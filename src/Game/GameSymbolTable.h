@@ -110,6 +110,162 @@ namespace Forge
             // Walks the groups at +0x4C comparing the id each element keeps at +0x715.
             "83 EC 08 83 7C 24 0C 00 75 08 33 C0 83 C4 08 C2 04 00 53 55 8B 69 4C 8B 49 50 "
             "56 57 C7 44 24 10"
+        },
+        {
+            "Parser_CreateFromBuffer", GameAddress::kParserCreateFromBuffer,
+            // Rejects a null or empty buffer through an inline strlen, then allocates the
+            // 0x55C byte parser. The size is what tells this apart from every other wrapper.
+            "57 8B 7C 24 08 85 FF 74 5A 8B C7 8D 50 01 8B FF 8A 08 40 84 C9 75 F9 2B C2 "
+            "74 48 56 68 8E 00 00 00 68 ?? ?? ?? ?? 68 5C 05 00 00"
+        },
+        {
+            "Parser_Destroy", GameAddress::kParserDestroy,
+            // Aligns the stack, takes the security cookie, then walks the 0x13 dword block
+            // the parser keeps at +0x4C8.
+            "55 8B EC 83 E4 F8 83 EC 5C A1 ?? ?? ?? ?? 33 C4 89 44 24 58 53 8B 5D 08 56 57 "
+            "8D B3 C8 04 00 00 B9 13 00 00 00"
+        },
+        {
+            "Parser_EnterBlock", GameAddress::kParserEnterBlock,
+            // Cookie, then the null check on the parser that returns false in AL.
+            "83 EC 48 A1 ?? ?? ?? ?? 33 C4 89 44 24 44 8B 4C 24 50 56 8B 74 24 50 89 4C 24 04 "
+            "85 F6 75 12 32 C0 5E"
+        },
+        {
+            "Parser_NextBlock", GameAddress::kParserNextBlock,
+            // The two long jumps that leave when the parser or its buffer is gone, and the
+            // depth at +0x4C8 it checks after them.
+            "83 EC 48 A1 ?? ?? ?? ?? 33 C4 89 44 24 44 56 8B 74 24 50 85 F6 0F 84 22 01 00 00 "
+            "83 3E 00 0F 84 19 01 00 00 83 BE C8 04 00 00 00"
+        },
+        {
+            "Parser_LeaveBlock", GameAddress::kParserLeaveBlock,
+            // Reads the nesting depth at +0x4C4 and indexes the 0x4C byte frames behind it.
+            "83 EC 50 A1 ?? ?? ?? ?? 33 C4 89 44 24 4C 53 8B 5C 24 58 85 DB 74 54 "
+            "8B 93 C4 04 00 00 8D 43 04 85 D2 7C 3D 56 8B F2 6B F6 4C"
+        },
+        {
+            "Menu_AddElement", GameAddress::kMenuAddElement,
+            // Looks the element's $group up at +0x194 and creates it when the lookup fails,
+            // which is the pair of calls no other routine makes.
+            "83 EC 08 53 8B 5C 24 10 55 56 57 8B E9 8D BB 94 01 00 00 57 89 6C 24 14 "
+            "E8 ?? ?? ?? ?? 8B F0 85 F6 75 0A 57 8B CD E8 ?? ?? ?? ??"
+        },
+
+        // The constructors. Every one of them writes its class's vftable, and that address
+        // is kept literal here rather than wildcarded like other globals: it is what tells
+        // one constructor from the next, several of them being otherwise identical, and this
+        // executable carries no relocations, so an address that moved means a rebuild.
+        {
+            "MenuItem_Create", GameAddress::kMenuItemCreate,
+            "56 8B F1 E8 ?? ?? ?? ?? D9 05 ?? ?? ?? ?? D9 9E B8 05 00 00 32 C0 D9 EE "
+            "88 86 58 07 00 00 D9 96 BC 05 00 00 88 86 BC 07 00 00"
+        },
+        {
+            "MenuLogo_Create", GameAddress::kMenuLogoCreate,
+            // The whole routine: chain to the common constructor, store the vftable, answer
+            // the block.
+            "56 8B F1 E8 ?? ?? ?? ?? C7 06 D4 34 4D 00 8B C6 5E C3"
+        },
+        {
+            "TextButton_Create", GameAddress::kTextButtonCreate,
+            // Opens an exception frame. The scope table it registers is the only thing that
+            // separates this from MenuList_Create, so that address stays literal too.
+            "6A FF 68 08 64 4C 00 64 A1 00 00 00 00 50 51 56 A1 ?? ?? ?? ?? 33 C4 50 "
+            "8D 44 24 0C 64 A3 00 00 00 00 8B F1"
+        },
+        {
+            "ImageButton_Create", GameAddress::kImageButtonCreate,
+            // Stores its vftable, then fills three floats at +0x764..+0x770 with one.
+            "56 8B F1 E8 ?? ?? ?? ?? D9 E8 C7 06 DC 33 4D 00 D9 96 70 07 00 00 "
+            "D9 96 6C 07 00 00 33 C0 D9 96 68 07 00 00"
+        },
+        {
+            "HotkeyButton_Create", GameAddress::kHotkeyButtonCreate,
+            // Chains to TextButton_Create, then works on the buffer at +0x9b8 that holds the
+            // key name.
+            "53 56 57 8B F1 E8 ?? ?? ?? ?? 68 FF 00 00 00 33 DB C7 06 34 33 4D 00 "
+            "88 9E B8 09 00 00"
+        },
+        {
+            "CastleButton_Create", GameAddress::kCastleButtonCreate,
+            // Chains to ImageButton_Create, then fills the door scales at +0xae0..+0xae8.
+            "56 8B F1 E8 ?? ?? ?? ?? D9 E8 C7 06 BC 32 4D 00 D9 96 E8 0A 00 00 "
+            "D9 96 E4 0A 00 00 8D 8E 14 13 00 00"
+        },
+        {
+            "MenuList_Create", GameAddress::kMenuListCreate,
+            // The same exception frame TextButton_Create opens, with its own scope table.
+            "6A FF 68 84 63 4C 00 64 A1 00 00 00 00 50 51 56 A1 ?? ?? ?? ?? 33 C4 50 "
+            "8D 44 24 0C 64 A3 00 00 00 00 8B F1"
+        },
+        {
+            "MenuSlider_Create", GameAddress::kMenuSliderCreate,
+            // Zeroes +0x780 and raises the two flags at +0x5fc and +0x5fe before the vftable.
+            "56 8B F1 E8 ?? ?? ?? ?? D9 EE B0 01 D9 9E 80 07 00 00 88 86 FC 05 00 00 "
+            "88 86 FE 05 00 00 C7 06 DC 30 4D 00"
+        },
+        {
+            "MenuLogo_Parse", GameAddress::kMenuLogoParse,
+            // Delegates to MenuButton_ParseCommon, cleans up eight bytes on the way out, then
+            // reaches for the $sp1 key.
+            "56 57 8B 7C 24 0C 57 8B F1 E8 ?? ?? ?? ?? 84 C0 75 05 5F 5E C2 08 00 "
+            "55 6A 00 68 1C 35 4D 00 57"
+        },
+        {
+            "MenuList_Parse", GameAddress::kMenuListParse,
+            // Security cookie over a 0x48 byte frame, then the parser is picked up from the
+            // stack and handed straight to MenuButton_ParseCommon.
+            "83 EC 48 A1 ?? ?? ?? ?? 33 C4 89 44 24 44 56 57 8B 7C 24 54 57 8B F1 "
+            "E8 ?? ?? ?? ?? 84 C0"
+        },
+
+        {
+            "MenuTable_Create", GameAddress::kMenuTableCreate,
+            // Writes its vftable and zeroes the six fields around it. The vftable stays
+            // literal, as every constructor's does.
+            "8B C1 33 C9 C7 00 0C 2F 4D 00 89 88 88 00 00 00 89 48 7C 89 88 98 00 00 00 "
+            "89 88 94 00 00 00 89 88 84 00 00 00"
+        },
+        {
+            "MenuTable_Parse", GameAddress::kMenuTableParse,
+            // 0x60 frame with a cookie, then the $id key it opens before anything else.
+            "83 EC 60 A1 ?? ?? ?? ?? 33 C4 89 44 24 5C 53 55 8B 6C 24 6C 68 ?? ?? ?? ?? "
+            "55 8B D9 E8 ?? ?? ?? ??"
+        },
+        {
+            "Menu_AddTable", GameAddress::kMenuAddTable,
+            // The whole routine: append a pointer to the array at this+0x54 through
+            // Collection_AppendPointer, then store the table into the slot it returns.
+            "8D 41 58 83 C1 54 50 51 8D 4C 24 0C E8 ?? ?? ?? ?? 85 C0 74 06 8B 4C 24 04 "
+            "89 08 B0 01 C2 04 00"
+        },
+
+        // The decoration parsers. Each opens an exception frame, and the scope table it
+        // registers is kept literal for the same reason the constructors keep their vftable:
+        // their prologues are otherwise the same routine three times over.
+        {
+            "Menu_ParseImages", GameAddress::kMenuParseImages,
+            "55 8B EC 6A FF 68 20 60 4C 00 64 A1 00 00 00 00 50 83 EC 44 53 56 57 "
+            "A1 ?? ?? ?? ?? 33 C5 50 8D 45 F4 64 A3 00 00 00 00"
+        },
+        {
+            "Menu_ParseAnimatedImages", GameAddress::kMenuParseAnimatedImages,
+            "55 8B EC 6A FF 68 40 60 4C 00 64 A1 00 00 00 00 50 83 EC 3C 53 56 57 "
+            "A1 ?? ?? ?? ?? 33 C5 50 8D 45 F4 64 A3 00 00 00 00"
+        },
+        {
+            "Menu_ParseStaticText", GameAddress::kMenuParseStaticText,
+            // The 0x474 byte frame is the 0x470 byte record it builds each $static into.
+            "55 8D AC 24 8C FB FF FF 81 EC 74 04 00 00 6A FF 68 60 60 4C 00 "
+            "64 A1 00 00 00 00 50 83 EC 20 A1 ?? ?? ?? ?? 33 C5"
+        },
+        {
+            "Mem_ReallocTracked", GameAddress::kMemReallocTracked,
+            // LEA EBX,[EDI+0x118] adds the tracking header to the requested size, the same
+            // 0x118 that separates Mem_AllocTracked from any other wrapper.
+            "53 55 8B 6C 24 0C 56 57 8B 7C 24 18 8D 9F 18 01 00 00 53 E8 ?? ?? ?? ?? "
+            "8B F0 83 C4 04 85 F6 75 1E"
         }
     };
 }

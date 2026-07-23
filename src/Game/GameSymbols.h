@@ -21,6 +21,41 @@ namespace Forge
         MenuItemParse,
         MenuFindItemById,
 
+        // What building an object out of a script fragment needs.
+        ParserCreateFromBuffer,
+        ParserDestroy,
+        ParserEnterBlock,
+        ParserNextBlock,
+        ParserLeaveBlock,
+        MenuAddElement,
+
+        // A constructor per kind, and the two parsers besides MenuItem_Parse that
+        // Menu_ParseScript calls directly instead of through the vtable.
+        MenuItemCreate,
+        MenuLogoCreate,
+        TextButtonCreate,
+        ImageButtonCreate,
+        HotkeyButtonCreate,
+        CastleButtonCreate,
+        MenuListCreate,
+        MenuSliderCreate,
+        MenuLogoParse,
+        MenuListParse,
+
+        // A table is not an element either: it has its own constructor and parser, goes to
+        // Menu_AddTable rather than Menu_AddElement, and is destroyed through a different
+        // vtable slot.
+        MenuTableCreate,
+        MenuTableParse,
+        MenuAddTable,
+
+        // Decorations are not elements: these answer a whole collection, so what they build
+        // has to be merged into what the menu already holds.
+        MenuParseImages,
+        MenuParseAnimatedImages,
+        MenuParseStaticText,
+        MemReallocTracked,
+
         Count
     };
 

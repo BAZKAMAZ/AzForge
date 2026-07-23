@@ -175,6 +175,19 @@ typedef struct AmodObjectsMenuApi
      * expectedGameBuild matches AmodApi::GetGameBuild. */
     void* (__cdecl* GetRawPointer)(AmodMod mod, AmodMenuItem item, uint32_t expectedGameBuild);
 
+    /* --- since API version 4 ------------------------------------------------------- */
+
+    /* Builds objects into a menu out of a fragment written in the syntax of a menu_*.txt,
+     * and answers the first one, or null when nothing was built.
+     *
+     * The fragment goes to the game's own parser, so an object made this way is
+     * indistinguishable from one the game's script declared - the alignment, the drawing
+     * centre and everything else a parser derives come out the same.
+     *
+     * Objects belong to the menu and go away when it is rebuilt, so this belongs in an
+     * AMOD_MENU_LOADED handler, next to the changes made to what was already there. */
+    AmodMenuItem (__cdecl* AddObject)(AmodMod mod, const char* menuId, const char* fragment);
+
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodObjectsMenuApi;
 
@@ -467,6 +480,30 @@ namespace Amod
         inline Element                                              At(const char* menuId, int index)
         {
             return Element(g_menu != nullptr ? g_menu->GetItemAt(g_self, menuId, index) : nullptr);
+        }
+
+        /* Builds objects into a menu from a fragment in the syntax of a menu_*.txt. A raw
+         * string literal keeps it looking like the script it is:
+         *
+         *     Amod::Menu::Add(menuId, R"(
+         *         $menu_items {
+         *             $item {
+         *                 $id        "ID_MODS"
+         *                 $text      "MODS"
+         *                 $pos       320 25
+         *                 $rect_size 214 45
+         *             }
+         *         }
+         *     )");
+         *
+         * Answers the first object built, which the property keys then reach as usual. */
+        inline Element                                              Add(const char* menuId, const char* fragment)
+        {
+            if (g_menu == nullptr || g_menu->structSize < sizeof(AmodObjectsMenuApi))
+            {
+                return Element();
+            }
+            return Element(g_menu->AddObject(g_self, menuId, fragment));
         }
     }
 }

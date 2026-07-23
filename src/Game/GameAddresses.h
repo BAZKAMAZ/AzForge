@@ -47,6 +47,81 @@ namespace Forge
         constexpr uintptr_t kMenuItemParse        = 0x0045F550; // __thiscall (element, parser)
         constexpr uintptr_t kMenuFindItemById     = 0x00451860; // __thiscall (menu, id)
 
+        // What Menu_ParseScript uses to turn text into objects, and what AzForge calls to do
+        // the same with a fragment a mod supplies.
+        //
+        // The parser is built over a plain NUL terminated buffer - Menu_ParseScript only
+        // reaches for Package_OpenFile to get one - and it keeps the pointer rather than a
+        // copy, having first stripped the comments out of it in place. So the text has to be
+        // writable and has to outlive the parser.
+        //
+        // The second argument is the character that introduces a key: 0x24 is '$'.
+        constexpr uintptr_t kParserCreateFromBuffer = 0x00420F70; // __cdecl (text, keyPrefix)
+        constexpr uintptr_t kParserDestroy          = 0x00421AB0; // __cdecl (parser)
+        constexpr uintptr_t kParserEnterBlock       = 0x00421B40; // __cdecl (parser, name)
+        constexpr uintptr_t kParserNextBlock        = 0x00421350; // __cdecl (parser)
+        constexpr uintptr_t kParserLeaveBlock       = 0x00421C60; // __cdecl (parser)
+
+        // Menu_AddElement does far more than append: it finds or creates the group named by
+        // $group, grows the group's array, writes the element's back pointer to the menu and
+        // rebuilds the circular navigation ring across the whole group. Reproducing that by
+        // hand is exactly the mistake feeding the parser avoids.
+        constexpr uintptr_t kMenuAddElement       = 0x004525C0; // __thiscall (menu, element)
+
+        // One constructor per kind. Each is __thiscall on the freshly allocated block and
+        // answers it, and each writes its own vftable, which is what makes them tellable
+        // apart from one another at all.
+        constexpr uintptr_t kMenuItemCreate       = 0x0045F4F0;
+        constexpr uintptr_t kMenuLogoCreate       = 0x0045F2A0;
+        constexpr uintptr_t kTextButtonCreate     = 0x0045EB80;
+        constexpr uintptr_t kImageButtonCreate    = 0x0045EAC0;
+        constexpr uintptr_t kHotkeyButtonCreate   = 0x0045E130;
+        constexpr uintptr_t kCastleButtonCreate   = 0x0045D380;
+        constexpr uintptr_t kMenuListCreate       = 0x0045BF50;
+        constexpr uintptr_t kMenuSliderCreate     = 0x0045B460;
+
+        // Four kinds are parsed by a routine Menu_ParseScript calls directly rather than
+        // through the vtable, and each cleans up its own stack, so the argument list is not
+        // a matter of taste:
+        //
+        //   MenuItem_Parse  (parser, float itemsOffs)  RET 8
+        //   MenuLogo_Parse  (parser, float itemsOffs)  RET 8
+        //   MenuList_Parse  (parser, Menu* menu)       RET 8
+        //   MenuTable_Parse (parser)
+        //
+        // The other five go through vtable +0x30, which takes the parser alone.
+        constexpr uintptr_t kMenuLogoParse        = 0x0045F2D0;
+        constexpr uintptr_t kMenuListParse        = 0x0045CAE0;
+        constexpr uintptr_t kElementParseVtableSlot = 0x30;
+
+        // A table: its own constructor and parser, and Menu_AddTable to link it into the
+        // array at menu+0x54. MenuTable_Parse is __thiscall (block, parser), RET 4, and
+        // answers a bool rather than throwing - it behaves like an element parser even
+        // though a table is not one.
+        constexpr uintptr_t kMenuTableCreate      = 0x00459790; // __thiscall (block)
+        constexpr uintptr_t kMenuTableParse       = 0x0045A0B0; // __thiscall (block, parser)
+        constexpr uintptr_t kMenuAddTable         = 0x00452780; // __thiscall (menu, block)
+
+        // A table is destroyed through vtable slot 0, not the 0x34 an element uses.
+        constexpr uintptr_t kTableDestroyVtableSlot = 0x00;
+
+        // The three decoration parsers, all __cdecl and all answering a whole collection
+        // rather than adding to one - Menu_ParseScript stores what they return straight into
+        // the menu. They also throw rather than answering false when their block is missing,
+        // which is why the fragment is inspected before any of them is called.
+        constexpr uintptr_t kMenuParseImages         = 0x0044B320; // (parser, "images")
+        constexpr uintptr_t kMenuParseAnimatedImages = 0x0044B5C0; // (parser)
+        constexpr uintptr_t kMenuParseStaticText     = 0x0044B7E0; // (parser)
+
+        // Grows a tracked block, keeping what was in it.
+        constexpr uintptr_t kMemReallocTracked = 0x00421EC0; // (block, size, file, line)
+
+        constexpr uint8_t kParserKeyPrefix = 0x24;              // '$'
+
+        // How the game disposes of an element whose block the parser refused: the scalar
+        // deleting destructor, which frees the block as well as running the destructor.
+        constexpr uintptr_t kElementDestroyVtableSlot = 0x34;
+
         // Menu object.
         constexpr uintptr_t kMenuIdOffset = 0x009;          // $menu_id
         constexpr uintptr_t kMenuGroupsOffset = 0x04C;

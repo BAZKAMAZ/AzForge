@@ -990,6 +990,448 @@ namespace Forge
             g_elementsByMenu[menu] = std::move(elements);
         }
 
+        // --- building objects out of a script fragment ----------------------------------
+        //
+        // The game turns text into objects in one uniform shape, whatever the kind:
+        //
+        //     block = Mem_AllocTracked(size, file, line);
+        //     Kind_Create(block);
+        //     if (parse(block, parser)) Menu_AddElement(menu, block);
+        //     else                      block->vtable[0x34](1);
+        //
+        // so creating one needs no new logic, only the parser pointed at the mod's text.
+        // Everything a parser derives on the way - the alignment, the drawing centre, the
+        // caption rectangle - therefore comes out exactly as it would from a menu_*.txt,
+        // which is the whole reason this goes through text rather than assembling fields.
+
+        typedef void* (__cdecl* ParserCreateRoutine)(char* text, uint8_t keyPrefix);
+        typedef void (__cdecl* ParserDestroyRoutine)(void* parser);
+        typedef int (__cdecl* ParserEnterBlockRoutine)(void* parser, const char* name);
+        typedef int (__cdecl* ParserNextBlockRoutine)(void* parser);
+        typedef void (__cdecl* ParserLeaveBlockRoutine)(void* parser);
+        typedef void* (__cdecl* AllocTrackedRoutine)(uint32_t size, const char* file, uint32_t line);
+        typedef void* (__fastcall* ElementCreateRoutine)(void* block, void* unused);
+        typedef void (__fastcall* AddElementRoutine)(void* menu, void* unused, void* element);
+
+        // Each kind cleans up its own stack, so these are not interchangeable.
+        typedef int (__fastcall* OffsetParseRoutine)(void* element, void* unused,
+                                                     void* parser, float itemsOffs);
+        typedef int (__fastcall* MenuParseRoutine)(void* element, void* unused,
+                                                   void* parser, void* menu);
+        typedef int (__fastcall* VirtualParseRoutine)(void* element, void* unused, void* parser);
+
+        ParserCreateRoutine g_parserCreate = nullptr;
+        ParserDestroyRoutine g_parserDestroy = nullptr;
+        ParserEnterBlockRoutine g_parserEnter = nullptr;
+        ParserNextBlockRoutine g_parserNext = nullptr;
+        ParserLeaveBlockRoutine g_parserLeave = nullptr;
+        AllocTrackedRoutine g_allocTracked = nullptr;
+
+        // How a kind's parser is reached and what it wants besides the parser.
+        enum class ParseStyle
+        {
+            WithOffset,     // the $items_offs of the enclosing block
+            WithMenu,       // the menu itself
+            Direct,         // called at a fixed address, the parser alone
+            Virtual         // vtable +0x30, the parser alone
+        };
+
+        struct BlockDescriptor
+        {
+            const char* container;      // "$menu_items", "$sliders", ...
+            const char* element;        // "$item", "$slider", ...
+            uint32_t size;
+            GameSymbol create;
+            GameSymbol parse;           // ignored when the style is Virtual
+            ParseStyle style;
+            GameSymbol add;             // Menu_AddElement, or Menu_AddTable for a table
+            uintptr_t destroySlot;      // vtable slot that frees a refused block
+        };
+
+        // The nine rows Menu_ParseScript @0x004527a0 walks, in the same order. A table is on
+        // the list now that its parser is confirmed to answer a bool and clean up its own
+        // stack, but it is not an element: it takes Menu_AddTable and a different destructor.
+        constexpr BlockDescriptor kBlocks[] =
+        {
+            { "menu_items",     "item",   GameAddress::kSizeMenuItem,
+              GameSymbol::MenuItemCreate,      GameSymbol::MenuItemParse, ParseStyle::WithOffset,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "menu_items",     "logo",   GameAddress::kSizeMenuLogo,
+              GameSymbol::MenuLogoCreate,      GameSymbol::MenuLogoParse, ParseStyle::WithOffset,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "text_buttons",   "button", GameAddress::kSizeTextButton,
+              GameSymbol::TextButtonCreate,    GameSymbol::Count,         ParseStyle::Virtual,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "img_buttons",    "button", GameAddress::kSizeImageButton,
+              GameSymbol::ImageButtonCreate,   GameSymbol::Count,         ParseStyle::Virtual,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "hotkey_buttons", "button", GameAddress::kSizeHotkeyButton,
+              GameSymbol::HotkeyButtonCreate,  GameSymbol::Count,         ParseStyle::Virtual,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "castle_buttons", "button", GameAddress::kSizeCastleButton,
+              GameSymbol::CastleButtonCreate,  GameSymbol::Count,         ParseStyle::Virtual,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "lists",          "list",   GameAddress::kSizeMenuList,
+              GameSymbol::MenuListCreate,      GameSymbol::MenuListParse, ParseStyle::WithMenu,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "sliders",        "slider", GameAddress::kSizeMenuSlider,
+              GameSymbol::MenuSliderCreate,    GameSymbol::Count,         ParseStyle::Virtual,
+              GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+        };
+
+        bool CreationReady()
+        {
+            if (g_parserCreate == nullptr || g_parserDestroy == nullptr ||
+                g_parserEnter == nullptr || g_parserNext == nullptr ||
+                g_parserLeave == nullptr || g_allocTracked == nullptr)
+            {
+                return false;
+            }
+
+            for (const BlockDescriptor& block : kBlocks)
+            {
+                if (GameSymbols::Address(block.create) == nullptr ||
+                    GameSymbols::Address(block.add) == nullptr)
+                {
+                    return false;
+                }
+                if (block.style != ParseStyle::Virtual &&
+                    GameSymbols::Address(block.parse) == nullptr)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        // The game disposes of an object whose block the parser refused through its scalar
+        // deleting destructor, which frees the block as well as running it. The slot differs
+        // by kind - 0x34 for an element, 0 for a table - so it comes from the descriptor.
+        void DestroyObject(void* object, uintptr_t destroySlot)
+        {
+            void** const vtable = *reinterpret_cast<void***>(object);
+            typedef void (__fastcall* DestroyRoutine)(void* self, void* unused, int flags);
+            reinterpret_cast<DestroyRoutine>(vtable[destroySlot / sizeof(void*)])(
+                object, nullptr, 1);
+        }
+
+        bool ParseElement(void* element, const BlockDescriptor& block, void* parser, void* menu)
+        {
+            switch (block.style)
+            {
+            case ParseStyle::WithOffset:
+            {
+                // The offset the enclosing block would have supplied. A fragment that wants
+                // one says $pos instead, so zero is the honest default.
+                const OffsetParseRoutine parse = reinterpret_cast<OffsetParseRoutine>(
+                    GameSymbols::Address(block.parse));
+                return Succeeded(parse(element, nullptr, parser, 0.0f));
+            }
+
+            case ParseStyle::WithMenu:
+            {
+                const MenuParseRoutine parse = reinterpret_cast<MenuParseRoutine>(
+                    GameSymbols::Address(block.parse));
+                return Succeeded(parse(element, nullptr, parser, menu));
+            }
+
+            case ParseStyle::Direct:
+            {
+                const VirtualParseRoutine parse = reinterpret_cast<VirtualParseRoutine>(
+                    GameSymbols::Address(block.parse));
+                return Succeeded(parse(element, nullptr, parser));
+            }
+
+            case ParseStyle::Virtual:
+            {
+                void** const vtable = *reinterpret_cast<void***>(element);
+                const VirtualParseRoutine parse = reinterpret_cast<VirtualParseRoutine>(
+                    vtable[GameAddress::kElementParseVtableSlot / sizeof(void*)]);
+                return Succeeded(parse(element, nullptr, parser));
+            }
+            }
+
+            return false;
+        }
+
+        // Builds every element of one block into the menu. The parser is already sitting on
+        // the container.
+        void* BuildBlock(void* menu, void* parser, const BlockDescriptor& block, int& built)
+        {
+            if (!Succeeded(g_parserEnter(parser, block.element)))
+            {
+                return nullptr;
+            }
+
+            const ElementCreateRoutine create = reinterpret_cast<ElementCreateRoutine>(
+                GameSymbols::Address(block.create));
+            const AddElementRoutine add = reinterpret_cast<AddElementRoutine>(
+                GameSymbols::Address(block.add));
+            void* first = nullptr;
+
+            do
+            {
+                void* const storage = g_allocTracked(block.size, ".\\AzForge.cpp", __LINE__);
+                if (storage == nullptr)
+                {
+                    break;
+                }
+
+                void* const element = create(storage, nullptr);
+                if (element == nullptr)
+                {
+                    continue;
+                }
+
+                if (!ParseElement(element, block, parser, menu))
+                {
+                    // Refused, most likely for want of an $id.
+                    DestroyObject(element, block.destroySlot);
+                    continue;
+                }
+
+                add(menu, nullptr, element);
+
+                if (first == nullptr)
+                {
+                    first = element;
+                }
+                ++built;
+            }
+            while (Succeeded(g_parserNext(parser)));
+
+            g_parserLeave(parser);
+            return first;
+        }
+
+        // --- decorations ----------------------------------------------------------------
+        //
+        // These do not go through Menu_AddElement, because they are not elements. Each of
+        // the three parsers allocates a whole collection and answers it - Menu_ParseScript
+        // stores what comes back straight into the menu - so calling one on a fragment would
+        // throw away whatever the menu already held.
+        //
+        // What makes merging honest here, and would not for an element, is that a decoration
+        // record is self contained: numbers, text and resolved handles, no pointer back to
+        // its collection, no navigation ring. Two arrays of them concatenate.
+
+        typedef void* (__cdecl* ParseImagesRoutine)(void* parser, const char* blockName);
+        typedef void* (__cdecl* ParseCollectionRoutine)(void* parser);
+        typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size,
+                                                        const char* file, uint32_t line);
+        typedef void (__cdecl* FreeTrackedRoutine)(void* block);
+
+        ReallocTrackedRoutine g_reallocTracked = nullptr;
+        FreeTrackedRoutine g_freeTracked = nullptr;
+
+        struct DecorationDescriptor
+        {
+            const char* container;      // "images", "images_anim", "static_text"
+            const char* element;        // the block one entry lives in
+            uintptr_t collection;       // where the menu keeps it
+            size_t stride;
+            GameSymbol parse;
+            bool takesBlockName;        // only Menu_ParseImages is told its own block
+        };
+
+        constexpr DecorationDescriptor kDecorations[] =
+        {
+            { "images",      "image",  GameAddress::kMenuImagesOffset,
+              GameAddress::kImageStride,      GameSymbol::MenuParseImages,         true },
+            { "images_anim", "image",  GameAddress::kMenuAnimImagesOffset,
+              GameAddress::kAnimImageStride,  GameSymbol::MenuParseAnimatedImages, false },
+            { "static_text", "static", GameAddress::kMenuStaticTextOffset,
+              GameAddress::kStaticTextStride, GameSymbol::MenuParseStaticText,     false },
+        };
+
+        // Kept apart from everything else because a function using __try may hold nothing
+        // that needs unwinding. The guard is here for one case the fragment cannot be
+        // inspected for: Menu_ParseAnimatedImages throws when its block is present but
+        // yields no image at all.
+        void* ParseDecorationGuarded(const DecorationDescriptor& decoration, void* parser)
+        {
+            __try
+            {
+                if (decoration.takesBlockName)
+                {
+                    return reinterpret_cast<ParseImagesRoutine>(
+                        GameSymbols::Address(decoration.parse))(parser, decoration.container);
+                }
+
+                return reinterpret_cast<ParseCollectionRoutine>(
+                    GameSymbols::Address(decoration.parse))(parser);
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
+                return nullptr;
+            }
+        }
+
+        void* MergeDecorations(void* menu, const DecorationDescriptor& decoration,
+                               void* parsed, int& built)
+        {
+            uint8_t* const fresh =
+                *reinterpret_cast<uint8_t**>(Field(parsed, GameAddress::kCollectionItemsOffset));
+            const int freshCount =
+                *reinterpret_cast<int*>(Field(parsed, GameAddress::kCollectionCountOffset));
+
+            if (fresh == nullptr || freshCount <= 0)
+            {
+                return nullptr;
+            }
+
+            void** const slot = reinterpret_cast<void**>(Field(menu, decoration.collection));
+            uint8_t* const existing = static_cast<uint8_t*>(*slot);
+
+            int* const count = existing != nullptr
+                ? reinterpret_cast<int*>(existing + GameAddress::kCollectionCountOffset)
+                : nullptr;
+
+            // Nothing of this kind in the menu yet, so what was parsed simply becomes it.
+            if (existing == nullptr || *count <= 0)
+            {
+                if (existing != nullptr && g_freeTracked != nullptr)
+                {
+                    g_freeTracked(existing);
+                }
+                *slot = parsed;
+                built += freshCount;
+                return fresh;
+            }
+
+            uint8_t** const items =
+                reinterpret_cast<uint8_t**>(existing + GameAddress::kCollectionItemsOffset);
+            const size_t before = static_cast<size_t>(*count) * decoration.stride;
+            const size_t total = before + static_cast<size_t>(freshCount) * decoration.stride;
+
+            uint8_t* const grown = static_cast<uint8_t*>(
+                g_reallocTracked(*items, static_cast<uint32_t>(total),
+                                 ".\\AzForge.cpp", __LINE__));
+            if (grown == nullptr)
+            {
+                return nullptr;
+            }
+
+            memcpy(grown + before, fresh, static_cast<size_t>(freshCount) * decoration.stride);
+            *items = grown;
+            *count += freshCount;
+
+            // The records were copied out of it, so the collection the parser made is ours
+            // to release.
+            if (g_freeTracked != nullptr)
+            {
+                g_freeTracked(fresh);
+                g_freeTracked(parsed);
+            }
+
+            built += freshCount;
+            return grown + before;
+        }
+
+        // Answers true when the fragment really carries this block, which is what keeps the
+        // two "missing block" throws out of reach rather than caught.
+        bool FragmentHas(void* parser, const DecorationDescriptor& decoration)
+        {
+            if (!Succeeded(g_parserEnter(parser, decoration.container)))
+            {
+                return false;
+            }
+
+            const bool present = Succeeded(g_parserEnter(parser, decoration.element));
+            if (present)
+            {
+                g_parserLeave(parser);
+            }
+
+            g_parserLeave(parser);
+            return present;
+        }
+
+        void* BuildDecorations(void* menu, void* parser, int& built)
+        {
+            if (g_reallocTracked == nullptr)
+            {
+                return nullptr;
+            }
+
+            void* first = nullptr;
+
+            for (const DecorationDescriptor& decoration : kDecorations)
+            {
+                if (GameSymbols::Address(decoration.parse) == nullptr ||
+                    !FragmentHas(parser, decoration))
+                {
+                    continue;
+                }
+
+                void* const parsed = ParseDecorationGuarded(decoration, parser);
+                if (parsed == nullptr)
+                {
+                    FORGE_LOG_WARN("A mod's $%s block was refused by the game's parser",
+                                   decoration.container);
+                    continue;
+                }
+
+                void* const made = MergeDecorations(menu, decoration, parsed, built);
+                if (first == nullptr)
+                {
+                    first = made;
+                }
+            }
+
+            return first;
+        }
+
+        void* BuildFromFragment(void* menu, const char* fragment, int& built)
+        {
+            built = 0;
+
+            if (!CreationReady() || menu == nullptr || fragment == nullptr ||
+                fragment[0] == '\0')
+            {
+                return nullptr;
+            }
+
+            // Parser_CreateFromBuffer keeps the pointer it is given rather than a copy, and
+            // strips the comments out of it in place first, so the text has to be writable
+            // and has to outlive the parser. A mod's literal is neither.
+            std::vector<char> text(fragment, fragment + strlen(fragment) + 1);
+
+            void* const parser = g_parserCreate(text.data(), GameAddress::kParserKeyPrefix);
+            if (parser == nullptr)
+            {
+                FORGE_LOG_ERROR("A mod's fragment did not produce a parser");
+                return nullptr;
+            }
+
+            void* first = nullptr;
+
+            for (const BlockDescriptor& block : kBlocks)
+            {
+                if (!Succeeded(g_parserEnter(parser, block.container)))
+                {
+                    continue;
+                }
+
+                void* const made = BuildBlock(menu, parser, block, built);
+                if (first == nullptr)
+                {
+                    first = made;
+                }
+
+                g_parserLeave(parser);
+            }
+
+            void* const decoration = BuildDecorations(menu, parser, built);
+            if (first == nullptr)
+            {
+                first = decoration;
+            }
+
+            g_parserDestroy(parser);
+            return first;
+        }
+
         void Dispatch(AmodMenuEvent event, void* data)
         {
             const std::vector<Subscription> snapshot = g_subscriptions;
@@ -1374,6 +1816,35 @@ namespace Forge
             return "";
         }
 
+        AmodMenuItem __cdecl ApiAddObject(AmodMod mod, const char* menuId, const char* fragment)
+        {
+            ModContext* const context = Resolve(mod);
+            void* const menu = context != nullptr ? MenuByIdOrNull(menuId) : nullptr;
+            if (menu == nullptr)
+            {
+                return nullptr;
+            }
+
+            int built = 0;
+            void* const first = BuildFromFragment(menu, fragment, built);
+
+            if (built == 0)
+            {
+                FORGE_LOG_WARN("[%s] built nothing from its fragment for menu '%s'",
+                                  context->id.c_str(), menuId);
+                return nullptr;
+            }
+
+            // Menu_AddElement put them in a group, so walking the menu again is all it takes
+            // for them to become handles the property interface accepts. Without this it
+            // would refuse the very handle it just returned.
+            RecordMenu(menu);
+
+            FORGE_LOG_INFO("[%s] added %d object(s) to menu '%s'",
+                           context->id.c_str(), built, menuId);
+            return first;
+        }
+
         void* __cdecl ApiGetRawPointer(AmodMod mod, AmodMenuItem item, uint32_t expectedGameBuild)
         {
             if (Resolve(mod) == nullptr || !IsLive(item) ||
@@ -1431,6 +1902,32 @@ namespace Forge
             return false;
         }
 
+        // Object creation is a separate capability: it calls into the game rather than
+        // detouring it, so a build where one of these cannot be located still gets a working
+        // interface for everything a menu already holds.
+        g_parserCreate = reinterpret_cast<ParserCreateRoutine>(
+            GameSymbols::Address(GameSymbol::ParserCreateFromBuffer));
+        g_parserDestroy = reinterpret_cast<ParserDestroyRoutine>(
+            GameSymbols::Address(GameSymbol::ParserDestroy));
+        g_parserEnter = reinterpret_cast<ParserEnterBlockRoutine>(
+            GameSymbols::Address(GameSymbol::ParserEnterBlock));
+        g_parserNext = reinterpret_cast<ParserNextBlockRoutine>(
+            GameSymbols::Address(GameSymbol::ParserNextBlock));
+        g_parserLeave = reinterpret_cast<ParserLeaveBlockRoutine>(
+            GameSymbols::Address(GameSymbol::ParserLeaveBlock));
+        g_allocTracked = reinterpret_cast<AllocTrackedRoutine>(
+            GameSymbols::Address(GameSymbol::MemAllocTracked));
+        g_reallocTracked = reinterpret_cast<ReallocTrackedRoutine>(
+            GameSymbols::Address(GameSymbol::MemReallocTracked));
+        g_freeTracked = reinterpret_cast<FreeTrackedRoutine>(
+            GameSymbols::Address(GameSymbol::MemFreeTracked));
+
+        if (!CreationReady())
+        {
+            FORGE_LOG_WARN("Not every routine object creation needs was located, "
+                              "so mods can read and write menus but not add to them");
+        }
+
         if (!InstallOne(g_parseHook, GameSymbol::MenuParseScript,
                         reinterpret_cast<void*>(&ParseScriptDetour),
                         kMenuParseScriptPrologue, sizeof(kMenuParseScriptPrologue)) ||
@@ -1462,6 +1959,7 @@ namespace Forge
         g_table.PropertyCount = &ApiPropertyCount;
         g_table.PropertyNameAt = &ApiPropertyNameAt;
         g_table.GetRawPointer = &ApiGetRawPointer;
+        g_table.AddObject = &ApiAddObject;
 
         ValidatePropertyTable();
 
