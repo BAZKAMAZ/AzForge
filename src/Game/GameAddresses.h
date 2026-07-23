@@ -58,6 +58,11 @@ namespace Forge
         // Menu element, common part parsed by MenuButton_ParseCommon @0x0045a600.
         constexpr uintptr_t kMenuElementRectOffset = 0x294;     // $rect_size, four floats
         constexpr uintptr_t kMenuElementPosOffset = 0x5B8;      // $pos, two floats
+        // Horizontal and vertical alignment packed into one word by MenuButton_ParseCommon
+        // @0x0045a600: 0x02 right, 0x04 horizontally centred, 0x08 top, 0x20 vertically
+        // centred, and the absence of a bit meaning left or bottom.
+        constexpr uintptr_t kMenuElementAlignOffset = 0x5C8;
+
         // What MenuItem_Render @0x0045f620 actually draws at: the middle of the rectangle,
         // worked out once during parsing. Writing the rectangle without bringing this along
         // changes nothing on screen.
