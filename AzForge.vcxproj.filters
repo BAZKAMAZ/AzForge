@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Исходные файлы">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Файлы заголовков">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="Файлы ресурсов">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Core">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a01}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Game">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a05}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Hook">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a06}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Json">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a02}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Mods">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a03}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Zip">
+      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a04}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Файлы заголовков</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeBoot.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeLog.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgePaths.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeText.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeVersion.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\GameAddresses.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\GameFunctions.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\GameModule.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\PackageFile.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\PackageHook.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Hook\InlineHook.h">
+      <Filter>Hook</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Json\JsonValue.h">
+      <Filter>Json</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModFileSystem.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModManifest.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModRegistry.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Zip\ZipArchive.h">
+      <Filter>Zip</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Исходные файлы</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeBoot.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeLog.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgePaths.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeText.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\GameFunctions.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\GameModule.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\PackageHook.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Hook\InlineHook.cpp">
+      <Filter>Hook</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Json\JsonValue.cpp">
+      <Filter>Json</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModFileSystem.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModManifest.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModRegistry.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Zip\ZipArchive.cpp">
+      <Filter>Zip</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

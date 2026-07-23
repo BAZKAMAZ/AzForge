@@ -1,0 +1,10 @@
+{
+  "id": "azforge.sample",
+  "name": "AzForge Sample Mod",
+  "version": "1.0.0",
+  "author": "AzForge",
+  "description": "Template mod: reports its host and restyles the start-up launcher.",
+  "api_version": 3,
+  "game_version": "1.0",
+  "entry": "bin/SampleMod.dll"
+}

@@ -1,0 +1,25 @@
+# Local tooling, not part of the project
+.claude/
+.mcp.json
+
+# The game itself. AzForge is built against it but does not redistribute it.
+az_orginal/
+
+# Visual Studio
+.vs/
+*.user
+*.aps
+
+# Build output, at the solution root and inside every project
+[Dd]ebug/
+[Rr]elease/
+[Xx]64/
+[Ww]in32/
+ipch/
+
+# Written by the SampleMod post-build step, which copies the freshly linked
+# DLL into the package before sealing it into a .amod
+sdk/SampleMod/package/bin/
+
+# Produced by a running game, never by a build
+forge.log

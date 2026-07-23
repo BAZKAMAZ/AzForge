@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- AzForge.dll is loaded into game.exe, a 32-bit process, so Win32 is the only
+       platform this project builds for. -->
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <VCProjectVersion>18.0</VCProjectVersion>
+    <Keyword>Win32Proj</Keyword>
+    <ProjectGuid>{35552fb5-dfb1-4d0e-a86d-ed6c1c7bf288}</ProjectGuid>
+    <RootNamespace>AzForge</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v145</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;_DEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level4</WarningLevel>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <PreprocessorDefinitions>WIN32;NDEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <SubSystem>Windows</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableUAC>false</EnableUAC>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="framework.h" />
+    <ClInclude Include="pch.h" />
+    <ClInclude Include="sdk\include\ForgeApi.h" />
+    <ClInclude Include="sdk\include\ForgeTypes.h" />
+    <ClInclude Include="sdk\include\LauncherApi.h" />
+    <ClInclude Include="sdk\include\ObjectsMenuApi.h" />
+    <ClInclude Include="src\Api\LauncherApi.h" />
+    <ClInclude Include="src\Api\ObjectsMenuApi.h" />
+    <ClInclude Include="src\Api\ModContext.h" />
+    <ClInclude Include="src\Api\ModOwnership.h" />
+    <ClInclude Include="src\Core\ForgeBoot.h" />
+    <ClInclude Include="src\Core\ForgeLog.h" />
+    <ClInclude Include="src\Core\ForgePaths.h" />
+    <ClInclude Include="src\Core\ForgeText.h" />
+    <ClInclude Include="src\Core\ForgeVersion.h" />
+    <ClInclude Include="src\Game\GameAddresses.h" />
+    <ClInclude Include="src\Game\GameFunctions.h" />
+    <ClInclude Include="src\Game\GameModule.h" />
+    <ClInclude Include="src\Game\GameSymbols.h" />
+    <ClInclude Include="src\Game\GameSymbolTable.h" />
+    <ClInclude Include="src\Game\ShutdownHook.h" />
+    <ClInclude Include="src\Game\Signature.h" />
+    <ClInclude Include="src\Game\PackageFile.h" />
+    <ClInclude Include="src\Game\PackageHook.h" />
+    <ClInclude Include="src\Hook\InlineHook.h" />
+    <ClInclude Include="src\Json\JsonValue.h" />
+    <ClInclude Include="src\Mods\ModFileSystem.h" />
+    <ClInclude Include="src\Mods\ModHost.h" />
+    <ClInclude Include="src\Mods\ModLibrary.h" />
+    <ClInclude Include="src\Mods\ModManifest.h" />
+    <ClInclude Include="src\Mods\ModRegistry.h" />
+    <ClInclude Include="src\Zip\Crc32.h" />
+    <ClInclude Include="src\Zip\Inflate.h" />
+    <ClInclude Include="src\Zip\ZipArchive.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeBoot.cpp" />
+    <ClCompile Include="src\Core\ForgeLog.cpp" />
+    <ClCompile Include="src\Core\ForgePaths.cpp" />
+    <ClCompile Include="src\Core\ForgeText.cpp" />
+    <ClCompile Include="src\Game\GameFunctions.cpp" />
+    <ClCompile Include="src\Game\GameModule.cpp" />
+    <ClCompile Include="src\Game\GameSymbols.cpp" />
+    <ClCompile Include="src\Game\ShutdownHook.cpp" />
+    <ClCompile Include="src\Game\Signature.cpp" />
+    <ClCompile Include="src\Game\PackageHook.cpp" />
+    <ClCompile Include="src\Hook\InlineHook.cpp" />
+    <ClCompile Include="src\Json\JsonValue.cpp" />
+    <ClCompile Include="src\Api\ForgeApiImpl.cpp" />
+    <ClCompile Include="src\Api\LauncherApi.cpp" />
+    <ClCompile Include="src\Api\ObjectsMenuApi.cpp" />
+    <ClCompile Include="src\Api\ModOwnership.cpp" />
+    <ClCompile Include="src\Mods\ModFileSystem.cpp" />
+    <ClCompile Include="src\Mods\ModHost.cpp" />
+    <ClCompile Include="src\Mods\ModLibrary.cpp" />
+    <ClCompile Include="src\Mods\ModManifest.cpp" />
+    <ClCompile Include="src\Mods\ModRegistry.cpp" />
+    <ClCompile Include="src\Zip\Crc32.cpp" />
+    <ClCompile Include="src\Zip\Inflate.cpp" />
+    <ClCompile Include="src\Zip\ZipArchive.cpp" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
