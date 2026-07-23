@@ -197,14 +197,6 @@ typedef struct AmodObjectsMenuApi
 
 #ifdef __cplusplus
 
-/*
- * Inline layer, compiled into the mod:
- *
- *     auto quit = Amod::Menu::Find(menuId, "ID_QUIT");
- *     quit["pos"].Set(320.0f, 200.0f);
- *     quit["text"].Set("LEAVE");
- *     float x = quit["pos"].Number(0);
- */
 namespace Amod
 {
     namespace Menu
@@ -365,9 +357,6 @@ namespace Amod
             }
 
         private:
-            /* The subscript is kept as a number and spelled out only for the call, so a
-             * Property stays copyable and owns no storage of its own. Written out by hand
-             * rather than with snprintf to keep this header free of <stdio.h>. */
             const char*                                             Resolve(char* buffer, size_t size) const
             {
                 if (m_index < 0)
@@ -482,21 +471,6 @@ namespace Amod
             return Element(g_menu != nullptr ? g_menu->GetItemAt(g_self, menuId, index) : nullptr);
         }
 
-        /* Builds objects into a menu from a fragment in the syntax of a menu_*.txt. A raw
-         * string literal keeps it looking like the script it is:
-         *
-         *     Amod::Menu::Add(menuId, R"(
-         *         $menu_items {
-         *             $item {
-         *                 $id        "ID_MODS"
-         *                 $text      "MODS"
-         *                 $pos       320 25
-         *                 $rect_size 214 45
-         *             }
-         *         }
-         *     )");
-         *
-         * Answers the first object built, which the property keys then reach as usual. */
         inline Element                                              Add(const char* menuId, const char* fragment)
         {
             if (g_menu == nullptr || g_menu->structSize < sizeof(AmodObjectsMenuApi))

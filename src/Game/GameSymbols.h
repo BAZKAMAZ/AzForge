@@ -56,6 +56,14 @@ namespace Forge
         MenuParseStaticText,
         MemReallocTracked,
 
+        // Menu navigation: registering a whole menu, and moving between them.
+        MenuFindByMenuId,
+        CBaseMenuConstruct,
+        MenuEnterMenu,
+        MenuGoBack,
+        MenuShowBox,
+        MenuCloseAll,
+
         Count
     };
 

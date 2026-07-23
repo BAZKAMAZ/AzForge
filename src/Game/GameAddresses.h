@@ -43,6 +43,25 @@ namespace Forge
         constexpr uintptr_t kMenuRegister         = 0x0043CA40; // __thiscall (manager, menu, script, menuId, force)
 
         constexpr uintptr_t kMenuLoadFromScript   = 0x0043C090; // __stdcall (menuId, scriptFile)
+
+        // The menu manager is a global pointer. It is itself a CMenu; the 28 built-in menus
+        // are sub-objects embedded in it, and the registry is a separate dynamic array of
+        // pointers, so a heap menu can be added to it.
+        constexpr uintptr_t kMenuManager             = 0x00692860; // CMenu**
+        constexpr uintptr_t kMenuManagerCurrentOffset = 0x0C;       // the current menu
+        constexpr uintptr_t kMenuManagerBoxOffset     = 0x10;       // the overlay over it
+
+        // Registering and navigating menus. Menu_Register (above) parses a script FILE into a
+        // menu and appends it to the registry; a null script with force set makes an empty
+        // registered menu, which is how IDM_LEVEL_STAT comes to be and how a mod adds one.
+        constexpr uintptr_t kMenuFindByMenuId  = 0x0043BF00; // __thiscall (manager, id) -> menu
+        constexpr uintptr_t kCBaseMenuConstruct = 0x00451BE0; // __thiscall (block) -> block
+        constexpr uintptr_t kMenuEnterMenu     = 0x0043C5A0; // __thiscall (manager, id), pushes
+        constexpr uintptr_t kMenuGoBack        = 0x0043C660; // __thiscall (manager)
+        constexpr uintptr_t kMenuShowBox       = 0x0043C610; // __thiscall (manager, id), overlay
+        constexpr uintptr_t kMenuCloseAll      = 0x0043C6F0; // __thiscall (manager)
+
+        constexpr uint32_t kSizeBaseMenu = 0x020C;
         constexpr uintptr_t kMenuParseScript      = 0x004527A0; // __thiscall (menu, scriptFile)
         constexpr uintptr_t kMenuItemParse        = 0x0045F550; // __thiscall (element, parser)
         constexpr uintptr_t kMenuFindItemById     = 0x00451860; // __thiscall (menu, id)

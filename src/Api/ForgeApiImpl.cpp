@@ -2,6 +2,7 @@
 
 #include "src/Api/ModContext.h"
 
+#include "src/Api/BoxMenuApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Core/ForgeLog.h"
@@ -105,5 +106,6 @@ namespace Forge
         context.table.GetGameBuild = &ApiGetGameBuild;
         context.table.launcher = LauncherApi::Table();
         context.table.objectsMenu = ObjectsMenuApi::Table();
+        context.table.boxMenu = BoxMenuApi::Table();
     }
 }

@@ -88,10 +88,12 @@
   <ItemGroup>
     <ClInclude Include="framework.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="sdk\include\BoxMenuApi.h" />
     <ClInclude Include="sdk\include\ForgeApi.h" />
     <ClInclude Include="sdk\include\ForgeTypes.h" />
     <ClInclude Include="sdk\include\LauncherApi.h" />
     <ClInclude Include="sdk\include\ObjectsMenuApi.h" />
+    <ClInclude Include="src\Api\BoxMenuApi.h" />
     <ClInclude Include="src\Api\LauncherApi.h" />
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\ModContext.h" />
@@ -141,6 +143,7 @@
     <ClCompile Include="src\Json\JsonValue.cpp" />
     <ClCompile Include="src\Api\ForgeApiImpl.cpp" />
     <ClCompile Include="src\Api\LauncherApi.cpp" />
+    <ClCompile Include="src\Api\BoxMenuApi.cpp" />
     <ClCompile Include="src\Api\ObjectsMenuApi.cpp" />
     <ClCompile Include="src\Api\ModOwnership.cpp" />
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />

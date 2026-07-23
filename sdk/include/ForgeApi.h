@@ -38,6 +38,7 @@
 #include "ForgeTypes.h"
 #include "LauncherApi.h"
 #include "ObjectsMenuApi.h"
+#include "BoxMenuApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -78,6 +79,10 @@ typedef struct AmodApi
 
     const AmodObjectsMenuApi* objectsMenu;
 
+    /* --- since API version 5 ------------------------------------------------------- */
+
+    const AmodBoxMenuApi* boxMenu;
+
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodApi;
 
@@ -117,6 +122,7 @@ namespace Amod
         g_api = api;
         Launcher::Attach(api->launcher, api->self);
         Menu::Attach(api->objectsMenu, api->self);
+        Box::Attach(api->boxMenu, api->self);
         return true;
     }
 

@@ -56,6 +56,43 @@ namespace
                       made["kind"].Text(), made.PropertyCount(), made["text"].Text());
         }
 
+        // The AZFORGE item above carries $sub_menu "IDM_FORGE", a menu no script declares.
+        // Register it once and fill it, and the button leads somewhere; its ID_BACK returns
+        // the way every other back button does.
+        if (Amod::Box::IsAvailable() && !Amod::Box::Exists("IDM_FORGE"))
+        {
+            Report("registered IDM_FORGE", Amod::Box::Register("IDM_FORGE"));
+
+            Amod::Menu::Add("IDM_FORGE", R"(
+                $menu_items {
+                    $item {
+                        $id      "ID_BACK"
+                        $text    "BACK"
+                        $pos     320 120
+                        $rect_size 184 45
+                        $h_align "center"
+                        $v_align "center"
+                        $help    "Return to the main menu"
+                    }
+                }
+            )");
+            Amod::Menu::Add("IDM_FORGE", R"(
+                $static_text {
+                    $static {
+                        $text        "A MENU FROM A MOD"
+                        $pos         320 360
+                        $font_scale  1.2 1.2
+                        $font_color  0.4 0.9 1 1
+                        $line_height 24
+                        $align       "center"
+                    }
+                }
+            )");
+        }
+
+        Amod::Log(AMOD_LOG_INFO, "  %-28s \"%s\", IDM_FORGE exists %d", "current menu",
+                  Amod::Box::Current(), Amod::Box::Exists("IDM_FORGE") ? 1 : 0);
+
         // Decorations take the same call, though they take a different road behind it: their
         // parsers hand back a whole collection, which the loader merges into the one the
         // menu already has rather than replacing it.

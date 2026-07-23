@@ -26,6 +26,7 @@ namespace Forge
         typedef int(__stdcall* LoadFromScriptRoutine)(const char* menuId, const char* scriptFile);
         typedef int(__fastcall* ParseScriptRoutine)(void* menu, void* unused, const char* scriptFile);
         typedef void*(__fastcall* FindItemRoutine)(void* menu, void* unused, const char* itemId);
+        typedef void*(__fastcall* FindMenuRoutine)(void* manager, void* unused, const char* menuId);
 
         struct Subscription
         {
@@ -44,6 +45,7 @@ namespace Forge
         LoadFromScriptRoutine g_originalLoad = nullptr;
         ParseScriptRoutine g_originalParse = nullptr;
         FindItemRoutine g_findItem = nullptr;
+        FindMenuRoutine g_findMenu = nullptr;
 
         std::map<std::string, void*> g_menusById;
         std::map<void*, std::vector<void*>> g_elementsByMenu;
@@ -1541,7 +1543,31 @@ namespace Forge
             }
 
             const auto found = g_menusById.find(menuId);
-            return found == g_menusById.end() ? nullptr : found->second;
+            if (found != g_menusById.end())
+            {
+                return found->second;
+            }
+
+            // A menu this interface never saw parsed is still reachable through the game's
+            // own registry - a menu a mod registered through BoxMenu is the case that matters.
+            // Record it so its elements become live handles, and cache it so later calls and
+            // the walking functions find it the same way.
+            if (g_findMenu != nullptr)
+            {
+                void** const slot = static_cast<void**>(
+                    GameModule::Resolve(GameAddress::kMenuManager));
+                void* const manager = slot != nullptr ? *slot : nullptr;
+                void* const menu = manager != nullptr ? g_findMenu(manager, nullptr, menuId) : nullptr;
+
+                if (menu != nullptr)
+                {
+                    RecordMenu(menu);
+                    g_menusById[menuId] = menu;
+                    return menu;
+                }
+            }
+
+            return nullptr;
         }
 
         // --- the table the mods call through -------------------------------------------
@@ -1902,6 +1928,11 @@ namespace Forge
             return false;
         }
 
+        // Optional: lets Add and the walking functions reach a menu the game registered but
+        // this interface never saw parsed, such as one a mod added through BoxMenu.
+        g_findMenu = reinterpret_cast<FindMenuRoutine>(
+            GameSymbols::Address(GameSymbol::MenuFindByMenuId));
+
         // Object creation is a separate capability: it calls into the game rather than
         // detouring it, so a build where one of these cannot be located still gets a working
         // interface for everything a menu already holds.
@@ -1993,6 +2024,7 @@ namespace Forge
         g_originalLoad = nullptr;
         g_originalParse = nullptr;
         g_findItem = nullptr;
+        g_findMenu = nullptr;
 
         g_subscriptions.clear();
         g_menusById.clear();

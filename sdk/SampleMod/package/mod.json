@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "author": "AzForge",
   "description": "Template mod: reworks menus and restyles the start-up launcher.",
-  "api_version": 4,
+  "api_version": 5,
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll"
 }

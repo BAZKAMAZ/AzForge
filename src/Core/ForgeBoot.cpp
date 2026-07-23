@@ -2,6 +2,7 @@
 
 #include "src/Core/ForgeBoot.h"
 
+#include "src/Api/BoxMenuApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Core/ForgeLog.h"
@@ -131,6 +132,7 @@ namespace Forge
         // their API and can subscribe from AmodInit.
         LauncherApi::Install();
         ObjectsMenuApi::Install();
+        BoxMenuApi::Install();
 
         // Code mods come up last, so everything they might inspect is already in place.
         ModHost::LoadAll(g_registry.LoadOrder());
@@ -159,6 +161,7 @@ namespace Forge
         ShutdownHook::Uninstall();
         LauncherApi::Uninstall();
         ObjectsMenuApi::Uninstall();
+        BoxMenuApi::Uninstall();
         ModFileSystem::Clear();
         g_registry.Clear();
 

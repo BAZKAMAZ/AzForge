@@ -266,6 +266,49 @@ namespace Forge
             // 0x118 that separates Mem_AllocTracked from any other wrapper.
             "53 55 8B 6C 24 0C 56 57 8B 7C 24 18 8D 9F 18 01 00 00 53 E8 ?? ?? ?? ?? "
             "8B F0 83 C4 04 85 F6 75 1E"
+        },
+        {
+            "Menu_FindByMenuId", GameAddress::kMenuFindByMenuId,
+            // Inline strlen of the id, then the walk over the registry count at manager+0x38.
+            "55 8B 6C 24 08 56 85 ED 0F 84 8A 00 00 00 8B C5 8D 70 01 8A 10 40 84 D2 "
+            "75 F9 2B C6 74 7A 53 8B 59 38"
+        },
+        {
+            "CBaseMenu_Construct", GameAddress::kCBaseMenuConstruct,
+            // Stores CBaseMenu::vftable and clears the five click-result fields at +0x5c.
+            // The vftable stays literal, as every constructor's does.
+            "53 33 DB 33 C0 56 8B F1 C7 06 AC 1A 4D 00 88 9E 08 01 00 00 89 46 5C "
+            "89 46 60 89 46 64 89 46 68 89 46 6C"
+        },
+        {
+            "Menu_EnterMenu", GameAddress::kMenuEnterMenu,
+            // Finds the target, checks its disabled flag at +0x209, then reads the current
+            // menu at manager+0xc. The 0x4e/0x45 branch distances tell it from Menu_ShowBox,
+            // whose prologue is otherwise identical.
+            "8B 44 24 04 56 57 50 8B F1 E8 ?? ?? ?? ?? 8B F8 85 FF 74 4E 80 BF 09 02 00 00 00 "
+            "75 45 8B 4E 0C"
+        },
+        {
+            "Menu_ShowBox", GameAddress::kMenuShowBox,
+            // The same shape as Menu_EnterMenu with 0x34/0x2b branch distances: it sets the
+            // overlay at manager+0x10 rather than switching the current menu.
+            "8B 44 24 04 56 57 50 8B F1 E8 ?? ?? ?? ?? 8B F8 85 FF 74 34 80 BF 09 02 00 00 00 "
+            "75 2B 8B 4E 0C"
+        },
+        {
+            "Menu_GoBack", GameAddress::kMenuGoBack,
+            // Reads the overlay at manager+0x10; when it is clear it pops the stack, and the
+            // MOV dword [ESI+0x10],0 that clears the overlay is the tail unique to it.
+            "56 8B F1 8B 4E 10 85 C9 74 28 6A 00 E8 ?? ?? ?? ?? 8B 4E 10 8B 01 8B 50 54 FF D2 "
+            "8B 4E 0C C7 46 10 00 00 00 00"
+        },
+        {
+            "Menu_CloseAll", GameAddress::kMenuCloseAll,
+            // Also reads manager+0x10 first, but pushes EDI and closes both overlay and
+            // current before unwinding, which the early PUSH EDI and second manager+0xc read
+            // set apart from Menu_GoBack.
+            "56 8B F1 8B 4E 10 57 85 C9 74 11 6A 00 E8 ?? ?? ?? ?? 8B 4E 10 8B 01 8B 50 54 "
+            "FF D2 8B 4E 0C 85 C9 74 11"
         }
     };
 }
