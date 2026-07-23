@@ -71,6 +71,36 @@ namespace Forge
         constexpr uintptr_t kMenuElementVisibleOffset = 0x714;
         constexpr uintptr_t kMenuElementIdOffset = 0x715;       // $id
 
+        // The rectangle of the $caption block, derived from $rect_len, and the flag saying
+        // the block was there at all. A logo overwrites the rectangle with its own edges.
+        constexpr uintptr_t kMenuElementCaptionRectOffset = 0x2A4;
+        constexpr uintptr_t kMenuElementHasCaptionOffset = 0x2B4;
+
+        // What MenuItem_Parse @0x0045f550 adds on top of the common part.
+        constexpr uintptr_t kMenuItemPlankWidthOffset = 0x798;
+        constexpr uintptr_t kMenuItemCursor3dOffset = 0x79C;    // $cursor3d block present
+        constexpr uintptr_t kMenuItemCursorOrientOffset = 0x7A4; // three floats
+        constexpr uintptr_t kMenuItemCursorPosOffset = 0x7B0;    // three floats
+
+        // Menu_ParseScript @0x004527a0 builds nine kinds of element, each a different size.
+        // Mem_AllocTracked @0x00421df0 keeps the requested size in its header, so the kind
+        // of any element can be read back from the block it lives in without the loader
+        // having to watch every parser.
+        constexpr uintptr_t kTrackedHeaderSize = 0x118;
+        constexpr uintptr_t kTrackedMagicOffset = 0x000;    // u16 0xAFAF
+        constexpr uintptr_t kTrackedSizeOffset = 0x008;     // u32 requested size
+        constexpr uint16_t kTrackedMagic = 0xAFAF;
+
+        constexpr uint32_t kSizeMenuItem = 0x07C4;      // $menu_items / $item
+        constexpr uint32_t kSizeMenuLogo = 0x0770;      // $menu_items / $logo
+        constexpr uint32_t kSizeTextButton = 0x09B8;    // $text_buttons / $button
+        constexpr uint32_t kSizeImageButton = 0x07DC;   // $img_buttons / $button
+        constexpr uint32_t kSizeHotkeyButton = 0x0BD4;  // $hotkey_buttons / $button
+        constexpr uint32_t kSizeCastleButton = 0x2320;  // $castle_buttons / $button
+        constexpr uint32_t kSizeMenuList = 0x08AC;      // $lists / $list
+        constexpr uint32_t kSizeMenuSlider = 0x0788;    // $sliders / $slider
+        constexpr uint32_t kSizeMenuTable = 0x00A0;     // $tables / $table
+
         // Only present on elements MenuItem_Parse @0x0045f550 built, and the field
         // MenuItem_Render @0x0045f620 actually draws.
         //
@@ -78,6 +108,118 @@ namespace Forge
         // at +0x798, so the text occupies everything up to it.
         constexpr uintptr_t kMenuItemTextOffset = 0x758;
         constexpr size_t kMenuItemTextCapacity = 0x798 - 0x758;
+
+        // Decorative $images, filled by Menu_ParseImages @0x0044b320. The menu keeps a
+        // pointer to an eight byte collection of { void* items; int count; }, and each
+        // entry is 40 bytes laid out by FUN_00449950 @0x00449950. They are not individual
+        // allocations, so their kind cannot be read from an allocator header.
+        constexpr uintptr_t kMenuImagesOffset = 0x074;
+        constexpr uintptr_t kCollectionItemsOffset = 0x000;
+        constexpr uintptr_t kCollectionCountOffset = 0x004;
+        constexpr uintptr_t kImageStride = 0x28;
+
+        constexpr uintptr_t kImageTextureOffset = 0x00;     // $texture, resolved handle
+        constexpr uintptr_t kImagePosOffset = 0x04;         // $pos, or $offs when +0x0C set
+        constexpr uintptr_t kImageIsOffsetOffset = 0x0C;
+        constexpr uintptr_t kImageSizeOffset = 0x10;        // $size
+        constexpr uintptr_t kImageHorzFlipOffset = 0x18;
+        constexpr uintptr_t kImageVertFlipOffset = 0x19;
+        constexpr uintptr_t kImageHorzReptOffset = 0x1C;    // $horz_rept, default 1
+        constexpr uintptr_t kImageVertReptOffset = 0x20;    // $vert_rept, default 1
+        constexpr uintptr_t kImageUnregOnlyOffset = 0x24;   // $unreg_only
+
+        // $images_anim, filled by Menu_ParseAnimatedImages @0x0044b5c0. Same collection
+        // shape, records of 24 bytes written field by field at the end of that routine:
+        // position, size, $unreg_only and the animation object.
+        constexpr uintptr_t kMenuAnimImagesOffset = 0x078;
+        constexpr uintptr_t kAnimImageStride = 0x18;
+        constexpr uintptr_t kAnimImageUnregOnlyOffset = 0x10;
+        constexpr uintptr_t kAnimImageAnimationOffset = 0x14;
+
+        // $static_text, filled by Menu_ParseStaticText @0x0044b7e0. Records of 0x470 bytes
+        // laid out by FUN_0044a540 @0x0044a540, which the castle button also uses for its
+        // own $text_castle block.
+        constexpr uintptr_t kMenuStaticTextOffset = 0x084;
+        constexpr uintptr_t kStaticTextStride = 0x470;
+        constexpr uintptr_t kStaticTextUnregOnlyOffset = 0x46C;
+
+        // $logo, laid out by MenuLogo_Parse @0x0045f2d0. Two sprites and the size its
+        // rectangle is built from. A logo is the one element that does not go through
+        // Layout_ApplyAlignment: the parser hangs the edges off $pos by hand and keeps a
+        // second copy of them right behind the first.
+        constexpr uintptr_t kLogoSpriteNormalOffset = 0x758;    // $sp1
+        constexpr uintptr_t kLogoSpriteFocusedOffset = 0x75C;   // $sp2
+        constexpr uintptr_t kLogoSpriteOffset = 0x760;          // the one being drawn
+        constexpr uintptr_t kLogoTwoSpritesOffset = 0x764;      // both $sp1 and $sp2 loaded
+        constexpr uintptr_t kLogoSwapOnFocusOffset = 0x765;
+        constexpr uintptr_t kLogoSizeOffset = 0x768;            // $size
+
+        // $list, laid out by MenuList_Parse @0x0045cae0. Its $items block is a run of $text
+        // entries in records of 0x48 bytes: the text, then two words MenuList_AddItem
+        // @0x0045ca50 leaves at zero for a scripted entry.
+        //
+        // The array and its count are two fields of the list rather than a collection of
+        // their own, and the count is an int, not a pointer to the end: MenuList_AddItem
+        // grows the array through FUN_0045c650 @0x0045c650, which reallocates to
+        // (count + 1) * 0x48 and returns the new last record.
+        constexpr uintptr_t kListItemsOffset = 0x758;
+        constexpr uintptr_t kListItemCountOffset = 0x75C;
+        constexpr size_t kListItemStride = 0x48;
+        constexpr size_t kListItemTextCapacity = 0x40;
+
+        // How many entries fit across, worked out from the width of the rectangle.
+        constexpr uintptr_t kListColumnsOffset = 0x764;
+
+        // The three sub-buttons a list draws itself from, at +0x768, +0x7d4 and +0x840, each
+        // 0x6c bytes with its rectangle at +0x4c and the key that works it at +0x60. They
+        // come out of MenuList_Parse as "left", "text" and "right", bound to VK_LEFT, space
+        // and VK_RIGHT.
+        constexpr uintptr_t kListLeftRectOffset = 0x7B4;
+        constexpr uintptr_t kListLeftKeyOffset = 0x7C8;
+        constexpr uintptr_t kListTextRectOffset = 0x820;
+        constexpr uintptr_t kListTextKeyOffset = 0x834;
+        constexpr uintptr_t kListRightRectOffset = 0x88C;
+        constexpr uintptr_t kListRightKeyOffset = 0x8A0;
+
+        // $tables. Menu_AddTable @0x00452780 keeps them in an array of pointers of its own,
+        // right behind the groups, which is why walking the groups never turns one up. Two
+        // of the shipped menus are built from nothing else.
+        constexpr uintptr_t kMenuTablesOffset = 0x054;
+        constexpr uintptr_t kMenuTableCountOffset = 0x058;
+
+        // $table, laid out by MenuTable_Parse @0x0045a0b0. Not an element: it has no $pos,
+        // no $rect_size and no vtable parse slot, and it lays its rows out from $line_pos,
+        // $line_step and $line_count instead.
+        constexpr uintptr_t kTableIdOffset = 0x004;             // $id, 0x40 bytes
+        constexpr uintptr_t kTableHeaderColorOffset = 0x044;
+        constexpr uintptr_t kTableHeaderScaleOffset = 0x054;
+        constexpr uintptr_t kTableBodyColorOffset = 0x05C;
+        constexpr uintptr_t kTableBodyScaleOffset = 0x06C;
+        constexpr uintptr_t kTableLinePosOffset = 0x074;
+        constexpr uintptr_t kTableLineStepOffset = 0x078;
+        constexpr uintptr_t kTableLineCountOffset = 0x07C;
+        constexpr uintptr_t kTableLinesVertAlignOffset = 0x080;
+        constexpr uintptr_t kTablePointStepOffset = 0x08C;      // defaults to 5
+        constexpr uintptr_t kTablePointMarginOffset = 0x090;    // defaults to 10
+        constexpr uintptr_t kTableFontIdOffset = 0x09C;
+
+        // Its $col blocks, in the same { records; count } shape the list uses for $items.
+        // A column is 0x50 bytes: $title, $horz_pos, $align and $fixed.
+        constexpr uintptr_t kTableColumnsOffset = 0x098;
+        constexpr uintptr_t kTableColumnCountOffset = 0x094;
+        constexpr size_t kTableColumnStride = 0x50;
+        constexpr uintptr_t kTableColumnTitleOffset = 0x00;     // 0x40 bytes
+        constexpr uintptr_t kTableColumnHorzPosOffset = 0x40;
+        constexpr uintptr_t kTableColumnAlignOffset = 0x44;
+        constexpr uintptr_t kTableColumnFixedOffset = 0x4C;
+
+        // $item_anim, laid out by ButtonAnim_Parse @0x004445e0: five colours of four floats
+        // followed by five scales of two, 0x78 bytes in all. Only the two image kinds carry
+        // one. A castle button keeps the one ImageButton_Parse gave it and a second of its
+        // own, both filled from the same block but falling back to different templates that
+        // Menu_LoadMenuCfg @0x00444fb0 reads out of menu.cfg.
+        constexpr uintptr_t kButtonAnimOffset = 0x764;
+        constexpr uintptr_t kCastleAnimOffset = 0xADC;
 
         // Control name map used by Launcher_ApplyItemLayout: entries of
         // { u32 controlId, const char* section, const char* key }, count in a separate dword.

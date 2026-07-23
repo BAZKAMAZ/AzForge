@@ -11,6 +11,7 @@
 
 #include <map>
 #include <set>
+#include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -24,7 +25,6 @@ namespace Forge
                                                  int force);
         typedef int(__stdcall* LoadFromScriptRoutine)(const char* menuId, const char* scriptFile);
         typedef int(__fastcall* ParseScriptRoutine)(void* menu, void* unused, const char* scriptFile);
-        typedef int(__fastcall* ItemParseRoutine)(void* element, void* unused, void* parser, void* extra);
         typedef void*(__fastcall* FindItemRoutine)(void* menu, void* unused, const char* itemId);
 
         struct Subscription
@@ -39,18 +39,15 @@ namespace Forge
         InlineHook g_registerHook;
         InlineHook g_loadHook;
         InlineHook g_parseHook;
-        InlineHook g_itemHook;
 
         RegisterRoutine g_originalRegister = nullptr;
         LoadFromScriptRoutine g_originalLoad = nullptr;
         ParseScriptRoutine g_originalParse = nullptr;
-        ItemParseRoutine g_originalItemParse = nullptr;
         FindItemRoutine g_findItem = nullptr;
 
         std::map<std::string, void*> g_menusById;
         std::map<void*, std::vector<void*>> g_elementsByMenu;
         std::set<void*> g_validElements;
-        std::set<void*> g_textElements;
 
         void* g_parsingMenu = nullptr;
         void* g_lastParsedMenu = nullptr;
@@ -88,10 +85,83 @@ namespace Forge
             return item != nullptr && g_validElements.find(item) != g_validElements.end();
         }
 
-        bool IsTextElement(AmodMenuItem item)
+        enum class ElementKind
         {
-            return g_textElements.find(item) != g_textElements.end();
+            Unknown,
+            Item,
+            Logo,
+            TextButton,
+            ImageButton,
+            HotkeyButton,
+            CastleButton,
+            List,
+            Slider,
+            Table,
+            Image,
+            AnimImage,
+            StaticText
+        };
+
+        // Kinds that are not individual allocations, and so cannot be recognised from an
+        // allocator header, are recorded here as the menu is walked.
+        std::map<void*, ElementKind> g_kindByElement;
+
+        // Read out of the allocation the element lives in rather than watched for during
+        // parsing: Menu_ParseScript @0x004527a0 builds each kind at a distinct size, and
+        // Mem_AllocTracked @0x00421df0 records that size in its header.
+        ElementKind KindOf(AmodMenuItem item)
+        {
+            const auto recorded = g_kindByElement.find(item);
+            if (recorded != g_kindByElement.end())
+            {
+                return recorded->second;
+            }
+
+            const uint8_t* const header =
+                static_cast<const uint8_t*>(item) - GameAddress::kTrackedHeaderSize;
+
+            if (*reinterpret_cast<const uint16_t*>(header + GameAddress::kTrackedMagicOffset) !=
+                GameAddress::kTrackedMagic)
+            {
+                return ElementKind::Unknown;
+            }
+
+            switch (*reinterpret_cast<const uint32_t*>(header + GameAddress::kTrackedSizeOffset))
+            {
+            case GameAddress::kSizeMenuItem:     return ElementKind::Item;
+            case GameAddress::kSizeMenuLogo:     return ElementKind::Logo;
+            case GameAddress::kSizeTextButton:   return ElementKind::TextButton;
+            case GameAddress::kSizeImageButton:  return ElementKind::ImageButton;
+            case GameAddress::kSizeHotkeyButton: return ElementKind::HotkeyButton;
+            case GameAddress::kSizeCastleButton: return ElementKind::CastleButton;
+            case GameAddress::kSizeMenuList:     return ElementKind::List;
+            case GameAddress::kSizeMenuSlider:   return ElementKind::Slider;
+            case GameAddress::kSizeMenuTable:    return ElementKind::Table;
+            default:                             return ElementKind::Unknown;
+            }
         }
+
+        const char* KindName(ElementKind kind)
+        {
+            switch (kind)
+            {
+            case ElementKind::Item:         return "item";
+            case ElementKind::Logo:         return "logo";
+            case ElementKind::TextButton:   return "text_button";
+            case ElementKind::ImageButton:  return "img_button";
+            case ElementKind::HotkeyButton: return "hotkey_button";
+            case ElementKind::CastleButton: return "castle_button";
+            case ElementKind::List:         return "list";
+            case ElementKind::Slider:       return "slider";
+            case ElementKind::Table:        return "table";
+            case ElementKind::Image:        return "image";
+            case ElementKind::AnimImage:    return "image_anim";
+            case ElementKind::StaticText:   return "static";
+            case ElementKind::Unknown:      break;
+            }
+            return "";
+        }
+
 
         // --- geometry ------------------------------------------------------------------
 
@@ -174,6 +244,39 @@ namespace Forge
             Int
         };
 
+        constexpr uint32_t KindBit(ElementKind kind)
+        {
+            return 1u << static_cast<uint32_t>(kind);
+        }
+
+        // Which kinds carry a key. The same offset means different things from one kind to
+        // the next - +0x758 is the drawn text on an item and a texture handle on an image
+        // button - so this is what keeps a write from landing on the wrong field.
+        constexpr uint32_t kAnyKind = 0xFFFFFFFFu;
+        constexpr uint32_t kItem = KindBit(ElementKind::Item);
+        constexpr uint32_t kLogo = KindBit(ElementKind::Logo);
+        constexpr uint32_t kTextBtn = KindBit(ElementKind::TextButton);
+        constexpr uint32_t kHotkeyBtn = KindBit(ElementKind::HotkeyButton);
+        constexpr uint32_t kImgBtn = KindBit(ElementKind::ImageButton);
+        constexpr uint32_t kCastleBtn = KindBit(ElementKind::CastleButton);
+        constexpr uint32_t kList = KindBit(ElementKind::List);
+        constexpr uint32_t kSlider = KindBit(ElementKind::Slider);
+        constexpr uint32_t kTable = KindBit(ElementKind::Table);
+        constexpr uint32_t kImage = KindBit(ElementKind::Image);
+        constexpr uint32_t kAnimImage = KindBit(ElementKind::AnimImage);
+        constexpr uint32_t kStaticText = KindBit(ElementKind::StaticText);
+
+        // Everything that went through MenuButton_ParseCommon and therefore shares the
+        // common layout. A decorative image is deliberately not one of them: it is a forty
+        // byte record with a layout of its own, so a common key read from it would run off
+        // the end.
+        constexpr uint32_t kElementKinds =
+            kItem | kLogo | kTextBtn | kImgBtn | kHotkeyBtn | kCastleBtn | kList | kSlider;
+
+        // The same minus the logo, which builds its rectangle by hand and so takes its own
+        // rows for every key that places an element.
+        constexpr uint32_t kAlignedKinds = kElementKinds & ~kLogo;
+
         struct PropertyDescriptor
         {
             const char* key;
@@ -181,11 +284,64 @@ namespace Forge
             Store store;
             uint32_t count;     // how many floats, for Store::Float
             size_t capacity;    // bytes available, for Store::String
-            bool itemOnly;      // only on elements MenuItem_Parse built
+            uint32_t kinds;     // which element kinds carry it
             bool writable;
             bool (*read)(void* item, AmodValue& value);              // null: plain load
             bool (*write)(void* item, const AmodValue& value);       // null: plain store
+
+            // Set only by a key that addresses a collection: "items" answers how many there
+            // are, "items[2]" reaches one of them. The offset above is then the field's
+            // place inside a record rather than inside the element, which is what lets four
+            // keys share one array the way a table's columns do.
+            uintptr_t arrayOffset;
+            uintptr_t countOffset;
+            size_t stride;      // zero on every key that is not a collection
         };
+
+        // "items[3]" names one entry of a collection. Splits into the key the table holds
+        // and the index to hand its accessor, and leaves the index negative when there is
+        // no subscript at all.
+        bool SplitKey(const char* key, char* base, size_t baseSize, int& index)
+        {
+            index = -1;
+
+            if (key == nullptr)
+            {
+                return false;
+            }
+
+            const char* const bracket = strchr(key, '[');
+            if (bracket == nullptr)
+            {
+                return strncpy_s(base, baseSize, key, _TRUNCATE) == 0;
+            }
+
+            const size_t length = static_cast<size_t>(bracket - key);
+            if (length == 0 || length + 1 >= baseSize)
+            {
+                return false;
+            }
+
+            memcpy(base, key, length);
+            base[length] = '\0';
+
+            char* end = nullptr;
+            const long parsed = strtol(bracket + 1, &end, 10);
+            if (end != bracket + 1 && *end == ']' && end[1] == '\0' && parsed >= 0)
+            {
+                index = static_cast<int>(parsed);
+                return true;
+            }
+
+            return false;
+        }
+
+        bool ReadKind(void* item, AmodValue& value)
+        {
+            value.kind = AMOD_VALUE_STRING;
+            value.text = KindName(KindOf(item));
+            return true;
+        }
 
         bool ReadSize(void* item, AmodValue& value)
         {
@@ -250,40 +406,324 @@ namespace Forge
             return true;
         }
 
+        // --- logo ----------------------------------------------------------------------
+
+        // Reproduces the tail of MenuLogo_Parse @0x0045f2d0. A logo is the one kind that
+        // ignores $align: MenuButton_ParseCommon lays it out like everything else and the
+        // logo parser then throws that away and builds the edges from $pos and $size, with
+        // a second copy of them right behind.
+        void LogoApplyGeometry(void* item)
+        {
+            const float* const pos = Floats(item, GameAddress::kMenuElementPosOffset);
+            const float* const size = Floats(item, GameAddress::kLogoSizeOffset);
+            float* const rect = Floats(item, GameAddress::kMenuElementRectOffset);
+
+            rect[0] = pos[0];
+            rect[1] = pos[1] - size[1];
+            rect[2] = pos[0] + size[0];
+            rect[3] = pos[1];
+
+            // What the parser does with the caption rectangle, whether or not the logo has
+            // a $caption block to put there.
+            float* const copy = Floats(item, GameAddress::kMenuElementCaptionRectOffset);
+            for (int i = 0; i < 4; ++i)
+            {
+                copy[i] = rect[i];
+            }
+
+            // The parser leaves the drawing centre where MenuButton_ParseCommon put it, so
+            // the game itself lets the two disagree. Bringing it along costs nothing if a
+            // logo draws from its edges, and is the difference between a move showing and
+            // not showing if it does not.
+            RecomputeCentre(item);
+        }
+
+        bool WriteLogoPosition(void* item, const AmodValue& value)
+        {
+            float* const pos = Floats(item, GameAddress::kMenuElementPosOffset);
+            pos[0] = value.numbers[0];
+            pos[1] = value.numbers[1];
+
+            LogoApplyGeometry(item);
+            return true;
+        }
+
+        bool WriteLogoSize(void* item, const AmodValue& value)
+        {
+            float* const size = Floats(item, GameAddress::kLogoSizeOffset);
+            size[0] = value.numbers[0];
+            size[1] = value.numbers[1];
+
+            LogoApplyGeometry(item);
+            return true;
+        }
+
         // Every string capacity below is the distance to the next field the parser writes,
         // so none of them is a guess.
         constexpr PropertyDescriptor g_properties[] =
         {
-            // key                offset  store          n  cap    itemOnly writable read        write
-            // The parser reads every string with a limit of 0x100 whatever field it is
-            // filling, so a long $id in a script overruns into the text that follows it.
-            // The capacity here is the distance to that next field instead, which is
-            // stricter than the game is with itself.
-            { "id",               0x715,  Store::String, 0, 0x43,  false,   true,    nullptr,    nullptr },
-            { "sub_menu",         0x014,  Store::String, 0, 0x40,  false,   true,    nullptr,    nullptr },
-            { "box_menu",         0x054,  Store::String, 0, 0x40,  false,   true,    nullptr,    nullptr },
-            { "reg_menu",         0x094,  Store::String, 0, 0x100, false,   true,    nullptr,    nullptr },
-            { "group",            0x194,  Store::String, 0, 0x100, false,   true,    nullptr,    nullptr },
-            { "help",             0x2B5,  Store::String, 0, 0x100, false,   true,    nullptr,    nullptr },
-            { "warning",          0x3B5,  Store::String, 0, 0x100, false,   true,    nullptr,    nullptr },
-            { "lock",             0x4B5,  Store::String, 0, 0x100, false,   true,    nullptr,    nullptr },
-            { "unreg_enabled",    0x5B5,  Store::Bool,   0, 0,     false,   true,    nullptr,    nullptr },
-            { "pos",              0x5B8,  Store::Float,  2, 0,     false,   true,    nullptr,    &WritePosition },
-            { "rect",             0x294,  Store::Float,  4, 0,     false,   true,    nullptr,    &WriteRect },
-            { "size",             0,      Store::Float,  2, 0,     false,   true,    &ReadSize,  &WriteSize },
-            { "rect_size",        0,      Store::Float,  2, 0,     false,   true,    &ReadSize,  &WriteSize },
-            { "centre",           0x5C0,  Store::Float,  2, 0,     false,   false,   nullptr,    nullptr },
-            { "align",            0x5C8,  Store::Int,    0, 0,     false,   true,    nullptr,    &WriteAlign },
-            { "font_id",          0x5F8,  Store::Int,    0, 0,     false,   false,   nullptr,    nullptr },
-            { "caption.text",     0x5FF,  Store::String, 0, 0x101, false,   true,    nullptr,    nullptr },
-            { "caption.offs",     0x700,  Store::Float,  2, 0,     false,   true,    nullptr,    nullptr },
-            { "caption.rect_len", 0x708,  Store::Float,  1, 0,     false,   true,    nullptr,    nullptr },
-            { "visible",          0x714,  Store::Bool,   0, 0,     false,   true,    nullptr,    nullptr },
-            { "text",             0x758,  Store::String, 0, 0x40,  true,    true,    nullptr,    nullptr },
-            { "cursor3d",         0x79C,  Store::Bool,   0, 0,     true,    true,    nullptr,    nullptr },
+            // key                  offset store          n  cap    kinds                          writable read        write
+            { "kind",               0,     Store::String, 0, 0,     kAnyKind,     false,   &ReadKind,  nullptr },
+
+            // Everything MenuButton_ParseCommon @0x0045a600 gives every element.
+            //
+            // The parser reads every string with a limit of 0x100 whatever field it fills,
+            // so a long $id in a script overruns into what follows it. The capacities here
+            // are the distance to the next field instead, stricter than the game is with
+            // itself.
+            { "id",                 0x715, Store::String, 0, 0x43,  kElementKinds,                 true,    nullptr,    nullptr },
+            { "sub_menu",           0x014, Store::String, 0, 0x40,  kElementKinds,                 true,    nullptr,    nullptr },
+            { "box_menu",           0x054, Store::String, 0, 0x40,  kElementKinds,                 true,    nullptr,    nullptr },
+            { "reg_menu",           0x094, Store::String, 0, 0x100, kElementKinds,                 true,    nullptr,    nullptr },
+            { "group",              0x194, Store::String, 0, 0x100, kElementKinds,                 true,    nullptr,    nullptr },
+            { "help",               0x2B5, Store::String, 0, 0x100, kElementKinds,                 true,    nullptr,    nullptr },
+            { "warning",            0x3B5, Store::String, 0, 0x100, kElementKinds,                 true,    nullptr,    nullptr },
+            { "lock",               0x4B5, Store::String, 0, 0x100, kElementKinds,                 true,    nullptr,    nullptr },
+            { "unreg_enabled",      0x5B5, Store::Bool,   0, 0,     kElementKinds,true,    nullptr,    nullptr },
+            { "pos",                0x5B8, Store::Float,  2, 0,     kAlignedKinds,true,    nullptr,    &WritePosition },
+            { "rect",               0x294, Store::Float,  4, 0,     kElementKinds,true,    nullptr,    &WriteRect },
+            { "size",               0,     Store::Float,  2, 0,     kAlignedKinds,true,    &ReadSize,  &WriteSize },
+            // What $rect_size meant. The parser consumes that key and keeps only the edges
+            // it produced, so this reads back the width and height those edges describe.
+            { "rect_size",          0,     Store::Float,  2, 0,     kAlignedKinds,true,    &ReadSize,  &WriteSize },
+            { "centre",             0x5C0, Store::Float,  2, 0,     kElementKinds,false,   nullptr,    nullptr },
+            // 1 left, 2 right, 4 centred, 8 top, 0x20 centred vertically, as
+            // Layout_ApplyAlignment @0x0044a450 reads them.
+            { "align",              0x5C8, Store::Int,    0, 0,     kAlignedKinds,true,    nullptr,    &WriteAlign },
+            { "font_id",            0x5F8, Store::Int,    0, 0,     kElementKinds,false,   nullptr,    nullptr },
+            { "caption.text",       0x5FF, Store::String, 0, 0x101, kElementKinds,                 true,    nullptr,    nullptr },
+            { "caption.offs",       0x700, Store::Float,  2, 0,     kElementKinds,true,    nullptr,    nullptr },
+            { "caption.rect_len",   0x708, Store::Float,  1, 0,     kElementKinds,true,    nullptr,    nullptr },
+            // Derived from $rect_len when the $caption block is there. A logo puts its own
+            // edges here instead, which is the only thing it uses the field for.
+            { "caption.rect",       0x2A4, Store::Float,  4, 0,     kElementKinds,true,    nullptr,    nullptr },
+            { "caption.enabled",    0x2B4, Store::Bool,   0, 0,     kElementKinds,true,    nullptr,    nullptr },
+            { "visible",            0x714, Store::Bool,   0, 0,     kElementKinds,true,    nullptr,    nullptr },
+
+            // The drawn label. MenuItem_Parse and TextButton_Parse @0x0045ec60 both put it
+            // at +0x758, and a hotkey button inherits it by running the text button parser.
+            // An image button keeps a texture handle at that same offset, which is why this
+            // is not offered to every kind.
+            { "text",               0x758, Store::String, 0, 0x40,  kItem | kTextBtn | kHotkeyBtn, true,    nullptr,    nullptr },
+            { "plank_width",        0x798, Store::Int,    0, 0,     kItem,                         true,    nullptr,    nullptr },
+            // The $cursor3d block: whether the script gave one, and where the model sits.
+            // Both are three floats, not two - this is the 3d cursor beside the item.
+            { "cursor3d",           0x79C, Store::Bool,   0, 0,     kItem,                         true,    nullptr,    nullptr },
+            { "cursor3d.orient",    0x7A4, Store::Float,  3, 0,     kItem,                         true,    nullptr,    nullptr },
+            { "cursor3d.pos",       0x7B0, Store::Float,  3, 0,     kItem,                         true,    nullptr,    nullptr },
+
+            // ImageButton_Parse @0x0045e700, which the castle button inherits.
+            { "img_enabled",        0x758, Store::Int,    0, 0,     kImgBtn | kCastleBtn,          true,    nullptr,    nullptr },
+            { "img_disabled",       0x75C, Store::Int,    0, 0,     kImgBtn | kCastleBtn,          true,    nullptr,    nullptr },
+            { "horz_flip",          0x760, Store::Bool,   0, 0,     kImgBtn | kCastleBtn,          true,    nullptr,    nullptr },
+
+            // MenuLogo_Parse @0x0045f2d0. A logo is a link rather than a button: activating
+            // it opens website.url next to the executable. It carries two sprites and swaps
+            // between them as the cursor comes and goes, so $sp2 is the focused one.
+            //
+            // Its geometry keys are its own because it does not use $align: the parser puts
+            // the edges at $pos and extends them by $size, and keeps a copy of them at
+            // +0x2a4. Writing "pos" or "size" here rebuilds both the way the parser does.
+            { "sp1",                0x758, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
+            { "sp2",                0x75C, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
+            { "sprite",             0x760, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
+            { "two_sprites",        0x764, Store::Bool,   0, 0,     kLogo,                         true,    nullptr,    nullptr },
+            { "swap_on_focus",      0x765, Store::Bool,   0, 0,     kLogo,                         true,    nullptr,    nullptr },
+            { "pos",                0x5B8, Store::Float,  2, 0,     kLogo,                         true,    nullptr,    &WriteLogoPosition },
+            { "size",               0x768, Store::Float,  2, 0,     kLogo,                         true,    nullptr,    &WriteLogoSize },
+            // Present because MenuButton_ParseCommon filled it, and read back for what the
+            // script said, but nothing draws by it on a logo.
+            { "align",              0x5C8, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
+
+            // MenuList_Parse @0x0045cae0. A list is the horizontal chooser the options
+            // screens are built from: an arrow, the current entry, an arrow.
+            //
+            // "items" answers how many entries there are, and "items[2]" reaches one of
+            // them. Writing the count can only drop entries from the end; adding one is an
+            // allocation, and belongs with creating objects rather than editing them.
+            { "items",              0x00,  Store::String, 0, 0x40,  kList,                         true,    nullptr,    nullptr,    0x758, 0x75C, 0x48 },
+            // How many entries fit across, which the parser works out from the width.
+            { "columns",            0x764, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
+            // The three sub-buttons the list draws itself from, and the keys that work
+            // them: VK_LEFT, space and VK_RIGHT as the parser bound them.
+            { "left.rect",          0x7B4, Store::Float,  4, 0,     kList,                         true,    nullptr,    nullptr },
+            { "left.key",           0x7C8, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
+            { "text.rect",          0x820, Store::Float,  4, 0,     kList,                         true,    nullptr,    nullptr },
+            { "text.key",           0x834, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
+            { "right.rect",         0x88C, Store::Float,  4, 0,     kList,                         true,    nullptr,    nullptr },
+            { "right.key",          0x8A0, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
+
+            // HotkeyButton_Parse @0x0045e410.
+            { "help_key",           0xAB8, Store::String, 0, 0x100, kHotkeyBtn,                    true,    nullptr,    nullptr },
+
+            // MenuSlider_Parse @0x0045b4b0.
+            { "margin",             0x75C, Store::Float,  2, 0,     kSlider,                       true,    nullptr,    nullptr },
+            { "range",              0x76C, Store::Float,  2, 0,     kSlider,                       true,    nullptr,    nullptr },
+
+            // CastleButton_Parse @0x0045cf60.
+            { "start_level",        0x7DC, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+            { "demo_level",         0x8DC, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+            { "unable_menu",        0x9DC, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+            { "door_offs",          0xB54, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "door_size",          0xB5C, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "part_count",         0xB64, Store::Int,    0, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "part_radius",        0xB68, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "part_disp",          0xB70, Store::Float,  1, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "active_door_scale",  0xB7C, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "inactive_door_scale",0xB84, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "blocked_offs",       0xB8C, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "img_blocked",        0xB94, Store::Int,    0, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "img_size",           0xB98, Store::Float,  2, 0,     kCastleBtn,                    true,    nullptr,    nullptr },
+            { "help_demo",          0xBA1, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+            { "start_play",         0xCA1, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+            { "start_demo",         0xDA1, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
+
+            // $item_anim, laid out by ButtonAnim_Parse @0x004445e0. Five colours and five
+            // scales, one pair for each state a button can be in.
+            //
+            // A castle button parses the block twice: once as the image button it is built
+            // on, into "anim", and once as itself, into "anim_castle". The script fills both
+            // from the same $item_anim, and each falls back to its own template out of
+            // menu.cfg when there is none.
+            { "anim.color_passive",    0x764, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.color_active",     0x774, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.color_disabled",   0x784, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.color_blocked",    0x794, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.color_nof_active", 0x7A4, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.scale_passive",    0x7B4, Store::Float, 2, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.scale_active",     0x7BC, Store::Float, 2, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.scale_disabled",   0x7C4, Store::Float, 2, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.scale_blocked",    0x7CC, Store::Float, 2, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+            { "anim.scale_nof_active", 0x7D4, Store::Float, 2, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
+
+            { "anim_castle.color_passive",    0xADC, Store::Float, 4, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.color_active",     0xAEC, Store::Float, 4, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.color_disabled",   0xAFC, Store::Float, 4, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.color_blocked",    0xB0C, Store::Float, 4, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.color_nof_active", 0xB1C, Store::Float, 4, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.scale_passive",    0xB2C, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.scale_active",     0xB34, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.scale_disabled",   0xB3C, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.scale_blocked",    0xB44, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
+            { "anim_castle.scale_nof_active", 0xB4C, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
+
+            // A $table, laid out by MenuTable_Parse @0x0045a0b0. It is not an element and
+            // shares nothing with one: no position, no rectangle, no alignment. Its rows are
+            // placed from $line_pos and $line_step, and its columns are a collection, so
+            // "col.title" answers how many there are and "col.title[1]" names the second.
+            { "id",                 0x004, Store::String, 0, 0x40,  kTable,                        true,    nullptr,    nullptr },
+            { "header_color",       0x044, Store::Float,  4, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "header_scale",       0x054, Store::Float,  2, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "body_color",         0x05C, Store::Float,  4, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "body_scale",         0x06C, Store::Float,  2, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "line_pos",           0x074, Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "line_step",          0x078, Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "line_count",         0x07C, Store::Int,    0, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "lines_vert_align",   0x080, Store::Int,    0, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "point_step",         0x08C, Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "point_margin",       0x090, Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr },
+            { "font_id",            0x09C, Store::Int,    0, 0,     kTable,                        false,   nullptr,    nullptr },
+            { "col.title",          0x00,  Store::String, 0, 0x40,  kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
+            { "col.horz_pos",       0x40,  Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
+            { "col.align",          0x44,  Store::Int,    0, 0,     kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
+            { "col.fixed",          0x4C,  Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
+
+            // A decorative $image, laid out by FUN_00449950 @0x00449950. Forty bytes with
+            // nothing in common with the elements above, which is why every key here is
+            // gated to this kind alone.
+            //
+            // "pos" holds $offs instead when "is_offset" is set, exactly as the script chose.
+            { "texture",            0x00,  Store::Int,    0, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "pos",                0x04,  Store::Float,  2, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "is_offset",          0x0C,  Store::Bool,   0, 0,     kImage,                        false,   nullptr,    nullptr },
+            { "size",               0x10,  Store::Float,  2, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "horz_flip",          0x18,  Store::Bool,   0, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "vert_flip",          0x19,  Store::Bool,   0, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "horz_rept",          0x1C,  Store::Float,  1, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "vert_rept",          0x20,  Store::Float,  1, 0,     kImage,                        true,    nullptr,    nullptr },
+            { "unreg_only",         0x24,  Store::Int,    0, 0,     kImage,                        true,    nullptr,    nullptr },
+
+            // An $images_anim entry, from Menu_ParseAnimatedImages @0x0044b5c0. Twenty four
+            // bytes, written field by field at the end of that routine: where it sits, how
+            // big it is, $unreg_only, and the animation the $frames block built.
+            { "pos",                0x00,  Store::Float,  2, 0,     kAnimImage,                    true,    nullptr,    nullptr },
+            { "size",               0x08,  Store::Float,  2, 0,     kAnimImage,                    true,    nullptr,    nullptr },
+            { "unreg_only",         0x10,  Store::Int,    0, 0,     kAnimImage,                    true,    nullptr,    nullptr },
+            { "animation",          0x14,  Store::Int,    0, 0,     kAnimImage,                    true,    nullptr,    nullptr },
+
+            // A $static_text entry, from Menu_ParseStaticText @0x0044b7e0. The same 0x470
+            // byte block the castle button keeps for its own $text_castle.
+            { "id",                 0x000, Store::String, 0, 0x40,  kStaticText,                   true,    nullptr,    nullptr },
+            { "text",               0x040, Store::String, 0, 0x400, kStaticText,                   true,    nullptr,    nullptr },
+            { "pos",                0x440, Store::Float,  2, 0,     kStaticText,                   true,    nullptr,    nullptr },
+            { "font_id",            0x448, Store::Int,    0, 0,     kStaticText,                   false,   nullptr,    nullptr },
+            { "font_scale",         0x44C, Store::Float,  2, 0,     kStaticText,                   true,    nullptr,    nullptr },
+            { "font_color",         0x454, Store::Float,  4, 0,     kStaticText,                   true,    nullptr,    nullptr },
+            { "line_height",        0x464, Store::Float,  1, 0,     kStaticText,                   true,    nullptr,    nullptr },
+            { "align",              0x468, Store::Int,    0, 0,     kStaticText,                   true,    nullptr,    nullptr },
+            { "unreg_only",         0x46C, Store::Int,    0, 0,     kStaticText,                   true,    nullptr,    nullptr },
         };
 
         constexpr size_t kPropertyCount = sizeof(g_properties) / sizeof(g_properties[0]);
+
+        // A key may appear more than once when different kinds keep it at different offsets,
+        // as pos and size do for a decorative image. That only works while the kind masks of
+        // those rows are disjoint: lookup answers with the first row that matches, so an
+        // overlap would silently resolve to whichever comes first in the table and read the
+        // wrong offset. Checked once, because that is the mistake this table invites.
+        bool ValidatePropertyTable()
+        {
+            bool sound = true;
+
+            for (size_t i = 0; i < kPropertyCount; ++i)
+            {
+                for (size_t k = i + 1; k < kPropertyCount; ++k)
+                {
+                    if (strcmp(g_properties[i].key, g_properties[k].key) != 0)
+                    {
+                        continue;
+                    }
+
+                    const uint32_t overlap = g_properties[i].kinds & g_properties[k].kinds;
+                    if (overlap != 0)
+                    {
+                        FORGE_LOG_ERROR("Property table: '%s' is claimed twice for the same "
+                                        "kind (masks %08X and %08X overlap in %08X)",
+                                        g_properties[i].key, g_properties[i].kinds,
+                                        g_properties[k].kinds, overlap);
+                        sound = false;
+                    }
+                }
+            }
+
+            return sound;
+        }
+
+        // A collection is a pointer to records laid end to end with the number of them in a
+        // field beside it. The game builds every one of them that way - the decorations on a
+        // menu, the entries of a list, the columns of a table - because they all grow
+        // through the same pair of helpers.
+        int CollectionCount(void* item, const PropertyDescriptor& descriptor)
+        {
+            const uint8_t* const entries =
+                *reinterpret_cast<uint8_t* const*>(Field(item, descriptor.arrayOffset));
+            const int count =
+                *reinterpret_cast<const int*>(Field(item, descriptor.countOffset));
+
+            return (entries != nullptr && count > 0) ? count : 0;
+        }
+
+        void* CollectionAt(void* item, const PropertyDescriptor& descriptor, int index)
+        {
+            if (index < 0 || index >= CollectionCount(item, descriptor))
+            {
+                return nullptr;
+            }
+
+            uint8_t* const entries =
+                *reinterpret_cast<uint8_t**>(Field(item, descriptor.arrayOffset));
+            return entries + static_cast<size_t>(index) * descriptor.stride;
+        }
 
         const PropertyDescriptor* FindDescriptor(AmodMenuItem item, const char* key)
         {
@@ -299,11 +739,14 @@ namespace Forge
                     continue;
                 }
 
-                // A key an element does not carry is refused, never written to whatever that
-                // other kind of element keeps at the same offset.
-                if (descriptor.itemOnly && !IsTextElement(item))
+                // Keep looking rather than giving up here. A key can appear more than once,
+                // for kinds that keep it at different offsets, so a row that does not apply
+                // to this kind only rules out that row. Ending the search on it would hide
+                // the row that does apply, which is what "pos" on an image would hit: the
+                // common row is reached first and is not the one wanted.
+                if ((descriptor.kinds & KindBit(KindOf(item))) == 0)
                 {
-                    return nullptr;
+                    continue;
                 }
 
                 return &descriptor;
@@ -433,14 +876,20 @@ namespace Forge
             for (void* element : found->second)
             {
                 g_validElements.erase(element);
-                g_textElements.erase(element);
+                g_kindByElement.erase(element);
             }
             g_elementsByMenu.erase(found);
         }
 
         void RecordMenu(void* menu)
         {
+            // Publish reaches here from both Menu_Register and Menu_LoadFromScript, and the
+            // same menu can go through both. Dropping what was recorded before makes a
+            // second pass replace the previous one instead of piling on top of it.
+            ForgetMenu(menu);
+
             std::vector<void*> elements;
+            int fromGroups = 0;
 
             uint8_t* const groups = *reinterpret_cast<uint8_t**>(Field(menu, GameAddress::kMenuGroupsOffset));
             const int groupCount = *reinterpret_cast<int*>(Field(menu, GameAddress::kMenuGroupCountOffset));
@@ -459,10 +908,84 @@ namespace Forge
                         {
                             elements.push_back(items[k]);
                             g_validElements.insert(items[k]);
+                            ++fromGroups;
                         }
                     }
                 }
             }
+
+            // The decorative $images are not in the groups. The menu keeps them in a
+            // collection of its own at +0x74: eight bytes of { record* items; int count; },
+            // with the records laid out end to end, forty bytes each.
+            //
+            // Confirmed against a running game rather than inferred: the collection block
+            // carries the ui_items.cpp:157 stamp Menu_ParseImages @0x0044b320 allocates it
+            // with, and for the main menu the array block is 0x118 bytes for a count of 7,
+            // which is exactly seven records of forty.
+            const struct
+            {
+                uintptr_t offset;
+                uintptr_t stride;
+                ElementKind kind;
+            }
+            collections[] =
+            {
+                { GameAddress::kMenuImagesOffset,     GameAddress::kImageStride,      ElementKind::Image },
+                { GameAddress::kMenuAnimImagesOffset, GameAddress::kAnimImageStride,  ElementKind::AnimImage },
+                { GameAddress::kMenuStaticTextOffset, GameAddress::kStaticTextStride, ElementKind::StaticText },
+            };
+
+            int decorations[3] = {};
+
+            for (size_t c = 0; c < sizeof(collections) / sizeof(collections[0]); ++c)
+            {
+                const auto& collection = collections[c];
+
+                uint8_t* const header =
+                    *reinterpret_cast<uint8_t**>(Field(menu, collection.offset));
+                if (header == nullptr)
+                {
+                    continue;
+                }
+
+                uint8_t* const entries =
+                    *reinterpret_cast<uint8_t**>(header + GameAddress::kCollectionItemsOffset);
+                const int count =
+                    *reinterpret_cast<int*>(header + GameAddress::kCollectionCountOffset);
+
+                for (int i = 0; entries != nullptr && i < count; ++i)
+                {
+                    void* const record = entries + static_cast<size_t>(i) * collection.stride;
+                    elements.push_back(record);
+                    g_validElements.insert(record);
+                    g_kindByElement[record] = collection.kind;
+                    ++decorations[c];
+                }
+            }
+
+            // A $table is not in the groups either, and unlike the decorations it is an
+            // allocation of its own: Menu_AddTable @0x00452780 keeps an array of pointers to
+            // them rather than the tables themselves, so this walk is one level deeper.
+            void** const tables =
+                *reinterpret_cast<void***>(Field(menu, GameAddress::kMenuTablesOffset));
+            const int tableCount =
+                *reinterpret_cast<int*>(Field(menu, GameAddress::kMenuTableCountOffset));
+
+            int fromTables = 0;
+            for (int i = 0; tables != nullptr && i < tableCount; ++i)
+            {
+                if (tables[i] != nullptr)
+                {
+                    elements.push_back(tables[i]);
+                    g_validElements.insert(tables[i]);
+                    ++fromTables;
+                }
+            }
+
+            FORGE_LOG_INFO("Menu %p: %d element(s) - %d in groups, %d image, %d image_anim, "
+                           "%d static, %d table", menu, static_cast<int>(elements.size()),
+                           fromGroups, decorations[0], decorations[1], decorations[2],
+                           fromTables);
 
             g_elementsByMenu[menu] = std::move(elements);
         }
@@ -536,19 +1059,6 @@ namespace Forge
             if (Succeeded(result))
             {
                 g_lastParsedMenu = menu;
-            }
-
-            return result;
-        }
-
-        int __fastcall ItemParseDetour(void* element, void* unused, void* parser, void* extra)
-        {
-            const int result = g_originalItemParse(element, unused, parser, extra);
-
-            // Only what came through here owns the text field MenuItem_Render draws.
-            if (Succeeded(result) && g_parsingMenu != nullptr)
-            {
-                g_textElements.insert(element);
             }
 
             return result;
@@ -668,11 +1178,22 @@ namespace Forge
 
         const char* __cdecl ApiGetItemId(AmodMod mod, AmodMenuItem item)
         {
+            // Answered through the table rather than from a fixed offset: a static text
+            // entry also declares an $id, but keeps it somewhere else entirely, and a kind
+            // with no id at all has to answer an empty string rather than hand back
+            // whatever bytes follow a shorter record.
             if (Resolve(mod) == nullptr || !IsLive(item))
             {
                 return "";
             }
-            return reinterpret_cast<const char*>(Field(item, GameAddress::kMenuElementIdOffset));
+
+            const PropertyDescriptor* const descriptor = FindDescriptor(item, "id");
+            if (descriptor == nullptr)
+            {
+                return "";
+            }
+
+            return reinterpret_cast<const char*>(Field(item, descriptor->offset));
         }
 
         int __cdecl ApiGetProperty(AmodMod mod, AmodMenuItem item, const char* key, AmodValue* value)
@@ -682,8 +1203,36 @@ namespace Forge
                 return 0;
             }
 
-            const PropertyDescriptor* const descriptor = FindDescriptor(item, key);
+            char base[64] = {};
+            int index = -1;
+            if (!SplitKey(key, base, sizeof(base), index))
+            {
+                return 0;
+            }
+
+            const PropertyDescriptor* const descriptor = FindDescriptor(item, base);
             if (descriptor == nullptr)
+            {
+                return 0;
+            }
+
+            if (descriptor->stride != 0)
+            {
+                if (index < 0)
+                {
+                    *value = AmodValue();
+                    value->kind = AMOD_VALUE_INT;
+                    value->integer = CollectionCount(item, *descriptor);
+                    return 1;
+                }
+
+                void* const record = CollectionAt(item, *descriptor, index);
+                return (record != nullptr && LoadProperty(record, *descriptor, *value)) ? 1 : 0;
+            }
+
+            // A subscript on a key that names one field and not a collection of them is a
+            // mistake rather than something to quietly ignore.
+            if (index >= 0)
             {
                 return 0;
             }
@@ -699,8 +1248,47 @@ namespace Forge
                 return 0;
             }
 
-            const PropertyDescriptor* const descriptor = FindDescriptor(item, key);
+            char base[64] = {};
+            int index = -1;
+            if (!SplitKey(key, base, sizeof(base), index))
+            {
+                return 0;
+            }
+
+            const PropertyDescriptor* const descriptor = FindDescriptor(item, base);
             if (descriptor == nullptr)
+            {
+                return 0;
+            }
+
+            if (descriptor->stride != 0)
+            {
+                if (!descriptor->writable)
+                {
+                    return 0;
+                }
+
+                // Writing the count can only drop records from the end. Making one means
+                // reallocating the array, which is creating an object rather than editing
+                // one, so a larger count is refused outright rather than half honoured.
+                if (index < 0)
+                {
+                    if ((value->kind != AMOD_VALUE_INT && value->kind != AMOD_VALUE_BOOL) ||
+                        value->integer < 0 ||
+                        value->integer > CollectionCount(item, *descriptor))
+                    {
+                        return 0;
+                    }
+
+                    *reinterpret_cast<int*>(Field(item, descriptor->countOffset)) = value->integer;
+                    return 1;
+                }
+
+                void* const record = CollectionAt(item, *descriptor, index);
+                return (record != nullptr && StoreProperty(record, *descriptor, *value)) ? 1 : 0;
+            }
+
+            if (index >= 0)
             {
                 return 0;
             }
@@ -714,7 +1302,29 @@ namespace Forge
             {
                 return 0;
             }
-            return FindDescriptor(item, key) != nullptr ? 1 : 0;
+
+            char base[64] = {};
+            int index = -1;
+            if (!SplitKey(key, base, sizeof(base), index))
+            {
+                return 0;
+            }
+
+            const PropertyDescriptor* const descriptor = FindDescriptor(item, base);
+            if (descriptor == nullptr)
+            {
+                return 0;
+            }
+
+            // A subscript is only there if that record is, so a mod can walk a collection
+            // until it runs out instead of asking for the count first.
+            if (index >= 0)
+            {
+                return (descriptor->stride != 0 &&
+                        CollectionAt(item, *descriptor, index) != nullptr) ? 1 : 0;
+            }
+
+            return 1;
         }
 
         int __cdecl ApiPropertyCount(AmodMod mod, AmodMenuItem item)
@@ -724,10 +1334,12 @@ namespace Forge
                 return 0;
             }
 
+            const uint32_t kind = KindBit(KindOf(item));
+
             int count = 0;
             for (const PropertyDescriptor& descriptor : g_properties)
             {
-                if (!descriptor.itemOnly || IsTextElement(item))
+                if ((descriptor.kinds & kind) != 0)
                 {
                     ++count;
                 }
@@ -742,10 +1354,12 @@ namespace Forge
                 return "";
             }
 
+            const uint32_t kind = KindBit(KindOf(item));
+
             int seen = 0;
             for (const PropertyDescriptor& descriptor : g_properties)
             {
-                if (descriptor.itemOnly && !IsTextElement(item))
+                if ((descriptor.kinds & kind) == 0)
                 {
                     continue;
                 }
@@ -820,9 +1434,6 @@ namespace Forge
         if (!InstallOne(g_parseHook, GameSymbol::MenuParseScript,
                         reinterpret_cast<void*>(&ParseScriptDetour),
                         kMenuParseScriptPrologue, sizeof(kMenuParseScriptPrologue)) ||
-            !InstallOne(g_itemHook, GameSymbol::MenuItemParse,
-                        reinterpret_cast<void*>(&ItemParseDetour),
-                        kMenuItemParsePrologue, sizeof(kMenuItemParsePrologue)) ||
             !InstallOne(g_loadHook, GameSymbol::MenuLoadFromScript,
                         reinterpret_cast<void*>(&LoadFromScriptDetour),
                         kMenuLoadFromScriptPrologue, sizeof(kMenuLoadFromScriptPrologue)) ||
@@ -835,7 +1446,6 @@ namespace Forge
         }
 
         g_originalParse = reinterpret_cast<ParseScriptRoutine>(g_parseHook.Trampoline());
-        g_originalItemParse = reinterpret_cast<ItemParseRoutine>(g_itemHook.Trampoline());
         g_originalLoad = reinterpret_cast<LoadFromScriptRoutine>(g_loadHook.Trampoline());
         g_originalRegister = reinterpret_cast<RegisterRoutine>(g_registerHook.Trampoline());
 
@@ -853,7 +1463,25 @@ namespace Forge
         g_table.PropertyNameAt = &ApiPropertyNameAt;
         g_table.GetRawPointer = &ApiGetRawPointer;
 
-        FORGE_LOG_INFO("Menu interface installed, %zu propert(ies) per element", kPropertyCount);
+        ValidatePropertyTable();
+
+        // Counted rather than assumed: a kind with no row of its own is one the interface
+        // does not actually reach, whatever the enumeration says.
+        int kinds = 0;
+        for (int k = 1; k <= static_cast<int>(ElementKind::StaticText); ++k)
+        {
+            for (const PropertyDescriptor& descriptor : g_properties)
+            {
+                if ((descriptor.kinds & (1u << k)) != 0)
+                {
+                    ++kinds;
+                    break;
+                }
+            }
+        }
+
+        FORGE_LOG_INFO("Menu interface installed, %zu propert(ies) across %d kind(s)",
+                       kPropertyCount, kinds);
         return true;
     }
 
@@ -862,19 +1490,17 @@ namespace Forge
         g_registerHook.Uninstall();
         g_loadHook.Uninstall();
         g_parseHook.Uninstall();
-        g_itemHook.Uninstall();
 
         g_originalRegister = nullptr;
         g_originalLoad = nullptr;
         g_originalParse = nullptr;
-        g_originalItemParse = nullptr;
         g_findItem = nullptr;
 
         g_subscriptions.clear();
         g_menusById.clear();
         g_elementsByMenu.clear();
         g_validElements.clear();
-        g_textElements.clear();
+        g_kindByElement.clear();
         g_parsingMenu = nullptr;
         g_lastParsedMenu = nullptr;
         g_table = {};

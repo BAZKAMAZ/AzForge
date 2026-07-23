@@ -77,11 +77,63 @@ typedef struct AmodValue
  *   caption.text      string
  *   caption.offs      float 2
  *   caption.rect_len  float 1
+ *   caption.rect      float 4  derived from rect_len; a logo keeps its own edges here
+ *   caption.enabled   bool     the script gave a $caption block
  *
  * Carried only by elements the game built as $item:
  *
  *   text              string   the label that is drawn
- *   cursor3d          bool
+ *   plank_width       int
+ *   cursor3d          bool     the script gave a $cursor3d block
+ *   cursor3d.orient   float 3  where the 3d cursor beside the item points
+ *   cursor3d.pos      float 3
+ *
+ * Decorative $image, $images_anim and $static entries all carry:
+ *
+ *   unreg_only        int      shown only while the game is unregistered
+ *
+ * Carried only by a $logo, which is a link to website.url rather than a button and swaps
+ * sprites as the cursor comes and goes. It places itself without $align, so pos and size
+ * are its own and rebuild its edges the way its parser does:
+ *
+ *   sp1, sp2          int      sprite handles, plain and focused
+ *   sprite            int      the one being drawn
+ *   two_sprites       bool     both were loaded, so swapping is possible
+ *   swap_on_focus     bool
+ *   size              float 2  the extent the edges are built from
+ *   rect_copy         float 4  the second copy of the edges the parser keeps
+ *
+ * Carried only by a $list, the horizontal chooser the options screens are built from.
+ * Its $items are addressed by subscript, and a count that asks for more entries than
+ * there are is refused - entries can be dropped from the end but not created:
+ *
+ *   items             int      how many entries; items[2] is the third of them, a string
+ *   columns           int      how many fit across
+ *   left.rect         float 4  the arrow that steps back, and text.rect, right.rect
+ *   left.key          int      the key that works it, and text.key, right.key
+ *
+ * Carried by the two image kinds, from the $item_anim block: a colour and a scale for each
+ * state a button can be in. A castle button parses that block twice and keeps the second
+ * under anim_castle, with the same ten keys:
+ *
+ *   anim.color_passive     float 4  and color_active, color_disabled, color_blocked,
+ *                                   color_nof_active
+ *   anim.scale_passive     float 2  and the same four again
+ *
+ * A $table is not an element and shares none of the keys above - no position, no rectangle,
+ * no alignment. It places its rows itself:
+ *
+ *   id                string
+ *   line_pos          float 1  where the first row sits, with line_step between them
+ *   line_step         float 1
+ *   line_count        int
+ *   lines_vert_align  int
+ *   header_color      float 4  and body_color
+ *   header_scale      float 2  and body_scale
+ *   point_step        float 1  and point_margin
+ *   font_id           int      resolved font, read only
+ *   col.title         string   how many columns there are; col.title[1] names the second
+ *   col.horz_pos      float 1  and col.align, col.fixed, indexed the same way
  *
  * A key this kind of element does not carry is refused: the field belongs to another kind,
  * and what this one keeps at that offset is not known, so writing there would corrupt
@@ -176,20 +228,33 @@ namespace Amod
         class Property
         {
         public:
-            Property(AmodMenuItem item, const char* key)
+            Property(AmodMenuItem item, const char* key, int index = -1)
                 : m_item(item)
                 , m_key(key)
+                , m_index(index)
             {
+            }
+
+            /* One record of a collection: list["items"][2], table["col.title"][1]. Without
+             * a subscript the same key answers how many records there are. */
+            Property                                                operator[](int index) const
+            {
+                return Property(m_item, m_key, index);
             }
 
             bool                                                    Exists() const
             {
-                return g_menu != nullptr && g_menu->HasProperty(g_self, m_item, m_key) != 0;
+                char buffer[96];
+                return g_menu != nullptr &&
+                       g_menu->HasProperty(g_self, m_item, Resolve(buffer, sizeof(buffer))) != 0;
             }
 
             bool                                                    Read(AmodValue& value) const
             {
-                return g_menu != nullptr && g_menu->GetProperty(g_self, m_item, m_key, &value) != 0;
+                char buffer[96];
+                return g_menu != nullptr &&
+                       g_menu->GetProperty(g_self, m_item, Resolve(buffer, sizeof(buffer)),
+                                           &value) != 0;
             }
 
             /* Each returns the fallback when the key is absent or holds another kind,
@@ -233,7 +298,10 @@ namespace Amod
 
             bool                                                    Set(const AmodValue& value) const
             {
-                return g_menu != nullptr && g_menu->SetProperty(g_self, m_item, m_key, &value) != 0;
+                char buffer[96];
+                return g_menu != nullptr &&
+                       g_menu->SetProperty(g_self, m_item, Resolve(buffer, sizeof(buffer)),
+                                           &value) != 0;
             }
 
             bool                                                    Set(float a) const
@@ -245,6 +313,12 @@ namespace Amod
             {
                 const float numbers[2] = { a, b };
                 return SetNumbers(numbers, 2);
+            }
+
+            bool                                                    Set(float a, float b, float c) const
+            {
+                const float numbers[3] = { a, b, c };
+                return SetNumbers(numbers, 3);
             }
 
             bool                                                    Set(float a, float b, float c, float d) const
@@ -278,6 +352,43 @@ namespace Amod
             }
 
         private:
+            /* The subscript is kept as a number and spelled out only for the call, so a
+             * Property stays copyable and owns no storage of its own. Written out by hand
+             * rather than with snprintf to keep this header free of <stdio.h>. */
+            const char*                                             Resolve(char* buffer, size_t size) const
+            {
+                if (m_index < 0)
+                {
+                    return m_key;
+                }
+
+                size_t at = 0;
+                while (m_key[at] != '\0' && at + 16 < size)
+                {
+                    buffer[at] = m_key[at];
+                    ++at;
+                }
+
+                char digits[12];
+                int written = 0;
+                int value = m_index;
+                do
+                {
+                    digits[written++] = static_cast<char>('0' + (value % 10));
+                    value /= 10;
+                }
+                while (value != 0);
+
+                buffer[at++] = '[';
+                while (written > 0)
+                {
+                    buffer[at++] = digits[--written];
+                }
+                buffer[at++] = ']';
+                buffer[at] = '\0';
+                return buffer;
+            }
+
             bool                                                    SetNumbers(const float* numbers, uint32_t count) const
             {
                 AmodValue value = {};
@@ -292,6 +403,7 @@ namespace Amod
 
             AmodMenuItem m_item;
             const char* m_key;
+            int m_index;
         };
 
         class Element
