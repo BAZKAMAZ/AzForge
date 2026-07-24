@@ -2,6 +2,7 @@
 
 #include "src/Api/ModContext.h"
 
+#include "src/Api/BlockExpressionApi.h"
 #include "src/Api/BoxMenuApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
@@ -107,5 +108,6 @@ namespace Forge
         context.table.launcher = LauncherApi::Table();
         context.table.objectsMenu = ObjectsMenuApi::Table();
         context.table.boxMenu = BoxMenuApi::Table();
+        context.table.blockExpression = BlockExpressionApi::Table();
     }
 }

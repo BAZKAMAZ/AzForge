@@ -272,7 +272,19 @@ namespace
         (void)event;
 
         AmodMenuClicked* const click = static_cast<AmodMenuClicked*>(data);
-        Amod::Log(AMOD_LOG_INFO, "click: %s / %s", click->menuId, click->itemId);
+
+        // Mod-owned data hung off the button itself: a click count the engine knows nothing
+        // about, kept on the element and read back the next time it is pressed.
+        const Amod::Menu::Element item = Amod::Menu::Find(click->menuId, click->itemId);
+        int count = 0;
+        if (item.IsValid() && Amod::Data::IsAvailable())
+        {
+            Amod::Data::Block on = Amod::Data::On(item.Handle());
+            count = on["clicks"].Int() + 1;
+            on["clicks"].Set(count);
+        }
+
+        Amod::Log(AMOD_LOG_INFO, "click: %s / %s (%d)", click->menuId, click->itemId, count);
 
         // GRAPHICS carries no $sub_menu, so the game does nothing with it; the mod makes it
         // navigate, and claims the click so nothing else acts on it.
@@ -369,6 +381,27 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
     Amod::Log(AMOD_LOG_INFO, "%s %s loaded", Amod::ModId(), Amod::ModVersion());
     Amod::Log(AMOD_LOG_INFO, "running on AzForge %s, game build %u",
               Amod::LoaderVersion(), Amod::GameBuild());
+
+    // A tree the mod owns, authored in the game's own syntax and read back by key. The
+    // engine never sees these - they are the mod's config and state.
+    if (Amod::Data::IsAvailable())
+    {
+        Amod::Data::Block cfg = Amod::Data::Parse(R"(
+            $difficulty 3
+            $title "Sample Mod"
+            $spawn { $bat { $count 5  $speed 1.5 } }
+        )");
+
+        Amod::Log(AMOD_LOG_INFO, "data: difficulty %d, title \"%s\"",
+                  cfg["difficulty"].Int(), cfg["title"].Text());
+
+        Amod::Data::Block bat = cfg.Child("spawn").Child("bat");
+        Amod::Log(AMOD_LOG_INFO, "data: spawn %d bat(s) at speed %.1f",
+                  bat["count"].Int(), bat["speed"].Number());
+
+        cfg["difficulty"].Set(5);
+        Amod::Log(AMOD_LOG_INFO, "data: difficulty after Set is %d", cfg["difficulty"].Int());
+    }
 
     if (Amod::Menu::IsAvailable())
     {

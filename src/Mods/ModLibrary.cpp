@@ -2,6 +2,7 @@
 
 #include "src/Mods/ModLibrary.h"
 
+#include "src/Api/BlockExpressionApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
@@ -220,6 +221,7 @@ namespace Forge
         FrameApi::ForgetMod(&m_context);
         LauncherApi::ForgetMod(&m_context);
         ObjectsMenuApi::ForgetMod(&m_context);
+        BlockExpressionApi::ForgetMod(&m_context);
         m_context.owned.ReleaseAll();
 
         if (m_initialised && m_shutdown != nullptr)

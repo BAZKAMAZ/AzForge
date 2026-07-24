@@ -12,7 +12,7 @@
 
 /* Version of the interface as a whole. A mod declares what it was built against in mod.json
  * as api_version; a mod asking for more than the loader implements is refused. */
-#define AMOD_API_VERSION                                            7
+#define AMOD_API_VERSION                                            8
 
 #define AMOD_EXPORT                                                 __declspec(dllexport)
 
@@ -47,6 +47,26 @@ typedef enum AmodLogLevel
     AMOD_LOG_WARNING = 1,
     AMOD_LOG_ERROR = 2
 } AmodLogLevel;
+
+/* A tagged value carried by a script key. Shared because more than one subsystem reads and
+ * writes keys - a menu element's properties and a mod's own block/expression data alike. */
+typedef enum AmodValueKind
+{
+    AMOD_VALUE_NONE = 0,
+    AMOD_VALUE_BOOL = 1,
+    AMOD_VALUE_INT = 2,
+    AMOD_VALUE_FLOAT = 3,   /* one to four, see count */
+    AMOD_VALUE_STRING = 4
+} AmodValueKind;
+
+typedef struct AmodValue
+{
+    AmodValueKind kind;
+    uint32_t count;         /* floats in use */
+    int integer;            /* AMOD_VALUE_BOOL, AMOD_VALUE_INT */
+    float numbers[4];       /* AMOD_VALUE_FLOAT */
+    const char* text;       /* AMOD_VALUE_STRING; when read, points into the owner */
+} AmodValue;
 
 #ifdef __cplusplus
 } /* extern "C" */

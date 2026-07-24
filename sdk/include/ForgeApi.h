@@ -39,6 +39,7 @@
 #include "LauncherApi.h"
 #include "ObjectsMenuApi.h"
 #include "BoxMenuApi.h"
+#include "BlockExpressionApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -82,6 +83,10 @@ typedef struct AmodApi
     /* --- since API version 5 ------------------------------------------------------- */
 
     const AmodBoxMenuApi* boxMenu;
+
+    /* --- since API version 8 ------------------------------------------------------- */
+
+    const AmodBlockExpressionApi* blockExpression;
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodApi;
@@ -137,6 +142,7 @@ namespace Amod
         Launcher::Attach(api->launcher, api->self);
         Menu::Attach(api->objectsMenu, api->self);
         Box::Attach(api->boxMenu, api->self);
+        Data::Attach(api->blockExpression, api->self);
         return true;
     }
 

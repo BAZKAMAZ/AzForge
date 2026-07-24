@@ -49,23 +49,8 @@ typedef struct AmodMenuClicked
 
 typedef void (__cdecl* AmodMenuCallback)(AmodMenuEvent event, void* data, void* user);
 
-typedef enum AmodValueKind
-{
-    AMOD_VALUE_NONE = 0,
-    AMOD_VALUE_BOOL = 1,
-    AMOD_VALUE_INT = 2,
-    AMOD_VALUE_FLOAT = 3,   /* one to four, see count */
-    AMOD_VALUE_STRING = 4
-} AmodValueKind;
-
-typedef struct AmodValue
-{
-    AmodValueKind kind;
-    uint32_t count;         /* floats in use */
-    int integer;            /* AMOD_VALUE_BOOL, AMOD_VALUE_INT */
-    float numbers[4];       /* AMOD_VALUE_FLOAT */
-    const char* text;       /* AMOD_VALUE_STRING; when read, points into the element */
-} AmodValue;
+/* AmodValue and AmodValueKind moved to ForgeTypes.h, shared with the block/expression
+ * interface; ForgeTypes.h is already included above. */
 
 /*
  * Keys carried by every element:
