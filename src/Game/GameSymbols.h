@@ -64,6 +64,9 @@ namespace Forge
         MenuShowBox,
         MenuCloseAll,
 
+        // Where a click is drained out of the menu just before the game acts on it.
+        MenuTakeClickResult,
+
         Count
     };
 

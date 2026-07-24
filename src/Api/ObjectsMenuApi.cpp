@@ -27,6 +27,7 @@ namespace Forge
         typedef int(__fastcall* ParseScriptRoutine)(void* menu, void* unused, const char* scriptFile);
         typedef void*(__fastcall* FindItemRoutine)(void* menu, void* unused, const char* itemId);
         typedef void*(__fastcall* FindMenuRoutine)(void* manager, void* unused, const char* menuId);
+        typedef void(__fastcall* TakeClickResultRoutine)(void* menu, void* unused, void* dest);
 
         struct Subscription
         {
@@ -40,10 +41,12 @@ namespace Forge
         InlineHook g_registerHook;
         InlineHook g_loadHook;
         InlineHook g_parseHook;
+        InlineHook g_clickHook;
 
         RegisterRoutine g_originalRegister = nullptr;
         LoadFromScriptRoutine g_originalLoad = nullptr;
         ParseScriptRoutine g_originalParse = nullptr;
+        TakeClickResultRoutine g_originalTakeClick = nullptr;
         FindItemRoutine g_findItem = nullptr;
         FindMenuRoutine g_findMenu = nullptr;
 
@@ -1521,6 +1524,43 @@ namespace Forge
             return result;
         }
 
+        // Menu_TakeClickResult drains the clicked (menu, button, sub_menu, box_menu,
+        // reg_menu) out of the menu into the five-pointer block Menu_Update then acts on. By
+        // the time the trampoline returns, the click is in dest but not yet acted on, so a
+        // mod hears it here and, by clearing dest, can keep the game from acting - which is
+        // what turns a custom button into one that does something and lets a mod take over
+        // one of the game's.
+        void __fastcall TakeClickResultDetour(void* menu, void* unused, void* dest)
+        {
+            g_originalTakeClick(menu, unused, dest);
+
+            const char** const result = static_cast<const char**>(dest);
+            const char* const itemId = result[GameAddress::kClickResultItemId / sizeof(char*)];
+            if (itemId == nullptr || itemId[0] == '\0')
+            {
+                return;
+            }
+
+            const char* const menuId = result[GameAddress::kClickResultMenuId / sizeof(char*)];
+
+            AmodMenuClicked clicked = {};
+            clicked.menuId = menuId != nullptr ? menuId : "";
+            clicked.itemId = itemId;
+            clicked.handled = 0;
+            Dispatch(AMOD_MENU_CLICKED, &clicked);
+
+            // A claimed click is erased from the block, so neither Menu_Update's own
+            // navigation nor the game-flow dispatcher that reads it afterwards sees anything.
+            if (clicked.handled != 0)
+            {
+                result[GameAddress::kClickResultMenuId / sizeof(char*)] = nullptr;
+                result[GameAddress::kClickResultItemId / sizeof(char*)] = nullptr;
+                result[GameAddress::kClickResultSubMenu / sizeof(char*)] = nullptr;
+                result[GameAddress::kClickResultBoxMenu / sizeof(char*)] = nullptr;
+                result[GameAddress::kClickResultRegMenu / sizeof(char*)] = nullptr;
+            }
+        }
+
         int __stdcall LoadFromScriptDetour(const char* menuId, const char* scriptFile)
         {
             g_lastParsedMenu = nullptr;
@@ -1977,6 +2017,20 @@ namespace Forge
         g_originalLoad = reinterpret_cast<LoadFromScriptRoutine>(g_loadHook.Trampoline());
         g_originalRegister = reinterpret_cast<RegisterRoutine>(g_registerHook.Trampoline());
 
+        // The click event is optional: a build where its one routine cannot be found still
+        // reads, writes and builds menus, it just cannot report their buttons.
+        if (InstallOne(g_clickHook, GameSymbol::MenuTakeClickResult,
+                       reinterpret_cast<void*>(&TakeClickResultDetour),
+                       kMenuTakeClickResultPrologue, sizeof(kMenuTakeClickResultPrologue)))
+        {
+            g_originalTakeClick =
+                reinterpret_cast<TakeClickResultRoutine>(g_clickHook.Trampoline());
+        }
+        else
+        {
+            FORGE_LOG_WARN("Menu_TakeClickResult was not hooked, so click events are off");
+        }
+
         g_table.structSize = sizeof(AmodObjectsMenuApi);
         g_table.Subscribe = &ApiSubscribe;
         g_table.Unsubscribe = &ApiUnsubscribe;
@@ -2019,10 +2073,12 @@ namespace Forge
         g_registerHook.Uninstall();
         g_loadHook.Uninstall();
         g_parseHook.Uninstall();
+        g_clickHook.Uninstall();
 
         g_originalRegister = nullptr;
         g_originalLoad = nullptr;
         g_originalParse = nullptr;
+        g_originalTakeClick = nullptr;
         g_findItem = nullptr;
         g_findMenu = nullptr;
 

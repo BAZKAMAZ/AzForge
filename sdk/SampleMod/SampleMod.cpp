@@ -66,6 +66,15 @@ namespace
             Amod::Menu::Add("IDM_FORGE", R"(
                 $menu_items {
                     $item {
+                        $id      "ID_FORGE_GRAPHICS"
+                        $text    "GRAPHICS"
+                        $pos     320 200
+                        $rect_size 240 45
+                        $h_align "center"
+                        $v_align "center"
+                        $help    "A button with no $sub_menu - the mod handles it"
+                    }
+                    $item {
                         $id      "ID_BACK"
                         $text    "BACK"
                         $pos     320 120
@@ -162,70 +171,20 @@ namespace
     }
 
     // Decorations carry no $id at all, so they are reached by walking the menu and picking
-    // on what the game built them as.
+    // on what the game built them as. The main menu's only static is the UNREGISTERED
+    // banner, which the script marks $unreg_only 1 so a bought copy never draws it; clearing
+    // that shows the wording anyway - it is still in the game, just never otherwise reached.
     void RestyleDecorations(const char* menuId)
     {
         const int total = Amod::Menu::Count(menuId);
 
-        int tiles = 0;
-        int flipped = 0;
-        int firstTexture = 0;
-        Amod::Menu::Element lastTile;
-
         for (int i = 0; i < total; ++i)
         {
             const Amod::Menu::Element element = Amod::Menu::At(menuId, i);
-
             if (IsKind(element, "static"))
             {
-                //Report("static text", element["text"].Set("RUNNING ON AZFORGE"));
-                //Report("static colour", element["font_color"].Set(0.3f, 1.0f, 0.4f, 1.0f));
-                //Report("static scale", element["font_scale"].Set(1.4f, 1.4f));
-
-                //// The main menu's only static is the UNREGISTERED banner, which the script
-                //// marks $unreg_only 1 so a bought copy never draws it. Clearing that shows
-                //// it anyway - the trial-version wording is still in the game, just never
-                //// reached, and a mod can reach it.
                 Report("static unreg_only", element["unreg_only"].Set(0));
             }
-            else if (IsKind(element, "image_anim"))
-            {
-                // The flame the main menu keeps on the right, moved to the left.
-                //Report("flame position", element["pos"].Set(105.0f, 405.0f));
-            }
-            //else if (IsKind(element, "image"))
-            //{
-            //    // The main menu's background is cut into seven of these, so mirroring every
-            //    // one of them is hard to miss.
-            //    ++tiles;
-            //    if (element["horz_flip"].Set(true))
-            //    {
-            //        ++flipped;
-            //    }
-
-            //    if (tiles == 1)
-            //    {
-            //        firstTexture = element["texture"].Integer();
-            //    }
-            //    lastTile = element;
-
-            //    // An image has no text of its own, and says so rather than writing
-            //    // somewhere unrelated.
-            //    if (element["text"].Set("nowhere"))
-            //    {
-            //        Amod::LogText(AMOD_LOG_ERROR, "  an image accepted a text it cannot hold");
-            //    }
-            //}
-        }
-
-        Amod::Log(tiles == flipped ? AMOD_LOG_INFO : AMOD_LOG_WARNING,
-                  "  %-28s %d of %d", "background tiles flipped", flipped, tiles);
-
-        // A texture is a resolved handle, so one anonymous image can be given another's
-        // artwork without the loader ever naming a file.
-        if (lastTile.IsValid() && firstTexture != 0)
-        {
-            Report("last tile texture", lastTile["texture"].Set(firstTexture));
         }
     }
 
@@ -304,6 +263,23 @@ namespace
         {
             Amod::Log(AMOD_LOG_INFO, "  %-28s %d entr(ies), first \"%s\"", "list contents",
                       list["items"].Integer(), list["items"][0].Text());
+        }
+    }
+
+    void __cdecl OnMenuClicked(AmodMenuEvent event, void* data, void* user)
+    {
+        (void)user;
+        (void)event;
+
+        AmodMenuClicked* const click = static_cast<AmodMenuClicked*>(data);
+        Amod::Log(AMOD_LOG_INFO, "click: %s / %s", click->menuId, click->itemId);
+
+        // GRAPHICS carries no $sub_menu, so the game does nothing with it; the mod makes it
+        // navigate, and claims the click so nothing else acts on it.
+        if (strcmp(click->itemId, "ID_FORGE_GRAPHICS") == 0)
+        {
+            Amod::Box::Open("IDM_GRAPHICS");
+            click->handled = 1;
         }
     }
 
@@ -397,6 +373,7 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
     if (Amod::Menu::IsAvailable())
     {
         Amod::Menu::Subscribe(AMOD_MENU_LOADED, &OnMenuEvent);
+        Amod::Menu::Subscribe(AMOD_MENU_CLICKED, &OnMenuClicked);
     }
 
     if (!Amod::Launcher::IsAvailable())

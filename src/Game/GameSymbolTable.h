@@ -309,6 +309,13 @@ namespace Forge
             // set apart from Menu_GoBack.
             "56 8B F1 8B 4E 10 57 85 C9 74 11 6A 00 E8 ?? ?? ?? ?? 8B 4E 10 8B 01 8B 50 54 "
             "FF D2 8B 4E 0C 85 C9 74 11"
+        },
+        {
+            "Menu_TakeClickResult", GameAddress::kMenuTakeClickResult,
+            // Copies the five click fields from menu+0x5c into the destination and clears
+            // them - the whole routine, and unmistakable for it.
+            "8B 51 5C 8B 44 24 04 89 10 8B 51 60 89 50 04 8B 51 64 89 50 08 8B 51 68 "
+            "89 50 0C 8B 51 6C 89 50 10 33 C0 89 41 5C"
         }
     };
 }

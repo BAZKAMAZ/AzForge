@@ -27,13 +27,25 @@ typedef enum AmodMenuEvent
 {
     /* A menu has been built and is ready to be changed. Data is AmodMenuLoaded. Arrives
      * again every time the game rebuilds the menu. */
-    AMOD_MENU_LOADED = 0
+    AMOD_MENU_LOADED = 0,
+
+    /* A button was activated, before the game acts on it. Data is AmodMenuClicked. This is
+     * how a mod's own buttons come to do something, and how it can take over one of the
+     * game's. */
+    AMOD_MENU_CLICKED = 1
 } AmodMenuEvent;
 
 typedef struct AmodMenuLoaded
 {
     const char* menuId;     /* $menu_id from the script header, "IDM_MAIN_MENU" and so on */
 } AmodMenuLoaded;
+
+typedef struct AmodMenuClicked
+{
+    const char* menuId;     /* the menu the click was in */
+    const char* itemId;     /* the $id of the button that was activated */
+    int handled;            /* set non-zero to stop the game acting on the click */
+} AmodMenuClicked;
 
 typedef void (__cdecl* AmodMenuCallback)(AmodMenuEvent event, void* data, void* user);
 

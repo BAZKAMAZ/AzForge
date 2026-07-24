@@ -62,6 +62,18 @@ namespace Forge
         constexpr uintptr_t kMenuCloseAll      = 0x0043C6F0; // __thiscall (manager)
 
         constexpr uint32_t kSizeBaseMenu = 0x020C;
+
+        // Menu_Update @0x0043C7C0 clears these five globals, drains the clicked menu's
+        // pending result into them through Menu_TakeClickResult, then acts on them. They are
+        // the click result: which menu, which button, and the $sub_menu, $box_menu and
+        // $reg_menu that button carried. Hooking the drain is the point where the click is
+        // known but not yet acted on.
+        constexpr uintptr_t kMenuTakeClickResult = 0x00451660; // __thiscall (menu, dest[5])
+        constexpr uintptr_t kClickResultMenuId = 0x00;    // dest indices, each a char*
+        constexpr uintptr_t kClickResultItemId = 0x04;
+        constexpr uintptr_t kClickResultSubMenu = 0x08;
+        constexpr uintptr_t kClickResultBoxMenu = 0x0C;
+        constexpr uintptr_t kClickResultRegMenu = 0x10;
         constexpr uintptr_t kMenuParseScript      = 0x004527A0; // __thiscall (menu, scriptFile)
         constexpr uintptr_t kMenuItemParse        = 0x0045F550; // __thiscall (element, parser)
         constexpr uintptr_t kMenuFindItemById     = 0x00451860; // __thiscall (menu, id)
@@ -372,4 +384,9 @@ namespace Forge
         { 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x0C };
     constexpr uint8_t kMenuItemParsePrologue[] =
         { 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x0C };
+
+    //   Menu_TakeClickResult  MOV EDX,[ECX+0x5c] / MOV EAX,[ESP+0x4]                 -> 7
+    // Both are position independent, so seven bytes are taken and two padded with NOPs.
+    constexpr uint8_t kMenuTakeClickResultPrologue[] =
+        { 0x8B, 0x51, 0x5C, 0x8B, 0x44, 0x24, 0x04 };
 }
