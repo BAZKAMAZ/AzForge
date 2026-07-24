@@ -8,24 +8,6 @@
 
 namespace Forge
 {
-    // One loaded mod DLL.
-    //
-    // The DLL cannot be handed to the Windows loader from inside the archive, and mapping a
-    // PE by hand would take the module out of the loader's list, which is exactly where a
-    // debugger looks for modules and their symbols. So the entry is written out and loaded
-    // by path, marked temporary so the file system keeps it in cache rather than committing
-    // it to disk where it can.
-    //
-    // Removal is done explicitly, after FreeLibrary. FILE_FLAG_DELETE_ON_CLOSE is set as
-    // well, but it is only a backstop for the paths where the image never got mapped:
-    // Windows will not unlink a file that still backs a loaded image, so a copy left behind
-    // by a crash survives until the next run sweeps the cache.
-    //
-    // The file name carries the process id so that two copies of the game running at once
-    // do not fight over it, and so that a sweep can tell a leftover from a live file.
-    //
-    // Instances must not move once loaded: the mod holds a pointer to the table inside
-    // m_context, and that table's self field points back at the context.
     class ModLibrary
     {
     public:

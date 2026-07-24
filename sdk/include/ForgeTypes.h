@@ -12,7 +12,7 @@
 
 /* Version of the interface as a whole. A mod declares what it was built against in mod.json
  * as api_version; a mod asking for more than the loader implements is refused. */
-#define AMOD_API_VERSION                                            6
+#define AMOD_API_VERSION                                            7
 
 #define AMOD_EXPORT                                                 __declspec(dllexport)
 

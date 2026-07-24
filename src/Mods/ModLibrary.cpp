@@ -2,6 +2,7 @@
 
 #include "src/Mods/ModLibrary.h"
 
+#include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Core/ForgeLog.h"
@@ -203,6 +204,11 @@ namespace Forge
             return false;
         }
 
+        // Optional, and resolved only once the mod is up: a mod that exports AmodUpdate is
+        // driven every frame until it is unloaded.
+        FrameApi::Register(&m_context,
+            reinterpret_cast<AmodUpdateRoutine>(GetProcAddress(m_module, "AmodUpdate")));
+
         m_initialised = true;
         return true;
     }
@@ -211,6 +217,7 @@ namespace Forge
     {
         // Registrations go before the mod's own teardown: by the time AmodShutdown runs,
         // nothing the loader holds can call back into code that is about to disappear.
+        FrameApi::ForgetMod(&m_context);
         LauncherApi::ForgetMod(&m_context);
         ObjectsMenuApi::ForgetMod(&m_context);
         m_context.owned.ReleaseAll();

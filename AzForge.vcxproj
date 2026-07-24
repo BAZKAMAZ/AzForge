@@ -94,6 +94,7 @@
     <ClInclude Include="sdk\include\LauncherApi.h" />
     <ClInclude Include="sdk\include\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\BoxMenuApi.h" />
+    <ClInclude Include="src\Api\FrameApi.h" />
     <ClInclude Include="src\Api\LauncherApi.h" />
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\ModContext.h" />
@@ -144,6 +145,7 @@
     <ClCompile Include="src\Api\ForgeApiImpl.cpp" />
     <ClCompile Include="src\Api\LauncherApi.cpp" />
     <ClCompile Include="src\Api\BoxMenuApi.cpp" />
+    <ClCompile Include="src\Api\FrameApi.cpp" />
     <ClCompile Include="src\Api\ObjectsMenuApi.cpp" />
     <ClCompile Include="src\Api\ModOwnership.cpp" />
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />

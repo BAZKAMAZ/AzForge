@@ -86,12 +86,26 @@ typedef struct AmodApi
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodApi;
 
+/* Passed to AmodUpdate once per frame. */
+typedef struct AmodFrame
+{
+    uint32_t structSize;    /* sizeof(AmodFrame) as the running loader built it */
+    float delta;            /* seconds since the previous frame, the game's own step */
+    double elapsed;         /* seconds since the first frame */
+    uint64_t frameIndex;    /* frames seen so far, starting at 0 */
+} AmodFrame;
+
 /* Called once, before the game starts. Anything other than AMOD_OK unloads the mod. The
  * tables stay valid until AmodShutdown returns. */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
 
 /* Called once, after everything the mod registered has already been released. */
 AMOD_EXPORT void __cdecl AmodShutdown(void);
+
+/* Optional. Exported by a mod that wants to run every frame - the game's frame, in every
+ * state, menu and gameplay alike - after the game has advanced the world. A mod that does
+ * not export it simply gets no frame ticks. The pointer is valid only for the call. */
+AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame);
 
 #ifdef __cplusplus
 } /* extern "C" */

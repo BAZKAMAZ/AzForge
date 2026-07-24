@@ -390,6 +390,19 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
     return AMOD_OK;
 }
 
+// Runs every frame the game does, in every state. Kept to a heartbeat so the log stays
+// readable: it reports once a second of game time, proving the delta is the game's own.
+AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
+{
+    static double nextTick = 1.0;
+    if (frame->elapsed >= nextTick)
+    {
+        nextTick += 1.0;
+        Amod::Log(AMOD_LOG_INFO, "frame %llu, %.1fs elapsed, dt %.4f",
+                  frame->frameIndex, frame->elapsed, frame->delta);
+    }
+}
+
 AMOD_EXPORT void __cdecl AmodShutdown(void)
 {
     Amod::LogText(AMOD_LOG_INFO, "sample mod shutting down");

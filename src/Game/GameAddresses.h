@@ -68,6 +68,13 @@ namespace Forge
         // the click result: which menu, which button, and the $sub_menu, $box_menu and
         // $reg_menu that button carried. Hooking the drain is the point where the click is
         // known but not yet acted on.
+        // WinMain's idle work: Game_FrameTick runs once per frame when no window message is
+        // waiting. It works out the frame delta, keeps it in a global in seconds, and drives
+        // the current game state's update through its vtable. Hooking it is where a mod gets
+        // a frame of its own, in every state - menu and gameplay alike.
+        constexpr uintptr_t kGameFrameTick = 0x00425000; // __cdecl (void)
+        constexpr uintptr_t kFrameDelta = 0x0067A5F8;    // float, seconds since last frame
+
         constexpr uintptr_t kMenuTakeClickResult = 0x00451660; // __thiscall (menu, dest[5])
         constexpr uintptr_t kClickResultMenuId = 0x00;    // dest indices, each a char*
         constexpr uintptr_t kClickResultItemId = 0x04;
@@ -389,4 +396,8 @@ namespace Forge
     // Both are position independent, so seven bytes are taken and two padded with NOPs.
     constexpr uint8_t kMenuTakeClickResultPrologue[] =
         { 0x8B, 0x51, 0x5C, 0x8B, 0x44, 0x24, 0x04 };
+
+    //   Game_FrameTick  SUB ESP,0x50 / PUSH ESI / PUSH EDI                            -> 5
+    constexpr uint8_t kGameFrameTickPrologue[] =
+        { 0x83, 0xEC, 0x50, 0x56, 0x57 };
 }

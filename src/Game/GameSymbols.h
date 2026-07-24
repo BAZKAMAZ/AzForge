@@ -67,6 +67,9 @@ namespace Forge
         // Where a click is drained out of the menu just before the game acts on it.
         MenuTakeClickResult,
 
+        // The per-frame tick, and the frame delta it works out.
+        GameFrameTick,
+
         Count
     };
 

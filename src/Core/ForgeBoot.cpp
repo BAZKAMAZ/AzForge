@@ -1,8 +1,8 @@
 #include "pch.h"
 
 #include "src/Core/ForgeBoot.h"
-
 #include "src/Api/BoxMenuApi.h"
+#include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Core/ForgeLog.h"
@@ -128,17 +128,11 @@ namespace Forge
             PackageHook::Install();
         }
 
-        // Installed before the mods so that the table is already there when they are handed
-        // their API and can subscribe from AmodInit.
         LauncherApi::Install();
         ObjectsMenuApi::Install();
         BoxMenuApi::Install();
-
-        // Code mods come up last, so everything they might inspect is already in place.
+        FrameApi::Install();
         ModHost::LoadAll(g_registry.LoadOrder());
-
-        // Nothing else in the process will tell the loader that the game is closing, so it
-        // has to take that notice from the game itself.
         ShutdownHook::Install(&Boot::Stop);
 
         return true;
@@ -153,15 +147,13 @@ namespace Forge
 
         FORGE_LOG_INFO("AzForge shutting down");
 
-        // Mods go first: they were brought up last and may hold on to anything below them.
         ModHost::UnloadAll();
-
-        // The index points into the archives the registry owns, so it has to go first.
         PackageHook::Uninstall();
         ShutdownHook::Uninstall();
         LauncherApi::Uninstall();
         ObjectsMenuApi::Uninstall();
         BoxMenuApi::Uninstall();
+        FrameApi::Uninstall();
         ModFileSystem::Clear();
         g_registry.Clear();
 

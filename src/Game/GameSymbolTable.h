@@ -316,6 +316,13 @@ namespace Forge
             // them - the whole routine, and unmistakable for it.
             "8B 51 5C 8B 44 24 04 89 10 8B 51 60 89 50 04 8B 51 64 89 50 08 8B 51 68 "
             "89 50 0C 8B 51 6C 89 50 10 33 C0 89 41 5C"
+        },
+        {
+            "Game_FrameTick", GameAddress::kGameFrameTick,
+            // The frame gate opens with a 0x50 frame, then GameState_Current and the
+            // FUN_00424fd0 timer read into the local pair - the shape no other routine has.
+            "83 EC 50 56 57 E8 ?? ?? ?? ?? 8B F0 8D 44 24 0C 50 68 ?? ?? ?? ?? "
+            "C7 44 24 14 00 00 00 00"
         }
     };
 }
