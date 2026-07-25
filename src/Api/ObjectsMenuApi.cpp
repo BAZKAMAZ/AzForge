@@ -919,14 +919,8 @@ namespace Forge
                 }
             }
 
-            // The decorative $images are not in the groups. The menu keeps them in a
-            // collection of its own at +0x74: eight bytes of { record* items; int count; },
-            // with the records laid out end to end, forty bytes each.
-            //
-            // Confirmed against a running game rather than inferred: the collection block
-            // carries the ui_items.cpp:157 stamp Menu_ParseImages @0x0044b320 allocates it
-            // with, and for the main menu the array block is 0x118 bytes for a count of 7,
-            // which is exactly seven records of forty.
+            // Decorations are not in the groups. The menu keeps each collection - { record*
+            // items; int count } - of its own, records laid end to end.
             const struct
             {
                 uintptr_t offset;
@@ -968,9 +962,8 @@ namespace Forge
                 }
             }
 
-            // A $table is not in the groups either, and unlike the decorations it is an
-            // allocation of its own: Menu_AddTable @0x00452780 keeps an array of pointers to
-            // them rather than the tables themselves, so this walk is one level deeper.
+            // Tables live in an array of pointers at menu+0x54, one level deeper than the
+            // decorations.
             void** const tables =
                 *reinterpret_cast<void***>(Field(menu, GameAddress::kMenuTablesOffset));
             const int tableCount =
@@ -987,27 +980,23 @@ namespace Forge
                 }
             }
 
-            FORGE_LOG_INFO("Menu %p: %d element(s) - %d in groups, %d image, %d image_anim, "
+            /*FORGE_LOG_INFO("Menu %p: %d element(s) - %d in groups, %d image, %d image_anim, "
                            "%d static, %d table", menu, static_cast<int>(elements.size()),
                            fromGroups, decorations[0], decorations[1], decorations[2],
-                           fromTables);
+                           fromTables);*/
 
             g_elementsByMenu[menu] = std::move(elements);
         }
 
         // --- building objects out of a script fragment ----------------------------------
         //
-        // The game turns text into objects in one uniform shape, whatever the kind:
+        // The game builds every kind the same way - alloc, construct, parse, add - so feeding
+        // the parser the mod's text needs no new logic, and everything a parser derives (the
+        // alignment, the drawing centre, the caption rectangle) comes out as from a menu_*.txt:
         //
         //     block = Mem_AllocTracked(size, file, line);
         //     Kind_Create(block);
-        //     if (parse(block, parser)) Menu_AddElement(menu, block);
-        //     else                      block->vtable[0x34](1);
-        //
-        // so creating one needs no new logic, only the parser pointed at the mod's text.
-        // Everything a parser derives on the way - the alignment, the drawing centre, the
-        // caption rectangle - therefore comes out exactly as it would from a menu_*.txt,
-        // which is the whole reason this goes through text rather than assembling fields.
+        //     if (parse(block, parser)) Menu_AddElement(menu, block); else block->vtable[0x34](1);
 
         typedef void* (__cdecl* ParserCreateRoutine)(char* text, uint8_t keyPrefix);
         typedef void (__cdecl* ParserDestroyRoutine)(void* parser);
@@ -1053,9 +1042,9 @@ namespace Forge
             uintptr_t destroySlot;      // vtable slot that frees a refused block
         };
 
-        // The nine rows Menu_ParseScript @0x004527a0 walks, in the same order. A table is on
-        // the list now that its parser is confirmed to answer a bool and clean up its own
-        // stack, but it is not an element: it takes Menu_AddTable and a different destructor.
+        // The element rows Menu_ParseScript @0x004527a0 walks, in order. A $table is left out:
+        // it has no draw method of its own and is rendered only by the score screen, so one
+        // built anywhere else would never appear.
         constexpr BlockDescriptor kBlocks[] =
         {
             { "menu_items",     "item",   GameAddress::kSizeMenuItem,
@@ -1109,9 +1098,7 @@ namespace Forge
             return true;
         }
 
-        // The game disposes of an object whose block the parser refused through its scalar
-        // deleting destructor, which frees the block as well as running it. The slot differs
-        // by kind - 0x34 for an element, 0 for a table - so it comes from the descriptor.
+        // Disposes of an object the parser refused, through its scalar deleting destructor.
         void DestroyObject(void* object, uintptr_t destroySlot)
         {
             void** const vtable = *reinterpret_cast<void***>(object);
@@ -1397,9 +1384,8 @@ namespace Forge
                 return nullptr;
             }
 
-            // Parser_CreateFromBuffer keeps the pointer it is given rather than a copy, and
-            // strips the comments out of it in place first, so the text has to be writable
-            // and has to outlive the parser. A mod's literal is neither.
+            // The parser keeps the pointer and strips comments in place, so the text must be
+            // writable and outlive it - a mod's literal is neither.
             std::vector<char> text(fragment, fragment + strlen(fragment) + 1);
 
             void* const parser = g_parserCreate(text.data(), GameAddress::kParserKeyPrefix);

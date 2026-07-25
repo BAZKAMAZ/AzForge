@@ -70,6 +70,25 @@ namespace Forge
         // The per-frame tick, and the frame delta it works out.
         GameFrameTick,
 
+        // The developer console: output, command registration, and running a line.
+        GameConsoleWrite,
+        CmdRegister,
+        ConsoleExecute,
+
+        // The D3D8 render manager's Begin and Present, hooked to run a mod at the start and end
+        // of each frame.
+        RenderBegin,
+        RenderPresent,
+
+        // A $item's vtable render, hooked so a mod can draw before/after or replace it.
+        MenuItemRender,
+
+        // A menu's background-decoration draw, hooked so a mod can supply its own background.
+        MenuDrawDecorations,
+
+        // Resolves a named menu font to its font object, for Render::Text with a chosen font.
+        MenuFindFont,
+
         Count
     };
 

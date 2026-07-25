@@ -66,8 +66,6 @@ typedef struct AmodLauncherApi
 {
     uint32_t structSize;
 
-    /* --- since API version 2 ------------------------------------------------------- */
-
     AmodToken (__cdecl* Subscribe)(AmodMod mod, AmodLauncherEvent event,
                                    AmodLauncherCallback callback, void* user);
     void (__cdecl* Unsubscribe)(AmodMod mod, AmodToken token);

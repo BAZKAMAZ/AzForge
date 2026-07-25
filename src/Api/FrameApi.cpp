@@ -27,15 +27,20 @@ namespace Forge
         const float* g_delta = nullptr;
 
         std::vector<Subscriber> g_subscribers;
+        std::vector<void(__cdecl*)()> g_internalTicks;
 
         double g_elapsed = 0.0;
         uint64_t g_frameIndex = 0;
 
-        // Runs after the game's own frame, so a mod sees the world the game has already
-        // advanced, and reads this frame's delta rather than the previous one's.
+        // Runs after the game's frame, so a mod sees the advanced world and this frame's delta.
         void __cdecl FrameTickDetour(void)
         {
             g_originalTick();
+
+            for (void(__cdecl* const tick)() : g_internalTicks)
+            {
+                tick();
+            }
 
             if (g_subscribers.empty())
             {
@@ -49,8 +54,7 @@ namespace Forge
             frame.elapsed = g_elapsed;
             frame.frameIndex = g_frameIndex++;
 
-            // A copy is walked so a mod unloading itself from inside its own update cannot
-            // invalidate the list mid-iteration.
+            // A copy, so a mod unloading itself from its own update cannot break iteration.
             const std::vector<Subscriber> snapshot = g_subscribers;
             for (const Subscriber& subscriber : snapshot)
             {
@@ -101,8 +105,17 @@ namespace Forge
         g_originalTick = nullptr;
         g_delta = nullptr;
         g_subscribers.clear();
+        g_internalTicks.clear();
         g_elapsed = 0.0;
         g_frameIndex = 0;
+    }
+
+    void FrameApi::AddInternalTick(void(__cdecl* tick)())
+    {
+        if (tick != nullptr)
+        {
+            g_internalTicks.push_back(tick);
+        }
     }
 
     void FrameApi::Register(ModContext* owner, AmodUpdateRoutine update)

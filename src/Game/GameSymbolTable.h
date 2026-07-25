@@ -323,6 +323,67 @@ namespace Forge
             // FUN_00424fd0 timer read into the local pair - the shape no other routine has.
             "83 EC 50 56 57 E8 ?? ?? ?? ?? 8B F0 8D 44 24 0C 50 68 ?? ?? ?? ?? "
             "C7 44 24 14 00 00 00 00"
+        },
+        {
+            "GameConsoleWrite", GameAddress::kGameConsoleWrite,
+            // A 0x408 frame for the vsprintf buffer, the cookie, then the format argument
+            // fetched from the far end of the frame - the console print and nothing else.
+            "81 EC 08 04 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 04 04 00 00 56 "
+            "8B B4 24 14 04 00 00 8B C6"
+        },
+        {
+            "Cmd_Register", GameAddress::kCmdRegister,
+            // Rejects a null name or handler, then the inline strlen before it hashes the
+            // name into the command table at config+0x08.
+            "57 8B 7C 24 08 85 FF 74 66 55 8B 6C 24 10 85 ED 74 5C 8B C7 56 "
+            "8D 70 01 8A 10 40 84 D2 75 F9 2B C6"
+        },
+        {
+            "Console_Execute", GameAddress::kConsoleExecute,
+            // The exception frame with the console scope table, then the 0xc byte frame it
+            // tokenises the line in.
+            "6A FF 68 B8 58 4C 00 64 A1 00 00 00 00 50 83 EC 0C 53 56 57"
+        },
+        {
+            "Render_Begin", GameAddress::kRenderBegin,
+            // The device-check at +0x0c, the early-out that returns 0 in AL, the resize test at
+            // +0x58, then TestCooperativeLevel through the device vtable. The Present pointer call
+            // is an import, so it is wildcarded.
+            "56 8B F1 83 7E 0C 00 75 04 32 C0 5E C3 80 7E 58 00 74 22 8B 46 04 6A 01 6A 00 50 "
+            "FF 15 ?? ?? ?? ??"
+        },
+        {
+            "Render_Present", GameAddress::kRenderPresent,
+            // The device-lost gate at +0x20, then the load of the device at +0x0c and the
+            // call through its EndScene slot at vtable +0x8c - the shape no other routine has.
+            // The "EndScene" string push is an absolute, so it is wildcarded.
+            "56 8B F1 80 7E 20 00 0F 85 85 00 00 00 8B 46 0C 8B 08 8B 91 8C 00 00 00 "
+            "50 FF D2 85 C0 7D 10 50 68 ?? ?? ?? ?? E8 ?? ?? ?? ??"
+        },
+        {
+            "MenuItem_Render", GameAddress::kMenuItemRender,
+            // The $plank_width test at +0x798, then the ItemAnim state read at +0x5d1/+0x5cc/
+            // +0x5b5 and the LEA of the drawing centre at +0x5c0 - all structure-relative, so
+            // the whole prologue is literal.
+            "83 EC 10 56 8B F1 8B 86 98 07 00 00 85 C0 74 35 0F B6 8E D1 05 00 00 "
+            "D9 86 CC 05 00 00 80 BE B5 05 00 00 00 51 0F 94 C2 0F B6 CA 51 51 "
+            "8D 96 C0 05 00 00 D9 1C 24 50 52"
+        },
+        {
+            "Menu_DrawDecorations", GameAddress::kMenuDrawDecorations,
+            // Reads the $image collection at menu+0x74 and the $images_anim at menu+0x78, draws
+            // each, then tests the background-tile flag at menu+0xF4 - the decoration draw and
+            // nothing else. The two draw calls are wildcarded.
+            "83 EC 0C 56 8B F1 8B 46 74 6A 00 50 E8 ?? ?? ?? ?? 8B 4E 78 51 "
+            "E8 ?? ?? ?? ?? 83 C4 0C 80 BE F4 00 00 00 00 74 68"
+        },
+        {
+            "Menu_FindFont", GameAddress::kMenuFindFont,
+            // Defaults a null name to the "default" string, then walks the font registry count
+            // and items (both absolute globals, wildcarded) comparing names. The "default" push
+            // is an absolute too.
+            "53 55 8B 6C 24 0C 56 57 85 ED 75 05 BD ?? ?? ?? ?? 8B 1D ?? ?? ?? ?? "
+            "33 F6 85 DB 7E 3B 8B 3D ?? ?? ?? ??"
         }
     };
 }

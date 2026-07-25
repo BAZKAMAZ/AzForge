@@ -1,15 +1,9 @@
 /*
  * BoxMenuApi.h - the menus as a whole, and moving between them.
  *
- * ObjectsMenuApi reaches inside one menu; this reaches across them. A menu is addressed by
- * its $menu_id, and every button that carries $sub_menu already navigates to one. Here a mod
- * can register a menu of its own for those buttons to reach, ask which menu is on screen, and
- * drive the navigation itself.
- *
- * The manager keeps a current menu, an optional box overlay layered over it, and a stack of
- * the menus stepped through to get here - the same stack the game's ID_BACK button pops.
- *
- * Reached through AmodApi::boxMenu, null on a loader older than API version 5.
+ * ObjectsMenuApi reaches inside one menu; this reaches across them: register a menu of your
+ * own for $sub_menu buttons to reach, ask which is on screen, and drive the navigation.
+ * Reached through AmodApi::boxMenu.
  */
 
 #ifndef AZFORGE_BOX_MENU_API_H
@@ -24,8 +18,6 @@ extern "C" {
 typedef struct AmodBoxMenuApi
 {
     uint32_t structSize;
-
-    /* --- since API version 5 ------------------------------------------------------- */
 
     /* Registers an empty menu under this id, for $sub_menu buttons to reach and for
      * ObjectsMenu::Add to fill. Non-zero on success; zero if the id is already taken or the
@@ -64,18 +56,6 @@ typedef struct AmodBoxMenuApi
 
 #ifdef __cplusplus
 
-/*
- * Inline layer, compiled into the mod:
- *
- *     if (!Amod::Box::Exists("IDM_MODS"))
- *     {
- *         Amod::Box::Register("IDM_MODS");
- *         Amod::Menu::Add("IDM_MODS", R"( $menu_items { ... } )");
- *     }
- *
- *     if (Amod::Box::IsCurrent("IDM_MAIN_MENU"))
- *         Amod::Box::Open("IDM_MODS");
- */
 namespace Amod
 {
     namespace Box

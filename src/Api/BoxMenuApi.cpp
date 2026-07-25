@@ -72,11 +72,8 @@ namespace Forge
                    g_goBack != nullptr && g_closeAll != nullptr;
         }
 
-        // Appends a menu pointer to the registry at manager+0x08 / +0x38, the tail of
-        // Menu_Register done without its parser: the parser is what throws on an absent
-        // script, and that throw has no handler on a mod's call stack the way it does on the
-        // game's. This is the grow that Collection_AppendPointer performs, in C++ so the
-        // calling convention of that helper does not have to be trusted.
+        // The tail of Menu_Register - append to the registry at manager+0x08/+0x38 - without
+        // its parser, which throws on an absent script and has no handler on a mod's stack.
         bool AppendToRegistry(void* manager, void* menu)
         {
             int* const countPtr = reinterpret_cast<int*>(static_cast<uint8_t*>(manager) + 0x38);
@@ -129,9 +126,8 @@ namespace Forge
                 return 0;
             }
 
-            // Zeroed before construction so the fields the base constructor leaves alone -
-            // the disabled flag at +0x209 among them - are clear rather than whatever the
-            // allocator handed back; a stray disabled flag would make the menu unreachable.
+            // Zeroed first: the constructor leaves the disabled flag at +0x209 untouched, and
+            // a stray one would make the menu unreachable.
             memset(block, 0, kSizeBaseMenu);
             g_construct(block, nullptr);
 

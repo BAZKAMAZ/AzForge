@@ -4,8 +4,10 @@
 
 #include "src/Api/BlockExpressionApi.h"
 #include "src/Api/BoxMenuApi.h"
+#include "src/Api/ConsoleApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
+#include "src/Api/RenderApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeText.h"
@@ -109,5 +111,7 @@ namespace Forge
         context.table.objectsMenu = ObjectsMenuApi::Table();
         context.table.boxMenu = BoxMenuApi::Table();
         context.table.blockExpression = BlockExpressionApi::Table();
+        context.table.console = ConsoleApi::Table();
+        context.table.render = RenderApi::Table();
     }
 }

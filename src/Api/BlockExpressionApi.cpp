@@ -16,9 +16,8 @@ namespace Forge
 {
     namespace
     {
-        // One key and the value it carries. The value's text points back into this node's own
-        // storage, which is why an expression lives behind a unique_ptr: the pointer a mod
-        // reads stays put when other expressions are added or removed around it.
+        // value.text points into this node's own storage; the unique_ptr keeps that pointer
+        // stable as other expressions come and go around it.
         struct Expr
         {
             std::string key;
@@ -33,9 +32,8 @@ namespace Forge
             std::vector<std::unique_ptr<Node>> children;
         };
 
-        // Everything one mod made. Trees are owned here; the live set is what a handle is
-        // checked against before it is followed, so a stale or foreign block is refused
-        // rather than dereferenced.
+        // Everything one mod made. A handle is checked against the live set before use, so a
+        // stale or foreign block is refused rather than dereferenced.
         struct ModStore
         {
             std::vector<std::unique_ptr<Node>> roots;
@@ -119,9 +117,8 @@ namespace Forge
 
         // --- the script syntax parser --------------------------------------------------
         //
-        // The same shape the game reads - $key value, $name { ... }, // and /* */ comments,
-        // quoted strings - but it builds this mod's own tree rather than a game object, so it
-        // is free to enumerate everything and to keep keys the engine would not know.
+        // The same shape the game reads - $key value, $name { }, // and /* */, quoted strings -
+        // but into this mod's own tree, so it can enumerate freely and keep unknown keys.
 
         struct Parser
         {
@@ -224,8 +221,7 @@ namespace Forge
             return true;
         }
 
-        // Classifies the value tokens of one expression into an AmodValue, the way the game's
-        // readers would have taken them: a run of up to four numbers, a lone integer, or text.
+        // A run of up to four numbers, a lone integer, or text - as the game's readers take them.
         void Classify(const std::vector<std::string>& tokens, const std::vector<char>& quoted,
                       Expr& expr)
         {

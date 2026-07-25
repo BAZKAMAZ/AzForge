@@ -75,6 +75,116 @@ namespace Forge
         constexpr uintptr_t kGameFrameTick = 0x00425000; // __cdecl (void)
         constexpr uintptr_t kFrameDelta = 0x0067A5F8;    // float, seconds since last frame
 
+        // The Direct3D 8 render manager (CRenderState @0x00695c68), reached through the
+        // pointer the game keeps at kRenderManagerPtr. CRenderState::Present is the last
+        // render call each frame: on entry the scene is still open (CRenderState::Begin ran
+        // BeginScene), and it calls IDirect3DDevice8::EndScene then Present. Hooking its entry
+        // is where a mod draws an overlay over the finished frame, before EndScene.
+        //
+        //   Render_Present  __thiscall (manager)   vtable +0x44, @0x0047a110
+        //
+        // The device is at manager+0x0C, and manager+0x20 is a device-lost flag that Present
+        // and Begin both honour. The backbuffer size lives in an embedded struct at
+        // manager+0xA8, width at +0xB4 and height at +0xB8.
+        // The game's styled-text draw is an indirect call through the global function pointer
+        // at 0x00691308, __cdecl with eight arguments:
+        //   draw(font, text, 0, centre[2], scale[2], colour[4], align, 0)
+        // scale points at two floats (x,y from ItemAnim_GetScale) and colour at four (RGBA
+        // 0..1 from ItemAnim_GetColor). The pointer is null until the game sets it at run time,
+        // so a hook swaps it lazily. Swapping it lets a mod recolour, fade or resize a native
+        // item's label while the game keeps drawing it.
+        constexpr uintptr_t kDrawStyledTextPtr       = 0x00691308; // void(__cdecl*)(...)
+
+        // The low-level sprite blit is another runtime-set __cdecl pointer, at 0x006912f0:
+        //   draw(sprite, x, y, w, h, 0, colour[4], a7, a8)
+        // Menu_DrawSprite @0x00449b90 calls it with the colour computed by ItemAnim_GetColor, so
+        // the sprite kinds (img_button, castle) draw through it; MenuLogo_Render passes a null
+        // colour. Swapping it lets a mod recolour or fade a native sprite element.
+        constexpr uintptr_t kDrawSpritePtr           = 0x006912F0; // void(__cdecl*)(...)
+
+        // The $static_text decoration draw is another runtime-set __cdecl pointer, at 0x00691310,
+        // used only by StaticText_DrawItem @0x0044a6b0:
+        //   draw(a1, pos, a3, a4, a5, colour[4], a7)   -- seven args, colour is arg index 5
+        // colour points at four floats in the static_text record (record+0x454). A $static_text
+        // is a decoration, not a vtable element, so this is how a mod recolours it.
+        constexpr uintptr_t kDrawStaticTextPtr       = 0x00691310; // void(__cdecl*)(...)
+
+        // The system font (scripts/fnt_sys2.txt) is a static font object at 0x00503598, built by
+        // LoadGameFont @0x004258a0 at render init. It is the font the help text and info readouts
+        // draw with, and the default a mod's Render::Text hands to g_pfnDrawStyledText.
+        constexpr uintptr_t kSystemFont              = 0x00503598;
+
+        // Menu_FindFont @0x00444380 resolves a font by the name it was given in the menu_fonts
+        // block of menu_cfg.txt (bigitem, multy_e, and so on) to its font object, or the default
+        // font for a null or unknown name. __cdecl (const char* name) -> font. The registry it
+        // searches is filled by Menu_LoadMenuCfg @0x00444fb0, entries of 0x44 bytes, name at +0
+        // and the font object at +0x40.
+        constexpr uintptr_t kMenuFindFont            = 0x00444380;
+
+        // Every menu element kind draws through slot 0 of its own vtable (the render method):
+        // MenuItem_Render is slot 0 of CMenuButton::vftable, and each other kind has its render
+        // at slot 0 of its vftable. Patching that one slot in each vtable with a shared thunk
+        // wraps the draw of every element of every kind - the universal element-draw hook.
+        // The vtable each element carries at element+0 identifies its kind, so the thunk finds
+        // the original render to chain to. Confirmed renders: item 0x0045f620, logo 0x0045f3e0,
+        // img_button 0x0045e840, slider 0x0045b9d0.
+        // Slot 0 is the render for every drawable element kind. A $table is the exception: its
+        // slot 0 is the scalar deleting destructor (kTableDestroyVtableSlot below), not a render,
+        // so it must not be patched - and a table is not drawn as an ordinary element anyway.
+        constexpr uintptr_t kElementRenderSlot = 0x00;
+        constexpr uintptr_t kElementVtables[] =
+        {
+            0x004D3564, // menu_items  $item   (CMenuButton::vftable, slot0 = MenuItem_Render)
+            0x004D34D4, // $logo                (slot0 = MenuLogo_Render)
+            0x004D3464, // text_buttons $button (slot0 = TextButton_Render)
+            0x004D33DC, // img_buttons  $button (slot0 = ImageButton_Render)
+            0x004D3334, // hotkey_buttons $button (slot0 = HotkeyButton_Render)
+            0x004D32BC, // castle_buttons $button (slot0 = CastleButton_Render)
+            0x004D3154, // lists $list          (slot0 = MenuList_Render)
+            0x004D30DC, // sliders $slider      (slot0 = MenuSlider_Render)
+        };
+
+        // MenuItem_Render @0x0045f620 draws a $item's plank and label (the label through
+        // g_pfnDrawStyledText @0x00691308). It is the item's vtable render, called once per
+        // visible $item each frame; detouring it lets a mod draw before or after the game's
+        // own draw of an item, or replace it. __thiscall (element). The element's $id is the
+        // inline string at element+0x715 (kMenuElementIdOffset).
+        constexpr uintptr_t kMenuItemRender          = 0x0045F620;
+
+        // Menu_DrawDecorations @0x00451420 draws a menu's background - the $image scene, animated
+        // images and the background tile - before Menu_DrawElements draws the text and buttons on
+        // top. Detouring it and skipping the original lets a mod draw a custom background in its
+        // place. __thiscall (menu); the menu's $menu_id is the inline string at menu+0x09.
+        constexpr uintptr_t kMenuDrawDecorations     = 0x00451420;
+
+        // CRenderState::Begin (manager vtable +0x40, @0x0047b230) opens the frame: it calls
+        // IDirect3DDevice8::BeginScene and returns non-zero when the frame will be drawn. It runs
+        // before the game draws the world and menu, so a detour that fires after it is where a mod
+        // sets render state that affects the whole frame (wireframe, and so on) or draws a layer
+        // under everything. __thiscall (manager).
+        constexpr uintptr_t kRenderBegin             = 0x0047B230;
+
+        constexpr uintptr_t kRenderPresent           = 0x0047A110;
+        constexpr uintptr_t kRenderManagerPtr        = 0x0067CB40; // CRenderState**
+        constexpr uintptr_t kRenderDeviceOffset      = 0x0C;       // IDirect3DDevice8*
+        constexpr uintptr_t kRenderDeviceLostOffset  = 0x20;       // byte, set while lost
+        constexpr uintptr_t kRenderViewportInfoOffset = 0xA8;
+        constexpr uintptr_t kRenderViewportWidthOffset = 0x0C;     // within the info struct
+        constexpr uintptr_t kRenderViewportHeightOffset = 0x10;
+
+        // The developer console (nsConsole): a Quake-style console with named commands, cvars
+        // and text output. The command table hangs off a global config singleton at +0x08.
+        //
+        //   GameConsoleWrite(level, fmt, ...)   __cdecl variadic; level 0 needs the
+        //                                       'developer' cvar, level 1 always writes
+        //   Cmd_Register(config, name, handler) __thiscall, handler is __cdecl(argc, argv)
+        //   Console_Execute(config, line)       __thiscall, runs a command line
+        constexpr uintptr_t kConfig            = 0x0067A0D8; // Config** singleton
+        constexpr uintptr_t kConfigCommandsOffset = 0x08;
+        constexpr uintptr_t kGameConsoleWrite  = 0x004220C0;
+        constexpr uintptr_t kCmdRegister       = 0x00423990;
+        constexpr uintptr_t kConsoleExecute    = 0x004237B0;
+
         constexpr uintptr_t kMenuTakeClickResult = 0x00451660; // __thiscall (menu, dest[5])
         constexpr uintptr_t kClickResultMenuId = 0x00;    // dest indices, each a char*
         constexpr uintptr_t kClickResultItemId = 0x04;
@@ -400,4 +510,22 @@ namespace Forge
     //   Game_FrameTick  SUB ESP,0x50 / PUSH ESI / PUSH EDI                            -> 5
     constexpr uint8_t kGameFrameTickPrologue[] =
         { 0x83, 0xEC, 0x50, 0x56, 0x57 };
+
+    //   Render_Begin    PUSH ESI / MOV ESI,ECX / CMP dword [ESI+0x0C],0               -> 7
+    constexpr uint8_t kRenderBeginPrologue[] =
+        { 0x56, 0x8B, 0xF1, 0x83, 0x7E, 0x0C, 0x00 };
+
+    //   Render_Present  PUSH ESI / MOV ESI,ECX / CMP byte [ESI+0x20],0                -> 7
+    // All three are position independent, so seven bytes are taken and two padded with NOPs;
+    // the CMP is followed by a near JNZ outside the stolen range.
+    constexpr uint8_t kRenderPresentPrologue[] =
+        { 0x56, 0x8B, 0xF1, 0x80, 0x7E, 0x20, 0x00 };
+
+    //   MenuItem_Render  SUB ESP,0x10 / PUSH ESI / MOV ESI,ECX                         -> 6
+    constexpr uint8_t kMenuItemRenderPrologue[] =
+        { 0x83, 0xEC, 0x10, 0x56, 0x8B, 0xF1 };
+
+    //   Menu_DrawDecorations  SUB ESP,0x0C / PUSH ESI / MOV ESI,ECX                     -> 6
+    constexpr uint8_t kMenuDrawDecorationsPrologue[] =
+        { 0x83, 0xEC, 0x0C, 0x56, 0x8B, 0xF1 };
 }

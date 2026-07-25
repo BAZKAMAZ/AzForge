@@ -2,9 +2,11 @@
 
 #include "src/Core/ForgeBoot.h"
 #include "src/Api/BoxMenuApi.h"
+#include "src/Api/ConsoleApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
+#include "src/Api/RenderApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeText.h"
@@ -132,6 +134,8 @@ namespace Forge
         ObjectsMenuApi::Install();
         BoxMenuApi::Install();
         FrameApi::Install();
+        ConsoleApi::Install();
+        RenderApi::Install();
         ModHost::LoadAll(g_registry.LoadOrder());
         ShutdownHook::Install(&Boot::Stop);
 
@@ -154,6 +158,7 @@ namespace Forge
         ObjectsMenuApi::Uninstall();
         BoxMenuApi::Uninstall();
         FrameApi::Uninstall();
+        RenderApi::Uninstall();
         ModFileSystem::Clear();
         g_registry.Clear();
 

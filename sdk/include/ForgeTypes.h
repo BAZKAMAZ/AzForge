@@ -12,7 +12,7 @@
 
 /* Version of the interface as a whole. A mod declares what it was built against in mod.json
  * as api_version; a mod asking for more than the loader implements is refused. */
-#define AMOD_API_VERSION                                            8
+#define AMOD_API_VERSION                                            16
 
 #define AMOD_EXPORT                                                 __declspec(dllexport)
 
@@ -67,6 +67,16 @@ typedef struct AmodValue
     float numbers[4];       /* AMOD_VALUE_FLOAT */
     const char* text;       /* AMOD_VALUE_STRING; when read, points into the owner */
 } AmodValue;
+
+/* Passed once per frame to AmodUpdate and to render callbacks. Shared because more than one
+ * subsystem hands it out. */
+typedef struct AmodFrame
+{
+    uint32_t structSize;    /* sizeof(AmodFrame) as the running loader built it */
+    float delta;            /* seconds since the previous frame, the game's own step */
+    double elapsed;         /* seconds since the first frame */
+    uint64_t frameIndex;    /* frames seen so far, starting at 0 */
+} AmodFrame;
 
 #ifdef __cplusplus
 } /* extern "C" */

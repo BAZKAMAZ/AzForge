@@ -3,9 +3,11 @@
 #include "src/Mods/ModLibrary.h"
 
 #include "src/Api/BlockExpressionApi.h"
+#include "src/Api/ConsoleApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
+#include "src/Api/RenderApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeText.h"
@@ -216,12 +218,14 @@ namespace Forge
 
     void ModLibrary::Unload()
     {
-        // Registrations go before the mod's own teardown: by the time AmodShutdown runs,
-        // nothing the loader holds can call back into code that is about to disappear.
+        // Released before AmodShutdown, so nothing the loader holds calls into code that is
+        // about to unload.
         FrameApi::ForgetMod(&m_context);
         LauncherApi::ForgetMod(&m_context);
         ObjectsMenuApi::ForgetMod(&m_context);
         BlockExpressionApi::ForgetMod(&m_context);
+        ConsoleApi::ForgetMod(&m_context);
+        RenderApi::ForgetMod(&m_context);
         m_context.owned.ReleaseAll();
 
         if (m_initialised && m_shutdown != nullptr)

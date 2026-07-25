@@ -30,8 +30,6 @@ typedef struct AmodBlockExpressionApi
 {
     uint32_t structSize;
 
-    /* --- since API version 8 ------------------------------------------------------- */
-
     /* Standalone trees the mod owns. Parse reads a fragment in the game's script syntax into
      * a tree; NewTree starts an empty one. Free releases a root and its subtree, though
      * everything a mod made is freed when it unloads regardless. */
@@ -70,17 +68,6 @@ typedef struct AmodBlockExpressionApi
 
 #ifdef __cplusplus
 
-/*
- * Inline layer, compiled into the mod:
- *
- *     auto cfg = Amod::Data::Parse(R"( $difficulty 3  $name "Hard" )");
- *     int d = cfg["difficulty"].Int();
- *     cfg["difficulty"].Set(5);
- *     cfg.Child("weapons").Child("sword")["damage"].Set(10);
- *
- *     Amod::Data::On(monster)["ai_mode"].Set("hunter");
- *     const char* m = Amod::Data::On(monster)["ai_mode"].Text();
- */
 namespace Amod
 {
     namespace Data

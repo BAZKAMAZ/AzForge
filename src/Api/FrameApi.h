@@ -8,12 +8,8 @@ namespace Forge
 
     typedef void(__cdecl* AmodUpdateRoutine)(const AmodFrame* frame);
 
-    // Loader side of the per-frame update.
-    //
-    // A mod that exports AmodUpdate is registered here; a single detour on Game_FrameTick
-    // then calls every registered mod once per frame, with the delta the game itself worked
-    // out. Unlike the launcher and menu interfaces there is no table a mod calls - AmodUpdate
-    // is an export the loader resolves and drives, the way it does AmodInit and AmodShutdown.
+    // Loader side of the per-frame update. One detour on Game_FrameTick calls each mod's
+    // AmodUpdate export once a frame; there is no table a mod calls.
     class FrameApi
     {
     public:
@@ -23,5 +19,9 @@ namespace Forge
         // A loaded mod's AmodUpdate export. Ignored when update is null.
         static void                                                 Register(ModContext* owner, AmodUpdateRoutine update);
         static void                                                 ForgetMod(ModContext* owner);
+
+        // A loader subsystem's per-frame nudge, to notice state that only exists once the
+        // game runs (the console becoming ready). Called every frame, before the mods.
+        static void                                                 AddInternalTick(void(__cdecl* tick)());
     };
 }

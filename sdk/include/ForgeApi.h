@@ -2,34 +2,10 @@
  * ForgeApi.h - the interface between AzForge and a mod. Include this one; it pulls in the
  * subsystem headers.
  *
- * A mod is a 32-bit DLL inside an .amod container. The loader resolves two exports from it
- * and passes tables of function pointers: no linking, no import library, no dependency on
- * AzForge.dll. A version mismatch is reported instead of failing at load time with a missing
- * entry point.
- *
- * Rules of the boundary:
- *
- *   - C linkage and __cdecl. No C++ objects, no STL types, no exceptions cross it.
- *   - Strings are UTF-8 and zero terminated. What the loader returns stays valid until
- *     AmodShutdown unless stated otherwise.
- *   - Tables only ever grow at the end, and each carries its structSize.
- *   - Everything a mod registers is released when it is unloaded, in reverse order. A mod
- *     does not write teardown that mirrors its setup.
- *
- * Minimal mod:
- *
- *     #include <ForgeApi.h>
- *
- *     AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
- *     {
- *         if (!Amod::Attach(api))
- *             return AMOD_ERROR_API_VERSION;
- *
- *         Amod::Log(AMOD_LOG_INFO, "%s is up", Amod::ModId());
- *         return AMOD_OK;
- *     }
- *
- *     AMOD_EXPORT void __cdecl AmodShutdown(void) { }
+ * A mod is a 32-bit DLL in an .amod container. The loader resolves its exports and passes
+ * tables of function pointers - no linking against AzForge.dll. The boundary is C linkage and
+ * __cdecl, UTF-8 strings, tables that only grow at the end and carry their structSize, and
+ * registrations that are released automatically when the mod unloads.
  */
 
 #ifndef AZFORGE_FORGE_API_H
@@ -40,6 +16,8 @@
 #include "ObjectsMenuApi.h"
 #include "BoxMenuApi.h"
 #include "BlockExpressionApi.h"
+#include "ConsoleApi.h"
+#include "RenderApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -51,8 +29,6 @@ typedef struct AmodApi
     uint32_t apiVersion;    /* AMOD_API_VERSION the running loader implements */
     AmodMod self;           /* the mod this table belongs to */
 
-    /* --- since API version 1 ------------------------------------------------------- */
-
     /* One line into forge.log. The text is taken as it is; formatting is the caller's. */
     void (__cdecl* Log)(AmodMod mod, AmodLogLevel level, const char* text);
 
@@ -63,42 +39,22 @@ typedef struct AmodApi
     /* Directory holding game.exe, UTF-8. */
     const char* (__cdecl* GetGameDirectory)(void);
 
-    /* Load address of game.exe. It has no relocations, so this is 0x00400000 in practice;
-     * a mod working with absolute addresses should still add the difference from that
-     * rather than assume it. */
+    /* Load address of game.exe, 0x00400000 in practice. */
     uintptr_t (__cdecl* GetGameModuleBase)(void);
-
-    /* --- since API version 2 ------------------------------------------------------- */
 
     /* Which layout of game.exe this is, one of AMOD_GAME_BUILD_*. */
     uint32_t (__cdecl* GetGameBuild)(void);
 
-    /* Null on a loader that does not offer the subsystem. */
+    /* Each null on a loader that does not offer the subsystem. */
     const AmodLauncherApi* launcher;
-
-    /* --- since API version 3 ------------------------------------------------------- */
-
     const AmodObjectsMenuApi* objectsMenu;
-
-    /* --- since API version 5 ------------------------------------------------------- */
-
     const AmodBoxMenuApi* boxMenu;
-
-    /* --- since API version 8 ------------------------------------------------------- */
-
     const AmodBlockExpressionApi* blockExpression;
+    const AmodConsoleApi* console;
+    const AmodRenderApi* render;
 
-    /* Fields added in later API versions go here, and nowhere else. */
+    /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
-
-/* Passed to AmodUpdate once per frame. */
-typedef struct AmodFrame
-{
-    uint32_t structSize;    /* sizeof(AmodFrame) as the running loader built it */
-    float delta;            /* seconds since the previous frame, the game's own step */
-    double elapsed;         /* seconds since the first frame */
-    uint64_t frameIndex;    /* frames seen so far, starting at 0 */
-} AmodFrame;
 
 /* Called once, before the game starts. Anything other than AMOD_OK unloads the mod. The
  * tables stay valid until AmodShutdown returns. */
@@ -126,9 +82,8 @@ namespace Amod
 {
     inline const AmodApi* g_api = nullptr;
 
-    /* Stores the tables after checking the running loader can serve what this mod was built
-     * against. False is the mod's cue to return AMOD_ERROR_API_VERSION rather than carry on
-     * partially working. */
+    /* Checks the loader can serve what this mod was built against and wires up the subsystem
+     * namespaces. False means the mod should return AMOD_ERROR_API_VERSION. */
     inline bool                                                     Attach(const AmodApi* api)
     {
         if (api == nullptr ||
@@ -143,6 +98,8 @@ namespace Amod
         Menu::Attach(api->objectsMenu, api->self);
         Box::Attach(api->boxMenu, api->self);
         Data::Attach(api->blockExpression, api->self);
+        Console::Attach(api->console, api->self);
+        Render::Attach(api->render, api->self);
         return true;
     }
 

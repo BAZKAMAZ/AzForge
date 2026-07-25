@@ -1,14 +1,5 @@
 /*
  * ObjectsMenuApi.h - the in-game menus.
- *
- * Menus are built from menu_*.txt scripts. Interactive elements declare a mandatory $id and
- * are addressed by it; decorative $image and $static_text entries carry no identity and are
- * not reachable here.
- *
- * Elements are read and written through the same keys their script block uses, so $pos is
- * "pos" and a key inside a nested block is a path: "caption.offs".
- *
- * Reached through AmodApi::objectsMenu, null on a loader older than API version 3.
  */
 
 #ifndef AZFORGE_OBJECTS_MENU_API_H
@@ -49,99 +40,13 @@ typedef struct AmodMenuClicked
 
 typedef void (__cdecl* AmodMenuCallback)(AmodMenuEvent event, void* data, void* user);
 
-/* AmodValue and AmodValueKind moved to ForgeTypes.h, shared with the block/expression
- * interface; ForgeTypes.h is already included above. */
-
-/*
- * Keys carried by every element:
- *
- *   id                string   renaming it is allowed and breaks lookups by the old name
- *   pos               float 2  writing it moves the rectangle and the drawing centre too
- *   size, rect_size   float 2  width and height; writing places the element again
- *   rect              float 4  left, bottom, right, top
- *   centre            float 2  where the element is drawn, read only
- *   align             int      1 left, 2 right, 4 centred, 8 top, 0x20 centred vertically
- *   visible           bool
- *   unreg_enabled     bool
- *   group             string
- *   sub_menu          string
- *   box_menu          string
- *   reg_menu          string
- *   help              string
- *   warning           string
- *   lock              string
- *   font_id           int      resolved font, read only
- *   caption.text      string
- *   caption.offs      float 2
- *   caption.rect_len  float 1
- *   caption.rect      float 4  derived from rect_len; a logo keeps its own edges here
- *   caption.enabled   bool     the script gave a $caption block
- *
- * Carried only by elements the game built as $item:
- *
- *   text              string   the label that is drawn
- *   plank_width       int
- *   cursor3d          bool     the script gave a $cursor3d block
- *   cursor3d.orient   float 3  where the 3d cursor beside the item points
- *   cursor3d.pos      float 3
- *
- * Decorative $image, $images_anim and $static entries all carry:
- *
- *   unreg_only        int      shown only while the game is unregistered
- *
- * Carried only by a $logo, which is a link to website.url rather than a button and swaps
- * sprites as the cursor comes and goes. It places itself without $align, so pos and size
- * are its own and rebuild its edges the way its parser does:
- *
- *   sp1, sp2          int      sprite handles, plain and focused
- *   sprite            int      the one being drawn
- *   two_sprites       bool     both were loaded, so swapping is possible
- *   swap_on_focus     bool
- *   size              float 2  the extent the edges are built from
- *   rect_copy         float 4  the second copy of the edges the parser keeps
- *
- * Carried only by a $list, the horizontal chooser the options screens are built from.
- * Its $items are addressed by subscript, and a count that asks for more entries than
- * there are is refused - entries can be dropped from the end but not created:
- *
- *   items             int      how many entries; items[2] is the third of them, a string
- *   columns           int      how many fit across
- *   left.rect         float 4  the arrow that steps back, and text.rect, right.rect
- *   left.key          int      the key that works it, and text.key, right.key
- *
- * Carried by the two image kinds, from the $item_anim block: a colour and a scale for each
- * state a button can be in. A castle button parses that block twice and keeps the second
- * under anim_castle, with the same ten keys:
- *
- *   anim.color_passive     float 4  and color_active, color_disabled, color_blocked,
- *                                   color_nof_active
- *   anim.scale_passive     float 2  and the same four again
- *
- * A $table is not an element and shares none of the keys above - no position, no rectangle,
- * no alignment. It places its rows itself:
- *
- *   id                string
- *   line_pos          float 1  where the first row sits, with line_step between them
- *   line_step         float 1
- *   line_count        int
- *   lines_vert_align  int
- *   header_color      float 4  and body_color
- *   header_scale      float 2  and body_scale
- *   point_step        float 1  and point_margin
- *   font_id           int      resolved font, read only
- *   col.title         string   how many columns there are; col.title[1] names the second
- *   col.horz_pos      float 1  and col.align, col.fixed, indexed the same way
- *
- * A key this kind of element does not carry is refused: the field belongs to another kind,
- * and what this one keeps at that offset is not known, so writing there would corrupt
- * something unrelated. GetRawPointer is the way past that.
- */
+/* The keys each kind of element carries are documented on the site. A key a kind does not
+ * carry is refused rather than written to an unrelated field; GetRawPointer is the way past
+ * the typed interface. */
 
 typedef struct AmodObjectsMenuApi
 {
     uint32_t structSize;
-
-    /* --- since API version 3 ------------------------------------------------------- */
 
     AmodToken (__cdecl* Subscribe)(AmodMod mod, AmodMenuEvent event,
                                    AmodMenuCallback callback, void* user);
@@ -172,17 +77,10 @@ typedef struct AmodObjectsMenuApi
      * expectedGameBuild matches AmodApi::GetGameBuild. */
     void* (__cdecl* GetRawPointer)(AmodMod mod, AmodMenuItem item, uint32_t expectedGameBuild);
 
-    /* --- since API version 4 ------------------------------------------------------- */
-
-    /* Builds objects into a menu out of a fragment written in the syntax of a menu_*.txt,
-     * and answers the first one, or null when nothing was built.
-     *
-     * The fragment goes to the game's own parser, so an object made this way is
-     * indistinguishable from one the game's script declared - the alignment, the drawing
-     * centre and everything else a parser derives come out the same.
-     *
-     * Objects belong to the menu and go away when it is rebuilt, so this belongs in an
-     * AMOD_MENU_LOADED handler, next to the changes made to what was already there. */
+    /* Builds objects into a menu from a fragment in menu_*.txt syntax and answers the first,
+     * or null. The fragment goes to the game's own parser, so the objects are exactly what a
+     * script would have made. They go away when the menu is rebuilt, so this belongs in an
+     * AMOD_MENU_LOADED handler. */
     AmodMenuItem (__cdecl* AddObject)(AmodMod mod, const char* menuId, const char* fragment);
 
     /* Fields added in later API versions go here, and nowhere else. */

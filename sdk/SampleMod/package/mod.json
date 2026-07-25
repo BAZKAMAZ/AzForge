@@ -3,8 +3,8 @@
   "name": "AzForge Sample Mod",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "Template mod: reworks menus and restyles the start-up launcher.",
-  "api_version": 8,
+  "description": "Template mod: draws a spinning overlay through the render interface.",
+  "api_version": 10,
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll"
 }
