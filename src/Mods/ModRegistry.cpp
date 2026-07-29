@@ -14,11 +14,6 @@ namespace Forge
 {
     namespace
     {
-        std::string PathToUtf8(const std::filesystem::path& path)
-        {
-            return ToUtf8(path.wstring());
-        }
-
         bool HasModExtension(const std::filesystem::path& path)
         {
             std::wstring extension = path.extension().wstring();

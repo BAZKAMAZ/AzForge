@@ -76,6 +76,11 @@ namespace Forge
         memcpy(m_trampoline, site, prologueLength);
         WriteRelativeJump(m_trampoline + prologueLength, site + prologueLength);
 
+        // Freshly written memory that is about to be executed. x86 keeps its instruction
+        // cache coherent with writes on its own, so this changes nothing here; it is what
+        // makes the sequence correct rather than correct by architecture.
+        FlushInstructionCache(GetCurrentProcess(), m_trampoline, prologueLength + kJumpLength);
+
         DWORD previousProtection = 0;
         if (!VirtualProtect(site, prologueLength, PAGE_EXECUTE_READWRITE, &previousProtection))
         {

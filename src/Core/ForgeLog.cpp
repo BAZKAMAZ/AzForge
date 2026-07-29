@@ -44,12 +44,22 @@ namespace Forge
             g_console = GetStdHandle(STD_OUTPUT_HANDLE);
         }
 
-        void Emit(const char* text, size_t length)
+        // durable forces the record past the operating system's cache. A process that crashes
+        // does not need this - the kernel writes the cache out when it tears the handle down,
+        // so an ordinary record survives one - but a machine that hangs hard does, and a bad
+        // detour is exactly the kind of fault that hangs one. It is worth the seek for the
+        // records that explain a failure and not for the rest, which is why the level decides:
+        // a mod logging every frame must not pay for a flush every frame.
+        void Emit(const char* text, size_t length, bool durable)
         {
             DWORD written = 0;
             if (g_file != INVALID_HANDLE_VALUE)
             {
                 WriteFile(g_file, text, static_cast<DWORD>(length), &written, nullptr);
+                if (durable)
+                {
+                    FlushFileBuffers(g_file);
+                }
             }
             if (g_console != INVALID_HANDLE_VALUE)
             {
@@ -68,7 +78,9 @@ namespace Forge
 
         if (!g_lockReady)
         {
-            InitializeCriticalSection(&g_lock);
+            // The spin-count form does not raise on a machine that is out of memory, which
+            // the plain one is documented to do on older Windows.
+            InitializeCriticalSectionAndSpinCount(&g_lock, 4000);
             g_lockReady = true;
         }
 
@@ -91,6 +103,7 @@ namespace Forge
     {
         if (g_file != INVALID_HANDLE_VALUE)
         {
+            FlushFileBuffers(g_file);
             CloseHandle(g_file);
             g_file = INVALID_HANDLE_VALUE;
         }
@@ -143,7 +156,7 @@ namespace Forge
             EnterCriticalSection(&g_lock);
         }
 
-        Emit(record, static_cast<size_t>(length));
+        Emit(record, static_cast<size_t>(length), level != LogLevel::Info);
 
         if (g_lockReady)
         {
@@ -160,7 +173,9 @@ namespace Forge
             EnterCriticalSection(&g_lock);
         }
 
-        Emit(kSeparator, sizeof(kSeparator) - 1);
+        // A separator carries no timestamp or level of its own on purpose: it is there to be
+        // told apart from the records at a glance.
+        Emit(kSeparator, sizeof(kSeparator) - 1, false);
 
         if (g_lockReady)
         {

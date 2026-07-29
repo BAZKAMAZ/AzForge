@@ -75,4 +75,9 @@ namespace Forge
 
         return result;
     }
+
+    std::string PathToUtf8(const std::filesystem::path& path)
+    {
+        return ToUtf8(path.wstring());
+    }
 }

@@ -384,6 +384,29 @@ namespace Forge
             // is an absolute too.
             "53 55 8B 6C 24 0C 56 57 85 ED 75 05 BD ?? ?? ?? ?? 8B 1D ?? ?? ?? ?? "
             "33 F6 85 DB 7E 3B 8B 3D ?? ?? ?? ??"
+        },
+        {
+            "Level_Load", GameAddress::kLevelLoad,
+            // The structured exception frame, then MOV EAX,0x27d0 - the frame it reserves for
+            // the one room entry it parses into, which no other routine asks for. The pushed
+            // handler, the alloca probe and the cookie are absolutes, so they are wildcarded.
+            "6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 B8 D0 27 00 00 E8 ?? ?? ?? ?? "
+            "A1 ?? ?? ?? ?? 33 C4"
+        },
+        {
+            "Level_Free", GameAddress::kLevelFree,
+            // The banner write, then the room loop: the count at +0x930 against a zeroed EDI
+            // and the rooms at +0x92c, both structure-relative and both unique to the level.
+            "56 57 68 ?? ?? ?? ?? 6A 01 8B F1 E8 ?? ?? ?? ?? 33 FF 83 C4 08 "
+            "39 BE 30 09 00 00 7E 23 53 33 DB 8B 86 2C 09 00 00 03 C3 50 8B CE"
+        },
+        {
+            "Level_ActivateRoom", GameAddress::kLevelActivateRoom,
+            // The maze test at +0x934 and its warning, then the maze cursor at +0x93c that the
+            // first argument is added to - the step through the maze and nothing else. Only the
+            // warning string and the console call are absolutes.
+            "56 8B F1 8B 86 34 09 00 00 85 C0 75 15 68 ?? ?? ?? ?? 6A 01 "
+            "E8 ?? ?? ?? ?? 83 C4 08 33 C0 5E C2 08 00 53 8B 9E 3C 09 00 00 03 5C 24 0C"
         }
     };
 }

@@ -173,7 +173,8 @@ namespace Forge
             !ReadOptionalString(root, "game_version", out.gameVersion, error) ||
             !ReadOptionalString(root, "entry", out.entry, error) ||
             !ReadOptionalStringArray(root, "load_after", out.loadAfter, error) ||
-            !ReadOptionalStringArray(root, "conflicts", out.conflicts, error))
+            !ReadOptionalStringArray(root, "conflicts", out.conflicts, error) ||
+            !ReadOptionalStringArray(root, "requires", out.requiredSubsystems, error))
         {
             return false;
         }

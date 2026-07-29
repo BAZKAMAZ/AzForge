@@ -10,6 +10,8 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
 namespace Forge
 {
@@ -37,6 +39,18 @@ namespace Forge
         ManagerRoutine g_closeAll = nullptr;
 
         AmodBoxMenuApi g_table = {};
+
+        // What each mod registered, so a mod that goes away takes its menus with it.
+        struct RegisteredMenu
+        {
+            uint32_t id;
+            ModContext* owner;
+            void* menu;
+            std::string menuId;
+        };
+
+        std::vector<RegisteredMenu> g_registered;
+        uint32_t g_nextRegisteredId = 1;
 
         ModContext* Resolve(AmodMod mod)
         {
@@ -104,6 +118,117 @@ namespace Forge
             return true;
         }
 
+        // Takes a menu back out of the registry, shifting the tail down over it. The array is
+        // the game's own, grown by the game's allocator, so it is left at its current size and
+        // only the count moves - the same shape Menu_Register leaves it in.
+        bool UnlinkFromRegistry(void* manager, void* menu)
+        {
+            int* const countPtr =
+                reinterpret_cast<int*>(static_cast<uint8_t*>(manager) + kMenuManagerRegistryCountOffset);
+            void** const array =
+                *reinterpret_cast<void***>(static_cast<uint8_t*>(manager) + kMenuManagerRegistryOffset);
+
+            if (array == nullptr || *countPtr <= 0)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < *countPtr; ++i)
+            {
+                if (array[i] != menu)
+                {
+                    continue;
+                }
+
+                for (int j = i + 1; j < *countPtr; ++j)
+                {
+                    array[j - 1] = array[j];
+                }
+                *countPtr -= 1;
+                return true;
+            }
+
+            return false;
+        }
+
+        // Whether the manager can still reach this menu: on screen, laid over what is on
+        // screen, or waiting on the stack for a Back that has not happened yet.
+        bool IsMenuInUse(void* manager, void* menu)
+        {
+            uint8_t* const base = static_cast<uint8_t*>(manager);
+
+            if (MenuField(manager, kMenuManagerCurrentOffset) == menu ||
+                MenuField(manager, kMenuManagerBoxOffset) == menu)
+            {
+                return true;
+            }
+
+            const int top = *reinterpret_cast<const int*>(base + kMenuManagerStackTopOffset);
+            void** const stack = reinterpret_cast<void**>(base + kMenuManagerStackOffset);
+            for (int i = 0; i <= top && i < static_cast<int>(kMenuManagerStackCapacity); ++i)
+            {
+                if (stack[i] == menu)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Retires one menu a mod registered. Two things happen and a third deliberately does
+        // not.
+        //
+        // The flag at +0x209 goes up, which is what both Menu_EnterMenu and Menu_ShowBox test,
+        // so nothing can navigate into it again. It is then unlinked from the registry, which
+        // is what makes Menu_FindByMenuId stop answering and frees the id for whoever wants it
+        // next - a mod switched back on, most likely.
+        //
+        // The block itself is not released. A menu owns what its elements allocated, and
+        // giving it back needs the destructor in its vtable, whose contract has not been
+        // reversed; running an unreversed vtable slot during a teardown is how a shutdown
+        // turns into a crash. So one block of kSizeBaseMenu is left behind per menu retired.
+        // It is bounded, it is unreachable, and it is a better trade than the alternative.
+        void RetireMenu(const RegisteredMenu& record)
+        {
+            void* const manager = Manager();
+            if (manager == nullptr)
+            {
+                // The game tore the manager down first, which happens at shutdown. Nothing
+                // is left to unlink from.
+                return;
+            }
+
+            *(static_cast<uint8_t*>(record.menu) + kMenuDisabledOffset) = 1;
+            UnlinkFromRegistry(manager, record.menu);
+
+            if (IsMenuInUse(manager, record.menu))
+            {
+                FORGE_LOG_WARN("Menu '%s' was retired while the game still had it open; it is "
+                               "disabled and unreachable, and the game will let go of it on "
+                               "the next Back", record.menuId.c_str());
+            }
+            else
+            {
+                FORGE_LOG_INFO("Menu '%s' retired with the mod that registered it",
+                               record.menuId.c_str());
+            }
+        }
+
+        void ReleaseRegisteredMenu(void* payload)
+        {
+            const uint32_t id = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(payload));
+            for (auto it = g_registered.begin(); it != g_registered.end(); ++it)
+            {
+                if (it->id == id)
+                {
+                    RetireMenu(*it);
+                    g_registered.erase(it);
+                    return;
+                }
+            }
+        }
+
         int __cdecl ApiRegister(AmodMod mod, const char* menuId)
         {
             void* const manager = Resolve(mod) != nullptr ? Manager() : nullptr;
@@ -139,7 +264,20 @@ namespace Forge
                 return 0;
             }
 
-            FORGE_LOG_INFO("[%s] registered menu '%s'", Resolve(mod)->id.c_str(), menuId);
+            // Recorded against the mod, so switching the mod off takes the menu with it
+            // rather than leaving it in the game's registry for the life of the process.
+            ModContext* const context = Resolve(mod);
+            RegisteredMenu record;
+            record.id = g_nextRegisteredId++;
+            record.owner = context;
+            record.menu = block;
+            record.menuId = menuId;
+            g_registered.push_back(record);
+
+            context->owned.Add(&ReleaseRegisteredMenu,
+                               reinterpret_cast<void*>(static_cast<uintptr_t>(record.id)));
+
+            FORGE_LOG_INFO("[%s] registered menu '%s'", context->id.c_str(), menuId);
             return 1;
         }
 
@@ -268,8 +406,27 @@ namespace Forge
         return true;
     }
 
+    void BoxMenuApi::ForgetMod(ModContext* owner)
+    {
+        // Runs before the mod's own registrations are released, so this is what actually
+        // retires the menus; the release routine then finds nothing left to do.
+        for (auto it = g_registered.begin(); it != g_registered.end();)
+        {
+            if (it->owner == owner)
+            {
+                RetireMenu(*it);
+                it = g_registered.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    }
+
     void BoxMenuApi::Uninstall()
     {
+        g_registered.clear();
         g_table = {};
         g_alloc = nullptr;
         g_realloc = nullptr;

@@ -131,7 +131,7 @@ namespace Forge
     {
         for (auto it = g_subscribers.begin(); it != g_subscribers.end();)
         {
-            it = it->owner == owner ? g_subscribers.erase(it) : it + 1;
+            it = it->owner == owner ? g_subscribers.erase(it) : ++it;
         }
     }
 }

@@ -89,6 +89,11 @@ namespace Forge
         // Resolves a named menu font to its font object, for Render::Text with a chosen font.
         MenuFindFont,
 
+        // The level coming and going, and the one route by which a room becomes current.
+        LevelLoad,
+        LevelFree,
+        LevelActivateRoom,
+
         Count
     };
 

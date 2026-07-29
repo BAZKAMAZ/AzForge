@@ -122,6 +122,30 @@ namespace Forge
                 return true;
             }
 
+            bool AtDigit() const
+            {
+                return !AtEnd() && Peek() >= '0' && Peek() <= '9';
+            }
+
+            // Consumes one or more digits. The caller has already said what it is reading, so
+            // the message names that rather than "a digit" on its own.
+            bool TakeDigits(const char* what)
+            {
+                if (!AtDigit())
+                {
+                    return Fail(what);
+                }
+                while (AtDigit())
+                {
+                    ++m_position;
+                }
+                return true;
+            }
+
+            // Reads a JSON number by its grammar rather than by scanning everything that looks
+            // vaguely numeric and letting strtod object afterwards. The difference is where the
+            // reader stops: "1.2.3" stops at the second dot and reports it, instead of taking
+            // the whole run and reporting the token as a whole.
             bool ParseNumber(JsonValue& out)
             {
                 const size_t start = m_position;
@@ -131,29 +155,51 @@ namespace Forge
                     ++m_position;
                 }
 
-                while (!AtEnd())
+                // A leading zero stands alone: JSON has no octal, and "01" is two tokens.
+                if (!AtEnd() && Peek() == '0')
                 {
-                    const char c = Peek();
-                    const bool numeric = (c >= '0' && c <= '9') || c == '.' ||
-                                         c == 'e' || c == 'E' || c == '+' || c == '-';
-                    if (!numeric)
-                    {
-                        break;
-                    }
                     ++m_position;
+                    if (AtDigit())
+                    {
+                        return Fail("a number cannot start with a zero");
+                    }
+                }
+                else if (!TakeDigits("expected a number"))
+                {
+                    return false;
                 }
 
-                if (m_position == start)
+                if (!AtEnd() && Peek() == '.')
                 {
-                    return Fail("expected a value");
+                    ++m_position;
+                    if (!TakeDigits("expected a digit after the decimal point"))
+                    {
+                        return false;
+                    }
+                }
+
+                if (!AtEnd() && (Peek() == 'e' || Peek() == 'E'))
+                {
+                    ++m_position;
+                    if (!AtEnd() && (Peek() == '+' || Peek() == '-'))
+                    {
+                        ++m_position;
+                    }
+                    if (!TakeDigits("expected a digit in the exponent"))
+                    {
+                        return false;
+                    }
                 }
 
                 const std::string token = m_text.substr(start, m_position - start);
                 char* stop = nullptr;
                 const double value = strtod(token.c_str(), &stop);
+
+                // The grammar above has already established the shape, so anything left here
+                // is the value being out of range rather than the text being malformed.
                 if (stop == nullptr || *stop != '\0')
                 {
-                    return Fail("malformed number");
+                    return Fail("the number cannot be represented");
                 }
 
                 out.SetNumber(value);

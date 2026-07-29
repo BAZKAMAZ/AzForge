@@ -3,8 +3,9 @@
   "name": "AzForge Sample Mod",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "Template mod: draws a spinning overlay through the render interface.",
-  "api_version": 10,
+  "description": "Template mod: reads the level through the world interface, and finds and hooks a game routine of its own through the direct interface.",
+  "api_version": 18,
+  "requires": ["world", "console", "interop"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll"
 }

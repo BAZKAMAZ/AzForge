@@ -3,12 +3,15 @@
 #include "src/Core/ForgeBoot.h"
 #include "src/Api/BoxMenuApi.h"
 #include "src/Api/ConsoleApi.h"
+#include "src/Api/InteropApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/RenderApi.h"
+#include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
+#include "src/Core/ForgeSubsystems.h"
 #include "src/Core/ForgeText.h"
 #include "src/Core/ForgeVersion.h"
 #include "src/Game/GameFunctions.h"
@@ -26,11 +29,6 @@ namespace Forge
         HMODULE g_module = nullptr;
         ModRegistry g_registry;
         bool g_running = false;
-
-        std::string PathToUtf8(const std::filesystem::path& path)
-        {
-            return ToUtf8(path.wstring());
-        }
 
         void WriteBanner()
         {
@@ -118,7 +116,7 @@ namespace Forge
         {
             FORGE_LOG_ERROR("This is not the game AzForge was built for. No mods are loaded and "
                             "the process is left exactly as it was.");
-            return true;
+            return false;
         }
 
         ModFileSystem::Build(g_registry.LoadOrder());
@@ -130,12 +128,25 @@ namespace Forge
             PackageHook::Install();
         }
 
-        LauncherApi::Install();
-        ObjectsMenuApi::Install();
-        BoxMenuApi::Install();
-        FrameApi::Install();
-        ConsoleApi::Install();
-        RenderApi::Install();
+        // Each of these stands or falls on its own and a failure is not fatal: the subsystem's
+        // table is handed to mods as null, which the interface documents. What is recorded is
+        // which ones made it, so the log says so plainly and a mod that declared it needs one
+        // is refused with a reason rather than loading against a null.
+        Subsystems::Record("launcher", LauncherApi::Install());
+        Subsystems::Record("objects_menu", ObjectsMenuApi::Install());
+        Subsystems::Record("box_menu", BoxMenuApi::Install());
+        Subsystems::Record("frame", FrameApi::Install());
+        Subsystems::Record("console", ConsoleApi::Install());
+        Subsystems::Record("render", RenderApi::Install());
+        Subsystems::Record("world", WorldApi::Install());
+        Subsystems::Record("interop", InteropApi::Install());
+
+        // Mod-owned data with nothing to install and no game routine behind it, so it is
+        // there whenever the loader is.
+        Subsystems::Record("block_expression", true);
+
+        Subsystems::WriteSummary();
+
         ModHost::LoadAll(g_registry.LoadOrder());
         ShutdownHook::Install(&Boot::Stop);
 
@@ -158,8 +169,12 @@ namespace Forge
         ObjectsMenuApi::Uninstall();
         BoxMenuApi::Uninstall();
         FrameApi::Uninstall();
+        ConsoleApi::Uninstall();
         RenderApi::Uninstall();
+        WorldApi::Uninstall();
+        InteropApi::Uninstall();
         ModFileSystem::Clear();
+        Subsystems::Clear();
         g_registry.Clear();
 
         Log::Close();
@@ -174,7 +189,11 @@ namespace Forge
 
 extern "C" __declspec(dllexport) void __cdecl AzForge_Boot()
 {
-    Forge::Boot::Run();
+    // The result is deliberately dropped. It says whether mods are running, and the caller is
+    // the winmm proxy, which has no business acting on that: a game whose executable AzForge
+    // does not recognise must still start, unmodified and without a dialog in the way. The
+    // reason is in forge.log, which is where someone looking for it will be.
+    (void)Forge::Boot::Run();
 }
 
 extern "C" __declspec(dllexport) void __cdecl AzForge_Shutdown()

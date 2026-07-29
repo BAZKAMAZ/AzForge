@@ -272,6 +272,28 @@ namespace Forge
 
         // Menu object.
         constexpr uintptr_t kMenuIdOffset = 0x009;          // $menu_id
+
+        // Both ways into a menu refuse one whose flag at +0x209 is set: Menu_EnterMenu
+        // @0x0043c5a0 and Menu_ShowBox @0x0043c610 each test it after the registry lookup.
+        // Setting it is therefore how a menu is taken out of service without touching the
+        // navigation the game may already be holding it in.
+        constexpr uintptr_t kMenuDisabledOffset = 0x209;
+
+        // The menu manager's registry and its navigation. The registry is the array of every
+        // registered menu; the navigation is what the player walked through to get here.
+        //
+        //   +0x08 CMenu**  the registry              +0x38 int  how many
+        //   +0x0c CMenu*   the menu on screen        +0x10 CMenu*  the overlay over it
+        //   +0x14 CMenu*[8] the menus stepped out of, and +0x34 the top, -1 when empty
+        //
+        // Menu_EnterMenu pushes the current menu onto that stack and Menu_GoBack pops it, so
+        // a menu can be off the registry and still be reachable through the stack. That is
+        // what makes freeing one unsafe while the manager can still name it.
+        constexpr uintptr_t kMenuManagerRegistryOffset = 0x08;
+        constexpr uintptr_t kMenuManagerRegistryCountOffset = 0x38;
+        constexpr uintptr_t kMenuManagerStackOffset = 0x14;
+        constexpr uintptr_t kMenuManagerStackTopOffset = 0x34;
+        constexpr size_t kMenuManagerStackCapacity = 8;
         constexpr uintptr_t kMenuGroupsOffset = 0x04C;
         constexpr uintptr_t kMenuGroupCountOffset = 0x050;
         constexpr uintptr_t kMenuGroupStride = 0x10C;
@@ -454,6 +476,112 @@ namespace Forge
         constexpr uintptr_t kLauncherLogoBitmapOffset = 0x0C;
         constexpr uintptr_t kLauncherLogoRectOffset = 0x10; // x, y, width, height
         constexpr uintptr_t kLauncherLogoDcOffset = 0x20;
+
+        // The game world. There is one level at a time and it is a static object rather than
+        // a pointer, so the address is the level: an empty one before the first is loaded and
+        // again after Level_Free, which is why a mod asks whether a level is loaded rather
+        // than whether the pointer is null.
+        //
+        //   Level_Load          __thiscall (level, script)  @0x0040e4b0 -> bool
+        //   Level_Free          __thiscall (level)          @0x0040e050
+        //   Level_ActivateRoom  __thiscall (level, dx, dy)  @0x0040e110 -> room, or null
+        //   Level_FindRoomById  __thiscall (level, id)      @0x0040d9c0 -> entry, or null
+        //   Level_FindRoomPos   __thiscall (level, id, x, y)@0x0040d670 -> bool
+        //
+        // Level_ActivateRoom is the only way a room becomes current, the first one included,
+        // so it is where a mod learns the player moved between rooms.
+        constexpr uintptr_t kLevel                = 0x00516D58; // CLevel, not a pointer
+        constexpr uintptr_t kLevelLoad            = 0x0040E4B0;
+        constexpr uintptr_t kLevelFree            = 0x0040E050;
+        constexpr uintptr_t kLevelActivateRoom    = 0x0040E110;
+
+        // CLevel, laid out by Level_ParseHeader @0x0040d320 and Level_Load. Every name is a
+        // fixed 0x100-byte buffer, so a level with no $music holds an empty string rather
+        // than a null.
+        constexpr uintptr_t kLevelScriptOffset       = 0x000; // the script it was loaded from
+        constexpr uintptr_t kLevelNextLevelOffset    = 0x100; // $next_level
+        constexpr uintptr_t kLevelNameOffset         = 0x200; // $level_name
+        constexpr uintptr_t kLevelEnableCastleOffset = 0x300; // $enable_castle
+        constexpr uintptr_t kLevelBackgroundOffset   = 0x400; // $background
+        constexpr uintptr_t kLevelMusicOffset        = 0x500; // $music
+        constexpr uintptr_t kLevelStartTitleOffset   = 0x600; // $start_title
+        constexpr uintptr_t kLevelEndTitleOffset     = 0x700; // $end_title
+        constexpr uintptr_t kLevelBonusOffset        = 0x800; // $bonus, a bool
+        constexpr uintptr_t kLevelBonusTimeOffset    = 0x804; // $bonus_time
+        constexpr uintptr_t kLevelBonusCountOffset   = 0x808; // $bonus_count
+        constexpr uintptr_t kLevelTimeOffset         = 0x80C; // $level_time
+        constexpr uintptr_t kLevelNumberOffset       = 0x810; // $level_number, never 0
+        constexpr uintptr_t kLevelDemoLevelOffset    = 0x814; // $demo_level, a bool
+        constexpr uintptr_t kLevelUseForDemoOffset   = 0x815; // $use_for_demo, a bool
+        constexpr uintptr_t kLevelMusicStartOffset   = 0x818; // $music_start
+        constexpr uintptr_t kLevelMenuStatOffset     = 0x81C; // $menu_stat
+        constexpr uintptr_t kLevelStartRoomXOffset   = 0x91C; // $player_start/$room_pos
+        constexpr uintptr_t kLevelStartRoomYOffset   = 0x920;
+        constexpr uintptr_t kLevelStartCellOffset    = 0x924; // $player_start/$pos, two floats
+        constexpr size_t kLevelNameLength = 0x100;
+
+        // A $bonus level loads neither monsters nor bonuses: Level_ParseRoomEntry reads those
+        // two keys only when the flag is clear.
+
+        constexpr uintptr_t kLevelRoomsOffset        = 0x92C; // the room entries
+        constexpr uintptr_t kLevelRoomCountOffset    = 0x930;
+        constexpr uintptr_t kLevelMazeOffset         = 0x934; // one row per $maze line
+        constexpr uintptr_t kLevelMazeHeightOffset   = 0x938;
+        constexpr uintptr_t kLevelMazeXOffset        = 0x93C; // where the player is on the maze
+        constexpr uintptr_t kLevelMazeYOffset        = 0x940;
+        constexpr uintptr_t kLevelCurrentRoomIdOffset = 0x944;
+        constexpr uintptr_t kLevelCurrentRoomOffset  = 0x948; // the entry, not the index
+        constexpr uintptr_t kLevelPreviousRoomOffset = 0x94C;
+
+        // A maze row is { int* roomIds; int width }, and rows are ragged: $maze lines are
+        // parsed one comma-separated list at a time, so each carries its own width. A cell
+        // holding 0 is a hole in the maze rather than a room.
+        constexpr size_t kMazeRowStride = 0x08;
+        constexpr uintptr_t kMazeRowIdsOffset = 0x00;
+        constexpr uintptr_t kMazeRowWidthOffset = 0x04;
+
+        // A room entry is the level's record of a room, with the room itself embedded at +4.
+        constexpr size_t kRoomEntryStride = 0x2794;
+        constexpr uintptr_t kRoomEntryIdOffset = 0x0000;       // $id
+        constexpr uintptr_t kRoomEntryRoomOffset = 0x0004;     // the CRoom, 0x2684 bytes
+        constexpr uintptr_t kRoomEntryFloorTexOffset = 0x2688; // $floor_tex, a texture
+        constexpr uintptr_t kRoomEntryWallTexOffset = 0x268C;  // $wall_tex, a texture
+        constexpr uintptr_t kRoomEntryMusicOffset = 0x2690;    // $music, 0x100 bytes
+
+        // CRoom, filled in by Room_Load @0x004130f0 out of the .room file. Offsets are from
+        // the room itself, which is the entry plus kRoomEntryRoomOffset.
+        constexpr uintptr_t kRoomMagicOffset = 0x0000;          // 0x9999 once loaded
+        constexpr uintptr_t kRoomFileOffset = 0x0004;           // the .room, 0x100 bytes
+        constexpr uintptr_t kRoomCellsOffset = 0x0104;          // the cell grid
+        constexpr uintptr_t kRoomGeometryModelOffset = 0x2554;
+        constexpr uintptr_t kRoomLightmapModelOffset = 0x2558;
+        constexpr uintptr_t kRoomBackWallModelOffset = 0x255C;
+        constexpr uintptr_t kRoomLightmapTextureOffset = 0x2560; // 256x256
+        constexpr uintptr_t kRoomHasBackWallOffset = 0x2564;
+        constexpr uintptr_t kRoomCollisionBoxesOffset = 0x2568;
+        constexpr uintptr_t kRoomCollisionBoxCountOffset = 0x256C;
+        constexpr uintptr_t kRoomLightTrianglesOffset = 0x2570;
+        constexpr uintptr_t kRoomLightTriangleCountOffset = 0x2574;
+        constexpr uintptr_t kRoomLoadedOffset = 0x2674;         // a bool
+        constexpr uintptr_t kRoomEntitiesOffset = 0x2680;
+
+        // The grid the whole of movement and collision is expressed in: 29 rows of 40 cells,
+        // one record of 8 bytes each, the type character at +0. The rest of the record is
+        // what the room's own geometry made of that cell and is not read here.
+        constexpr size_t kRoomGridColumns = 40;
+        constexpr size_t kRoomGridRows = 29;
+        constexpr size_t kRoomCellStride = 0x08;
+
+        // A collision box is 0x1c bytes and does not hold two corners in order: the z of the
+        // near face comes first, then the near x and y, a gap, and then the far x, y and z.
+        // r_room_bbox in the .so; CheckEMoveRoomCollision is what reads them.
+        constexpr size_t kRoomCollisionBoxStride = 0x1C;
+        constexpr uintptr_t kRoomBoxMinZOffset = 0x00;
+        constexpr uintptr_t kRoomBoxMinXOffset = 0x04;
+        constexpr uintptr_t kRoomBoxMinYOffset = 0x08;
+        constexpr uintptr_t kRoomBoxMaxXOffset = 0x10;
+        constexpr uintptr_t kRoomBoxMaxYOffset = 0x14;
+        constexpr uintptr_t kRoomBoxMaxZOffset = 0x18;
     }
 
     // Package_OpenFile @0x00422f00 opens with two whole, position-independent instructions
@@ -528,4 +656,21 @@ namespace Forge
     //   Menu_DrawDecorations  SUB ESP,0x0C / PUSH ESI / MOV ESI,ECX                     -> 6
     constexpr uint8_t kMenuDrawDecorationsPrologue[] =
         { 0x83, 0xEC, 0x0C, 0x56, 0x8B, 0xF1 };
+
+    //   Level_ActivateRoom  PUSH ESI / MOV ESI,ECX / MOV EAX,[ESI+0x934]                -> 9
+    // The load reaches the maze through ESI, so the range moves with the routine; the JNZ
+    // that follows it is the first instruction outside, and nothing branches into the range.
+    constexpr uint8_t kLevelActivateRoomPrologue[] =
+        { 0x56, 0x8B, 0xF1, 0x8B, 0x86, 0x34, 0x09, 0x00, 0x00 };
+
+    //   Level_Load  PUSH -1 / PUSH 0x004c55bb                                           -> 7
+    //   Level_Free  PUSH ESI / PUSH EDI / PUSH 0x004c8b7c                                -> 7
+    // Both push a 32-bit immediate that must not be cut in half. As with App_Shutdown the
+    // immediate is an address in this build, so a build where it differs is refused rather
+    // than patched: the executable carries no relocations, and an address that moved means
+    // the code was rebuilt.
+    constexpr uint8_t kLevelLoadPrologue[] =
+        { 0x6A, 0xFF, 0x68, 0xBB, 0x55, 0x4C, 0x00 };
+    constexpr uint8_t kLevelFreePrologue[] =
+        { 0x56, 0x57, 0x68, 0x7C, 0x8B, 0x4C, 0x00 };
 }

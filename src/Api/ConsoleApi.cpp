@@ -188,6 +188,29 @@ namespace Forge
         return true;
     }
 
+    void ConsoleApi::Uninstall()
+    {
+        // Names the game is still holding. They cannot be taken back, so the honest thing is
+        // to say which ones are left rather than pretend the table was cleaned.
+        if (!g_commands.empty())
+        {
+            for (const auto& entry : g_commands)
+            {
+                FORGE_LOG_INFO("Console command '%s' stays in the game's table until the "
+                               "process ends", entry.first.c_str());
+            }
+        }
+
+        g_commands.clear();
+        g_table = {};
+
+        // Two things are deliberately left alone. g_gameRegistered records what the game's
+        // table already holds: clearing it would let a later run hand the game the same name
+        // a second time, leaving two entries behind one dispatch. And the console routines
+        // point into game.exe rather than into AzForge, so they stay valid and Dispatch can
+        // still tell a player that the mod behind a command is gone.
+    }
+
     const AmodConsoleApi* ConsoleApi::Table()
     {
         return g_table.structSize != 0 ? &g_table : nullptr;

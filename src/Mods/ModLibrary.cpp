@@ -3,13 +3,17 @@
 #include "src/Mods/ModLibrary.h"
 
 #include "src/Api/BlockExpressionApi.h"
+#include "src/Api/BoxMenuApi.h"
 #include "src/Api/ConsoleApi.h"
 #include "src/Api/FrameApi.h"
+#include "src/Api/InteropApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/RenderApi.h"
+#include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
+#include "src/Core/ForgeSubsystems.h"
 #include "src/Core/ForgeText.h"
 
 #include <stdio.h>
@@ -153,6 +157,19 @@ namespace Forge
             return false;
         }
 
+        // Checked before the DLL is copied out and mapped: a mod that cannot work here should
+        // cost nothing and say why, rather than load and discover a null table it may never
+        // have checked for.
+        for (const std::string& subsystem : record.manifest.requiredSubsystems)
+        {
+            if (!Subsystems::IsAvailable(subsystem))
+            {
+                error = "the mod requires the '" + subsystem +
+                        "' subsystem, which this loader did not install";
+                return false;
+            }
+        }
+
         std::vector<uint8_t> bytes;
         if (!record.archive->ReadByName(record.manifest.entry, bytes, error))
         {
@@ -223,9 +240,16 @@ namespace Forge
         FrameApi::ForgetMod(&m_context);
         LauncherApi::ForgetMod(&m_context);
         ObjectsMenuApi::ForgetMod(&m_context);
+        BoxMenuApi::ForgetMod(&m_context);
         BlockExpressionApi::ForgetMod(&m_context);
         ConsoleApi::ForgetMod(&m_context);
         RenderApi::ForgetMod(&m_context);
+        WorldApi::ForgetMod(&m_context);
+
+        // Last of the release calls and before anything unmaps this mod: a detour of the
+        // mod's own points into the DLL that is about to go, so the game's code has to stop
+        // referring to it first.
+        InteropApi::ForgetMod(&m_context);
         m_context.owned.ReleaseAll();
 
         if (m_initialised && m_shutdown != nullptr)

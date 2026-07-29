@@ -19,6 +19,14 @@ namespace Forge
         int apiVersion = 0;             // required
         std::vector<std::string> loadAfter;
         std::vector<std::string> conflicts;
+
+        // The "requires" key: subsystems the mod cannot work without, by the names AmodApi
+        // uses - launcher, objects_menu, box_menu, block_expression, console, frame, render,
+        // world. A mod that names one this loader could not install is refused with that
+        // reason instead of loading and meeting a null table it may never have checked.
+        // Naming nothing keeps the old behaviour: the mod loads and decides for itself.
+        // Spelled out in full here because "requires" alone is a keyword in C++20.
+        std::vector<std::string> requiredSubsystems;
     };
 
     // Parses and validates a manifest document. Returns false with a human-readable

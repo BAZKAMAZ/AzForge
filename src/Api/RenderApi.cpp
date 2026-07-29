@@ -907,23 +907,23 @@ namespace Forge
     {
         for (auto it = g_subscribers.begin(); it != g_subscribers.end();)
         {
-            it = it->owner == owner ? g_subscribers.erase(it) : it + 1;
+            it = it->owner == owner ? g_subscribers.erase(it) : ++it;
         }
         for (auto it = g_beginSubs.begin(); it != g_beginSubs.end();)
         {
-            it = it->owner == owner ? g_beginSubs.erase(it) : it + 1;
+            it = it->owner == owner ? g_beginSubs.erase(it) : ++it;
         }
         for (auto it = g_elementSubs.begin(); it != g_elementSubs.end();)
         {
-            it = it->owner == owner ? g_elementSubs.erase(it) : it + 1;
+            it = it->owner == owner ? g_elementSubs.erase(it) : ++it;
         }
         for (auto it = g_styleSubs.begin(); it != g_styleSubs.end();)
         {
-            it = it->owner == owner ? g_styleSubs.erase(it) : it + 1;
+            it = it->owner == owner ? g_styleSubs.erase(it) : ++it;
         }
         for (auto it = g_bgSubs.begin(); it != g_bgSubs.end();)
         {
-            it = it->owner == owner ? g_bgSubs.erase(it) : it + 1;
+            it = it->owner == owner ? g_bgSubs.erase(it) : ++it;
         }
     }
 }

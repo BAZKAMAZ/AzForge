@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 
 // Complete export table of winmm.dll.
 //

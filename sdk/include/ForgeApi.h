@@ -18,6 +18,8 @@
 #include "BlockExpressionApi.h"
 #include "ConsoleApi.h"
 #include "RenderApi.h"
+#include "WorldApi.h"
+#include "InteropApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +54,8 @@ typedef struct AmodApi
     const AmodBlockExpressionApi* blockExpression;
     const AmodConsoleApi* console;
     const AmodRenderApi* render;
+    const AmodWorldApi* world;
+    const AmodInteropApi* interop;
 
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
@@ -100,6 +104,8 @@ namespace Amod
         Data::Attach(api->blockExpression, api->self);
         Console::Attach(api->console, api->self);
         Render::Attach(api->render, api->self);
+        World::Attach(api->world, api->self);
+        Interop::Attach(api->interop, api->self);
         return true;
     }
 

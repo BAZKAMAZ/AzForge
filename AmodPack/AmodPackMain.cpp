@@ -43,7 +43,7 @@ namespace
 
     std::string PathText(const std::filesystem::path& path)
     {
-        return Forge::ToUtf8(path.wstring());
+        return Forge::PathToUtf8(path);
     }
 
     bool ReadWholeFile(const std::filesystem::path& path, std::vector<uint8_t>& out, std::string& error)

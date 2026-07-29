@@ -1,5 +1,6 @@
 #pragma once
 
+#include <filesystem>
 #include <string>
 
 namespace Forge
@@ -8,6 +9,11 @@ namespace Forge
     // loader; the log file and every manifest field are UTF-8.
     std::string                                                     ToUtf8(const std::wstring& text);
     std::wstring                                                    FromUtf8(const std::string& text);
+
+    // A path in the form the log and the manifests use. Every caller that names a file in a
+    // message wants this, which is why it lives here rather than being written out again in
+    // each of them.
+    std::string                                                     PathToUtf8(const std::filesystem::path& path);
 
     // Lowercases ASCII letters only. Archive entry names and resource paths are matched
     // case-insensitively, matching Package_FindEntryInPak @0x00422b60 which lowercases

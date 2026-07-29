@@ -96,6 +96,8 @@
     <ClInclude Include="sdk\include\LauncherApi.h" />
     <ClInclude Include="sdk\include\ObjectsMenuApi.h" />
     <ClInclude Include="sdk\include\RenderApi.h" />
+    <ClInclude Include="sdk\include\WorldApi.h" />
+    <ClInclude Include="sdk\include\InteropApi.h" />
     <ClInclude Include="src\Api\BlockExpressionApi.h" />
     <ClInclude Include="src\Api\BoxMenuApi.h" />
     <ClInclude Include="src\Api\ConsoleApi.h" />
@@ -103,11 +105,14 @@
     <ClInclude Include="src\Api\LauncherApi.h" />
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\RenderApi.h" />
+    <ClInclude Include="src\Api\WorldApi.h" />
+    <ClInclude Include="src\Api\InteropApi.h" />
     <ClInclude Include="src\Api\ModContext.h" />
     <ClInclude Include="src\Api\ModOwnership.h" />
     <ClInclude Include="src\Core\ForgeBoot.h" />
     <ClInclude Include="src\Core\ForgeLog.h" />
     <ClInclude Include="src\Core\ForgePaths.h" />
+    <ClInclude Include="src\Core\ForgeSubsystems.h" />
     <ClInclude Include="src\Core\ForgeText.h" />
     <ClInclude Include="src\Core\ForgeVersion.h" />
     <ClInclude Include="src\Game\GameAddresses.h" />
@@ -139,6 +144,7 @@
     <ClCompile Include="src\Core\ForgeBoot.cpp" />
     <ClCompile Include="src\Core\ForgeLog.cpp" />
     <ClCompile Include="src\Core\ForgePaths.cpp" />
+    <ClCompile Include="src\Core\ForgeSubsystems.cpp" />
     <ClCompile Include="src\Core\ForgeText.cpp" />
     <ClCompile Include="src\Game\GameFunctions.cpp" />
     <ClCompile Include="src\Game\GameModule.cpp" />
@@ -156,6 +162,8 @@
     <ClCompile Include="src\Api\FrameApi.cpp" />
     <ClCompile Include="src\Api\ObjectsMenuApi.cpp" />
     <ClCompile Include="src\Api\RenderApi.cpp" />
+    <ClCompile Include="src\Api\WorldApi.cpp" />
+    <ClCompile Include="src\Api\InteropApi.cpp" />
     <ClCompile Include="src\Api\ModOwnership.cpp" />
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />
     <ClCompile Include="src\Mods\ModHost.cpp" />
