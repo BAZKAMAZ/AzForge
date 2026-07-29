@@ -17,7 +17,12 @@ typedef void* AmodMenuItem;
 typedef enum AmodMenuEvent
 {
     /* A menu has been built and is ready to be changed. Data is AmodMenuLoaded. Arrives
-     * again every time the game rebuilds the menu. */
+     * again every time the game rebuilds the menu.
+     *
+     * Subscribing late does not mean missing it: every menu that already exists is
+     * announced to the new subscriber as it subscribes. Mods are loaded on the loading
+     * screen, by which time the game has built all of its own menus, so without that a
+     * mod would never hear about any of them. */
     AMOD_MENU_LOADED = 0,
 
     /* A button was activated, before the game acts on it. Data is AmodMenuClicked. This is

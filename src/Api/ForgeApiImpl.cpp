@@ -8,6 +8,8 @@
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/InteropApi.h"
+#include "src/Api/ModManagerApi.h"
+#include "src/Api/InputApi.h"
 #include "src/Api/RenderApi.h"
 #include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
@@ -132,12 +134,17 @@ namespace Forge
         context.table.console = ConsoleApi::Table();
         context.table.render = RenderApi::Table();
         context.table.world = WorldApi::Table();
+        context.table.input = InputApi::Table();
 
         // The one capability the loader can hold back and mean it. Everything else a mod
         // declares is a statement about itself; this is the table that lets it detour the
         // game and write to its memory, and it is handed over only to a mod that said so.
         // Nothing is lost by being strict here - the interop table is new in API version 18,
         // so no mod written before it can be surprised.
+        // The manager, and only for core. Every other mod sees the same null it sees for a
+        // subsystem that is not there.
+        context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;
+
         if (context.Declares("interop"))
         {
             context.table.interop = InteropApi::Table();

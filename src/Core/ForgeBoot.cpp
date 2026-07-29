@@ -4,11 +4,14 @@
 #include "src/Api/BoxMenuApi.h"
 #include "src/Api/ConsoleApi.h"
 #include "src/Api/InteropApi.h"
+#include "src/Api/InputApi.h"
+#include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/RenderApi.h"
 #include "src/Api/WorldApi.h"
+#include "src/Core/ForgeCrash.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeSubsystems.h"
@@ -100,6 +103,9 @@ namespace Forge
 
         WriteBanner();
 
+        // First, so that anything that goes wrong from here on says where.
+        Crash::Install();
+
         // Done before anything else and regardless of what follows: a run that never gets
         // as far as loading mods should still clear what an earlier one left behind.
         ModHost::SweepCache();
@@ -116,6 +122,10 @@ namespace Forge
             FORGE_LOG_ERROR("Mod discovery failed, no mods will be loaded");
             g_registry.Clear();
         }
+
+        // core.amod is not one of the installed mods: it lives beside the loader, and that
+        // is what makes it the manager. Added after the scan so it leads the order.
+        g_registry.AddPrivileged(Paths::ForgeModuleFile().parent_path() / "core.amod");
 
         WriteLoadOrder();
 
@@ -150,6 +160,11 @@ namespace Forge
         Subsystems::Record("render", RenderApi::Install());
         Subsystems::Record("world", WorldApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
+        Subsystems::Record("input", InputApi::Install());
+
+        // Not recorded as a subsystem: it is offered to one mod by where that mod is installed,
+        // not asked for by name in a manifest. This only hangs its reload tick off the frame.
+        ModManagerApi::Install();
 
         // Mod-owned data with nothing to install and no game routine behind it, so it is
         // there whenever the loader is.
@@ -195,11 +210,16 @@ namespace Forge
         RenderApi::Uninstall();
         WorldApi::Uninstall();
         InteropApi::Uninstall();
+        InputApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
         ModState::Clear();
+        ModManagerApi::Clear();
         Subsystems::Clear();
         g_registry.Clear();
+
+        // Last, so a crash during the teardown is still reported.
+        Crash::Uninstall();
 
         Log::Close();
         g_running = false;

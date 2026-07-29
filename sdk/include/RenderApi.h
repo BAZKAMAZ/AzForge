@@ -161,6 +161,43 @@ namespace Amod
             }
         }
 
+        /* Everything drawn below is in device pixels, measured from the top left, at whatever
+         * resolution the game is running. Menu coordinates are the game's own 640x480 space
+         * measured from the bottom left, and a mod drawing over a menu is working in those.
+         * These two convert; without them a drawing lands near its element at 640x480 and
+         * drifts further from it the larger the window is. */
+        inline void                                                 MenuToScreen(float menuX, float menuY, float* screenX, float* screenY)
+        {
+            int width = 640;
+            int height = 480;
+            Viewport(&width, &height);
+
+            if (screenX != nullptr)
+            {
+                *screenX = menuX * (static_cast<float>(width) / 640.0f);
+            }
+            if (screenY != nullptr)
+            {
+                *screenY = (480.0f - menuY) * (static_cast<float>(height) / 480.0f);
+            }
+        }
+
+        inline void                                                 MenuToScreenSize(float menuWidth, float menuHeight, float* screenWidth, float* screenHeight)
+        {
+            int width = 640;
+            int height = 480;
+            Viewport(&width, &height);
+
+            if (screenWidth != nullptr)
+            {
+                *screenWidth = menuWidth * (static_cast<float>(width) / 640.0f);
+            }
+            if (screenHeight != nullptr)
+            {
+                *screenHeight = menuHeight * (static_cast<float>(height) / 480.0f);
+            }
+        }
+
         inline AmodToken                                            OnFrame(AmodRenderCallback callback, void* user = nullptr)
         {
             return g_render != nullptr
@@ -537,9 +574,14 @@ namespace Amod
         };
 
         /* A texture a mod loads from its own image file, to draw with DrawTexture. Load() reads
-         * an uncompressed 24- or 32-bit BMP and uploads it; the mod supplies the path (e.g. built
-         * from Amod::GameDirectory()). The image is owned here and released with the object.
-         * Kept to BMP so no image library or d3dx is needed - export a BMP from any editor. */
+         * a 24- or 32-bit BMP and uploads it; the mod supplies the path (e.g. built from
+         * Amod::GameDirectory()). The image is owned here and released with the object. Kept to
+         * BMP so no image library or d3dx is needed - export a BMP from any editor.
+         *
+         * Both of the forms editors actually write are read: plain BI_RGB, and the BI_BITFIELDS
+         * 32-bit one with a V4 or V5 header that anything saving alpha produces. An image whose
+         * alpha channel is zero everywhere - which several editors write for a picture with no
+         * transparency - is taken as opaque rather than drawn as nothing. */
         class Texture
         {
         public:
@@ -572,14 +614,15 @@ namespace Amod
                     return false;
                 }
 
-                // BMP header: 'BM', pixel-array offset at +10, width +18, height +22 (negative is
-                // top-down), bit count +28, compression +30 (0 = none).
+                // BMP header: 'BM', pixel-array offset at +10, header size +14, width +18,
+                // height +22 (negative is top-down), bit count +28, compression +30.
                 if (file[0] != 'B' || file[1] != 'M')
                 {
                     delete[] file;
                     return false;
                 }
                 const unsigned long pixelOffset = ReadU32(file + 10);
+                const unsigned long headerSize = ReadU32(file + 14);
                 const int rawWidth = static_cast<int>(ReadU32(file + 18));
                 const int rawHeight = static_cast<int>(ReadU32(file + 22));
                 const unsigned short bits = static_cast<unsigned short>(file[28] | (file[29] << 8));
@@ -589,10 +632,34 @@ namespace Amod
                 const int width = rawWidth;
                 const int height = topDown ? -rawHeight : rawHeight;
                 const int bytesPerPixel = bits / 8;
-                if (compression != 0 || (bits != 24 && bits != 32) || width <= 0 || height <= 0)
+
+                // 0 is BI_RGB, 3 is BI_BITFIELDS - the one an editor writes for 32 bits with
+                // alpha, where the channel masks follow the header and say where each one is.
+                const bool bitfields = compression == 3 && bits == 32;
+                if ((compression != 0 && !bitfields) || (bits != 24 && bits != 32) ||
+                    width <= 0 || height <= 0)
                 {
                     delete[] file;
                     return false;
+                }
+
+                unsigned long maskR = 0x00FF0000;
+                unsigned long maskG = 0x0000FF00;
+                unsigned long maskB = 0x000000FF;
+                unsigned long maskA = 0xFF000000;
+                if (bitfields)
+                {
+                    if (fileSize < 66)
+                    {
+                        delete[] file;
+                        return false;
+                    }
+                    maskR = ReadU32(file + 54);
+                    maskG = ReadU32(file + 58);
+                    maskB = ReadU32(file + 62);
+                    // Only a V4 or V5 header carries a fourth mask; BITMAPINFOHEADER stops at
+                    // three, and then there is no alpha to read.
+                    maskA = (headerSize >= 108 && fileSize >= 70) ? ReadU32(file + 66) : 0;
                 }
 
                 const int srcPitch = ((width * bytesPerPixel + 3) / 4) * 4; // BMP rows pad to 4
@@ -619,6 +686,26 @@ namespace Amod
                     return false;
                 }
 
+                // An image whose alpha is zero in every pixel has no alpha channel worth
+                // honouring, whatever its header says; drawing it as written would draw
+                // nothing at all.
+                bool anyAlpha = false;
+                if (bytesPerPixel == 4 && maskA != 0)
+                {
+                    for (int y = 0; y < height && !anyAlpha; ++y)
+                    {
+                        const unsigned char* const src = file + pixelOffset + y * srcPitch;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            if (Channel(ReadU32(src + x * 4), maskA) != 0)
+                            {
+                                anyAlpha = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+
                 for (int y = 0; y < height; ++y)
                 {
                     const int srcY = topDown ? y : (height - 1 - y); // BMP is bottom-up
@@ -629,9 +716,18 @@ namespace Amod
                     for (int x = 0; x < width; ++x)
                     {
                         const unsigned char* const p = src + x * bytesPerPixel;
-                        const unsigned long b = p[0], g = p[1], r = p[2];
-                        const unsigned long a = (bytesPerPixel == 4) ? p[3] : 0xFF;
-                        dst[x] = (a << 24) | (r << 16) | (g << 8) | b;
+                        if (bytesPerPixel == 4)
+                        {
+                            const unsigned long pixel = ReadU32(p);
+                            const unsigned long a = anyAlpha ? Channel(pixel, maskA) : 0xFF;
+                            dst[x] = (a << 24) | (Channel(pixel, maskR) << 16) |
+                                     (Channel(pixel, maskG) << 8) | Channel(pixel, maskB);
+                        }
+                        else
+                        {
+                            dst[x] = 0xFF000000ul | (static_cast<unsigned long>(p[2]) << 16) |
+                                     (static_cast<unsigned long>(p[1]) << 8) | p[0];
+                        }
                     }
                 }
 
@@ -658,6 +754,31 @@ namespace Amod
             {
                 return static_cast<unsigned long>(p[0]) | (static_cast<unsigned long>(p[1]) << 8) |
                        (static_cast<unsigned long>(p[2]) << 16) | (static_cast<unsigned long>(p[3]) << 24);
+            }
+
+            /* One channel out of a pixel, given the mask that says where it is, scaled to eight
+             * bits whatever width the mask happens to be. */
+            static unsigned long                                   Channel(unsigned long pixel, unsigned long mask)
+            {
+                if (mask == 0)
+                {
+                    return 0;
+                }
+
+                unsigned long value = pixel & mask;
+                while ((mask & 1) == 0)
+                {
+                    mask >>= 1;
+                    value >>= 1;
+                }
+
+                unsigned long width = 0;
+                for (unsigned long m = mask; m != 0; m >>= 1)
+                {
+                    ++width;
+                }
+
+                return width >= 8 ? ((value >> (width - 8)) & 0xFF) : (value * 255) / mask;
             }
 
             // Reads the whole file with the Win32 API, so no CRT file calls are needed in the

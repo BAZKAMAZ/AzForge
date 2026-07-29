@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "author": "AzForge",
   "description": "The MODS screen: what is installed, what each mod is, and which of them are switched on.",
-  "api_version": 18,
+  "api_version": 22,
   "game_version": "1.0",
   "entry": "bin/CoreMod.dll",
-  "requires": ["objects_menu", "box_menu", "render"],
+  "icon": "icon.bmp",
+  "requires": ["objects_menu", "box_menu", "render", "input"],
   "capabilities": ["menus", "manage_mods"]
 }

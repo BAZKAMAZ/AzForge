@@ -43,6 +43,10 @@ namespace Forge
         // out of reach of a mod that never said it would. The rest are recorded, not gated.
         std::vector<std::string> capabilities;
 
+        // The "icon" key: a file inside the archive the mod screen shows for it, defaulting
+        // to icon.bmp. A mod without one is drawn as a plain square.
+        std::string icon;
+
         bool                                                        Declares(const std::string& capability) const;
     };
 

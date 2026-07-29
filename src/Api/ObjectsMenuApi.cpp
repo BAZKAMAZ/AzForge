@@ -1615,6 +1615,23 @@ namespace Forge
             item.user = user;
             g_subscriptions.push_back(item);
 
+            // A menu that already exists is announced to the new subscriber at once, so that
+            // whether a mod hears about a menu does not depend on which of the two came first.
+            // Mods load before the game registers its own menus, so at startup this normally
+            // finds nothing; what it catches is a menu an earlier mod registered.
+            //
+            // Delivered to this subscriber alone, not through Dispatch, so nobody who has
+            // already been told hears it twice.
+            if (event == AMOD_MENU_LOADED)
+            {
+                for (const auto& entry : g_menusById)
+                {
+                    AmodMenuLoaded loaded = {};
+                    loaded.menuId = entry.first.c_str();
+                    callback(AMOD_MENU_LOADED, &loaded, user);
+                }
+            }
+
             return context->owned.Add(&ReleaseSubscription,
                                       reinterpret_cast<void*>(static_cast<uintptr_t>(item.id)));
         }
@@ -1628,6 +1645,31 @@ namespace Forge
             }
         }
 
+        // Menu_FindItemById walks the groups, and a decoration is not in them: a $static
+        // declares an $id like any element but lives in the menu's static-text collection. The
+        // recorded elements are the whole menu, so the id is matched against those instead.
+        void* FindRecordedById(void* menu, const char* itemId)
+        {
+            const auto found = g_elementsByMenu.find(menu);
+            if (found == g_elementsByMenu.end())
+            {
+                return nullptr;
+            }
+
+            for (void* const element : found->second)
+            {
+                const PropertyDescriptor* const descriptor = FindDescriptor(element, "id");
+                if (descriptor != nullptr &&
+                    strcmp(reinterpret_cast<const char*>(Field(element, descriptor->offset)),
+                           itemId) == 0)
+                {
+                    return element;
+                }
+            }
+
+            return nullptr;
+        }
+
         AmodMenuItem __cdecl ApiFindItem(AmodMod mod, const char* menuId, const char* itemId)
         {
             void* const menu = Resolve(mod) != nullptr ? MenuByIdOrNull(menuId) : nullptr;
@@ -1636,7 +1678,12 @@ namespace Forge
                 return nullptr;
             }
 
-            void* const element = g_findItem(menu, nullptr, itemId);
+            void* element = g_findItem(menu, nullptr, itemId);
+            if (element == nullptr)
+            {
+                element = FindRecordedById(menu, itemId);
+            }
+
             return IsLive(element) ? element : nullptr;
         }
 

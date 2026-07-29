@@ -15,12 +15,22 @@ namespace Forge
         ModManifest manifest;
         std::filesystem::path archivePath;
         std::unique_ptr<ZipArchive> archive;
+
+        // Loaded from beside AzForge.dll rather than out of the mods folder, which is what
+        // earns it the mod-manager interface. Trusting the location costs nothing: anyone who
+        // can write there can replace the loader itself.
+        bool privileged = false;
     };
 
     class ModRegistry
     {
     public:
         bool                                                        Scan(const std::filesystem::path& modsDirectory);
+
+        // Adds one archive from outside the mods folder and marks it the manager. Called with
+        // core.amod from the loader's own directory, after Scan.
+        bool                                                        AddPrivileged(const std::filesystem::path& archivePath);
+
         void                                                        Clear();
 
         const std::vector<ModRecord>&                               LoadOrder() const;

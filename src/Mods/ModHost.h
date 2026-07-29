@@ -3,6 +3,7 @@
 #include "src/Mods/ModRegistry.h"
 
 #include <stddef.h>
+#include <string>
 #include <vector>
 
 namespace Forge
@@ -45,6 +46,15 @@ namespace Forge
 
         static void                                                 UnloadAll();
 
+        // Brings one mod into step with its switch, in this run: loads it if it is on and is
+        // not up, takes it down if it is off and is. Answers false with a reason when it could
+        // not, which is a mod that has to be up before the launcher or a load that failed.
+        //
+        // The caller is responsible for calling this where no mod is on the stack: taking a
+        // mod down frees its DLL, and a callback of its own running at the time would return
+        // into nothing.
+        static bool                                                 Reload(const ModRecord& record, std::string& error);
+
         // Counted across both phases, so the loading screen can report the whole picture
         // rather than only what it loaded itself.
         static size_t                                               LoadedCount();
@@ -52,5 +62,11 @@ namespace Forge
 
         // How many mods in this order carry code at all, in either phase.
         static size_t                                               CodeModCount(const std::vector<ModRecord>& loadOrder);
+
+        // What the mod screen needs to say about this run: which mods came up, and why one
+        // did not. Keyed by id rather than by index, because the load order is not the
+        // order anything is displayed in.
+        static bool                                                 IsLoaded(const std::string& id);
+        static const char*                                          FailureFor(const std::string& id);
     };
 }

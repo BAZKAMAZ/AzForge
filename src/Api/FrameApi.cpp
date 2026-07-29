@@ -28,6 +28,7 @@ namespace Forge
 
         std::vector<Subscriber> g_subscribers;
         std::vector<void(__cdecl*)()> g_internalTicks;
+        std::vector<void(__cdecl*)()> g_lateTicks;
 
         double g_elapsed = 0.0;
         uint64_t g_frameIndex = 0;
@@ -44,6 +45,10 @@ namespace Forge
 
             if (g_subscribers.empty())
             {
+                for (void(__cdecl* const tick)() : g_lateTicks)
+                {
+                    tick();
+                }
                 return;
             }
 
@@ -62,6 +67,11 @@ namespace Forge
                 {
                     subscriber.update(&frame);
                 }
+            }
+
+            for (void(__cdecl* const tick)() : g_lateTicks)
+            {
+                tick();
             }
         }
     }
@@ -106,15 +116,16 @@ namespace Forge
         g_delta = nullptr;
         g_subscribers.clear();
         g_internalTicks.clear();
+        g_lateTicks.clear();
         g_elapsed = 0.0;
         g_frameIndex = 0;
     }
 
-    void FrameApi::AddInternalTick(void(__cdecl* tick)())
+    void FrameApi::AddInternalTick(void(__cdecl* tick)(), bool afterMods)
     {
         if (tick != nullptr)
         {
-            g_internalTicks.push_back(tick);
+            (afterMods ? g_lateTicks : g_internalTicks).push_back(tick);
         }
     }
 

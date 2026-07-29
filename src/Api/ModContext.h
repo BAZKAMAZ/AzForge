@@ -28,6 +28,10 @@ namespace Forge
         // mod that did not ask for something is not handed it.
         std::vector<std::string> capabilities;
 
+        // Loaded from beside AzForge.dll rather than from the mods folder, which is the
+        // whole of what earns it the mod-manager table.
+        bool privileged = false;
+
         // Everything this mod registered, released in reverse when it is unloaded.
         ModOwnership owned;
 

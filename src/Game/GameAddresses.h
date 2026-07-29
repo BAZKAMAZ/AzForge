@@ -44,6 +44,13 @@ namespace Forge
 
         constexpr uintptr_t kMenuLoadFromScript   = 0x0043C090; // __stdcall (menuId, scriptFile)
 
+        // Registers all 28 shipped menus, one Menu_Register after another. The startup load
+        // calls it at 0x0043cffc, right after the manager is constructed and stored in
+        // kMenuManager - so on the way in the manager exists and not one menu is registered
+        // yet. That is where mods are loaded: a mod can register a menu of its own, and it
+        // hears the game's own menus being built rather than arriving after they were.
+        constexpr uintptr_t kMenuRegisterAll      = 0x0043CAB0; // __thiscall (manager) -> bool
+
         // The menu manager is a global pointer. It is itself a CMenu; the 28 built-in menus
         // are sub-objects embedded in it, and the registry is a separate dynamic array of
         // pointers, so a heap menu can be added to it.
@@ -184,6 +191,24 @@ namespace Forge
         constexpr uintptr_t kGameConsoleWrite  = 0x004220C0;
         constexpr uintptr_t kCmdRegister       = 0x00423990;
         constexpr uintptr_t kConsoleExecute    = 0x004237B0;
+
+        // The command table is 256 buckets of pointers, each bucket a doubly linked list of
+        // 0x10-byte nodes built by FUN_00423910 @0x00423910:
+        //
+        //   +0x00 the command object, itself { char* name; handler } from Mem_AllocTracked(8)
+        //   +0x04 the node's own copy of the name        +0x08 previous     +0x0c next
+        //
+        // Cmd_Find @0x004232f0 __thiscall (table, name) walks the bucket and answers the node,
+        // which is what makes a command removable: unlink the node and the name is free again,
+        // both for Cmd_Register and for the dispatcher. Nothing in the game removes one, so
+        // this is the loader's own path and not a rebuilt copy of the game's.
+        constexpr uintptr_t kCmdFind           = 0x004232F0;
+        constexpr size_t kCmdBuckets           = 256;
+        constexpr uintptr_t kCmdNodeCommandOffset = 0x00;
+        constexpr uintptr_t kCmdNodeNameOffset = 0x04;
+        constexpr uintptr_t kCmdNodePrevOffset = 0x08;
+        constexpr uintptr_t kCmdNodeNextOffset = 0x0C;
+        constexpr uintptr_t kCmdCommandNameOffset = 0x00;
 
         constexpr uintptr_t kMenuTakeClickResult = 0x00451660; // __thiscall (menu, dest[5])
         constexpr uintptr_t kClickResultMenuId = 0x00;    // dest indices, each a char*
@@ -480,14 +505,9 @@ namespace Forge
         // The loading screen, and the startup load that runs behind it.
         //
         // Loading_SetProgress @0x0043a560 __thiscall (manager, percent) moves the bar and
-        // draws a frame for it. The startup load calls it at 30, 40, 55, 70, 85, 95 and 100,
-        // and the menu manager is built and every menu registered between 40 and 55 - so by
-        // the time it reaches 100 the game is loaded, the menus exist, and the loading screen
-        // is still the state on screen. That is where mods are loaded: late enough that a mod
-        // can add a menu, early enough that the player has not left the screen.
-        //
+        // draws a frame for it. The startup load calls it at 30, 40, 55, 70, 85, 95 and 100.
         // It does nothing unless the manager is in the loading state, so calling it to repaint
-        // between mods is safe wherever it is called from.
+        // while the mods load is safe wherever it is called from.
         constexpr uintptr_t kLoadingSetProgress = 0x0043A560;
         constexpr uintptr_t kGameStateManager   = 0x006914A8;
 
@@ -495,6 +515,17 @@ namespace Forge
         constexpr uintptr_t kGameStateCurrentOffset = 0x0C; // the CEventLoad while it is
         constexpr int kGameStateLoading = 7;
         constexpr int kLoadingProgressComplete = 100;
+
+        // GameState_SetEvent @0x0043a5e0 __thiscall (manager, id, a, b) is how the game changes
+        // state: it stores the id and both arguments at manager+0x00, +0x04 and +0x08, leaves
+        // the current state through its vtable +0x14 and enters the new one through +0x10.
+        //
+        // So the state that was in force can be restored exactly, from those same three fields,
+        // without knowing which id a menu is. Entering 7 runs Loading_Begin @0x0044fe90, whose
+        // one argument is the "this is the startup screen" flag at +0x134 - the flag the help
+        // line is drawn behind, so it is set when a mod reload borrows the screen.
+        constexpr uintptr_t kGameStateSetEvent = 0x0043A5E0;
+        constexpr uintptr_t kGameStateArgOffset = 0x04;     // and +0x08, the event's arguments
 
         // Inside CEventLoad, laid out by Loading_Parse @0x0044fce0. $wait_key is what holds
         // the screen: Loading_ShouldStay @0x0044ff20 keeps the game on it while the flag is
@@ -529,6 +560,39 @@ namespace Forge
         constexpr uintptr_t kLoadingHelpTextOffset = 0x13C;
         constexpr size_t kLoadingHelpTextLength = 0x104;
         constexpr uintptr_t kLoadingWaitKeyOffset = 0x5A8;   // a bool
+
+        // Input, as the game itself sees it.
+        //
+        // Input_Update @0x004270d0 polls GetAsyncKeyState for every virtual key each frame and
+        // keeps the answer in a table of one byte per key. The mouse buttons are in that same
+        // table under their own virtual-key codes - the poll skips VK_LBUTTON and VK_RBUTTON
+        // only when deciding whether to raise the "something was pressed" flag, and stores
+        // them like any other key. So there is no separate mouse state to find: there is not
+        // one.
+        //
+        //   Input_GetCursor @0x00426940 (float* x, float* y)  the pointer in 640x480 space
+        //   Input_SetCursor @0x004268b0 (float x, float y)
+        //   Input_AnyKeyPressed @0x00426a40 (input) -> the flag at +0x3ad2
+        //
+        // Reading this rather than calling GetAsyncKeyState from a mod is what keeps a mod in
+        // step with the game: the poll stops while the console is open, while the window is
+        // not focused and while the game is swallowing a key that was already down.
+        constexpr uintptr_t kInput = 0x0067CBB0;
+
+        constexpr uintptr_t kInputKeyStateOffset = 0x3804;   // one byte per virtual key
+        constexpr size_t kInputKeyCount = 0xFF;
+        constexpr uintptr_t kInputCursorInWindowOffset = 0x3905;
+        constexpr uintptr_t kInputSwallowingOffset = 0x3AD1; // a key held from before counts
+        constexpr uintptr_t kInputAnyPressedOffset = 0x3AD2;
+
+        // Both end in RET 8: they are __stdcall, whatever the argument list suggests.
+        constexpr uintptr_t kInputGetCursor = 0x00426940;
+        constexpr uintptr_t kInputSetCursor = 0x004268B0;
+
+        // The game's window, which Input_GetCursor maps the cursor into. It is also the only
+        // way to the mouse wheel: the poll above is GetAsyncKeyState over the virtual keys, and
+        // the wheel is not one - it arrives as WM_MOUSEWHEEL and nothing in the game reads it.
+        constexpr uintptr_t kGameWindow = 0x0067CB9C;   // HWND*
 
         // The game world. There is one level at a time and it is a static object rather than
         // a pointer, so the address is the level: an empty one before the first is loaded and
@@ -732,4 +796,8 @@ namespace Forge
     // JNZ after it is the first instruction outside.
     constexpr uint8_t kLoadingSetProgressPrologue[] =
         { 0x56, 0x8B, 0xF1, 0x83, 0x3E, 0x07 };
+
+    //   Menu_RegisterAll  PUSH ESI / PUSH 0 / PUSH 0                                      -> 5
+    constexpr uint8_t kMenuRegisterAllPrologue[] =
+        { 0x56, 0x6A, 0x00, 0x6A, 0x00 };
 }

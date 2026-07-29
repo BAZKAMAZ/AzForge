@@ -24,6 +24,15 @@ typedef struct AmodBoxMenuApi
      * menu system is not up. The menu persists for the life of the process. */
     int (__cdecl* Register)(AmodMod mod, const char* menuId);
 
+    /* Registers a menu built from a script file, the way the game builds its own. The file
+     * is opened through the game's resource system, so a script a mod ships under files/
+     * is found there without it having to exist on disk. Non-zero on success; zero if the
+     * id is taken, the script is missing or the menu system is not up.
+     *
+     * This is what makes a screen's layout a file rather than code: the same script another
+     * menu would have been written in, restyled without rebuilding the mod. */
+    int (__cdecl* RegisterFromScript)(AmodMod mod, const char* menuId, const char* scriptFile);
+
     /* Whether a menu with this id exists, whether the game's or a mod's. */
     int (__cdecl* Exists)(AmodMod mod, const char* menuId);
 
@@ -89,6 +98,11 @@ namespace Amod
         inline bool                                                 Register(const char* menuId)
         {
             return g_box != nullptr && g_box->Register(g_self, menuId) != 0;
+        }
+
+        inline bool                                                 RegisterFromScript(const char* menuId, const char* scriptFile)
+        {
+            return g_box != nullptr && g_box->RegisterFromScript(g_self, menuId, scriptFile) != 0;
         }
 
         inline bool                                                 Exists(const char* menuId)

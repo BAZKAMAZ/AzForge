@@ -20,6 +20,8 @@
 #include "RenderApi.h"
 #include "WorldApi.h"
 #include "InteropApi.h"
+#include "ModManagerApi.h"
+#include "InputApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,6 +58,12 @@ typedef struct AmodApi
     const AmodRenderApi* render;
     const AmodWorldApi* world;
     const AmodInteropApi* interop;
+
+    /* Null for every mod but core, which is loaded from beside the loader. */
+    const AmodModManagerApi* modManager;
+
+    /* The keyboard and the mouse as the game sees them. */
+    const AmodInputApi* input;
 
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
@@ -106,6 +114,8 @@ namespace Amod
         Render::Attach(api->render, api->self);
         World::Attach(api->world, api->self);
         Interop::Attach(api->interop, api->self);
+        Mods::Attach(api->modManager, api->self);
+        Input::Attach(api->input, api->self);
         return true;
     }
 

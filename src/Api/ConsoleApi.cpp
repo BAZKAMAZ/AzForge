@@ -21,6 +21,8 @@ namespace Forge
         typedef void(__fastcall* CmdRegisterRoutine)(void* config, void* unused,
                                                      const char* name, void* handler);
         typedef void(__fastcall* ConsoleExecuteRoutine)(void* config, void* unused, const char* line);
+        typedef void*(__fastcall* CmdFindRoutine)(void* table, void* unused, const char* name);
+        typedef void(__cdecl* FreeTrackedRoutine)(void* block);
 
         // The signature of a command handler the game calls: the words of the line.
         typedef void(__cdecl* GameCommandHandler)(int argc, char** argv);
@@ -28,6 +30,8 @@ namespace Forge
         ConsoleWriteRoutine g_write = nullptr;
         CmdRegisterRoutine g_cmdRegister = nullptr;
         ConsoleExecuteRoutine g_execute = nullptr;
+        CmdFindRoutine g_cmdFind = nullptr;
+        FreeTrackedRoutine g_freeTracked = nullptr;
 
         AmodConsoleApi g_table = {};
 
@@ -55,6 +59,83 @@ namespace Forge
         {
             void** const slot = static_cast<void**>(GameModule::Resolve(GameAddress::kConfig));
             return slot != nullptr ? *slot : nullptr;
+        }
+
+        // The game's command table: 256 buckets hanging off the config singleton.
+        uint32_t* CommandTable()
+        {
+            void* const config = Config();
+            return config != nullptr
+                       ? reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(config) +
+                                                     GameAddress::kConfigCommandsOffset)
+                       : nullptr;
+        }
+
+        uint32_t Field(void* node, uintptr_t offset)
+        {
+            return *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(node) + offset);
+        }
+
+        void SetField(void* node, uintptr_t offset, uint32_t value)
+        {
+            *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(node) + offset) = value;
+        }
+
+        // Takes one command back out of the game's table. Nothing in the game does this, so it
+        // is done here: unlink the node from its bucket and give back what registering it
+        // allocated. Mem_FreeTracked tests its own header magic, so a pointer that is not one
+        // of its blocks is refused rather than turned into a corrupted heap.
+        void UnregisterFromGame(const std::string& name)
+        {
+            uint32_t* const table = CommandTable();
+            void* const node = (table != nullptr && g_cmdFind != nullptr)
+                                   ? g_cmdFind(table, nullptr, name.c_str())
+                                   : nullptr;
+            if (node == nullptr)
+            {
+                return;
+            }
+
+            void* const previous = reinterpret_cast<void*>(Field(node, GameAddress::kCmdNodePrevOffset));
+            const uint32_t next = Field(node, GameAddress::kCmdNodeNextOffset);
+
+            if (previous != nullptr)
+            {
+                SetField(previous, GameAddress::kCmdNodeNextOffset, next);
+            }
+            else
+            {
+                // The head of its bucket. Which bucket that is takes the game's hash to work
+                // out, so it is looked for instead - there are only 256 of them.
+                for (size_t bucket = 0; bucket < GameAddress::kCmdBuckets; ++bucket)
+                {
+                    if (table[bucket] == reinterpret_cast<uint32_t>(node))
+                    {
+                        table[bucket] = next;
+                        break;
+                    }
+                }
+            }
+
+            if (next != 0)
+            {
+                SetField(reinterpret_cast<void*>(next), GameAddress::kCmdNodePrevOffset,
+                         reinterpret_cast<uint32_t>(previous));
+            }
+
+            if (g_freeTracked != nullptr)
+            {
+                void* const command = reinterpret_cast<void*>(Field(node, GameAddress::kCmdNodeCommandOffset));
+                if (command != nullptr)
+                {
+                    g_freeTracked(reinterpret_cast<void*>(Field(command, GameAddress::kCmdCommandNameOffset)));
+                    g_freeTracked(command);
+                }
+                g_freeTracked(reinterpret_cast<void*>(Field(node, GameAddress::kCmdNodeNameOffset)));
+                g_freeTracked(node);
+            }
+
+            g_gameRegistered.erase(name);
         }
 
         // The single handler the game calls for every mod command; argv[0] names the owner.
@@ -167,6 +248,12 @@ namespace Forge
         g_execute = reinterpret_cast<ConsoleExecuteRoutine>(
             GameSymbols::Address(GameSymbol::ConsoleExecute));
 
+        // Neither is signature-resolved: they are only ever reached from here, and the loader
+        // has already proved by the symbols above that this is the build they belong to.
+        g_cmdFind = reinterpret_cast<CmdFindRoutine>(GameModule::Resolve(GameAddress::kCmdFind));
+        g_freeTracked = reinterpret_cast<FreeTrackedRoutine>(
+            GameSymbols::Address(GameSymbol::MemFreeTracked));
+
         if (g_write == nullptr || g_cmdRegister == nullptr || g_execute == nullptr)
         {
             FORGE_LOG_WARN("The console routines were not all located, so the console "
@@ -190,25 +277,18 @@ namespace Forge
 
     void ConsoleApi::Uninstall()
     {
-        // Names the game is still holding. They cannot be taken back, so the honest thing is
-        // to say which ones are left rather than pretend the table was cleaned.
-        if (!g_commands.empty())
+        // Taken out of the game's table rather than left in it: Dispatch lives in AzForge, and
+        // a name still standing after the loader has gone would call into an unmapped page.
+        for (const auto& entry : g_commands)
         {
-            for (const auto& entry : g_commands)
-            {
-                FORGE_LOG_INFO("Console command '%s' stays in the game's table until the "
-                               "process ends", entry.first.c_str());
-            }
+            UnregisterFromGame(entry.first);
         }
 
         g_commands.clear();
         g_table = {};
 
-        // Two things are deliberately left alone. g_gameRegistered records what the game's
-        // table already holds: clearing it would let a later run hand the game the same name
-        // a second time, leaving two entries behind one dispatch. And the console routines
-        // point into game.exe rather than into AzForge, so they stay valid and Dispatch can
-        // still tell a player that the mod behind a command is gone.
+        // The console routines point into game.exe rather than into AzForge, so they are left
+        // as they are; g_gameRegistered is emptied by the unregistering above.
     }
 
     const AmodConsoleApi* ConsoleApi::Table()
@@ -220,7 +300,16 @@ namespace Forge
     {
         for (auto it = g_commands.begin(); it != g_commands.end();)
         {
-            it = it->second.owner == owner ? g_commands.erase(it) : ++it;
+            if (it->second.owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            UnregisterFromGame(it->first);
+            FORGE_LOG_INFO("Console command '%s' was taken out of the game's table",
+                           it->first.c_str());
+            it = g_commands.erase(it);
         }
     }
 }

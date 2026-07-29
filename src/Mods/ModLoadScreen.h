@@ -8,16 +8,12 @@ namespace Forge
 {
     // Loads the mods on the game's own loading screen, and says so on it.
     //
-    // The hook is Loading_SetProgress, and the moment is the step that reports 100: the game
-    // has finished loading, the menu manager is built and every menu registered - both happen
-    // between 40 and 55 - and the loading screen is still the state on screen. A mod loaded
-    // here can therefore add a menu, read the world and take a frame, none of which existed
-    // when the loader started.
+    // The hook is Menu_RegisterAll, which the startup load calls once the menu manager exists
+    // and before one menu is registered. A mod loaded there hears every menu the game builds,
+    // and the loading screen is on screen for the whole of it.
     //
-    // While the mods load, $wait_key is forced on so the game cannot fall through to the main
-    // menu, and the $press_key line is rewritten after each one. The repaint is the game's own
-    // Loading_SetProgress, called again with the same percentage - there is no second drawing
-    // path to keep working.
+    // The repaint is the game's own Loading_SetProgress, called again with the percentage the
+    // bar already stands at - there is no second drawing path to keep working.
     class ModLoadScreen
     {
     public:
@@ -25,5 +21,15 @@ namespace Forge
         // this, and copying it would leave the two able to disagree.
         static bool                                                 Install(const std::vector<ModRecord>& loadOrder);
         static void                                                 Uninstall();
+
+        // Borrowing the screen after the game has started, for a mod being switched on or off.
+        // Enter puts the game into the loading state and remembers what it was in; Leave puts
+        // that back. Report writes the line along the bottom and draws a frame.
+        //
+        // The pair belongs on the loader's own frame tick: entering a state runs the leave and
+        // enter of two game states, which is not something to do underneath a mod.
+        static bool                                                 Enter();
+        static void                                                 Leave();
+        static void                                                 Report(const char* line);
     };
 }

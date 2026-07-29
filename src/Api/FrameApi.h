@@ -20,8 +20,11 @@ namespace Forge
         static void                                                 Register(ModContext* owner, AmodUpdateRoutine update);
         static void                                                 ForgetMod(ModContext* owner);
 
-        // A loader subsystem's per-frame nudge, to notice state that only exists once the
-        // game runs (the console becoming ready). Called every frame, before the mods.
-        static void                                                 AddInternalTick(void(__cdecl* tick)());
+        // A loader subsystem's per-frame nudge, to notice state that only exists once the game
+        // runs (the console becoming ready), or to do work no mod may be on the stack for.
+        //
+        // afterMods matters: a tick that takes the frame's copy of the input has to run when
+        // every mod has had it, or WasKeyPressed answers false to the mod that asked.
+        static void                                                 AddInternalTick(void(__cdecl* tick)(), bool afterMods = false);
     };
 }

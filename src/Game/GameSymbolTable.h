@@ -415,6 +415,14 @@ namespace Forge
             // The two render calls go through absolute pointers, so they are wildcarded.
             "56 8B F1 83 3E 07 75 31 83 7E 0C 00 74 2B 8B 4E 0C 8B 01 8B 54 24 08 "
             "8B 40 0C 6A 00 52 FF D0 FF 15 ?? ?? ?? ?? 84 C0 74 10"
+        },
+        {
+            "Menu_RegisterAll", GameAddress::kMenuRegisterAll,
+            // The first two of its twenty-eight Menu_Register calls: the embedded menus at
+            // manager+0x40 and manager+0x24c, each with its script. Only the script strings
+            // and the calls are absolutes.
+            "56 6A 00 6A 00 8B F1 68 ?? ?? ?? ?? 8D 46 40 50 E8 ?? ?? ?? ?? 6A 00 6A 00 "
+            "68 ?? ?? ?? ?? 8D 8E 4C 02 00 00 51 8B CE E8 ?? ?? ?? ??"
         }
     };
 }

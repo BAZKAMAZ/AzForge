@@ -94,8 +94,11 @@ namespace Forge
         LevelFree,
         LevelActivateRoom,
 
-        // The loading screen's progress step, hooked to load mods while it is still up.
+        // The loading screen's progress step, called to repaint it while mods load.
         LoadingSetProgress,
+
+        // Registers every menu the game ships. Mods are loaded on its way in.
+        MenuRegisterAll,
 
         Count
     };

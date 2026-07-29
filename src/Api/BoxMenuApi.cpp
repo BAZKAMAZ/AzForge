@@ -26,13 +26,22 @@ namespace Forge
                                                        const char* file, uint32_t line);
         typedef void* (__fastcall* ConstructRoutine)(void* block, void* unused);
         typedef void* (__fastcall* FindMenuRoutine)(void* manager, void* unused, const char* id);
+        // Menu_Register: __thiscall (manager, menu, script, menuId, force).
+        typedef char (__fastcall* RegisterRoutine)(void* manager, void* unused, void* menu,
+                                                   const char* script, const char* menuId,
+                                                   char force);
         typedef void (__fastcall* NavigateRoutine)(void* manager, void* unused, const char* id);
         typedef void (__fastcall* ManagerRoutine)(void* manager, void* unused);
+        typedef void* (__cdecl* PackageOpenRoutine)(const char* name);
+        typedef void (__cdecl* PackageFreeRoutine)(void* file);
 
         AllocTrackedRoutine g_alloc = nullptr;
         ReallocTrackedRoutine g_realloc = nullptr;
         ConstructRoutine g_construct = nullptr;
         FindMenuRoutine g_find = nullptr;
+        RegisterRoutine g_register = nullptr;
+        PackageOpenRoutine g_open = nullptr;
+        PackageFreeRoutine g_freeFile = nullptr;
         NavigateRoutine g_enter = nullptr;
         NavigateRoutine g_showBox = nullptr;
         ManagerRoutine g_goBack = nullptr;
@@ -81,7 +90,8 @@ namespace Forge
 
         bool Ready()
         {
-            return g_alloc != nullptr && g_realloc != nullptr && g_construct != nullptr &&
+            return g_register != nullptr &&
+                   g_alloc != nullptr && g_realloc != nullptr && g_construct != nullptr &&
                    g_find != nullptr && g_enter != nullptr && g_showBox != nullptr &&
                    g_goBack != nullptr && g_closeAll != nullptr;
         }
@@ -281,6 +291,76 @@ namespace Forge
             return 1;
         }
 
+        int __cdecl ApiRegisterFromScript(AmodMod mod, const char* menuId, const char* scriptFile)
+        {
+            ModContext* const context = Resolve(mod);
+            void* const manager = context != nullptr ? Manager() : nullptr;
+            if (manager == nullptr || menuId == nullptr || menuId[0] == '\0' ||
+                scriptFile == nullptr || scriptFile[0] == '\0')
+            {
+                return 0;
+            }
+
+            if (g_find(manager, nullptr, menuId) != nullptr)
+            {
+                FORGE_LOG_WARN("A mod tried to register menu '%s', which already exists", menuId);
+                return 0;
+            }
+
+            void* const block = g_alloc(kSizeBaseMenu, ".\\AzForge.cpp", __LINE__);
+            if (block == nullptr)
+            {
+                return 0;
+            }
+
+            memset(block, 0, kSizeBaseMenu);
+            g_construct(block, nullptr);
+
+            // Menu_Register does the parsing, the id stamping and the appending itself, so
+            // this is the game's own path and not a rebuilt copy of it. It throws when the
+            // script is missing, which is why the file is checked for first rather than
+            // letting an exception cross back into a mod's stack.
+            // Menu_Register throws when the script is not there, and letting a C++ exception
+            // out of a table call is not something the boundary can carry. Asked for through
+            // the game's own resource path, so a script shipped inside an .amod is found the
+            // same way the game finds its own.
+            void* const probe = g_open != nullptr ? g_open(scriptFile) : nullptr;
+            if (probe == nullptr)
+            {
+                FORGE_LOG_WARN("[%s] asked for menu '%s' from '%s', which no mod or the game "
+                               "provides", context->id.c_str(), menuId, scriptFile);
+                return 0;
+            }
+
+            // Handed straight back: this was only ever a question, and holding it open would
+            // leave the parser reading a file someone else already has.
+            if (g_freeFile != nullptr)
+            {
+                g_freeFile(probe);
+            }
+
+            if (g_register(manager, nullptr, block, scriptFile, menuId, 1) == '\0')
+            {
+                FORGE_LOG_WARN("[%s] menu '%s' could not be built from '%s'",
+                               context->id.c_str(), menuId, scriptFile);
+                return 0;
+            }
+
+            RegisteredMenu record;
+            record.id = g_nextRegisteredId++;
+            record.owner = context;
+            record.menu = block;
+            record.menuId = menuId;
+            g_registered.push_back(record);
+
+            context->owned.Add(&ReleaseRegisteredMenu,
+                               reinterpret_cast<void*>(static_cast<uintptr_t>(record.id)));
+
+            FORGE_LOG_INFO("[%s] registered menu '%s' from '%s'", context->id.c_str(),
+                           menuId, scriptFile);
+            return 1;
+        }
+
         int __cdecl ApiExists(AmodMod mod, const char* menuId)
         {
             void* const manager = Resolve(mod) != nullptr ? Manager() : nullptr;
@@ -374,6 +454,14 @@ namespace Forge
             GameSymbols::Address(GameSymbol::MemReallocTracked));
         g_construct = reinterpret_cast<ConstructRoutine>(
             GameSymbols::Address(GameSymbol::CBaseMenuConstruct));
+        g_open = reinterpret_cast<PackageOpenRoutine>(
+            GameSymbols::Address(GameSymbol::PackageOpenFile));
+        // Package_Free is not signature-resolved - it is only ever reached from here - so it
+        // is taken from its address, which the loader has already proved is this build.
+        g_freeFile = reinterpret_cast<PackageFreeRoutine>(
+            GameModule::Resolve(kPackageFree));
+        g_register = reinterpret_cast<RegisterRoutine>(
+            GameSymbols::Address(GameSymbol::MenuRegister));
         g_find = reinterpret_cast<FindMenuRoutine>(
             GameSymbols::Address(GameSymbol::MenuFindByMenuId));
         g_enter = reinterpret_cast<NavigateRoutine>(
@@ -394,6 +482,7 @@ namespace Forge
 
         g_table.structSize = sizeof(AmodBoxMenuApi);
         g_table.Register = &ApiRegister;
+        g_table.RegisterFromScript = &ApiRegisterFromScript;
         g_table.Exists = &ApiExists;
         g_table.Current = &ApiCurrent;
         g_table.Box = &ApiBox;
@@ -432,6 +521,9 @@ namespace Forge
         g_realloc = nullptr;
         g_construct = nullptr;
         g_find = nullptr;
+        g_register = nullptr;
+        g_open = nullptr;
+        g_freeFile = nullptr;
         g_enter = nullptr;
         g_showBox = nullptr;
         g_goBack = nullptr;

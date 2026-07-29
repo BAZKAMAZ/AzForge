@@ -223,6 +223,7 @@ namespace Forge
         m_context.id = record.manifest.id;
         m_context.version = record.manifest.version;
         m_context.capabilities = record.manifest.capabilities;
+        m_context.privileged = record.privileged;
         BuildApiTable(m_context);
 
         // Written out because it is what a player will want to see in the mod list, and

@@ -1,26 +1,9 @@
-//=========================================================
-// MODS - what is installed, and which of it is switched on.
-//
-// Built on the frame menu_packs.txt uses, because it is the screen in this game that already
-// means "pick one of these": the same four mirrored panels, the same plank under the title,
-// the same back arrow in the corner.
-//
-// Only the frame is here. The mods themselves are not: they are whatever is in the mods
-// folder on the day, so the tiles, their icons and the detail text are created at run time by
-// core.amod through the menu interface. What this file fixes is everything that does not
-// depend on which mods a player has - which is also what makes it something you can restyle
-// without rebuilding the mod.
-//
-// Coordinates are the game's own: the origin is the bottom-left of the 640x480 screen and
-// $pos is the top-left corner of the thing being placed, so a larger y is further up.
-//=========================================================
-
 $header
 {
 	$menu_id "IDM_MODS"
 
-	$preview_size 128 128	//the mod icon; a mod without one gets a plain white square
-	$preview_grid 2 2
+	$preview_size 96 96
+	$preview_grid 3 2
 
 	$text_color 1 1 1 1
 	$text_scale 0.75 0.75
@@ -33,7 +16,6 @@ $header
 
 $images
 {
-	//The four mirrored panels of the pack screen.
 	$image
 	{
 		$texture "textures/menu/help.jpg"
@@ -98,7 +80,6 @@ $images
 		$unreg_only 0
 	}
 
-	//The two windows. The left one holds the mods, the right one holds whichever is picked.
 	$image
 	{
 		$texture "textures/frame/a40.png"
@@ -130,22 +111,10 @@ $static_text
 
 	$static
 	{
-		$text "Pick a mod to see what it is and what it may do"
-		$pos 322 40
-		$font_scale 0.67 0.75
-		$font_color 1 1 1 0.7
-		$line_height -24
-		$align "center"
-	}
-
-	//Everything the right-hand window says about the picked mod is written into these at run
-	//time. They are declared here so their place, size and colour are the file's to decide.
-	$static
-	{
 		$id "ID_MODS_NAME"
 		$text ""
-		$pos 516 250
-		$font_scale 0.85 0.85
+		$pos 516 372
+		$font_scale 0.6 0.6
 		$font_color 1 1 1 1
 		$align "center"
 	}
@@ -153,37 +122,26 @@ $static_text
 	{
 		$id "ID_MODS_DETAIL"
 		$text ""
-		$pos 420 226
-		$font_scale 0.62 0.7
+		$pos 422 344
+		$font_scale 0.5 0.55
 		$font_color 1 1 1 0.85
-		$line_height -18
+		$line_height -15
 		$align "left"
 	}
 }
 
-//The scrollbar is not declared here. The game's $slider is horizontal - its rail, its two
-//end arrows and the way it maps a click onto a value all assume it - and this list needs a
-//vertical one, which the game has never had. So core.amod draws its own down the right edge
-//of the left window and handles the dragging itself. It is written down here rather than
-//left to be discovered because this file is otherwise a complete description of the screen,
-//and the one piece that is missing from it should say so.
-//
-//The rail runs from the top of the left window to its bottom, at x = 372, 16 wide.
-
 $text_buttons
 {
-	//Switches the picked mod on or off. The caption is rewritten at run time to say which of
-	//the two it would do, because the button means the opposite of what the mod currently is.
 	$button
 	{
 		$id "ID_MODS_TOGGLE"
-		$pos 516 150
+		$pos 516 140
 		$h_align "center"
 		$v_align "center"
 		$text "ENABLE"
-		$rect_size 180 36
+		$rect_size 170 34
 
-		$help "Switch this mod on or off; it takes effect when you leave this screen"
+		$help "Switch this mod on or off"
 		$warning ""
 
 		$unreg_enabled 1
