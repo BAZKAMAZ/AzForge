@@ -94,6 +94,9 @@ namespace Forge
         LevelFree,
         LevelActivateRoom,
 
+        // The loading screen's progress step, hooked to load mods while it is still up.
+        LoadingSetProgress,
+
         Count
     };
 

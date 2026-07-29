@@ -21,6 +21,7 @@
 #include "src/Game/ShutdownHook.h"
 #include "src/Mods/ModFileSystem.h"
 #include "src/Mods/ModHost.h"
+#include "src/Mods/ModLoadScreen.h"
 #include "src/Mods/ModScan.h"
 
 namespace Forge
@@ -151,7 +152,18 @@ namespace Forge
 
         Subsystems::WriteSummary();
 
-        ModHost::LoadAll(g_registry.LoadOrder());
+        // Only the mods that change the launcher, because the launcher is the one thing that
+        // has already happened by the time the loading screen comes up. Everything else waits
+        // for the screen, where the menus and the world exist and where the wait is visible.
+        ModHost::Load(g_registry.LoadOrder(), ModPhase::BeforeLauncher, nullptr);
+
+        // If the screen cannot be reached, the rest are loaded here instead: late mods are
+        // better than no mods.
+        if (!ModLoadScreen::Install(g_registry.LoadOrder()))
+        {
+            ModHost::Load(g_registry.LoadOrder(), ModPhase::LoadingScreen, nullptr);
+        }
+
         ShutdownHook::Install(&Boot::Stop);
 
         return true;
@@ -167,6 +179,7 @@ namespace Forge
         FORGE_LOG_INFO("AzForge shutting down");
 
         ModHost::UnloadAll();
+        ModLoadScreen::Uninstall();
         PackageHook::Uninstall();
         ShutdownHook::Uninstall();
         LauncherApi::Uninstall();

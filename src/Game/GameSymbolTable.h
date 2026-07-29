@@ -407,6 +407,14 @@ namespace Forge
             // warning string and the console call are absolutes.
             "56 8B F1 8B 86 34 09 00 00 85 C0 75 15 68 ?? ?? ?? ?? 6A 01 "
             "E8 ?? ?? ?? ?? 83 C4 08 33 C0 5E C2 08 00 53 8B 9E 3C 09 00 00 03 5C 24 0C"
+        },
+        {
+            "Loading_SetProgress", GameAddress::kLoadingSetProgress,
+            // The loading-state test at +0x00 and the current state at +0x0c, then the call
+            // through its vtable +0x0c with the percentage - the shape no other routine has.
+            // The two render calls go through absolute pointers, so they are wildcarded.
+            "56 8B F1 83 3E 07 75 31 83 7E 0C 00 74 2B 8B 4E 0C 8B 01 8B 54 24 08 "
+            "8B 40 0C 6A 00 52 FF D0 FF 15 ?? ?? ?? ?? 84 C0 74 10"
         }
     };
 }

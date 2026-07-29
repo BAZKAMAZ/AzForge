@@ -477,6 +477,33 @@ namespace Forge
         constexpr uintptr_t kLauncherLogoRectOffset = 0x10; // x, y, width, height
         constexpr uintptr_t kLauncherLogoDcOffset = 0x20;
 
+        // The loading screen, and the startup load that runs behind it.
+        //
+        // Loading_SetProgress @0x0043a560 __thiscall (manager, percent) moves the bar and
+        // draws a frame for it. The startup load calls it at 30, 40, 55, 70, 85, 95 and 100,
+        // and the menu manager is built and every menu registered between 40 and 55 - so by
+        // the time it reaches 100 the game is loaded, the menus exist, and the loading screen
+        // is still the state on screen. That is where mods are loaded: late enough that a mod
+        // can add a menu, early enough that the player has not left the screen.
+        //
+        // It does nothing unless the manager is in the loading state, so calling it to repaint
+        // between mods is safe wherever it is called from.
+        constexpr uintptr_t kLoadingSetProgress = 0x0043A560;
+        constexpr uintptr_t kGameStateManager   = 0x006914A8;
+
+        constexpr uintptr_t kGameStateIdOffset = 0x00;      // 7 while the loading screen is up
+        constexpr uintptr_t kGameStateCurrentOffset = 0x0C; // the CEventLoad while it is
+        constexpr int kGameStateLoading = 7;
+        constexpr int kLoadingProgressComplete = 100;
+
+        // Inside CEventLoad, laid out by Loading_Parse @0x0044fce0. $wait_key is what holds
+        // the screen: Loading_ShouldStay @0x0044ff20 keeps the game on it while the flag is
+        // set and no key has been pressed, so clearing it is what lets the game fall through
+        // to the main menu.
+        constexpr uintptr_t kLoadingPressKeyOffset = 0x4A0;  // the line along the bottom
+        constexpr size_t kLoadingPressKeyLength = 0x108;
+        constexpr uintptr_t kLoadingWaitKeyOffset = 0x5A8;   // a bool
+
         // The game world. There is one level at a time and it is a static object rather than
         // a pointer, so the address is the level: an empty one before the first is loaded and
         // again after Level_Free, which is why a mod asks whether a level is loaded rather
@@ -673,4 +700,10 @@ namespace Forge
         { 0x6A, 0xFF, 0x68, 0xBB, 0x55, 0x4C, 0x00 };
     constexpr uint8_t kLevelFreePrologue[] =
         { 0x56, 0x57, 0x68, 0x7C, 0x8B, 0x4C, 0x00 };
+
+    //   Loading_SetProgress  PUSH ESI / MOV ESI,ECX / CMP [ESI],7                        -> 6
+    // The compare reaches the state through ESI, so the range moves with the routine, and the
+    // JNZ after it is the first instruction outside.
+    constexpr uint8_t kLoadingSetProgressPrologue[] =
+        { 0x56, 0x8B, 0xF1, 0x83, 0x3E, 0x07 };
 }

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- AzForge.dll is loaded into game.exe, a 32-bit process, so Win32 is the only
        platform this project builds for. -->
@@ -114,6 +114,7 @@
     <ClInclude Include="src\Core\ForgePaths.h" />
     <ClInclude Include="src\Core\ForgeSubsystems.h" />
     <ClInclude Include="src\Mods\ModScan.h" />
+    <ClInclude Include="src\Mods\ModLoadScreen.h" />
     <ClInclude Include="src\Core\ForgeText.h" />
     <ClInclude Include="src\Core\ForgeVersion.h" />
     <ClInclude Include="src\Game\GameAddresses.h" />
@@ -169,6 +170,7 @@
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />
     <ClCompile Include="src\Mods\ModHost.cpp" />
     <ClCompile Include="src\Mods\ModScan.cpp" />
+    <ClCompile Include="src\Mods\ModLoadScreen.cpp" />
     <ClCompile Include="src\Mods\ModLibrary.cpp" />
     <ClCompile Include="src\Mods\ModManifest.cpp" />
     <ClCompile Include="src\Mods\ModRegistry.cpp" />
