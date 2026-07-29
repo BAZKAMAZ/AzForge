@@ -14,6 +14,7 @@
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeSubsystems.h"
+#include "src/Mods/ModScan.h"
 #include "src/Core/ForgeText.h"
 
 #include <stdio.h>
@@ -182,6 +183,14 @@ namespace Forge
             return false;
         }
 
+        // Asked before the bytes reach the disk or the loader, which is the last point at
+        // which refusing costs nothing: once LoadLibrary runs, the mod's DllMain has already
+        // had its turn.
+        if (!ModScan::IsClean(record.manifest.id, bytes, error))
+        {
+            return false;
+        }
+
         wchar_t suffix[24] = {};
         _snwprintf_s(suffix, _TRUNCATE, L".%lu.dll", GetCurrentProcessId());
 
@@ -213,7 +222,16 @@ namespace Forge
 
         m_context.id = record.manifest.id;
         m_context.version = record.manifest.version;
+        m_context.capabilities = record.manifest.capabilities;
         BuildApiTable(m_context);
+
+        // Written out because it is what a player will want to see in the mod list, and
+        // because a mod reaching for something it never declared should be traceable to a
+        // line in the log rather than to a null it did not expect.
+        for (const std::string& capability : m_context.capabilities)
+        {
+            FORGE_LOG_INFO("[%s] declares '%s'", m_context.id.c_str(), capability.c_str());
+        }
 
         const int result = init(&m_context.table);
         if (result != AMOD_OK)

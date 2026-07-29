@@ -27,6 +27,23 @@ namespace Forge
         // Naming nothing keeps the old behaviour: the mod loads and decides for itself.
         // Spelled out in full here because "requires" alone is a keyword in C++20.
         std::vector<std::string> requiredSubsystems;
+
+        // The "capabilities" key: what the mod says it intends to do, for the mod list to
+        // show a player before they switch it on.
+        //
+        // Be careful about what this is. A mod is a native DLL and its DllMain runs before
+        // the loader has any say, so a mod that means harm is not stopped by anything it
+        // failed to declare - it can open files and sockets through Win32 without the loader
+        // ever seeing it. This is a statement of intent, and the only honest way to show it
+        // is as one.
+        //
+        // What the loader does enforce is the part it stands in the middle of. "interop" is
+        // the one that matters: a mod that has not declared it is not given the interop
+        // table, so finding routines, detouring them and writing to the game's memory are
+        // out of reach of a mod that never said it would. The rest are recorded, not gated.
+        std::vector<std::string> capabilities;
+
+        bool                                                        Declares(const std::string& capability) const;
     };
 
     // Parses and validates a manifest document. Returns false with a human-readable

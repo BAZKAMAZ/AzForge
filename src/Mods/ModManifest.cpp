@@ -174,7 +174,8 @@ namespace Forge
             !ReadOptionalString(root, "entry", out.entry, error) ||
             !ReadOptionalStringArray(root, "load_after", out.loadAfter, error) ||
             !ReadOptionalStringArray(root, "conflicts", out.conflicts, error) ||
-            !ReadOptionalStringArray(root, "requires", out.requiredSubsystems, error))
+            !ReadOptionalStringArray(root, "requires", out.requiredSubsystems, error) ||
+            !ReadOptionalStringArray(root, "capabilities", out.capabilities, error))
         {
             return false;
         }
@@ -198,5 +199,17 @@ namespace Forge
         }
 
         return true;
+    }
+
+    bool ModManifest::Declares(const std::string& capability) const
+    {
+        for (const std::string& declared : capabilities)
+        {
+            if (declared == capability)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

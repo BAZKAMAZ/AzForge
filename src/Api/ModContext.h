@@ -5,6 +5,7 @@
 #include "src/Api/ModOwnership.h"
 
 #include <string>
+#include <vector>
 
 namespace Forge
 {
@@ -23,10 +24,17 @@ namespace Forge
         std::string id;
         std::string version;
 
+        // What the manifest declared this mod would do. The table is built to match, so a
+        // mod that did not ask for something is not handed it.
+        std::vector<std::string> capabilities;
+
         // Everything this mod registered, released in reverse when it is unloaded.
         ModOwnership owned;
+
+        bool                                                        Declares(const char* capability) const;
     };
 
-    // Fills the table with the entry points of this API version.
+    // Fills the table with the entry points of this API version, and with nothing the mod
+    // did not declare.
     void                                                            BuildApiTable(ModContext& context);
 }

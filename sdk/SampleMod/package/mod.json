@@ -6,6 +6,7 @@
   "description": "Template mod: reads the level through the world interface, and finds and hooks a game routine of its own through the direct interface.",
   "api_version": 18,
   "requires": ["world", "console", "interop"],
+  "capabilities": ["interop"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll"
 }

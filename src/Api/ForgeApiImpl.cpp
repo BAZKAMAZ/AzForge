@@ -94,6 +94,22 @@ namespace Forge
         }
     }
 
+    bool ModContext::Declares(const char* capability) const
+    {
+        if (capability == nullptr)
+        {
+            return false;
+        }
+        for (const std::string& declared : capabilities)
+        {
+            if (declared == capability)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     void BuildApiTable(ModContext& context)
     {
         context.magic = kModContextMagic;
@@ -116,6 +132,19 @@ namespace Forge
         context.table.console = ConsoleApi::Table();
         context.table.render = RenderApi::Table();
         context.table.world = WorldApi::Table();
-        context.table.interop = InteropApi::Table();
+
+        // The one capability the loader can hold back and mean it. Everything else a mod
+        // declares is a statement about itself; this is the table that lets it detour the
+        // game and write to its memory, and it is handed over only to a mod that said so.
+        // Nothing is lost by being strict here - the interop table is new in API version 18,
+        // so no mod written before it can be surprised.
+        if (context.Declares("interop"))
+        {
+            context.table.interop = InteropApi::Table();
+        }
+        else
+        {
+            context.table.interop = nullptr;
+        }
     }
 }

@@ -21,6 +21,7 @@
 #include "src/Game/ShutdownHook.h"
 #include "src/Mods/ModFileSystem.h"
 #include "src/Mods/ModHost.h"
+#include "src/Mods/ModScan.h"
 
 namespace Forge
 {
@@ -101,6 +102,9 @@ namespace Forge
         // as far as loading mods should still clear what an earlier one left behind.
         ModHost::SweepCache();
 
+        // Brought up before any mod is read, so the first one is scanned like the rest.
+        ModScan::Initialize();
+
         if (!g_registry.Scan(Paths::ModsDirectory()))
         {
             FORGE_LOG_ERROR("Mod discovery failed, no mods will be loaded");
@@ -174,6 +178,7 @@ namespace Forge
         WorldApi::Uninstall();
         InteropApi::Uninstall();
         ModFileSystem::Clear();
+        ModScan::Shutdown();
         Subsystems::Clear();
         g_registry.Clear();
 
