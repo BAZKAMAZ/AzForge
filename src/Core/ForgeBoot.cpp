@@ -23,6 +23,7 @@
 #include "src/Mods/ModHost.h"
 #include "src/Mods/ModLoadScreen.h"
 #include "src/Mods/ModScan.h"
+#include "src/Mods/ModState.h"
 
 namespace Forge
 {
@@ -105,6 +106,10 @@ namespace Forge
 
         // Brought up before any mod is read, so the first one is scanned like the rest.
         ModScan::Initialize();
+
+        // Read before the scan, because a mod switched off provides neither files nor code
+        // and there is no point discovering what it would have provided.
+        ModState::Load();
 
         if (!g_registry.Scan(Paths::ModsDirectory()))
         {
@@ -192,6 +197,7 @@ namespace Forge
         InteropApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
+        ModState::Clear();
         Subsystems::Clear();
         g_registry.Clear();
 

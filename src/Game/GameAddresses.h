@@ -500,20 +500,34 @@ namespace Forge
         // the screen: Loading_ShouldStay @0x0044ff20 keeps the game on it while the flag is
         // set and no key has been pressed, so clearing it is what lets the game fall through
         // to the main menu.
-        // The line the player actually reads is the step caption at +0x2a0, which
-        // Loading_Render @0x0044ff70 draws, falling back to +0x18 when it is empty. The game
-        // writes it through Loading_SetStep @0x0044fef0 alongside the percentage, and
-        // Loading_SetProgress passes a null caption - so a caption written once survives
-        // every repaint after it.
+        // The step caption at +0x2a0 is what Loading_Render @0x0044ff70 draws in the middle,
+        // falling back to $text at +0x18 when it is empty - so on the startup screen it reads
+        // "LOADING". The game writes it through Loading_SetStep @0x0044fef0 along with the
+        // percentage, and Loading_SetProgress passes a null caption, which leaves whatever is
+        // there alone.
+        constexpr uintptr_t kLoadingTextOffset = 0x018;      // $text
+        constexpr uintptr_t kLoadingInitialOffset = 0x134;   // the startup screen, not a level
+        constexpr uintptr_t kLoadingMusicStartedOffset = 0x135;
         constexpr uintptr_t kLoadingPercentOffset = 0x29C;
         constexpr uintptr_t kLoadingCaptionOffset = 0x2A0;
         constexpr size_t kLoadingCaptionLength = 0x100;
 
-        // $press_key is not that line. Loading_Parse hands it to Menu_SetHelpText and it is
-        // drawn only while the screen is the initial one and its music has started, so it is
-        // the line along the bottom rather than the one that reports progress.
+        // $press_key is the line along the bottom, and it is drawn by Menu_DrawHelpText only
+        // once the screen is the initial one AND its music has started - the second of which
+        // Loading_ShouldStay @0x0044ff20 sets, and that does not run until the startup load
+        // has returned. So this line appears when the screen settles into waiting for a key,
+        // not while the loading is going on.
         constexpr uintptr_t kLoadingPressKeyOffset = 0x4A0;
         constexpr size_t kLoadingPressKeyLength = 0x108;
+
+        // And $press_key is not even what gets drawn. Loading_Parse passes it to
+        // Menu_SetHelpText @0x00458ab0, which COPIES it into the help object embedded in the
+        // screen at +0x138 - the string landing at +0x138+4, with the position after it at
+        // +0x108 and +0x10c of that object. The copy happens once, when the script is parsed,
+        // so writing $press_key afterwards changes nothing that anyone sees. This is the
+        // string Menu_DrawHelpText reads.
+        constexpr uintptr_t kLoadingHelpTextOffset = 0x13C;
+        constexpr size_t kLoadingHelpTextLength = 0x104;
         constexpr uintptr_t kLoadingWaitKeyOffset = 0x5A8;   // a bool
 
         // The game world. There is one level at a time and it is a static object rather than

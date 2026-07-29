@@ -5,6 +5,7 @@
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Mods/ModLibrary.h"
+#include "src/Mods/ModState.h"
 
 #include <memory>
 
@@ -66,10 +67,12 @@ namespace Forge
 
     size_t ModHost::CodeModCount(const std::vector<ModRecord>& loadOrder)
     {
+        // What the loading screen is counting towards, so a mod switched off is not one of
+        // them: "3 of 7" has to mean seven that were going to be loaded.
         size_t withCode = 0;
         for (const ModRecord& record : loadOrder)
         {
-            if (!record.manifest.entry.empty())
+            if (!record.manifest.entry.empty() && ModState::IsEnabled(record.manifest.id))
             {
                 ++withCode;
             }
@@ -89,7 +92,8 @@ namespace Forge
         for (const ModRecord& record : loadOrder)
         {
             if (!record.manifest.entry.empty() &&
-                record.manifest.Declares("launcher") == early)
+                record.manifest.Declares("launcher") == early &&
+                ModState::IsEnabled(record.manifest.id))
             {
                 ++inPhase;
             }
@@ -106,8 +110,12 @@ namespace Forge
 
         for (const ModRecord& record : loadOrder)
         {
+            // A mod the player switched off is passed over in silence here: it was already
+            // reported when the switches were read, and repeating it once per mod per run
+            // would bury the lines that matter.
             if (record.manifest.entry.empty() ||
-                record.manifest.Declares("launcher") != early)
+                record.manifest.Declares("launcher") != early ||
+                !ModState::IsEnabled(record.manifest.id))
             {
                 continue;
             }

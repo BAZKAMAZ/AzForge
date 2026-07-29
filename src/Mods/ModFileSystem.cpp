@@ -2,6 +2,8 @@
 
 #include "src/Mods/ModFileSystem.h"
 
+#include "src/Mods/ModState.h"
+
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgeText.h"
 #include "src/Core/ForgeVersion.h"
@@ -35,7 +37,10 @@ namespace Forge
 
         for (const ModRecord& record : loadOrder)
         {
-            if (record.archive == nullptr)
+            // A mod switched off provides no files either. Leaving its overrides in place
+            // would make "off" mean "its code is off", which is not what a player switching
+            // it off is asking for.
+            if (record.archive == nullptr || !ModState::IsEnabled(record.manifest.id))
             {
                 continue;
             }

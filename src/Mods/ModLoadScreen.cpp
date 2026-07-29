@@ -65,9 +65,31 @@ namespace Forge
             }
         }
 
-        // The caption is the line Loading_Render draws. $press_key is written too, because it
-        // is the line the screen shows along the bottom once it is waiting for a key, and by
-        // then it is the last thing left on screen to read.
+        // Turns the help line on while the mods load, by claiming the music has started.
+        //
+        // The flag is put back afterwards rather than left set, because Loading_ShouldStay
+        // reads it to decide whether it still has its one-time work to do - setting it and
+        // calling the routine behind 0x00691330. Leaving it set would make the game skip that
+        // for good; putting it back means the only thing changed is what was drawn while the
+        // loading was going on.
+        void ShowHelpText(uint8_t* screen, bool show)
+        {
+            if (screen != nullptr)
+            {
+                *(screen + kLoadingMusicStartedOffset) = show ? 1 : 0;
+            }
+        }
+
+        // $press_key, and only that. The caption at +0x2a0 is what Loading_Render draws in the
+        // middle of the screen, and it is where the script's $text - "LOADING" - ends up:
+        // writing there replaces the game's own word for what it is doing, which is not this
+        // to say.
+        //
+        // Menu_DrawHelpText draws $press_key only once both +0x134 and +0x135 are set, and
+        // the second is normally set by Loading_ShouldStay, which does not run until the
+        // startup load has returned - so without help the line would not appear until the
+        // loading was over. It is set for the length of the load and put back afterwards,
+        // which is what ShowHelpText below does.
         void SetLine(uint8_t* screen, const char* text)
         {
             if (screen == nullptr || text == nullptr)
@@ -75,8 +97,11 @@ namespace Forge
                 return;
             }
 
-            strncpy_s(reinterpret_cast<char*>(screen + kLoadingCaptionOffset),
-                      kLoadingCaptionLength, text, _TRUNCATE);
+            // The help object's own copy is the one drawn. $press_key is written too, so that
+            // anything reading the screen back - the game reparsing it, a mod looking at it -
+            // sees the same thing rather than the line the script started with.
+            strncpy_s(reinterpret_cast<char*>(screen + kLoadingHelpTextOffset),
+                      kLoadingHelpTextLength, text, _TRUNCATE);
             strncpy_s(reinterpret_cast<char*>(screen + kLoadingPressKeyOffset),
                       kLoadingPressKeyLength, text, _TRUNCATE);
         }
@@ -158,6 +183,7 @@ namespace Forge
             // so leaving it set is what gives the player time to read how it went - which is
             // the whole reason for reporting it here rather than only in the log.
             SetWaitKey(screen, true);
+            ShowHelpText(screen, true);
 
             g_total = ModHost::CodeModCount(*g_loadOrder);
 
@@ -169,6 +195,10 @@ namespace Forge
 
             WriteProgressLine();
             g_originalSetProgress(g_manager, nullptr, kLoadingProgressComplete);
+
+            // Handed back to the game, which has its own first-time work behind this flag.
+            // The line stays on screen because the game sets it again a frame later.
+            ShowHelpText(screen, false);
         }
     }
 

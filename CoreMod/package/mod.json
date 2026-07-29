@@ -1,0 +1,12 @@
+{
+  "id": "azforge.core",
+  "name": "AzForge Core",
+  "version": "1.0.0",
+  "author": "AzForge",
+  "description": "The MODS screen: what is installed, what each mod is, and which of them are switched on.",
+  "api_version": 18,
+  "game_version": "1.0",
+  "entry": "bin/CoreMod.dll",
+  "requires": ["objects_menu", "box_menu", "render"],
+  "capabilities": ["menus", "manage_mods"]
+}

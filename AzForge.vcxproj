@@ -115,6 +115,7 @@
     <ClInclude Include="src\Core\ForgeSubsystems.h" />
     <ClInclude Include="src\Mods\ModScan.h" />
     <ClInclude Include="src\Mods\ModLoadScreen.h" />
+    <ClInclude Include="src\Mods\ModState.h" />
     <ClInclude Include="src\Core\ForgeText.h" />
     <ClInclude Include="src\Core\ForgeVersion.h" />
     <ClInclude Include="src\Game\GameAddresses.h" />
@@ -171,6 +172,7 @@
     <ClCompile Include="src\Mods\ModHost.cpp" />
     <ClCompile Include="src\Mods\ModScan.cpp" />
     <ClCompile Include="src\Mods\ModLoadScreen.cpp" />
+    <ClCompile Include="src\Mods\ModState.cpp" />
     <ClCompile Include="src\Mods\ModLibrary.cpp" />
     <ClCompile Include="src\Mods\ModManifest.cpp" />
     <ClCompile Include="src\Mods\ModRegistry.cpp" />
