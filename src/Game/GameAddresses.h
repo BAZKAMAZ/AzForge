@@ -500,7 +500,19 @@ namespace Forge
         // the screen: Loading_ShouldStay @0x0044ff20 keeps the game on it while the flag is
         // set and no key has been pressed, so clearing it is what lets the game fall through
         // to the main menu.
-        constexpr uintptr_t kLoadingPressKeyOffset = 0x4A0;  // the line along the bottom
+        // The line the player actually reads is the step caption at +0x2a0, which
+        // Loading_Render @0x0044ff70 draws, falling back to +0x18 when it is empty. The game
+        // writes it through Loading_SetStep @0x0044fef0 alongside the percentage, and
+        // Loading_SetProgress passes a null caption - so a caption written once survives
+        // every repaint after it.
+        constexpr uintptr_t kLoadingPercentOffset = 0x29C;
+        constexpr uintptr_t kLoadingCaptionOffset = 0x2A0;
+        constexpr size_t kLoadingCaptionLength = 0x100;
+
+        // $press_key is not that line. Loading_Parse hands it to Menu_SetHelpText and it is
+        // drawn only while the screen is the initial one and its music has started, so it is
+        // the line along the bottom rather than the one that reports progress.
+        constexpr uintptr_t kLoadingPressKeyOffset = 0x4A0;
         constexpr size_t kLoadingPressKeyLength = 0x108;
         constexpr uintptr_t kLoadingWaitKeyOffset = 0x5A8;   // a bool
 

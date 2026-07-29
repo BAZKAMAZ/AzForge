@@ -65,15 +65,20 @@ namespace Forge
             }
         }
 
-        void SetPressKeyText(uint8_t* screen, const char* text)
+        // The caption is the line Loading_Render draws. $press_key is written too, because it
+        // is the line the screen shows along the bottom once it is waiting for a key, and by
+        // then it is the last thing left on screen to read.
+        void SetLine(uint8_t* screen, const char* text)
         {
             if (screen == nullptr || text == nullptr)
             {
                 return;
             }
 
-            char* const line = reinterpret_cast<char*>(screen + kLoadingPressKeyOffset);
-            strncpy_s(line, kLoadingPressKeyLength, text, _TRUNCATE);
+            strncpy_s(reinterpret_cast<char*>(screen + kLoadingCaptionOffset),
+                      kLoadingCaptionLength, text, _TRUNCATE);
+            strncpy_s(reinterpret_cast<char*>(screen + kLoadingPressKeyOffset),
+                      kLoadingPressKeyLength, text, _TRUNCATE);
         }
 
         // What the player reads while this happens.
@@ -99,20 +104,28 @@ namespace Forge
                          loaded, g_total, failed);
             }
 
-            SetPressKeyText(screen, line);
+            SetLine(screen, line);
         }
 
-        // Runs after each mod: rewrite the line, then let the game draw its own screen with
-        // it. The percentage is the one the game had already reached, so the bar does not
-        // move backwards while the text does.
+        // Runs after each mod: rewrite the line, move the bar to match how many are done, and
+        // let the game draw its own screen with both. The bar is restarted for the mods rather
+        // than left at the 100 the game finished on - it is reporting a different piece of
+        // work, and a bar that never moves reports nothing.
         void __cdecl AfterEachMod()
         {
             WriteProgressLine();
 
-            if (g_originalSetProgress != nullptr && g_manager != nullptr)
+            if (g_originalSetProgress == nullptr || g_manager == nullptr)
             {
-                g_originalSetProgress(g_manager, nullptr, kLoadingProgressComplete);
+                return;
             }
+
+            const size_t done = ModHost::LoadedCount() + ModHost::FailedCount();
+            const int percent = g_total == 0
+                                    ? kLoadingProgressComplete
+                                    : static_cast<int>((done * kLoadingProgressComplete) / g_total);
+
+            g_originalSetProgress(g_manager, nullptr, percent);
         }
 
         void __fastcall SetProgressDetour(void* manager, void* unused, int percent)
@@ -131,26 +144,31 @@ namespace Forge
             uint8_t* const screen = CurrentLoadingScreen();
             if (screen == nullptr)
             {
-                // The bar reached 100 outside the loading screen, which is not the startup
-                // load. Nothing to hold open, so the mods are loaded without the screen.
+                // The bar reached 100 without the loading screen being the state, which is
+                // not the startup load. The mods still have to be loaded, but there is
+                // nothing to hold open and nothing to report on.
+                FORGE_LOG_WARN("The loading screen was not on screen when the game finished "
+                               "loading, so the mods are loaded without it");
                 ModHost::Load(*g_loadOrder, ModPhase::LoadingScreen, nullptr);
                 return;
             }
 
-            // Held open for as long as this takes. Loading_ShouldStay keeps the game here
-            // while the flag is set, so the state cannot move on underneath the load - and
-            // the flag goes back to whatever the script asked for afterwards, because it is
-            // the script that decides whether the player presses a key to continue.
-            const uint8_t wasWaiting = *(screen + kLoadingWaitKeyOffset);
+            // Held open for as long as this takes, and left held afterwards. Loading_ShouldStay
+            // reads this flag to decide whether the game may fall through into the main menu,
+            // so leaving it set is what gives the player time to read how it went - which is
+            // the whole reason for reporting it here rather than only in the log.
             SetWaitKey(screen, true);
 
             g_total = ModHost::CodeModCount(*g_loadOrder);
 
+            // The bar starts again from nothing: it is reporting the mods now, not the game.
             WriteProgressLine();
-            ModHost::Load(*g_loadOrder, ModPhase::LoadingScreen, &AfterEachMod);
-            WriteProgressLine();
+            g_originalSetProgress(g_manager, nullptr, 0);
 
-            *(screen + kLoadingWaitKeyOffset) = wasWaiting;
+            ModHost::Load(*g_loadOrder, ModPhase::LoadingScreen, &AfterEachMod);
+
+            WriteProgressLine();
+            g_originalSetProgress(g_manager, nullptr, kLoadingProgressComplete);
         }
     }
 

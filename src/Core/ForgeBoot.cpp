@@ -157,12 +157,12 @@ namespace Forge
         // for the screen, where the menus and the world exist and where the wait is visible.
         ModHost::Load(g_registry.LoadOrder(), ModPhase::BeforeLauncher, nullptr);
 
-        // If the screen cannot be reached, the rest are loaded here instead: late mods are
-        // better than no mods.
-        if (!ModLoadScreen::Install(g_registry.LoadOrder()))
-        {
-            ModHost::Load(g_registry.LoadOrder(), ModPhase::LoadingScreen, nullptr);
-        }
+        // Everything else waits for the loading screen. There is deliberately no loading them
+        // here when the hook cannot be installed: a mod loaded before the launcher meets a
+        // game with no menus, no world and no frames, and would fail in ways that look like
+        // the mod's fault rather than the loader's. Refusing is the honest outcome, and the
+        // reason is in the log.
+        ModLoadScreen::Install(g_registry.LoadOrder());
 
         ShutdownHook::Install(&Boot::Stop);
 
