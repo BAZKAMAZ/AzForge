@@ -4,6 +4,7 @@
 #include "src/Api/InteropApi.h"
 #include "src/Api/BonusesApi.h"
 #include "src/Api/HudApi.h"
+#include "src/Api/MonstersApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/ModManagerApi.h"
@@ -145,6 +146,7 @@ namespace Forge
         Subsystems::Record("bonuses", BonusesApi::Install());
         Subsystems::Record("inventory", InventoryApi::Install());
         Subsystems::Record("hud", HudApi::Install());
+        Subsystems::Record("monsters", MonstersApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
         Subsystems::Record("input", InputApi::Install());
 
@@ -180,6 +182,7 @@ namespace Forge
         FrameApi::Uninstall();
         ConsoleApi::Uninstall();
         HudApi::Uninstall();
+        MonstersApi::Uninstall();
         RenderApi::Uninstall();
         WorldApi::Uninstall();
         InteropApi::Uninstall();

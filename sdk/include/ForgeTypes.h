@@ -4,7 +4,7 @@
 #include <stdint.h>
 
 /* Interface version. mod.json api_version > this → mod refused. */
-#define AMOD_API_VERSION                                            28
+#define AMOD_API_VERSION                                            29
 
 #define AMOD_EXPORT                                                 __declspec(dllexport)
 

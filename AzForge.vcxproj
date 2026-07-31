@@ -112,6 +112,7 @@
     <ClInclude Include="src\Api\ApiRead.h" />
     <ClInclude Include="src\Api\BonusesApi.h" />
     <ClInclude Include="src\Api\HudApi.h" />
+    <ClInclude Include="src\Api\MonstersApi.h" />
     <ClInclude Include="src\Api\InventoryApi.h" />
     <ClInclude Include="src\Api\WorldApi.h" />
     <ClInclude Include="src\Api\InteropApi.h" />
@@ -179,6 +180,7 @@
     <ClCompile Include="src\Api\ApiRead.cpp" />
     <ClCompile Include="src\Api\BonusesApi.cpp" />
     <ClCompile Include="src\Api\HudApi.cpp" />
+    <ClCompile Include="src\Api\MonstersApi.cpp" />
     <ClCompile Include="src\Api\InventoryApi.cpp" />
     <ClCompile Include="src\Api\WorldApi.cpp" />
     <ClCompile Include="src\Api\InteropApi.cpp" />

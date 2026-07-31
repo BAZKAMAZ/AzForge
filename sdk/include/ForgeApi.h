@@ -12,6 +12,7 @@
 #include "BonusesApi.h"
 #include "HudApi.h"
 #include "InventoryApi.h"
+#include "MonstersApi.h"
 #include "InteropApi.h"
 #include "ModManagerApi.h"
 #include "InputApi.h"
@@ -67,6 +68,9 @@ typedef struct AmodApi
     /* The screen the game plays behind. A file replaces it whole; this changes it while it runs. */
     const AmodHudApi* hud;
 
+    /* The monsters a level is filled with */
+    const AmodMonstersApi* monsters;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
@@ -113,6 +117,7 @@ namespace Amod
         Bonuses::Attach(api->bonuses, api->self);
         Inventory::Attach(api->inventory, api->self);
         Hud::Attach(api->hud, api->self);
+        Monsters::Attach(api->monsters, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

@@ -1,239 +1,204 @@
 #include <d3d8.h>
 #include <ForgeApi.h>
+#include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static const char* const kRedKnife = "red_knife";
-static const float kRedKnifeSeconds = 20.0f;
+//   mon   mtypes   mkill <n|all>   mplace <name> <col> <row> [col2 row2]
+//   mmove <n|all> <movement>   mspeed <factor>
 
-static const char* const kRedTexture = "textures/bonus/knife_red.jpg";
-static const char* const kRedIcon = "textures/bonus/knife_red_icon.png";
-static const char* const kPlainTexture = "textures/bonus/knife.jpg";
-static const char* const kPlainIcon = "textures/bonus/knife_icon.png";
+static const char* const kWasp = "wasp";
+static const char* const kGhost = "ghost";
 
-static float g_redKnifeLeft = 0.0f;
-static float g_blink = 0.0f;
-static bool g_red = true;
-static unsigned g_mine = 0;
+static float g_ghostPhase = 0.0f;
 
-static bool SlotHolds(int slot, const char* name)
+static int g_seen = 0;
+
+static const char* StateName(int state)
 {
-    return strcmp(Amod::Inventory::At(slot).Name(), name) == 0;
+    return state == AMOD_MONSTER_STATE_SIT ? "sit" : "move";
 }
 
-static void DropTheKnives()
+static AmodMonsterKillResult __cdecl OnMonsterKilled(const AmodMonsterKillInfo* info, void*)
 {
-    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
-    {
-        if ((g_mine & (1u << slot)) != 0 &&
-            (SlotHolds(slot, kRedKnife) || SlotHolds(slot, "knife")))
-        {
-            Amod::Inventory::Clear(slot);
-        }
-    }
-    g_mine = 0;
+    g_seen += info->isDecor != 0 ? 0 : 1;
+    return AMOD_MONSTER_KILL_DEFAULT;
 }
 
-static void FillWithKnives()
+// Its own rule for the meeting: a ghost goes through the player and neither is any the worse.
+static AmodMonsterTouchResult __cdecl OnMonsterTouch(const AmodMonsterTouchInfo* info, void*)
 {
-    const int count = Amod::Inventory::SlotCount();
-
-    if (Amod::Inventory::SlotOf(kRedKnife) < 0)
-    {
-        const int mine = Amod::Inventory::FreeSlot();
-        if (mine >= 0 && Amod::Inventory::Put(mine, kRedKnife, kRedKnifeSeconds, AMOD_BONUS_TIMER_MOD))
-        {
-            g_mine |= 1u << mine;
-            Amod::Inventory::Slot(mine)["icon"].Set(kRedIcon);
-        }
-    }
-
-    int empty = 0;
-    for (int slot = 0; slot < count; ++slot)
-    {
-        empty += Amod::Inventory::At(slot).IsEmpty() ? 1 : 0;
-    }
-
-    for (int slot = 0; slot < count; ++slot)
-    {
-        if (empty > 1 && Amod::Inventory::At(slot).IsEmpty() &&
-            Amod::Inventory::Put(slot, "knife", 0.0f, AMOD_BONUS_TIMER_NONE))
-        {
-            g_mine |= 1u << slot;
-            --empty;
-        }
-        if (SlotHolds(slot, kRedKnife))
-        {
-            Amod::Inventory::Slot(slot)["time_left"].Set(g_redKnifeLeft);
-        }
-    }
+    return (info->isPlayer != 0 && strcmp(info->name, kGhost) == 0)
+               ? AMOD_MONSTER_TOUCH_REFUSE
+               : AMOD_MONSTER_TOUCH_DEFAULT;
 }
 
-static AmodBonusTakeResult __cdecl OnBonusTaken(const AmodBonusTakeInfo* info, void*)
+static void __cdecl MonstersCommand(int, const char**, void*)
 {
-    if (strcmp(info->resourceId, kRedKnife) != 0)
-    {
-        return AMOD_BONUS_TAKE_DEFAULT;
-    }
-
-    g_redKnifeLeft = kRedKnifeSeconds;
-    FillWithKnives();
-
-    Amod::Bonuses::TakeChainLink(info->pointsOnTake, info->position);
-    return AMOD_BONUS_TAKE_HANDLED;
-}
-
-static void __cdecl SpendCommand(int, const char**, void*)
-{
-    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
-    {
-        if (SlotHolds(slot, "knife"))
-        {
-            Amod::Inventory::Clear(slot);
-            Amod::Console::Printf("spent the knife in slot %d\n", slot);
-            return;
-        }
-    }
-    Amod::Console::Printf("no knife is carried\n");
-}
-
-static void __cdecl FloaterCommand(int argc, const char** argv, void*)
-{
-    if (argc < 3)
-    {
-        Amod::Console::Printf("floater <column> <row>\n");
-        return;
-    }
-
-    const int column = atoi(argv[1]);
-    const int row = atoi(argv[2]);
-
-    Amod::Console::Printf(Amod::Bonuses::NewPlacement("floater", column, row).Put()
-                              ? "a floater on cell %d,%d\n"
-                              : "could not put a floater on cell %d,%d\n",
-                          column, row);
-}
-
-static void __cdecl PlaceCommand(int argc, const char** argv, void*)
-{
-    if (argc < 4)
-    {
-        Amod::Console::Printf("place <name> <column> <row>   e.g. place diamond 20 14\n");
-        return;
-    }
-
-    const int column = atoi(argv[2]);
-    const int row = atoi(argv[3]);
-
-    Amod::Console::Printf(Amod::Bonuses::Place(argv[1], column, row)
-                              ? "put a '%s' on cell %d,%d\n"
-                              : "could not put a '%s' on cell %d,%d - is that a name from "
-                                "bonus_res.txt?\n",
-                          argv[1], column, row);
-}
-
-static bool g_ownRow = false;
-static int g_holders = 0;
-
-static void SetHolders(int count)
-{
-    if (!g_ownRow)
-    {
-        for (int i = 0; i < 10; ++i)
-        {
-            Amod::Hud::RemoveImage(0);
-        }
-        g_ownRow = true;
-    }
-
-    for (int i = 0; i < g_holders; ++i)
-    {
-        Amod::Hud::RemoveImage(Amod::Hud::ImageCount() - 1);
-    }
-    g_holders = 0;
-
-    for (int half = 0; half < count * 2; ++half)
-    {
-        char fragment[320];
-        sprintf_s(fragment, sizeof(fragment),
-                  "$images\n{\n\t$image\n\t{\n"
-                  "\t\t$texture \"textures/ui/derjatel.png\"\n"
-                  "\t\t$pos %d 480\n\t\t$size 30 30\n%s\t}\n}\n",
-                  half * 30, (half % 2) != 0 ? "\t\t$horz_flip\n" : "");
-
-        g_holders += Amod::Hud::AddImages(fragment);
-    }
-}
-
-static void __cdecl InventoryCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        Amod::Console::Printf("inv <count>   now %d, up to %d\n", Amod::Inventory::SlotCount(),
-                              AMOD_INVENTORY_SLOTS_MAX);
-        return;
-    }
-
-    const int count = atoi(argv[1]);
-
-    if (Amod::Inventory::SetSlotCount(count))
-    {
-        // Nothing in the game shortens the step when there are more slots to fit, so the row is
-        // squeezed by hand until it would run off a 640-wide screen.
-        const float start = Amod::Hud::At("items.start_pos").Number(0, 30.0f);
-        const float step = (640.0f - start) / static_cast<float>(count);
-
-        Amod::Hud::At("items.offs").Set(step < 60.0f ? step : 60.0f, 0.0f);
-        SetHolders(count);
-
-        Amod::Console::Printf("the player carries %d slot(s)\n", count);
-    }
-    else
-    {
-        Amod::Console::Printf("%d slots is refused - 1 to %d is what there is room for\n", count,
-                              AMOD_INVENTORY_SLOTS_MAX);
-    }
-}
-
-static void __cdecl KindsCommand(int, const char**, void*)
-{
-    const int count = Amod::Bonuses::TypeCount();
-    Amod::Console::Printf("%d kinds of bonus\n", count);
+    const int count = Amod::Monsters::Count();
+    Amod::Console::Printf("%d monster(s) here, %d killed this level, %d seen off by this mod\n",
+                          count, Amod::Monsters::KilledCount(), g_seen);
 
     for (int index = 0; index < count; ++index)
     {
-        AmodBonusType type;
-        if (!Amod::Bonuses::GetType(index, type))
+        AmodMonster monster;
+        if (!Amod::Monsters::Get(index, monster))
         {
             continue;
         }
 
-        Amod::Console::Printf("%2d  %-12s %-12s %5d pts%s%s%s\n", index, type.resourceId,
-                              type.name, type.pointsOnTake,
-                              type.isTorch != 0 ? "  torch" : (type.isTotem != 0 ? "  totem" : ""),
-                              type.makesTrain != 0 ? "  train" : "",
-                              type.time > 0.0f ? "  timed" : "");
+        char state[24] = "-";
+        if (monster.hasState)
+        {
+            sprintf_s(state, sizeof(state), "%s %.2fs", StateName(monster.state), monster.timeLeft);
+        }
+
+        Amod::Console::Printf("%2d  %-10s moves %-9s %-12s speed %.2f  facing %+d%s%s  %s\n", index,
+                              monster.name, monster.moves, state, monster.speed, monster.facing,
+                              monster.isHard ? "  hard" : "", monster.isDecor ? "  decor" : "",
+                              monster.tag);
     }
 }
 
-// The game carries the slots from one level into the next, so they are emptied on the first frame
-// the new player exists - the carried state is restored after the event.
-static bool g_emptyThem = false;
-
-static void __cdecl OnWorldEvent(const AmodWorldEventInfo*, void*)
+// Nothing the game has: it drifts the way it is facing and rides a wave while doing it.
+static void __cdecl GhostThink(const AmodMonsterThinkInfo* info, void*)
 {
-    g_redKnifeLeft = 0.0f;
-    g_emptyThem = true;
-}
+    g_ghostPhase += info->delta;
 
-static void EmptyEverySlot()
-{
-    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
+    const Amod::Monsters::MonsterRef ghost = Amod::Monsters::At(info->index);
+
+    // The game's own step, so walls stop it; the bob is written straight, because nothing is
+    // supposed to stop that.
+    if (Amod::Monsters::Move(info->index, info->facing) == 1)
     {
-        Amod::Inventory::Clear(slot);
+        ghost["facing"].Set(-info->facing);
     }
-    g_mine = 0;
+    ghost["y"].Set(info->position[1] + sinf(g_ghostPhase * 4.0f) * 0.004f);
+}
+
+static void __cdecl TypesCommand(int, const char**, void*)
+{
+    const int count = Amod::Monsters::TypeCount();
+    Amod::Console::Printf("%d kind(s) of monster\n", count);
+
+    for (int index = 0; index < count; ++index)
+    {
+        AmodMonsterType type;
+        if (Amod::Monsters::GetType(index, type))
+        {
+            Amod::Console::Printf("%2d  %-12s speed %.2f  up %.2f  vert %.2f\n", index, type.name,
+                                  type.speed, type.speedUp, type.vertSpeed);
+        }
+    }
+}
+
+static void __cdecl KillCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        Amod::Console::Printf("mkill <index|all>\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "all") == 0)
+    {
+        int killed = 0;
+        // Backwards: killing one takes it out of the list the rest are numbered in.
+        for (int index = Amod::Monsters::Count() - 1; index >= 0; --index)
+        {
+            killed += Amod::Monsters::Kill(index) ? 1 : 0;
+        }
+        Amod::Console::Printf("killed %d\n", killed);
+        return;
+    }
+
+    // Read before killing, so what is reported is what actually died.
+    const int index = atoi(argv[1]);
+    AmodMonster monster;
+
+    if (!Amod::Monsters::Get(index, monster))
+    {
+        Amod::Console::Printf("there is no monster %d\n", index);
+        return;
+    }
+
+    const char* const name = monster.name;
+    const char* const moves = monster.moves;
+
+    Amod::Console::Printf(Amod::Monsters::Kill(index) ? "killed %d: %s, moves %s\n"
+                                                      : "could not kill %d: %s, moves %s\n",
+                          index, name, moves);
+}
+
+// mplace <name> <col> <row> [col2 row2]
+static void __cdecl PlaceCommand(int argc, const char** argv, void*)
+{
+    if (argc < 4)
+    {
+        Amod::Console::Printf("mplace <name> <col> <row> [col2 row2]\n");
+        return;
+    }
+
+    Amod::Monsters::PlacementBuilder where(argv[1], atoi(argv[2]), atoi(argv[3]));
+    if (argc >= 6)
+    {
+        where.Span(atoi(argv[4]), atoi(argv[5]));
+    }
+
+    Amod::Console::Printf(where.Put() ? "put a '%s' on cell %s,%s\n"
+                                      : "could not put a '%s' on cell %s,%s\n",
+                          argv[1], argv[2], argv[3]);
+}
+
+// mmove <n|all> <movement>
+static void __cdecl MovementCommand(int argc, const char** argv, void*)
+{
+    if (argc < 3)
+    {
+        Amod::Console::Printf("mmove <n|all> %s\n",
+                              "skull|snake|snake2|spider|scorpion|j_skull|bat|mummy|mummy2");
+        return;
+    }
+
+    if (strcmp(argv[1], "all") == 0)
+    {
+        int moved = 0;
+        for (int index = Amod::Monsters::Count() - 1; index >= 0; --index)
+        {
+            moved += Amod::Monsters::SetMovement(index, argv[2]) ? 1 : 0;
+        }
+        Amod::Console::Printf("%d monster(s) now move like a %s\n", moved, argv[2]);
+        return;
+    }
+
+    const int index = atoi(argv[1]);
+    Amod::Console::Printf(Amod::Monsters::SetMovement(index, argv[2])
+                              ? "%d now moves like a %s\n"
+                              : "could not make %d move like a %s\n",
+                          index, argv[2]);
+}
+
+static void __cdecl SpeedCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        Amod::Console::Printf("mspeed <factor>\n");
+        return;
+    }
+
+    const float factor = static_cast<float>(atof(argv[1]));
+    const int count = Amod::Monsters::Count();
+
+    for (int index = 0; index < count; ++index)
+    {
+        AmodMonster monster;
+        if (Amod::Monsters::Get(index, monster))
+        {
+            Amod::Monsters::At(index)["speed"].Set(monster.speed * factor);
+        }
+    }
+    Amod::Console::Printf("%d monster(s) now move %.2f times as fast\n", count, factor);
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -243,96 +208,40 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Amod::Console::AddCommand("place", &PlaceCommand);
-    Amod::Console::AddCommand("kinds", &KindsCommand);
-    Amod::Console::AddCommand("spend", &SpendCommand);
-    Amod::Console::AddCommand("floater", &FloaterCommand);
-    Amod::Console::AddCommand("inv", &InventoryCommand);
-    Amod::Bonuses::OnTake(&OnBonusTaken);
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_LOADED, &OnWorldEvent);
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_UNLOADED, &OnWorldEvent);
+    Amod::Console::AddCommand("mon", &MonstersCommand);
+    Amod::Console::AddCommand("mtypes", &TypesCommand);
+    Amod::Console::AddCommand("mkill", &KillCommand);
+    Amod::Console::AddCommand("mplace", &PlaceCommand);
+    Amod::Console::AddCommand("mmove", &MovementCommand);
+    Amod::Console::AddCommand("mspeed", &SpeedCommand);
+    Amod::Monsters::OnKill(&OnMonsterKilled);
+    Amod::Monsters::OnTouch(&OnMonsterTouch);
 
-    // The game has not read bonus_res.txt yet at this point, so the loader holds these until it has.
-    AmodBonusType known;
+    // The definition alone would never appear: the spawner matches a placement's $name against a
+    // closed table of ten, so the name is taught to it too, and told which of the ten it moves like.
+    AmodMonsterType known;
 
-    if (!Amod::Bonuses::FindType(kRedKnife, known))
+    if (!Amod::Monsters::FindType(kWasp, known))
     {
-        Amod::Bonuses::NewType(kRedKnife, "knife")
-            .Glow(1.0f, 0.15f, 0.1f, 1.0f)
-            .Glow2(1.0f, 0.3f, 0.2f, 1.0f)
-            .Timer(kRedKnifeSeconds, AMOD_BONUS_TIMER_MOD)
-            .PointsOnTake(50)
+        Amod::Monsters::NewType(kWasp, AMOD_MONSTER_MOVES_BAT)
+            .Speed(0.9f)
             .Define();
     }
+    Amod::Monsters::DefineKind(kWasp, AMOD_MONSTER_MOVES_BAT);
 
-    if (!Amod::Bonuses::FindType("floater", known))
+    // The same again, but this one keeps only the bat's shape and runs the mod's own think.
+    if (!Amod::Monsters::FindType(kGhost, known))
     {
-        Amod::Bonuses::NewType("floater", "bonus_1")
-            .Behaves(AMOD_BONUS_LIKE_SCORED)
-            .PointsOnTake(4000)
-            .Glow(1.0f, 0.4f, 0.1f, 1.0f)
-            .Rocking(0.15f, 2.0f, 0.0f, 0.0f, 1.0f)
-            .Define();
+        Amod::Monsters::NewType(kGhost, AMOD_MONSTER_MOVES_BAT).Define();
     }
+    Amod::Monsters::DefineKind(kGhost, AMOD_MONSTER_MOVES_BAT);
+    Amod::Monsters::DefineBehaviour(kGhost, &GhostThink);
 
     return AMOD_OK;
 }
 
-AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
+AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
-    g_blink += frame->delta;
-    if (g_blink >= 0.3f)
-    {
-        g_blink = 0.0f;
-        g_red = !g_red;
-
-        Amod::Bonuses::Type(kRedKnife)["texture"].Set(g_red ? kRedTexture : kPlainTexture);
-
-        const int carried = Amod::Inventory::SlotOf(kRedKnife);
-        if (carried >= 0)
-        {
-            Amod::Inventory::Slot(carried)["icon"].Set(g_red ? kRedIcon : kPlainIcon);
-        }
-    }
-
-    if (!Amod::Inventory::HasPlayer())
-    {
-        return;
-    }
-
-    if (g_emptyThem)
-    {
-        EmptyEverySlot();
-        g_emptyThem = false;
-    }
-
-    if (g_redKnifeLeft <= 0.0f)
-    {
-        const int carried = Amod::Inventory::SlotOf(kRedKnife);
-        if (carried < 0)
-        {
-            return;
-        }
-
-        g_redKnifeLeft = kRedKnifeSeconds;
-        g_mine |= 1u << carried;
-        Amod::Inventory::Slot(carried)["icon"].Set(kRedIcon);
-    }
-
-    g_redKnifeLeft -= frame->delta;
-    if (g_redKnifeLeft > 0.0f)
-    {
-        FillWithKnives();
-        return;
-    }
-
-    g_redKnifeLeft = 0.0f;
-
-    AmodBonusType type;
-    const int left = Amod::Bonuses::FindType(kRedKnife, type) ? type.pointsOnRunOut : 0;
-
-    DropTheKnives();
-    Amod::Bonuses::AwardPoints(left);
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

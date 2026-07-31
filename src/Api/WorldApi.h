@@ -20,6 +20,10 @@ namespace Forge
  
         static bool                                                 IsLevelLoaded();
         static uint8_t*                                             CurrentRoom();
+
+        // Every room of the level, whether the player is in it or not
+        static int                                                  RoomTotal();
+        static uint8_t*                                             RoomAt(int index);
  
         // Live entity list of the current room. Null ends the walk.
         static uint8_t*                                             FirstLiveEntity();

@@ -14,13 +14,6 @@ namespace Forge
         const char* pattern;
     };
 
-    // Wildcards cover the operand of every call that leaves the pattern and every absolute
-    // address of a global. Everything else, including short jumps, is literal: a short jump
-    // is relative to the instruction after it and survives the routine being moved, and the
-    // shape of the control flow is what makes a signature specific.
-    //
-    // This table lives in a header so the signature test can check the patterns AzForge
-    // actually ships rather than a copy of them.
     inline constexpr GameSymbolDefinition kGameSymbolTable[static_cast<size_t>(GameSymbol::Count)] =
     {
         {
@@ -154,7 +147,7 @@ namespace Forge
 
         // The constructors. Every one of them writes its class's vftable, and that address
         // is kept literal here rather than wildcarded like other globals: it is what tells
-        // one constructor from the next, several of them being otherwise identical, and this
+
         // executable carries no relocations, so an address that moved means a rebuild.
         {
             "MenuItem_Create", GameAddress::kMenuItemCreate,
@@ -242,7 +235,7 @@ namespace Forge
         },
 
         // The decoration parsers. Each opens an exception frame, and the scope table it
-        // registers is kept literal for the same reason the constructors keep their vftable:
+
         // their prologues are otherwise the same routine three times over.
         {
             "Menu_ParseImages", GameAddress::kMenuParseImages,
@@ -346,7 +339,7 @@ namespace Forge
         },
         {
             "Render_Begin", GameAddress::kRenderBegin,
-            // The device-check at +0x0c, the early-out that returns 0 in AL, the resize test at
+
             // +0x58, then TestCooperativeLevel through the device vtable. The Present pointer call
             // is an import, so it is wildcarded.
             "56 8B F1 83 7E 0C 00 75 04 32 C0 5E C3 80 7E 58 00 74 22 8B 46 04 6A 01 6A 00 50 "
@@ -371,7 +364,7 @@ namespace Forge
         },
         {
             "Menu_DrawDecorations", GameAddress::kMenuDrawDecorations,
-            // Reads the $image collection at menu+0x74 and the $images_anim at menu+0x78, draws
+
             // each, then tests the background-tile flag at menu+0xF4 - the decoration draw and
             // nothing else. The two draw calls are wildcarded.
             "83 EC 0C 56 8B F1 8B 46 74 6A 00 50 E8 ?? ?? ?? ?? 8B 4E 78 51 "
@@ -380,7 +373,7 @@ namespace Forge
         {
             "Menu_FindFont", GameAddress::kMenuFindFont,
             // Defaults a null name to the "default" string, then walks the font registry count
-            // and items (both absolute globals, wildcarded) comparing names. The "default" push
+
             // is an absolute too.
             "53 55 8B 6C 24 0C 56 57 85 ED 75 05 BD ?? ?? ?? ?? 8B 1D ?? ?? ?? ?? "
             "33 F6 85 DB 7E 3B 8B 3D ?? ?? ?? ??"
@@ -403,7 +396,7 @@ namespace Forge
         {
             "Level_ActivateRoom", GameAddress::kLevelActivateRoom,
             // The maze test at +0x934 and its warning, then the maze cursor at +0x93c that the
-            // first argument is added to - the step through the maze and nothing else. Only the
+
             // warning string and the console call are absolutes.
             "56 8B F1 8B 86 34 09 00 00 85 C0 75 15 68 ?? ?? ?? ?? 6A 01 "
             "E8 ?? ?? ?? ?? 83 C4 08 33 C0 5E C2 08 00 53 8B 9E 3C 09 00 00 03 5C 24 0C"
@@ -426,15 +419,14 @@ namespace Forge
         },
         {
             "Bonus_OnTouch", GameAddress::kBonusOnTouch,
-            // Takes the bonus's placement record from entity+0x5cc, checks its tag against 9, then
-            // the toucher's kind against 1 - the player test that gates the whole routine. All of
+
             // it structure-relative, so nothing needs wildcarding.
             "51 53 55 8B 6C 24 10 8B 85 CC 05 00 00 33 DB 56 3B C3 74 09 83 38 09 "
             "89 44 24 0C 74 04 89 5C 24 0C 8B 74 24 18 83 3E 01"
         },
         {
             "Bonuses_FreeResources", GameAddress::kBonusesFreeResources,
-            // The banner, the $bonus_fx glow released through the texture slot, then the count at
+
             // 0x00691490 tested against a zeroed EDI before the walk. The banner string, the
             // console call and every global are absolutes, so they are wildcarded.
             "68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 08 85 C0 74 0A "

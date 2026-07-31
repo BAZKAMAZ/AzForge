@@ -50,7 +50,7 @@ namespace Forge
         // Render_Present  __thiscall (manager)  vtable +0x44
         // device @ manager+0x0C, device-lost @ +0x20
         // viewport info @ +0xA8, width +0xB4, height +0xB8
-        //
+
         // g_pfnDrawStyledText __cdecl (font, text, 0, centre[2], scale[2], colour[4], align, 0)
         constexpr uintptr_t kDrawStyledTextPtr = 0x00691308;
 
@@ -140,9 +140,9 @@ namespace Forge
         constexpr uintptr_t kMenuSliderCreate = 0x0045B460;
 
         // Direct parsers (not via vtable):
-        //   MenuItem_Parse  (parser, float itemsOffs)  RET 8
-        //   MenuLogo_Parse  (parser, float itemsOffs)  RET 8
-        //   MenuList_Parse  (parser, Menu* menu)       RET 8
+        // MenuItem_Parse  (parser, float itemsOffs)  RET 8
+        // MenuLogo_Parse  (parser, float itemsOffs)  RET 8
+        // MenuList_Parse  (parser, Menu* menu)       RET 8
         //   MenuTable_Parse (parser)
         // Others go through vtable +0x30 (parser alone).
         constexpr uintptr_t kMenuLogoParse = 0x0045F2D0;
@@ -430,22 +430,15 @@ namespace Forge
         constexpr uintptr_t kInventoryTakeSlot = 0x00430550;
         constexpr uintptr_t kInventoryClearSlot = 0x00431130;
 
-        // Inventory_Update runs a slot's timer only on totem set and suppress clear; the HUD
-        // draws the ring on totem alone, so both bits mean a visible timer nobody but us runs.
         constexpr uintptr_t kInventoryUpdate = 0x00431700;
 
-        // How many slots there are, as six immediates rather than one number: every routine that
-        // walks them carries its own copy. Each site below points at the byte holding the 5.
-        //
-        //   Inventory_IsCarrying      83 FF 05   CMP EDI,5
-        //   Inventory_FindSlot        83 FE 05   CMP ESI,5
-        //   Inventory_FindSlotIndexed 83 FF 05   CMP EDI,5
+        // Inventory_IsCarrying      83 FF 05   CMP EDI,5
+        // Inventory_FindSlot        83 FE 05   CMP ESI,5
+        // Inventory_FindSlotIndexed 83 FF 05   CMP EDI,5
         //   Inventory_FirstFreeSlot   83 F8 05   CMP EAX,5
-        //   Inventory_Update          BB 05..    MOV EBX,5
-        //   Hud_DrawInventory         BD 05..    MOV EBP,5
-        //
-        // Five is also the most there can be: the slots are embedded in the player at +0x2ac with
-        // a stride of 0x60, and a sixth would start at +0x48c, which is the entity's flags.
+        // Inventory_Update          BB 05..    MOV EBX,5
+        // Hud_DrawInventory         BD 05..    MOV EBP,5
+
         struct SlotCountSite
         {
             uintptr_t address;      // the byte holding the count
@@ -453,13 +446,8 @@ namespace Forge
             uintptr_t opcodeAt;
         };
 
-        // Where the slots are, as nine more immediates: every routine adds 0x2ac to the player it
-        // was handed. Pointing them at a buffer of the loader's own is what lets there be more
-        // than five - each replacement is the same length or shorter, padded with NOPs, and the
         // index is already in a register of its own at the three that compute one.
-        //
-        // Not patched, and so left behind when the slots move: the save path (Player_ReadState)
-        // and the state copy at 0x00441690, which go on reading the five that are still inside
+
         // the player. An inventory of more than five therefore does not survive a save.
         constexpr size_t kInventorySlotsMax = 32;
 
@@ -494,11 +482,10 @@ namespace Forge
             // ADD EDI,0x2ac  ->  MOV EDI,buffer
             { 0x0044E730, 6, 1, { 0xBF, 0x00 }, 0, { 0x81, 0xC7, 0xAC, 0x02, 0x00, 0x00, 0x00 } },
 
-            // The save. One routine serves both directions - it hands its visitor the block and
             // the size, and the loop behind it resolves each slot's type again by $res_id. The
-            // size is left at five slots on purpose: a save that is still the shape the game wrote
+
             // is a save the game can still read.
-            //
+
             // ADD ECX,0x2ac  ->  MOV ECX,buffer
             { 0x00443FFA, 6, 1, { 0xB9, 0x00 }, 0, { 0x81, 0xC1, 0xAC, 0x02, 0x00, 0x00, 0x00 } },
             // LEA ECX,[EAX+EBX+0x2ac]  ->  LEA ECX,[EBX+buffer]   (EBX walks the slots)
@@ -543,7 +530,7 @@ namespace Forge
         constexpr uintptr_t kChainWindow = 0x00694664;
 
         // What a chain of that length shows and plays: __thiscall (messages, length) ->
-        // { sound, volume }, or null where the script named no message for it. The this is the
+
         // block of them; RET 4 is the length alone, which is what makes it look like a cdecl of
         // one argument until it is called that way and reads rubbish.
         constexpr uintptr_t kChainMessages = 0x00694650;
@@ -600,25 +587,154 @@ namespace Forge
         constexpr uintptr_t kBonusSpawnTypeOffset = 0xB8;
 
         // Bonus_OnTouch __cdecl (bonus, toucher, side), reached through the entity's own slot, so a
-        // detour catches every bonus. Entities_ResolveTouches 0x00413CD0 calls both handlers of a
+
         // touching pair, each with itself first.
         constexpr uintptr_t kBonusOnTouch = 0x00430B80;
         constexpr uintptr_t kBonusThink = 0x00430A90;
+        // Entity_MoveStep __cdecl (state, dirX, dirY, dirZ, delta, flags) -> hit something.
+
+        constexpr uintptr_t kEntityMoveStep = 0x0043F140;
+        constexpr uintptr_t kEntityMoveStateOffset = 0x120;
+
+        constexpr uintptr_t kEntityThinkOffset = 0x5B8;
         constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
 
-        // What Bonus_Think leaves for the renderer: one scalar along the axis the spawn copied
         // out of the type, added to the position. Nothing writes the position itself.
         constexpr uintptr_t kEntityRockingAxisOffset = 0x4FC;
         constexpr uintptr_t kEntityRockingOffset = 0x508;
 
-        // What a spawned bonus draws with. Bonus_Spawn copies these out of the type unless the
-        // placement named its own, so writing them changes one that is already lying there;
         // writing the type changes the ones spawned after.
         constexpr uintptr_t kEntityModelOffset = 0x274;
         constexpr uintptr_t kEntityTextureOffset = 0x278;
         constexpr uintptr_t kBonusSpawnOwnModelOffset = 0x58;   // nonzero: the two below are used
         constexpr uintptr_t kBonusSpawnModelOffset = 0x5C;
         constexpr uintptr_t kBonusSpawnTextureOffset = 0x60;
+
+        constexpr uintptr_t kMonsterResTable = 0x00691458;
+        constexpr uintptr_t kMonsterResCount = 0x0069145C;
+        constexpr size_t kMonsterResStride = 0xDC;
+        constexpr uintptr_t kMonsterResNameOffset = 0x000;      // $name, 0x40
+        constexpr uintptr_t kMonsterResTexEasyOffset = 0x040;
+        constexpr uintptr_t kMonsterResTexHardOffset = 0x044;
+        constexpr uintptr_t kMonsterResModelOffset = 0x048;
+        constexpr uintptr_t kMonsterResAnimationOffset = 0x04C;
+        constexpr uintptr_t kMonsterResSpeedUpOffset = 0x050;
+        constexpr uintptr_t kMonsterResSpeedOffset = 0x054;
+        constexpr uintptr_t kMonsterResVertSpeedOffset = 0x058;
+        constexpr uintptr_t kMonsterResPartColorOffset = 0x05C;      // four floats
+        constexpr uintptr_t kMonsterResPartColorHardOffset = 0x06C;
+        constexpr uintptr_t kMonsterResBoxOffset = 0x07C;            // 0x1c, as a room's boxes are
+        constexpr uintptr_t kMonsterResBox2Offset = 0x098;           // both fall back to $bbox
+        constexpr uintptr_t kMonsterResObjBoxOffset = 0x0B4;
+        constexpr uintptr_t kMonsterResJumpOffset = 0x0D0;           // "j_skull" alone reads these
+        constexpr uintptr_t kMonsterResJumpFactorOffset = 0x0D4;
+        constexpr uintptr_t kMonsterResFallOffset = 0x0D8;
+
+        // letting them through changes no monster the game already has.
+        constexpr uintptr_t kMonsterJumpKeysGuard = 0x004302B9;
+        constexpr uint8_t kMonsterJumpKeysGuardBytes[] = { 0x75, 0x4F };
+
+        constexpr uintptr_t kMonsterDieBlast = 0x00691400;      // $die_blast, 0x2c
+        constexpr uintptr_t kMonsterDieBlastHard = 0x0069142C;
+
+        constexpr uintptr_t kMonstersLoadResources = 0x0042FFD0;
+        constexpr uintptr_t kMonstersFreeResources = 0x0042F660;
+        constexpr uintptr_t kMonsterResAppend = 0x0042FF60;     // (record**, int*) -> record
+        constexpr uintptr_t kMonsterResFind = 0x0042F5C0;       // (name) -> record, by $name
+        constexpr uintptr_t kMonsterParseSpawn = 0x0042F730;
+        constexpr uintptr_t kMonsterKill = 0x0042FDB0;          // __fastcall (entity)
+
+        // cached in the last dword.
+        constexpr size_t kMonsterSpawnSize = 0x124;
+        constexpr uintptr_t kMonsterSpawnNameOffset = 0x004;    // $name, 0x40
+        constexpr uintptr_t kMonsterSpawnPositionOffset = 0x044;
+        constexpr uintptr_t kMonsterSpawnLevelOffset = 0x050;   // $level; 1 and 3 are the hard ones
+        constexpr uintptr_t kMonsterSpawnLiveOffset = 0x054;    // cleared by Monster_Kill
+        constexpr uintptr_t kMonsterSpawnSpeedOffset = 0x058;   // $speed, doubled when $level is hard
+        constexpr uintptr_t kMonsterSpawnDirOffset = 0x064;     // $dir
+        constexpr uintptr_t kMonsterSpawnAttackDistOffset = 0x068;
+        constexpr uintptr_t kMonsterSpawnAttackTimeOffset = 0x06C;   // every $*_time is two floats,
+        constexpr uintptr_t kMonsterSpawnBluffTimeOffset = 0x074;    // a range the monster picks in
+        constexpr uintptr_t kMonsterSpawnRadiusOffset = 0x07C;       // the circling monsters
+        constexpr uintptr_t kMonsterSpawnAxisOffset = 0x080;
+        constexpr uintptr_t kMonsterSpawnPhaseOffset = 0x08C;
+        constexpr uintptr_t kMonsterSpawnPosLerpOffset = 0x090;
+        constexpr uintptr_t kMonsterSpawnTagOffset = 0x09C;     // $tag, 0x40
+        constexpr uintptr_t kMonsterSpawnDecorOffset = 0x0DC;
+        constexpr uintptr_t kMonsterSpawnMoveTypeOffset = 0x0F0;
+        constexpr uintptr_t kMonsterSpawnWalkTimeOffset = 0x100;
+        constexpr uintptr_t kMonsterSpawnWalkWaitOffset = 0x108;
+        constexpr uintptr_t kMonsterSpawnSitTimeOffset = 0x110;
+        constexpr uintptr_t kMonsterSpawnWaitTimeOffset = 0x118;
+        constexpr uintptr_t kMonsterSpawnTypeOffset = 0x120;    // the definition record
+
+        // and how long until it changes. Both are rolled and stepped by Monster_Think.
+        constexpr uintptr_t kMonsterSpawnStateOffset = 0x0E0;   // 0 "move", 1 "sit"
+        constexpr uintptr_t kMonsterSpawnTimerOffset = 0x0E8;
+        constexpr int kMonsterStateMove = 0;
+        constexpr int kMonsterStateSit = 1;
+
+        // A live monster. The placement is kind 10, the entity itself is kind 2.
+        constexpr int kEntityKindMonster = 2;
+        constexpr uintptr_t kMonsterEntityTagOffset = 0x044;
+        constexpr uintptr_t kMonsterEntityObjBoxOffset = 0x158;
+        constexpr uintptr_t kMonsterEntitySpeedUpOffset = 0x190;
+        constexpr uintptr_t kMonsterEntitySpeedOffset = 0x224;
+        constexpr uintptr_t kMonsterEntityPlayerOffset = 0x24C;  // cached by the first think
+        constexpr uintptr_t kMonsterEntityLevelOffset = 0x4C8;
+        constexpr uintptr_t kMonsterEntityHardOffset = 0x4E4;    // 1.0, or 2.0 for a hard $level
+        constexpr uintptr_t kMonsterEntityFacingOffset = 0x588;  // -1 or 1
+        constexpr uintptr_t kEntityCollidesOffset = 0x595;
+
+        // the single door a mod can stand in.
+
+        // kept, and never becomes anything.
+        // Monster_ParseSpawn __cdecl (room, grid, parser). Keys on $name as well, so a name the
+
+        // in the same block and the placement only appended, not spawned.
+        constexpr uintptr_t kMonsterParseSpawnRoutine = 0x0042F730;
+
+        constexpr uintptr_t kParserFindKey = 0x00421560;
+        constexpr uintptr_t kParserReadFloat4 = 0x00421740;
+
+        constexpr float kMonsterCellZ = 0.2f;
+
+        constexpr uintptr_t kMonsterSpawnPlacement = 0x0042FD60;
+        constexpr uintptr_t kMonsterSpawnTable = 0x004CE4F8;
+        constexpr size_t kMonsterSpawnTableCount = 10;
+
+        // bat, which dies through an animation instead of at once.
+        constexpr uintptr_t kMonsterOnHit = 0x00447200;
+        constexpr uintptr_t kEntityHitHandlerOffset = 0x5C4;
+
+        // what chose the creator, but nothing in the entity spells the kind out.
+        struct MonsterMovement
+        {
+            const char* name;
+            uintptr_t think;
+
+            // instead, every frame. So which of the two is "the speed" depends on the kind.
+            bool speedInEntity;
+        };
+
+        constexpr MonsterMovement kMonsterMovements[] =
+        {
+            { "skull",    0x00448070, true  },
+            { "snake",    0x00447AB0, false },
+            { "snake2",   0x00447AC0, false },
+            { "spider",   0x004474B0, true  },   // the scorpion takes this one on one of its branches
+            { "scorpion", 0x00446E40, true  },
+            { "j_skull",  0x00446800, true  },
+            { "bat",      0x004463C0, false },
+            { "mummy",    0x004460A0, true  },
+            { "mummy2",   0x00445C30, true  },
+        };
+
+        // never touch those fields.
+        constexpr uintptr_t kMonsterThinkMummy = 0x004460A0;
+        constexpr uintptr_t kMonsterThinkMummy2 = 0x00445C30;
+
+        constexpr uintptr_t kMonstersKilled = 0x00694694;
 
         constexpr uintptr_t kBonusResFind = 0x00430680; // __cdecl (name) -> type record
 
@@ -645,7 +761,7 @@ namespace Forge
         constexpr uintptr_t kBonusResSoundTakeOffset = 0x0D4;
         constexpr uintptr_t kBonusResSoundUseOffset = 0x0D8;
         constexpr uintptr_t kBonusResFlagsOffset = 0x0DC;
-        // $rocking. Amp and speed are read from the type every frame; the axis is copied into
+
         // the entity at spawn, so changing it only takes on the next spawn.
         constexpr uintptr_t kBonusResRockingAmpOffset = 0x0E0;
         constexpr uintptr_t kBonusResRockingSpeedOffset = 0x0E4;
@@ -663,13 +779,12 @@ namespace Forge
         constexpr uint32_t kBonusFlagSuppressed = 0x08;         // slot only: skip the game's tick
 
         // BonusRes_Append __stdcall (record**, int* count) -> the new record. RET 8, not the cdecl
-        // Ghidra guesses; calling it cdecl leaves the stack 8 bytes out and crashes on the way
-        // back. Reallocs, so it moves every type the live spawns and slots point at: only safe
+
         // with no level loaded.
         constexpr uintptr_t kBonusResAppend = 0x00431690;
 
         // The gameplay HUD: one static object, built by Hud_Init @0x0044e0f0 out of
-        // scripts/game_info.txt at 95% of the startup, so every field of it has a name a script
+
         // author already knows. Zeroes until then.
         constexpr uintptr_t kHud = 0x006947D8;
         constexpr uintptr_t kHudInit = 0x0044E0F0;
@@ -688,13 +803,11 @@ namespace Forge
         // 0x0044EC60), two heap pointers the game refills every level and frees.
         constexpr size_t kHudSize = 0xD0;
 
-        // The $images of a HUD block: a pointer to { record*, count }, drawn by Menu_DrawImages.
         // One record is 0x28 bytes and is what Image_ParseRecord reads a $image into.
-        //
-        //   Image_ParseRecord __cdecl (parser, record)
-        //   Images_Append     __stdcall (record**, int* count) -> the new record   RET 8, not cdecl
-        //
-        // The append reallocates to exactly (count + 1) records, so the array is never longer than
+
+        // Image_ParseRecord __cdecl (parser, record)
+        // Images_Append     __stdcall (record**, int* count) -> the new record   RET 8, not cdecl
+
         // the count and removing records shortens it: nothing may be written past it.
         constexpr uintptr_t kHudImagesOffset = 0x10;            // $standard_level $images
         constexpr uintptr_t kHudBonusImagesOffset = 0x14;       // $bonus_level $images
@@ -705,7 +818,7 @@ namespace Forge
         constexpr uintptr_t kImagesCountOffset = 0x04;
 
         // Bonuses_FreeResources __cdecl (), called once from the shutdown block. Releases the
-        // model, texture, icon and both sounds of EVERY record in the table, one by one - so two
+
         // records holding the same handle release it twice.
         constexpr uintptr_t kBonusesFreeResources = 0x00430700;
 
@@ -714,12 +827,6 @@ namespace Forge
         constexpr uintptr_t kResolveModelSlot = 0x006912B8;
         constexpr uintptr_t kResolveTextureSlot = 0x006912A4;
         constexpr uintptr_t kResolveSoundSlot = 0x00691344;
-
-        constexpr uintptr_t kMonsterResTable = 0x00691458;
-        constexpr uintptr_t kMonsterResCount = 0x0069145C;
-        constexpr size_t kMonsterResStride = 0xDC;
-        constexpr uintptr_t kMonsterResNameOffset = 0x00;
-        constexpr uintptr_t kMonsterResSpeedOffset = 0x54;
 
         constexpr size_t kRoomGridColumns = 40;
         constexpr size_t kRoomGridRows = 29;
@@ -818,4 +925,39 @@ namespace Forge
     // Menu_RegisterAll: PUSH ESI / PUSH 0 / PUSH 0  → 5
     constexpr uint8_t kMenuRegisterAllPrologue[] =
     { 0x56, 0x6A, 0x00, 0x6A, 0x00 };
+
+    // Monster_SpawnPlacement: PUSH EDI / MOV EDI,[ESP+8]  → 5. __cdecl, RET with no operand.
+    constexpr uint8_t kMonsterSpawnPlacementPrologue[] =
+    { 0x57, 0x8B, 0x7C, 0x24, 0x08 };
+
+    // Monster_Kill: SUB ESP,0xc / PUSH ESI / MOV ESI,[ESP+0x14]  → 8. __cdecl.
+    constexpr uint8_t kMonsterKillPrologue[] =
+    { 0x83, 0xEC, 0x0C, 0x56, 0x8B, 0x74, 0x24, 0x14 };
+
+    // Monster_ParseSpawn: SUB ESP,0x15c  → 6, one instruction. __cdecl.
+    constexpr uint8_t kMonsterParseSpawnPrologue[] =
+    { 0x81, 0xEC, 0x5C, 0x01, 0x00, 0x00 };
+
+    // Monsters_FreeResources: CMP [0x00691458],0  → 7
+    constexpr uint8_t kMonstersFreeResourcesPrologue[] =
+    { 0x83, 0x3D, 0x58, 0x14, 0x69, 0x00, 0x00 };
+
+    // The six touch handlers, one per family, all __cdecl (monster, other, side). Between them
+    // they hold every rule of what a monster does to the player and the player to it.
+    struct MonsterTouchSite
+    {
+        uintptr_t address;
+        uint8_t prologue[8];
+        size_t length;
+    };
+
+    constexpr MonsterTouchSite kMonsterTouchSites[] =
+    {
+        { 0x00445D90, { 0x53, 0x55, 0x8B, 0x6C, 0x24, 0x0C },             6 },  // mummy, mummy2
+        { 0x00446570, { 0x53, 0x55, 0x8B, 0x6C, 0x24, 0x0C },             6 },  // bat
+        { 0x004469F0, { 0x53, 0x56, 0x8B, 0x74, 0x24, 0x0C },             6 },  // j_skull
+        { 0x00447790, { 0x53, 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x10 },       7 },  // spider, scorpion
+        { 0x00447CD0, { 0x53, 0x8B, 0x5C, 0x24, 0x08 },                   5 },  // the snakes
+        { 0x00448270, { 0x53, 0x56, 0x57, 0x8B, 0x7C, 0x24, 0x10 },       7 },  // skull
+    };
 }

@@ -23,3 +23,6 @@ sdk/SampleMod/package/bin/
 
 # Produced by a running game, never by a build
 forge.log
+
+# Handoff notes for the next session, not part of the project
+*_context.txt

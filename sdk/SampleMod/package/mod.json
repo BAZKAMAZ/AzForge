@@ -1,9 +1,9 @@
 {
-  "id": "azforge.boninv",
-  "name": "AzForge New bonuses",
+  "id": "azforge.monstersnew",
+  "name": "AzForge change monsters",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "Adding two bonuses, as well as adding new slots to the inventory",
+  "description": "",
   "api_version": 28,
   "requires": ["world", "console"],
   "game_version": "1.0",

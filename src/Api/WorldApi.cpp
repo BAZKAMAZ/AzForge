@@ -916,6 +916,16 @@ namespace Forge
         return Room(CurrentRoomIndex());
     }
 
+    int WorldApi::RoomTotal()
+    {
+        return RoomCount();
+    }
+
+    uint8_t* WorldApi::RoomAt(int index)
+    {
+        return Room(index);
+    }
+
     uint8_t* WorldApi::FirstLiveEntity()
     {
         return FirstEntity(CurrentRoomIndex());

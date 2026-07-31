@@ -219,6 +219,9 @@
     <ClInclude Include="src\Zip\ZipArchive.h">
       <Filter>Zip</Filter>
     </ClInclude>
+    <ClInclude Include="src\Api\MonstersApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -350,6 +353,9 @@
     </ClCompile>
     <ClCompile Include="src\Zip\ZipArchive.cpp">
       <Filter>Zip</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\MonstersApi.cpp">
+      <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
