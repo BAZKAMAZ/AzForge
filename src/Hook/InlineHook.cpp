@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Hook/InlineHook.h"
 
@@ -15,7 +15,7 @@ namespace Forge
         void WriteRelativeJump(uint8_t* at, const void* destination)
         {
             const intptr_t relative = reinterpret_cast<intptr_t>(destination) -
-                                      (reinterpret_cast<intptr_t>(at) + 5);
+                (reinterpret_cast<intptr_t>(at) + 5);
 
             at[0] = kOpcodeJumpRelative;
             memcpy(at + 1, &relative, sizeof(int32_t));
@@ -28,7 +28,7 @@ namespace Forge
     }
 
     bool InlineHook::Install(void* target, void* detour, const uint8_t* expectedPrologue,
-                             size_t prologueLength, std::string& error)
+        size_t prologueLength, std::string& error)
     {
         error.clear();
 
@@ -48,7 +48,7 @@ namespace Forge
         {
             char buffer[128];
             snprintf(buffer, sizeof(buffer), "prologue length %zu is outside the supported range %zu..%zu",
-                     prologueLength, kJumpLength, kMaxPrologueLength);
+                prologueLength, kJumpLength, kMaxPrologueLength);
             error = buffer;
             return false;
         }
@@ -61,12 +61,10 @@ namespace Forge
             return false;
         }
 
-        // The trampoline holds the stolen instructions plus a jump back into the original
-        // body. It is allocated separately so the game's code section keeps its own
-        // protection once the detour is written.
+        // Trampoline: stolen prologue + JMP back to original body.
         m_trampoline = static_cast<uint8_t*>(VirtualAlloc(nullptr, kMaxPrologueLength + kJumpLength,
-                                                          MEM_COMMIT | MEM_RESERVE,
-                                                          PAGE_EXECUTE_READWRITE));
+            MEM_COMMIT | MEM_RESERVE,
+            PAGE_EXECUTE_READWRITE));
         if (m_trampoline == nullptr)
         {
             error = "cannot allocate the trampoline";
@@ -75,10 +73,6 @@ namespace Forge
 
         memcpy(m_trampoline, site, prologueLength);
         WriteRelativeJump(m_trampoline + prologueLength, site + prologueLength);
-
-        // Freshly written memory that is about to be executed. x86 keeps its instruction
-        // cache coherent with writes on its own, so this changes nothing here; it is what
-        // makes the sequence correct rather than correct by architecture.
         FlushInstructionCache(GetCurrentProcess(), m_trampoline, prologueLength + kJumpLength);
 
         DWORD previousProtection = 0;

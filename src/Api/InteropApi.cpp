@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/InteropApi.h"
 
@@ -18,9 +18,6 @@ namespace Forge
     {
         AmodInteropApi g_table = {};
 
-        // A hook belongs to the loader, not to the mod that asked for it: the bytes have to
-        // come back out of the game's code before the mod's DLL is unmapped, and a mod that
-        // crashed or simply forgot cannot be relied on to do that.
         struct Detour
         {
             uint32_t id;
@@ -32,8 +29,6 @@ namespace Forge
         std::vector<Detour> g_detours;
         uint32_t g_nextDetourId = 1;
 
-        // Two matches are enough to call a pattern ambiguous, the same limit the loader's own
-        // symbol resolution uses.
         constexpr size_t kAmbiguityLimit = 2;
 
         ModContext* Resolve(AmodMod mod)
@@ -42,9 +37,6 @@ namespace Forge
             return (context != nullptr && context->magic == kModContextMagic) ? context : nullptr;
         }
 
-        // Whether the whole range is committed and carries at least the protection asked for.
-        // A range that crosses into a second region is walked region by region, because
-        // VirtualQuery answers about one at a time and a structure can straddle two.
         bool RangeHasAccess(uintptr_t address, uint32_t size, DWORD accepted)
         {
             if (size == 0)
@@ -147,8 +139,6 @@ namespace Forge
                 return AMOD_FIND_NOT_FOUND;
             }
 
-            // Refused rather than guessed at, for the same reason the loader refuses one of
-            // its own: taking the first hit binds to whichever came first in memory.
             if (found.size() > 1)
             {
                 return AMOD_FIND_AMBIGUOUS;
@@ -178,8 +168,6 @@ namespace Forge
                 return 0;
             }
 
-            // Made writable for the length of the write and put back afterwards, so patching
-            // the game's code works the same way patching its data does.
             void* const at = reinterpret_cast<void*>(address);
             DWORD previous = 0;
             if (!VirtualProtect(at, size, PAGE_EXECUTE_READWRITE, &previous))
@@ -220,8 +208,6 @@ namespace Forge
                 return AMOD_INVALID_TOKEN;
             }
 
-            // The target has to be code that is actually there before its bytes are compared,
-            // so a wrong address is reported rather than faulting inside the comparison.
             if (!RangeHasAccess(target, prologueLength, kAnyAccess))
             {
                 FORGE_LOG_WARN("[%s] asked to hook 0x%08X, which is not mapped code",
@@ -229,9 +215,6 @@ namespace Forge
                 return AMOD_INVALID_TOKEN;
             }
 
-            // One detour per site. Two hooks on one routine would each save the other's
-            // patched bytes as the original, and removing them in the wrong order would leave
-            // the game jumping into a trampoline that no longer exists.
             for (const Detour& existing : g_detours)
             {
                 if (existing.target == target)

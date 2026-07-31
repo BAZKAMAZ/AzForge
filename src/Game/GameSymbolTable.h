@@ -423,6 +423,22 @@ namespace Forge
             // and the calls are absolutes.
             "56 6A 00 6A 00 8B F1 68 ?? ?? ?? ?? 8D 46 40 50 E8 ?? ?? ?? ?? 6A 00 6A 00 "
             "68 ?? ?? ?? ?? 8D 8E 4C 02 00 00 51 8B CE E8 ?? ?? ?? ??"
+        },
+        {
+            "Bonus_OnTouch", GameAddress::kBonusOnTouch,
+            // Takes the bonus's placement record from entity+0x5cc, checks its tag against 9, then
+            // the toucher's kind against 1 - the player test that gates the whole routine. All of
+            // it structure-relative, so nothing needs wildcarding.
+            "51 53 55 8B 6C 24 10 8B 85 CC 05 00 00 33 DB 56 3B C3 74 09 83 38 09 "
+            "89 44 24 0C 74 04 89 5C 24 0C 8B 74 24 18 83 3E 01"
+        },
+        {
+            "Bonuses_FreeResources", GameAddress::kBonusesFreeResources,
+            // The banner, the $bonus_fx glow released through the texture slot, then the count at
+            // 0x00691490 tested against a zeroed EDI before the walk. The banner string, the
+            // console call and every global are absolutes, so they are wildcarded.
+            "68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 08 85 C0 74 0A "
+            "50 FF 15 ?? ?? ?? ?? 83 C4 04 57 B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 33 FF"
         }
     };
 }

@@ -1,22 +1,3 @@
-/*
- * RenderApi.h - drawing over the game's Direct3D 8 frame.
- *
- * The game finishes each frame with the scene still open and draws a mod overlay just before
- * it presents. A mod registers a per-frame callback and, inside it, draws through the game's
- * own IDirect3DDevice8: a HUD, a marker, a rotated quad, anything D3D8 can express.
- *
- * The device is the game's, shared: a callback that changes render state leaves it changed for
- * whatever draws next, so a callback saves and restores what it touches. The callback runs
- * inside BeginScene/EndScene, so no scene of its own is begun.
- *
- * A mod can also step into how the game draws one of its own menu items: a callback fires
- * before the item is drawn, after it, or in place of it, and inside the callback the item can
- * be redrawn, decorated, or left to the game. This is the same open scene as the frame
- * callback, so the whole render interface is available there.
- *
- * Reached through AmodApi::render, null on a loader older than API version 10.
- */
-
 #ifndef AZFORGE_RENDER_API_H
 #define AZFORGE_RENDER_API_H
 
@@ -27,12 +8,10 @@
 extern "C" {
 #endif
 
-/* Fired once per frame, inside the open scene, before the frame is presented. The frame
- * pointer is valid only for the call. */
+/* Fired once per frame, inside the open scene, before the frame is presented. The frame * pointer is valid only for the call. */
 typedef void (__cdecl* AmodRenderCallback)(const AmodFrame* frame, void* user);
 
-/* When an element-draw callback runs, relative to the game's own draw of the item. A
- * registration gives a mask of these; the callback is told which phase it is in. */
+/* When an element-draw callback runs, relative to the game's own draw of the item */
 typedef enum AmodElementPhase
 {
     AMOD_ELEMENT_BEFORE  = 1,   /* before the game draws the item - draws under it */
@@ -40,20 +19,11 @@ typedef enum AmodElementPhase
     AMOD_ELEMENT_REPLACE = 4    /* suppress the game's own draw of the item entirely */
 } AmodElementPhase;
 
-/* Fired around the game's draw of a menu item. phase is the single phase this call is for,
- * AMOD_ELEMENT_BEFORE or AMOD_ELEMENT_AFTER. The item is valid only for the call. */
+/* Fired around the game's draw of a menu item */
 typedef void (__cdecl* AmodElementDrawCallback)(AmodMenuItem item, AmodElementPhase phase, void* user);
 
-/* Fired as a native menu item draws its own label, with the colour and scale the game just
- * computed for it. rgba is four floats (red, green, blue, alpha, each 0..1) and scale is two
- * (x, y). Modify them in place to recolour, fade or resize the item while it keeps drawing
- * itself - no redraw by the mod. The item is valid only for the call. */
 typedef void (__cdecl* AmodItemStyleCallback)(AmodMenuItem item, float rgba[4], float scale[2], void* user);
 
-/* Fired where a menu draws its background, before its text and buttons. menuId is the menu's
- * $menu_id. Draw a custom background here (through the device or the primitives) and return
- * non-zero to suppress the game's own background - a replacement; return zero to draw under the
- * game's background and let it draw on top. */
 typedef int (__cdecl* AmodMenuBackgroundCallback)(const char* menuId, void* user);
 
 /* A menu font, resolved by name through GetFont. Opaque; null means the default system font. */
@@ -63,54 +33,37 @@ typedef struct AmodRenderApi
 {
     uint32_t structSize;
 
-    /* The live IDirect3DDevice8 as a void*, or null before the device exists or while it is
-     * lost. Meant to be used from inside a render callback, where it is always live. */
+    /* The live IDirect3DDevice8 as a void*, or null before the device exists or while it is * lost */
     void* (__cdecl* GetDevice)(AmodMod mod);
 
-    /* The backbuffer size in pixels. Either pointer may be null. Both are left untouched when
-     * the device is not up yet. */
+    /* The backbuffer size in pixels. Either pointer may be null. Both are left untouched when * the device is not up yet. */
     void (__cdecl* GetViewport)(AmodMod mod, int* width, int* height);
 
-    /* Registers a per-frame draw callback. Non-zero token on success. The callback runs until
-     * the token is dropped or the mod is unloaded. */
+    /* Registers a per-frame draw callback. Non-zero token on success. The callback runs until * the token is dropped or the mod is unloaded. */
     AmodToken (__cdecl* Subscribe)(AmodMod mod, AmodRenderCallback callback, void* user);
     void (__cdecl* Unsubscribe)(AmodMod mod, AmodToken token);
 
-    /* Registers a callback that runs at the START of the frame - the scene is open but the game
-     * has not drawn yet. Set device render state here to filter the whole frame (wireframe, and
-     * so on) or draw a layer under everything. Cancel it with Unsubscribe, like a frame callback. */
+    
     AmodToken (__cdecl* SubscribeFrameBegin)(AmodMod mod, AmodRenderCallback callback, void* user);
 
-    /* Registers a callback around the draw of menu items. id names one item, or is null to
-     * match every item. phases is a mask of AmodElementPhase choosing when the callback fires
-     * and whether the game's own draw is suppressed. Non-zero token on success; zero when the
-     * loader could not hook the item draw. Runs until the token is dropped or the mod unloads. */
+    
     AmodToken (__cdecl* OnElementDraw)(AmodMod mod, const char* id, uint32_t phases,
                                        AmodElementDrawCallback callback, void* user);
     void (__cdecl* CancelElementDraw)(AmodMod mod, AmodToken token);
 
-    /* Registers a callback that recolours, fades or resizes a native menu item as it draws
-     * itself. id names one item, or is null for every item. Non-zero token on success; zero
-     * when the loader could not reach the item draw. Runs until dropped or the mod unloads. */
+    
     AmodToken (__cdecl* OnItemStyle)(AmodMod mod, const char* id, AmodItemStyleCallback callback, void* user);
     void (__cdecl* CancelItemStyle)(AmodMod mod, AmodToken token);
 
-    /* Registers a callback that draws a menu's background in place of the game's own. Non-zero
-     * token on success; zero when the loader could not reach the background draw. Runs until the
-     * token is dropped or the mod unloads. */
+    
     AmodToken (__cdecl* OnMenuBackground)(AmodMod mod, AmodMenuBackgroundCallback callback, void* user);
     void (__cdecl* CancelMenuBackground)(AmodMod mod, AmodToken token);
 
-    /* Draws one line of text with the game's own system font, centred at (x, y). scale is a
-     * multiplier (1 is the font's size), colour is 0xAARRGGBB. Coordinates are in the projection
-     * active where it runs: logical 640x480 inside a menu-render callback, backbuffer pixels
-     * from a frame callback. */
-    /* The menu font of this name (bigitem, multy_e, and so on from menu_cfg.txt), or null for an
-     * unknown name. Pass the result to DrawTextLine, or null there for the default system font. */
+    
+    /* The menu font of this name (bigitem, multy_e, and so on from menu_cfg.txt), or null for an * unkn... */
     AmodFont (__cdecl* GetFont)(AmodMod mod, const char* name);
 
-    /* Named DrawTextLine, not DrawText, because <windows.h> defines a DrawText macro. font is a
-     * GetFont result, or null for the default system font. */
+    /* Named DrawTextLine, not DrawText, because <windows.h> defines a DrawText macro */
     void (__cdecl* DrawTextLine)(AmodMod mod, AmodFont font, float x, float y, const char* text, float scale, uint32_t color);
 
     /* Fields added in later API versions go here, and nowhere else. */
@@ -124,8 +77,7 @@ typedef struct AmodRenderApi
 
 #include <math.h>
 
-/* The device type comes from the mod's own <d3d8.h> when it includes one; this declaration
- * lets Device() stay typed even when it does not. */
+/* The device type comes from the mod's own <d3d8.h> when it includes one */
 struct IDirect3DDevice8;
 
 namespace Amod
@@ -161,11 +113,7 @@ namespace Amod
             }
         }
 
-        /* Everything drawn below is in device pixels, measured from the top left, at whatever
-         * resolution the game is running. Menu coordinates are the game's own 640x480 space
-         * measured from the bottom left, and a mod drawing over a menu is working in those.
-         * These two convert; without them a drawing lands near its element at 640x480 and
-         * drifts further from it the larger the window is. */
+        
         inline void                                                 MenuToScreen(float menuX, float menuY, float* screenX, float* screenY)
         {
             int width = 640;
@@ -213,8 +161,7 @@ namespace Amod
             }
         }
 
-        /* A callback at the start of the frame, before the game draws - for whole-frame render
-         * state (wireframe, colour) or a layer under everything. Cancel with CancelFrame. */
+        /* A callback at the start of the frame, before the game draws - for whole-frame render * state (wir... */
         inline AmodToken                                            OnFrameBegin(AmodRenderCallback callback, void* user = nullptr)
         {
             return g_render != nullptr
@@ -273,9 +220,7 @@ namespace Amod
             return g_render != nullptr ? g_render->GetFont(g_self, name) : nullptr;
         }
 
-        /* One line of text in the given font (null for the default system font), centred at
-         * (x, y). scale multiplies the font size, colour is 0xAARRGGBB. See DrawTextLine for the
-         * coordinate space. */
+        
         inline void                                                 Text(AmodFont font, float x, float y, const char* text, float scale, unsigned long color)
         {
             if (g_render != nullptr)
@@ -290,9 +235,6 @@ namespace Amod
             Text(nullptr, x, y, text, scale, color);
         }
 
-/* Primitive helpers, compiled only when the mod included <d3d8.h> before this header. They
- * draw an untextured, alpha-blended quad through DrawPrimitiveUP and restore the render state
- * they change. Colours are 0xAARRGGBB. */
 #if defined(D3DFVF_XYZRHW)
 
         namespace Detail
@@ -306,8 +248,7 @@ namespace Amod
                 return v;
             }
 
-            /* Draws untextured, alpha-blended primitives, saving and restoring the render
-             * state and texture it touches so the game's own frame is left as it was. */
+            /* Draws untextured, alpha-blended primitives, saving and restoring the render * state and texture i... */
             inline void                                             Submit(unsigned type, unsigned primitiveCount, const Vertex* vertices)
             {
                 IDirect3DDevice8* const device = Device();
@@ -379,8 +320,7 @@ namespace Amod
             Detail::Submit(D3DPT_TRIANGLESTRIP, 2, quad);
         }
 
-        /* The four corners of a rectangle centred at (cx, cy), rotated by angle radians
-         * (positive is clockwise in screen space), written tl, tr, bl, br. */
+        /* The four corners of a rectangle centred at (cx, cy), rotated by angle radians * (positive is cloc... */
         inline void                                                 RectCorners(float cx, float cy, float width, float height, float angle, float outX[4], float outY[4])
         {
             const float hw = width * 0.5f, hh = height * 0.5f;
@@ -395,8 +335,7 @@ namespace Amod
             }
         }
 
-        /* A filled rectangle centred at (cx, cy), rotated by angle radians. Colour is
-         * 0xAARRGGBB. */
+        /* A filled rectangle centred at (cx, cy), rotated by angle radians. Colour is * 0xAARRGGBB. */
         inline void                                                 Rect(float cx, float cy, float width, float height, float angle, unsigned long color)
         {
             float px[4], py[4];
@@ -427,8 +366,7 @@ namespace Amod
             struct TexVertex { float x, y, z, rhw; unsigned long color; float u, v; };
             const unsigned long kTexFvf = D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1;
 
-            /* Draws a textured quad, saving and restoring the state it touches. tex is modulated
-             * by the per-vertex colour, so 0xFFFFFFFF draws it as it is and a colour tints it. */
+            /* Draws a textured quad, saving and restoring the state it touches */
             inline void                                             SubmitTextured(IDirect3DTexture8* tex, const TexVertex* quad)
             {
                 IDirect3DDevice8* const device = Device();
@@ -479,8 +417,7 @@ namespace Amod
             }
         }
 
-        /* Draws a texture as a quad centred at (cx, cy), rotated by angle radians, tinted by
-         * colour (0xFFFFFFFF for none). The whole texture is mapped across the quad. */
+        /* Draws a texture as a quad centred at (cx, cy), rotated by angle radians, tinted by * colour (0xFF... */
         inline void                                                 DrawTexture(IDirect3DTexture8* texture, float cx, float cy, float width, float height, float angle, unsigned long color)
         {
             float px[4], py[4];
@@ -501,11 +438,7 @@ namespace Amod
             Detail::SubmitTextured(texture, quad);
         }
 
-        /* Holds a copy of the finished frame as a texture, for a mod to redraw with an effect -
-         * a picture-in-picture, a trail, a blur built from offset copies. Capture() copies the
-         * current backbuffer and answers the texture, or null while the device is not ready.
-         * The texture is a render target in the default pool; on a device reset it is dropped
-         * and rebuilt on the next capture. */
+        
         class FrameCapture
         {
         public:
@@ -573,15 +506,7 @@ namespace Amod
             int m_height = 0;
         };
 
-        /* A texture a mod loads from its own image file, to draw with DrawTexture. Load() reads
-         * a 24- or 32-bit BMP and uploads it; the mod supplies the path (e.g. built from
-         * Amod::GameDirectory()). The image is owned here and released with the object. Kept to
-         * BMP so no image library or d3dx is needed - export a BMP from any editor.
-         *
-         * Both of the forms editors actually write are read: plain BI_RGB, and the BI_BITFIELDS
-         * 32-bit one with a V4 or V5 header that anything saving alpha produces. An image whose
-         * alpha channel is zero everywhere - which several editors write for a picture with no
-         * transparency - is taken as opaque rather than drawn as nothing. */
+        
         class Texture
         {
         public:
@@ -595,8 +520,7 @@ namespace Amod
             int                                                    Width() const { return m_width; }
             int                                                    Height() const { return m_height; }
 
-            /* Loads the file into a texture. Returns true on success; on failure the object is
-             * left empty. Safe to call again to reload or load a different file. */
+            /* Loads the file into a texture */
             bool                                                   Load(const char* path)
             {
                 Release();
@@ -756,8 +680,7 @@ namespace Amod
                        (static_cast<unsigned long>(p[2]) << 16) | (static_cast<unsigned long>(p[3]) << 24);
             }
 
-            /* One channel out of a pixel, given the mask that says where it is, scaled to eight
-             * bits whatever width the mask happens to be. */
+            /* One channel out of a pixel, given the mask that says where it is, scaled to eight * bits whatever width the mask happens to be. */
             static unsigned long                                   Channel(unsigned long pixel, unsigned long mask)
             {
                 if (mask == 0)

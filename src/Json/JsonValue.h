@@ -16,9 +16,6 @@ namespace Forge
         Object
     };
 
-    // Minimal JSON reader covering exactly what mod.json needs. Duplicate object keys,
-    // trailing commas and comments are rejected rather than tolerated, so a malformed
-    // manifest is reported instead of silently losing fields.
     class JsonValue
     {
     public:
@@ -48,7 +45,5 @@ namespace Forge
         std::map<std::string, JsonValue> m_object;
     };
 
-    // Parses a complete UTF-8 document. On failure returns false and fills error with a
-    // message that names the byte offset.
     bool                                                            JsonParse(const std::string& text, JsonValue& out, std::string& error);
 }

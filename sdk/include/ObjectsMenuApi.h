@@ -1,7 +1,3 @@
-/*
- * ObjectsMenuApi.h - the in-game menus.
- */
-
 #ifndef AZFORGE_OBJECTS_MENU_API_H
 #define AZFORGE_OBJECTS_MENU_API_H
 
@@ -11,43 +7,29 @@
 extern "C" {
 #endif
 
-/* An element. Opaque, and valid until its menu is rebuilt. */
 typedef void* AmodMenuItem;
 
 typedef enum AmodMenuEvent
 {
-    /* A menu has been built and is ready to be changed. Data is AmodMenuLoaded. Arrives
-     * again every time the game rebuilds the menu.
-     *
-     * Subscribing late does not mean missing it: every menu that already exists is
-     * announced to the new subscriber as it subscribes. Mods are loaded on the loading
-     * screen, by which time the game has built all of its own menus, so without that a
-     * mod would never hear about any of them. */
+    /* Menu built (or rebuilt). Data = AmodMenuLoaded. Late subscribers get existing menus. */
     AMOD_MENU_LOADED = 0,
-
-    /* A button was activated, before the game acts on it. Data is AmodMenuClicked. This is
-     * how a mod's own buttons come to do something, and how it can take over one of the
-     * game's. */
+    /* Button activated, before the game acts. Data = AmodMenuClicked. */
     AMOD_MENU_CLICKED = 1
 } AmodMenuEvent;
 
 typedef struct AmodMenuLoaded
 {
-    const char* menuId;     /* $menu_id from the script header, "IDM_MAIN_MENU" and so on */
+    const char* menuId;     /* $menu_id, e.g. "IDM_MAIN_MENU" */
 } AmodMenuLoaded;
 
 typedef struct AmodMenuClicked
 {
-    const char* menuId;     /* the menu the click was in */
-    const char* itemId;     /* the $id of the button that was activated */
-    int handled;            /* set non-zero to stop the game acting on the click */
+    const char* menuId;
+    const char* itemId;     /* $id of the button */
+    int handled;            /* set non-zero to stop the game */
 } AmodMenuClicked;
 
 typedef void (__cdecl* AmodMenuCallback)(AmodMenuEvent event, void* data, void* user);
-
-/* The keys each kind of element carries are documented on the site. A key a kind does not
- * carry is refused rather than written to an unrelated field; GetRawPointer is the way past
- * the typed interface. */
 
 typedef struct AmodObjectsMenuApi
 {
@@ -57,42 +39,29 @@ typedef struct AmodObjectsMenuApi
                                    AmodMenuCallback callback, void* user);
     void (__cdecl* Unsubscribe)(AmodMod mod, AmodToken token);
 
-    /* Element with this $id in this menu, or null. */
     AmodMenuItem (__cdecl* FindItem)(AmodMod mod, const char* menuId, const char* itemId);
 
-    /* Walks the interactive elements of a menu in script order. */
     int (__cdecl* GetItemCount)(AmodMod mod, const char* menuId);
     AmodMenuItem (__cdecl* GetItemAt)(AmodMod mod, const char* menuId, int index);
 
     const char* (__cdecl* GetItemId)(AmodMod mod, AmodMenuItem item);
 
-    /* Both answer non-zero on success and leave the element alone otherwise: unknown key,
-     * key this element does not carry, key that cannot be written, or a value of the wrong
-     * shape. */
     int (__cdecl* GetProperty)(AmodMod mod, AmodMenuItem item, const char* key, AmodValue* value);
     int (__cdecl* SetProperty)(AmodMod mod, AmodMenuItem item, const char* key, const AmodValue* value);
-
     int (__cdecl* HasProperty)(AmodMod mod, AmodMenuItem item, const char* key);
 
-    /* Lists the keys an element carries. Names stay valid for the life of the loader. */
     int (__cdecl* PropertyCount)(AmodMod mod, AmodMenuItem item);
     const char* (__cdecl* PropertyNameAt)(AmodMod mod, AmodMenuItem item, int index);
 
-    /* The element itself, for whatever this interface does not cover. Null unless
-     * expectedGameBuild matches AmodApi::GetGameBuild. */
+    /* Element pointer; null unless expectedGameBuild matches. */
     void* (__cdecl* GetRawPointer)(AmodMod mod, AmodMenuItem item, uint32_t expectedGameBuild);
 
-    /* Builds objects into a menu from a fragment in menu_*.txt syntax and answers the first,
-     * or null. The fragment goes to the game's own parser, so the objects are exactly what a
-     * script would have made. They go away when the menu is rebuilt, so this belongs in an
-     * AMOD_MENU_LOADED handler. */
+    /* Build objects from menu_*.txt fragment; returns first, or null. Use in AMOD_MENU_LOADED. */
     AmodMenuItem (__cdecl* AddObject)(AmodMod mod, const char* menuId, const char* fragment);
-
-    /* Fields added in later API versions go here, and nowhere else. */
 } AmodObjectsMenuApi;
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
 
 #ifdef __cplusplus
@@ -129,7 +98,6 @@ namespace Amod
             }
         }
 
-        /* One key of one element. Holds nothing, meant to be used on the spot. */
         class Property
         {
         public:
@@ -140,8 +108,7 @@ namespace Amod
             {
             }
 
-            /* One record of a collection: list["items"][2], table["col.title"][1]. Without
-             * a subscript the same key answers how many records there are. */
+            /* Collection subscript: list["items"][2]. */
             Property                                                operator[](int index) const
             {
                 return Property(m_item, m_key, index);
@@ -162,8 +129,6 @@ namespace Amod
                                            &value) != 0;
             }
 
-            /* Each returns the fallback when the key is absent or holds another kind,
-             * which Exists tells apart from a genuine zero. */
             float                                                   Number(int index = 0, float fallback = 0.0f) const
             {
                 AmodValue value = {};

@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/ModOwnership.h"
 
 namespace Forge
@@ -39,8 +37,6 @@ namespace Forge
 
     void ModOwnership::ReleaseAll()
     {
-        // Reverse order, and the entry is taken out of the list before it is released so a
-        // release routine that reaches back in cannot see a half-dead registration.
         while (!m_entries.empty())
         {
             const Entry entry = m_entries.back();

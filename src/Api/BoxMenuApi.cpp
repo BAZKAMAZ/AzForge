@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/BoxMenuApi.h"
 
 #include "src/Api/ModContext.h"
@@ -19,8 +17,7 @@ namespace Forge
     {
         using namespace GameAddress;
 
-        // The tracked allocator is __cdecl with its arguments on the stack; the menu routines
-        // are __thiscall, emulated as __fastcall with the manager in ecx.
+        // AllocTracked __cdecl; menu routines __thiscall → __fastcall (ECX = manager).
         typedef void* (__cdecl* AllocTrackedRoutine)(uint32_t size, const char* file, uint32_t line);
         typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size,
                                                        const char* file, uint32_t line);
@@ -67,9 +64,6 @@ namespace Forge
             return (context != nullptr && context->magic == kModContextMagic) ? context : nullptr;
         }
 
-        // The manager is reached through a global pointer, so its address is followed once
-        // per call rather than cached: the game builds it after the loader is up and tears it
-        // down before the loader goes, and a stale copy would outlive both.
         void* Manager()
         {
             void** const slot = static_cast<void**>(GameModule::Resolve(kMenuManager));
@@ -96,8 +90,6 @@ namespace Forge
                    g_goBack != nullptr && g_closeAll != nullptr;
         }
 
-        // The tail of Menu_Register - append to the registry at manager+0x08/+0x38 - without
-        // its parser, which throws on an absent script and has no handler on a mod's stack.
         bool AppendToRegistry(void* manager, void* menu)
         {
             int* const countPtr = reinterpret_cast<int*>(static_cast<uint8_t*>(manager) + 0x38);
@@ -128,9 +120,6 @@ namespace Forge
             return true;
         }
 
-        // Takes a menu back out of the registry, shifting the tail down over it. The array is
-        // the game's own, grown by the game's allocator, so it is left at its current size and
-        // only the count moves - the same shape Menu_Register leaves it in.
         bool UnlinkFromRegistry(void* manager, void* menu)
         {
             int* const countPtr =
@@ -161,8 +150,6 @@ namespace Forge
             return false;
         }
 
-        // Whether the manager can still reach this menu: on screen, laid over what is on
-        // screen, or waiting on the stack for a Back that has not happened yet.
         bool IsMenuInUse(void* manager, void* menu)
         {
             uint8_t* const base = static_cast<uint8_t*>(manager);
@@ -186,26 +173,11 @@ namespace Forge
             return false;
         }
 
-        // Retires one menu a mod registered. Two things happen and a third deliberately does
-        // not.
-        //
-        // The flag at +0x209 goes up, which is what both Menu_EnterMenu and Menu_ShowBox test,
-        // so nothing can navigate into it again. It is then unlinked from the registry, which
-        // is what makes Menu_FindByMenuId stop answering and frees the id for whoever wants it
-        // next - a mod switched back on, most likely.
-        //
-        // The block itself is not released. A menu owns what its elements allocated, and
-        // giving it back needs the destructor in its vtable, whose contract has not been
-        // reversed; running an unreversed vtable slot during a teardown is how a shutdown
-        // turns into a crash. So one block of kSizeBaseMenu is left behind per menu retired.
-        // It is bounded, it is unreachable, and it is a better trade than the alternative.
         void RetireMenu(const RegisteredMenu& record)
         {
             void* const manager = Manager();
             if (manager == nullptr)
             {
-                // The game tore the manager down first, which happens at shutdown. Nothing
-                // is left to unlink from.
                 return;
             }
 
@@ -247,8 +219,6 @@ namespace Forge
                 return 0;
             }
 
-            // Refuse to shadow an existing menu: two menus under one id would make the
-            // registry answer with whichever comes first and leave the other unreachable.
             if (g_find(manager, nullptr, menuId) != nullptr)
             {
                 FORGE_LOG_WARN("A mod tried to register menu '%s', which already exists", menuId);
@@ -261,8 +231,6 @@ namespace Forge
                 return 0;
             }
 
-            // Zeroed first: the constructor leaves the disabled flag at +0x209 untouched, and
-            // a stray one would make the menu unreachable.
             memset(block, 0, kSizeBaseMenu);
             g_construct(block, nullptr);
 
@@ -274,8 +242,6 @@ namespace Forge
                 return 0;
             }
 
-            // Recorded against the mod, so switching the mod off takes the menu with it
-            // rather than leaving it in the game's registry for the life of the process.
             ModContext* const context = Resolve(mod);
             RegisteredMenu record;
             record.id = g_nextRegisteredId++;
@@ -316,14 +282,6 @@ namespace Forge
             memset(block, 0, kSizeBaseMenu);
             g_construct(block, nullptr);
 
-            // Menu_Register does the parsing, the id stamping and the appending itself, so
-            // this is the game's own path and not a rebuilt copy of it. It throws when the
-            // script is missing, which is why the file is checked for first rather than
-            // letting an exception cross back into a mod's stack.
-            // Menu_Register throws when the script is not there, and letting a C++ exception
-            // out of a table call is not something the boundary can carry. Asked for through
-            // the game's own resource path, so a script shipped inside an .amod is found the
-            // same way the game finds its own.
             void* const probe = g_open != nullptr ? g_open(scriptFile) : nullptr;
             if (probe == nullptr)
             {
@@ -332,8 +290,6 @@ namespace Forge
                 return 0;
             }
 
-            // Handed straight back: this was only ever a question, and holding it open would
-            // leave the parser reading a file someone else already has.
             if (g_freeFile != nullptr)
             {
                 g_freeFile(probe);
@@ -399,8 +355,6 @@ namespace Forge
                 return 0;
             }
 
-            // Menu_EnterMenu no-ops on an unknown id, so the existence check is what makes the
-            // answer honest rather than the call itself.
             if (g_find(manager, nullptr, menuId) == nullptr)
             {
                 return 0;
@@ -456,8 +410,6 @@ namespace Forge
             GameSymbols::Address(GameSymbol::CBaseMenuConstruct));
         g_open = reinterpret_cast<PackageOpenRoutine>(
             GameSymbols::Address(GameSymbol::PackageOpenFile));
-        // Package_Free is not signature-resolved - it is only ever reached from here - so it
-        // is taken from its address, which the loader has already proved is this build.
         g_freeFile = reinterpret_cast<PackageFreeRoutine>(
             GameModule::Resolve(kPackageFree));
         g_register = reinterpret_cast<RegisterRoutine>(
@@ -497,8 +449,6 @@ namespace Forge
 
     void BoxMenuApi::ForgetMod(ModContext* owner)
     {
-        // Runs before the mod's own registrations are released, so this is what actually
-        // retires the menus; the release routine then finds nothing left to do.
         for (auto it = g_registered.begin(); it != g_registered.end();)
         {
             if (it->owner == owner)

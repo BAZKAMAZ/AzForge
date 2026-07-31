@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 #include <filesystem>
 #include <map>
 #include <stdint.h>
@@ -19,13 +21,6 @@ namespace Forge
         uint32_t localHeaderOffset = 0;
     };
 
-    // Reader for the .amod container. Mods are consumed straight out of the archive, so
-    // the file stays open for the lifetime of the loader.
-    //
-    // Stored and deflated entries are both supported: amodpack writes stored entries, while
-    // an archive repacked with a general-purpose tool still loads. Every extraction is
-    // checked against the CRC recorded in the directory. ZIP64 and encrypted archives are
-    // rejected outright rather than partially handled.
     class ZipArchive
     {
     public:

@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/BlockExpressionApi.h"
 
 #include "src/Api/ModContext.h"
@@ -16,8 +14,6 @@ namespace Forge
 {
     namespace
     {
-        // value.text points into this node's own storage; the unique_ptr keeps that pointer
-        // stable as other expressions come and go around it.
         struct Expr
         {
             std::string key;
@@ -32,8 +28,6 @@ namespace Forge
             std::vector<std::unique_ptr<Node>> children;
         };
 
-        // Everything one mod made. A handle is checked against the live set before use, so a
-        // stale or foreign block is refused rather than dereferenced.
         struct ModStore
         {
             std::vector<std::unique_ptr<Node>> roots;
@@ -75,7 +69,6 @@ namespace Forge
             }
         }
 
-        // Turns an AmodBlock back into a node of this mod's tree, or null when it is not one.
         Node* AsNode(ModStore* store, AmodBlock block)
         {
             if (store == nullptr || block == nullptr)
@@ -221,7 +214,6 @@ namespace Forge
             return true;
         }
 
-        // A run of up to four numbers, a lone integer, or text - as the game's readers take them.
         void Classify(const std::vector<std::string>& tokens, const std::vector<char>& quoted,
                       Expr& expr)
         {

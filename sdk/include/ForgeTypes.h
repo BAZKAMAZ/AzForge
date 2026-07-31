@@ -1,30 +1,17 @@
-/*
- * ForgeTypes.h - declarations every part of the AzForge interface needs.
- *
- * Kept apart from ForgeApi.h so a subsystem header can be self-contained: it needs these
- * types, the core table needs a pointer to the subsystem, and neither can include the other.
- */
-
 #ifndef AZFORGE_FORGE_TYPES_H
 #define AZFORGE_FORGE_TYPES_H
 
 #include <stdint.h>
 
-/* Version of the interface as a whole. A mod declares what it was built against in mod.json
- * as api_version; a mod asking for more than the loader implements is refused. */
-#define AMOD_API_VERSION                                            22
+/* Interface version. mod.json api_version > this → mod refused. */
+#define AMOD_API_VERSION                                            28
 
 #define AMOD_EXPORT                                                 __declspec(dllexport)
 
-/* AmodInit results. Anything other than AMOD_OK leaves the mod unloaded and the reason in
- * forge.log. */
 #define AMOD_OK                                                     0
 #define AMOD_ERROR                                                  (-1)
 #define AMOD_ERROR_API_VERSION                                      (-2)
 
-/* Which layout of game.exe the loader knows. A mod reaching past the typed interface into
- * raw game state names the layout it was written against, so a loader taught about a second
- * build refuses rather than handing over pointers into a structure that moved. */
 #define AMOD_GAME_BUILD_UNKNOWN                                     0
 #define AMOD_GAME_BUILD_AZANGARA_10                                 1
 
@@ -32,12 +19,8 @@
 extern "C" {
 #endif
 
-/* The calling mod. Each mod gets its own tables with self already filled in, so it never
- * names itself and cannot act for another. */
 typedef void* AmodMod;
 
-/* One registration a mod made. Never zero on success. Releasing it is optional: everything
- * a mod registers goes away with it. */
 typedef uint32_t AmodToken;
 #define AMOD_INVALID_TOKEN                                          0
 
@@ -48,14 +31,12 @@ typedef enum AmodLogLevel
     AMOD_LOG_ERROR = 2
 } AmodLogLevel;
 
-/* A tagged value carried by a script key. Shared because more than one subsystem reads and
- * writes keys - a menu element's properties and a mod's own block/expression data alike. */
 typedef enum AmodValueKind
 {
     AMOD_VALUE_NONE = 0,
     AMOD_VALUE_BOOL = 1,
     AMOD_VALUE_INT = 2,
-    AMOD_VALUE_FLOAT = 3,   /* one to four, see count */
+    AMOD_VALUE_FLOAT = 3,   /* 1..4 floats, see count */
     AMOD_VALUE_STRING = 4
 } AmodValueKind;
 
@@ -63,23 +44,91 @@ typedef struct AmodValue
 {
     AmodValueKind kind;
     uint32_t count;         /* floats in use */
-    int integer;            /* AMOD_VALUE_BOOL, AMOD_VALUE_INT */
-    float numbers[4];       /* AMOD_VALUE_FLOAT */
-    const char* text;       /* AMOD_VALUE_STRING; when read, points into the owner */
+    int integer;            /* BOOL / INT */
+    float numbers[4];       /* FLOAT */
+    const char* text;       /* STRING; points into owner when read */
 } AmodValue;
 
-/* Passed once per frame to AmodUpdate and to render callbacks. Shared because more than one
- * subsystem hands it out. */
 typedef struct AmodFrame
 {
-    uint32_t structSize;    /* sizeof(AmodFrame) as the running loader built it */
-    float delta;            /* seconds since the previous frame, the game's own step */
-    double elapsed;         /* seconds since the first frame */
-    uint64_t frameIndex;    /* frames seen so far, starting at 0 */
+    uint32_t structSize;
+    float delta;            /* seconds since previous frame */
+    double elapsed;         /* seconds since first frame */
+    uint64_t frameIndex;    /* starts at 0 */
 } AmodFrame;
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
+
+#ifdef __cplusplus
+
+extern "C++" {
+
+namespace Amod
+{
+    inline AmodValue                                                Value(int number)
+    {
+        AmodValue value = {};
+        value.kind = AMOD_VALUE_INT;
+        value.integer = number;
+        return value;
+    }
+
+    inline AmodValue                                                Value(bool boolean)
+    {
+        AmodValue value = {};
+        value.kind = AMOD_VALUE_BOOL;
+        value.integer = boolean ? 1 : 0;
+        return value;
+    }
+
+    inline AmodValue                                                Value(const char* text)
+    {
+        AmodValue value = {};
+        value.kind = AMOD_VALUE_STRING;
+        value.text = text;
+        return value;
+    }
+
+    inline AmodValue                                                Values(const float* numbers, uint32_t count)
+    {
+        AmodValue value = {};
+        value.kind = AMOD_VALUE_FLOAT;
+        value.count = count > 4u ? 4u : count;
+        for (uint32_t at = 0; at < value.count; ++at)
+        {
+            value.numbers[at] = numbers[at];
+        }
+        return value;
+    }
+
+    inline AmodValue                                                Value(float a)
+    {
+        return Values(&a, 1);
+    }
+
+    inline AmodValue                                                Value(float a, float b)
+    {
+        const float numbers[2] = { a, b };
+        return Values(numbers, 2);
+    }
+
+    inline AmodValue                                                Value(float a, float b, float c)
+    {
+        const float numbers[3] = { a, b, c };
+        return Values(numbers, 3);
+    }
+
+    inline AmodValue                                                Value(float a, float b, float c, float d)
+    {
+        const float numbers[4] = { a, b, c, d };
+        return Values(numbers, 4);
+    }
+}
+
+} /* extern "C++" */
+
+#endif /* __cplusplus */
 
 #endif /* AZFORGE_FORGE_TYPES_H */

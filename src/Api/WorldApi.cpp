@@ -1,7 +1,7 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/WorldApi.h"
-
+#include "src/Api/FrameApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
@@ -11,29 +11,26 @@
 
 #include <stddef.h>
 #include <string.h>
+#include <string>
 #include <vector>
 
 namespace Forge
 {
     namespace
     {
-        // Level_Load and Level_Free take nothing but their level; Level_ActivateRoom takes the
-        // step to make through the maze. All three are __thiscall, which is __fastcall with the
-        // second register argument unused.
+        // All three are __thiscall → __fastcall with EDX unused.
         typedef char(__fastcall* LevelLoadRoutine)(void* level, void* unused, const char* script);
         typedef void(__fastcall* LevelFreeRoutine)(void* level, void* unused);
-        typedef void*(__fastcall* LevelActivateRoomRoutine)(void* level, void* unused, int dx, int dy);
+        typedef void* (__fastcall* LevelActivateRoomRoutine)(void* level, void* unused, int dx, int dy);
 
         InlineHook g_loadHook;
         InlineHook g_freeHook;
         InlineHook g_activateHook;
-
         LevelLoadRoutine g_originalLoad = nullptr;
         LevelFreeRoutine g_originalFree = nullptr;
         LevelActivateRoomRoutine g_originalActivate = nullptr;
 
         uint8_t* g_level = nullptr;
-
         AmodWorldApi g_table = {};
 
         struct Subscription
@@ -54,8 +51,6 @@ namespace Forge
             return (context != nullptr && context->magic == kModContextMagic) ? context : nullptr;
         }
 
-        // --- reading the level ------------------------------------------------------------
-
         template <typename T>
         T Read(const uint8_t* base, uintptr_t offset)
         {
@@ -74,10 +69,7 @@ namespace Forge
             return g_level != nullptr ? Read<int>(g_level, GameAddress::kLevelRoomCountOffset) : 0;
         }
 
-        // A level is loaded exactly when it has rooms. Level_Free clears the level rather than
-        // releasing it - the object is static - and a Level_Load that gave up before the $rooms
-        // block never appended any, so the count is the game's own answer to the question and
-        // needs no flag of AzForge's own kept alongside it.
+        // Level is static; rooms > 0 means loaded (Level_Free clears rather than releases).
         bool IsLevelLoaded()
         {
             return RoomCount() > 0;
@@ -86,8 +78,8 @@ namespace Forge
         uint8_t* Rooms()
         {
             return g_level != nullptr
-                       ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(g_level, GameAddress::kLevelRoomsOffset))
-                       : nullptr;
+                ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(g_level, GameAddress::kLevelRoomsOffset))
+                : nullptr;
         }
 
         uint8_t* RoomEntry(int index)
@@ -100,14 +92,168 @@ namespace Forge
             return rooms + static_cast<size_t>(index) * GameAddress::kRoomEntryStride;
         }
 
-        // The room itself is embedded in the entry rather than pointed at.
+        // Room is embedded in the entry, not pointed at.
         uint8_t* Room(int index)
         {
             uint8_t* const entry = RoomEntry(index);
             return entry != nullptr ? entry + GameAddress::kRoomEntryRoomOffset : nullptr;
         }
 
-        // Turns the entry pointer the game keeps for the current room back into an index.
+        bool Readable(const void* address, size_t size)
+        {
+            if (address == nullptr)
+            {
+                return false;
+            }
+            MEMORY_BASIC_INFORMATION region = {};
+            if (VirtualQuery(address, &region, sizeof(region)) != sizeof(region) ||
+                region.State != MEM_COMMIT)
+            {
+                return false;
+            }
+            const uintptr_t end = reinterpret_cast<uintptr_t>(region.BaseAddress) + region.RegionSize;
+            return reinterpret_cast<uintptr_t>(address) + size <= end;
+        }
+
+        // One global entity manager; live list is the current room only.
+        uint8_t* Entities(int roomIndex)
+        {
+            const uint8_t* const entry = RoomEntry(roomIndex);
+            const void* const current =
+                IsLevelLoaded() ? Read<void*>(g_level, GameAddress::kLevelCurrentRoomOffset) : nullptr;
+            if (entry == nullptr || entry != current)
+            {
+                return nullptr;
+            }
+            uint8_t* const container = static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kEntities));
+            return Readable(container, GameAddress::kEntitiesTimeScaleOffset + sizeof(float))
+                ? container
+                : nullptr;
+        }
+
+        uint8_t* FirstEntity(int roomIndex)
+        {
+            uint8_t* const container = Entities(roomIndex);
+            return container != nullptr
+                ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(container, GameAddress::kEntitiesLiveOffset))
+                : nullptr;
+        }
+
+        uint8_t* NextEntity(const uint8_t* entity)
+        {
+            return reinterpret_cast<uint8_t*>(Read<uintptr_t>(entity, GameAddress::kEntityNextOffset));
+        }
+
+        // Cap at pool size so a corrupted ring ends the walk.
+        int EntityCount(int roomIndex)
+        {
+            int count = 0;
+            for (uint8_t* entity = FirstEntity(roomIndex);
+                entity != nullptr && Readable(entity, GameAddress::kEntitySize) &&
+                count < static_cast<int>(GameAddress::kEntityPoolCount);
+                entity = NextEntity(entity))
+            {
+                ++count;
+            }
+            return count;
+        }
+
+        uint8_t* EntityAt(int roomIndex, int index)
+        {
+            if (index < 0)
+            {
+                return nullptr;
+            }
+            int at = 0;
+            for (uint8_t* entity = FirstEntity(roomIndex);
+                entity != nullptr && Readable(entity, GameAddress::kEntitySize) &&
+                at < static_cast<int>(GameAddress::kEntityPoolCount);
+                entity = NextEntity(entity), ++at)
+            {
+                if (at == index)
+                {
+                    return entity;
+                }
+            }
+            return nullptr;
+        }
+
+        // Printable NUL-terminated name of ≥ 2 chars (1-letter hits are noise).
+        bool NameAt(const uint8_t* record, uintptr_t offset)
+        {
+            if (!Readable(record + offset, GameAddress::kSpawnNameLength))
+            {
+                return false;
+            }
+            const char* const name = reinterpret_cast<const char*>(record + offset);
+            for (size_t at = 0; at < GameAddress::kSpawnNameLength; ++at)
+            {
+                if (name[at] == '\0')
+                {
+                    return at >= 2;
+                }
+                if (static_cast<unsigned char>(name[at]) < 0x20 ||
+                    static_cast<unsigned char>(name[at]) > 0x7E)
+                {
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        bool LooksLikeSpawnRecord(const uint8_t* record)
+        {
+            if (!Readable(record, sizeof(int)))
+            {
+                return false;
+            }
+            const int kind = Read<int>(record, GameAddress::kSpawnKindOffset);
+            return kind > 0 && kind < 0x100;
+        }
+
+        const GameAddress::SpawnLayout* LayoutOf(int kind)
+        {
+            for (const GameAddress::SpawnLayout& layout : GameAddress::kSpawnLayouts)
+            {
+                if (layout.kind == kind)
+                {
+                    return &layout;
+                }
+            }
+            return nullptr;
+        }
+
+        const char* SpawnNameOf(const uint8_t* record, const GameAddress::SpawnLayout* layout)
+        {
+            if (layout != nullptr)
+            {
+                return NameAt(record, layout->name)
+                    ? reinterpret_cast<const char*>(record + layout->name)
+                    : "";
+            }
+            // Byte-at-a-time: bonus name sits on an odd offset.
+            for (uintptr_t offset = sizeof(int); offset <= 0x80; ++offset)
+            {
+                if (NameAt(record, offset))
+                {
+                    return reinterpret_cast<const char*>(record + offset);
+                }
+            }
+            return "";
+        }
+
+        const uint8_t* SpawnRecord(const uint8_t* entity)
+        {
+            const uint8_t* const record =
+                reinterpret_cast<const uint8_t*>(Read<uintptr_t>(entity, GameAddress::kEntitySpawnOffset));
+            return LooksLikeSpawnRecord(record) ? record : nullptr;
+        }
+
+        const char* SpawnName(const uint8_t* record)
+        {
+            return SpawnNameOf(record, LayoutOf(Read<int>(record, GameAddress::kSpawnKindOffset)));
+        }
+
         int IndexOfEntry(const void* entry)
         {
             const uint8_t* const rooms = Rooms();
@@ -115,14 +261,12 @@ namespace Forge
             {
                 return -1;
             }
-
             const ptrdiff_t stride = static_cast<ptrdiff_t>(GameAddress::kRoomEntryStride);
             const ptrdiff_t distance = static_cast<const uint8_t*>(entry) - rooms;
             if (distance < 0 || distance % stride != 0)
             {
                 return -1;
             }
-
             const int index = static_cast<int>(distance / stride);
             return index < RoomCount() ? index : -1;
         }
@@ -140,8 +284,7 @@ namespace Forge
             return -1;
         }
 
-        // A maze row is { int* roomIds; int width } and rows are ragged, so a row carries the
-        // width of its own $maze line rather than the maze having one.
+        // Maze row: { int* roomIds; int width }, rows are ragged.
         const uint8_t* MazeRow(int y)
         {
             if (g_level == nullptr || y < 0 ||
@@ -149,11 +292,10 @@ namespace Forge
             {
                 return nullptr;
             }
-
             const uint8_t* const maze =
                 reinterpret_cast<const uint8_t*>(Read<uintptr_t>(g_level, GameAddress::kLevelMazeOffset));
             return maze != nullptr ? maze + static_cast<size_t>(y) * GameAddress::kMazeRowStride
-                                   : nullptr;
+                : nullptr;
         }
 
         int MazeRowWidth(int y)
@@ -169,14 +311,11 @@ namespace Forge
             {
                 return 0;
             }
-
             const int* const ids =
                 reinterpret_cast<const int*>(Read<uintptr_t>(row, GameAddress::kMazeRowIdsOffset));
             return ids != nullptr ? ids[x] : 0;
         }
 
-        // Where a room sits on the maze, the same search Level_FindRoomPos @0x0040d670 makes.
-        // A room the level carries but no maze cell names is not on it at all.
         void FindMazePos(int id, int& x, int& y)
         {
             x = -1;
@@ -185,7 +324,6 @@ namespace Forge
             {
                 return;
             }
-
             const int rows = Read<int>(g_level, GameAddress::kLevelMazeHeightOffset);
             for (int row = 0; row < rows; ++row)
             {
@@ -202,34 +340,27 @@ namespace Forge
             }
         }
 
-        // Copies as much of a filled structure as the caller has room for. A mod built against
-        // a later version of the interface gets the fields this loader knows and keeps the
-        // zeroes it started with in the rest; one built against an earlier version gets the
-        // prefix it asked for. Either way structSize comes back as what was actually written.
+        // Copy min(requested, produced); write actual size back into structSize.
         int CopyOut(void* out, uint32_t requested, const void* filled, size_t produced)
         {
             if (out == nullptr || requested < sizeof(uint32_t))
             {
                 return 0;
             }
-
             const uint32_t copied = requested < produced ? requested
-                                                        : static_cast<uint32_t>(produced);
+                : static_cast<uint32_t>(produced);
             memcpy(out, filled, copied);
             memcpy(out, &copied, sizeof(copied));
             return 1;
         }
 
-        // --- events -----------------------------------------------------------------------
-
         void Dispatch(AmodWorldEvent event, int roomIndex, int roomId, int previousRoomIndex,
-                      int mazeX, int mazeY)
+            int mazeX, int mazeY)
         {
             if (g_subscriptions.empty())
             {
                 return;
             }
-
             AmodWorldEventInfo info = {};
             info.structSize = sizeof(AmodWorldEventInfo);
             info.event = event;
@@ -239,8 +370,7 @@ namespace Forge
             info.mazeX = mazeX;
             info.mazeY = mazeY;
 
-            // A copy, so a mod dropping its handler from inside the handler cannot break
-            // iteration.
+            // Snapshot so a handler may unsubscribe without breaking iteration.
             const std::vector<Subscription> snapshot = g_subscriptions;
             for (const Subscription& subscription : snapshot)
             {
@@ -264,61 +394,93 @@ namespace Forge
             }
         }
 
-        // --- the detours ------------------------------------------------------------------
-
         char __fastcall LoadDetour(void* level, void* unused, const char* script)
         {
             const char result = g_originalLoad(level, unused, script);
-
-            // Level_Load opens by freeing whatever was loaded, so the unload event has already
-            // gone out by the time this returns. Reporting the level only when rooms came out
-            // of it keeps a script that failed to parse from announcing a level that is not
-            // there - the same test IsLevelLoaded makes.
             if (IsLevelLoaded())
             {
                 Dispatch(AMOD_WORLD_EVENT_LEVEL_LOADED, -1, 0, -1, -1, -1);
             }
-
             return result;
         }
 
         void __fastcall FreeDetour(void* level, void* unused)
         {
-            // Before the game clears it, so a mod can still read what is going away. Level_Load
-            // and Level_Start both call this whether or not a level is up, which is why an
-            // empty level is not announced as unloading.
             if (IsLevelLoaded())
             {
                 Dispatch(AMOD_WORLD_EVENT_LEVEL_UNLOADED, -1, 0, -1, -1, -1);
             }
-
             g_originalFree(level, unused);
         }
 
         void* __fastcall ActivateRoomDetour(void* level, void* unused, int dx, int dy)
         {
             void* const room = g_originalActivate(level, unused, dx, dy);
-
-            // A null means the step led nowhere - off the maze, an empty cell, or an id with no
-            // room behind it - and the current room did not change.
+            // Null = step led nowhere; current room unchanged.
             if (room == nullptr || g_level == nullptr)
             {
                 return room;
             }
-
             const int index = IndexOfEntry(Read<void*>(g_level, GameAddress::kLevelCurrentRoomOffset));
             const int previous =
                 IndexOfEntry(Read<void*>(g_level, GameAddress::kLevelPreviousRoomOffset));
-
             Dispatch(AMOD_WORLD_EVENT_ROOM_CHANGED, index,
-                     Read<int>(g_level, GameAddress::kLevelCurrentRoomIdOffset), previous,
-                     Read<int>(g_level, GameAddress::kLevelMazeXOffset),
-                     Read<int>(g_level, GameAddress::kLevelMazeYOffset));
-
+                Read<int>(g_level, GameAddress::kLevelCurrentRoomIdOffset), previous,
+                Read<int>(g_level, GameAddress::kLevelMazeXOffset),
+                Read<int>(g_level, GameAddress::kLevelMazeYOffset));
             return room;
         }
 
-        // --- the table the mods call through ------------------------------------------------
+        int CurrentRoomIndex()
+        {
+            return RoomCount() > 0
+                ? IndexOfEntry(Read<void*>(g_level, GameAddress::kLevelCurrentRoomOffset))
+                : -1;
+        }
+
+        bool IsPlayer(const uint8_t* entity)
+        {
+            return entity != nullptr && Readable(entity, GameAddress::kEntitySize) &&
+                Read<int>(entity, GameAddress::kEntityKindOffset) == GameAddress::kEntityKindPlayer;
+        }
+
+        // Prefer session pointer; fall back to walking the live list.
+        const uint8_t* FindPlayer()
+        {
+            const uint8_t* const session =
+                static_cast<const uint8_t*>(GameModule::Resolve(GameAddress::kGameSession));
+            if (session != nullptr && Readable(session, GameAddress::kSessionPlayerOffset + sizeof(void*)))
+            {
+                const uint8_t* const named =
+                    Read<const uint8_t*>(session, GameAddress::kSessionPlayerOffset);
+                if (IsPlayer(named))
+                {
+                    return named;
+                }
+            }
+            const int current = IsLevelLoaded()
+                ? IndexOfEntry(Read<void*>(g_level, GameAddress::kLevelCurrentRoomOffset))
+                : -1;
+            for (uint8_t* entity = FirstEntity(current);
+                entity != nullptr && Readable(entity, GameAddress::kEntitySize);
+                entity = NextEntity(entity))
+            {
+                if (IsPlayer(entity))
+                {
+                    return entity;
+                }
+            }
+            return nullptr;
+        }
+
+        uint8_t* FindSession()
+        {
+            uint8_t* const session = static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kGameSession));
+            return (session != nullptr &&
+                Readable(session, GameAddress::kSessionScoreOffset + sizeof(int)))
+                ? session
+                : nullptr;
+        }
 
         int __cdecl ApiIsLevelLoaded(AmodMod mod)
         {
@@ -331,10 +493,8 @@ namespace Forge
             {
                 return 0;
             }
-
             AmodWorldLevel level = {};
             level.structSize = sizeof(AmodWorldLevel);
-
             level.script = ReadText(g_level, GameAddress::kLevelScriptOffset);
             level.name = ReadText(g_level, GameAddress::kLevelNameOffset);
             level.nextLevel = ReadText(g_level, GameAddress::kLevelNextLevelOffset);
@@ -344,26 +504,20 @@ namespace Forge
             level.endTitle = ReadText(g_level, GameAddress::kLevelEndTitleOffset);
             level.menuStat = ReadText(g_level, GameAddress::kLevelMenuStatOffset);
             level.castle = ReadText(g_level, GameAddress::kLevelEnableCastleOffset);
-
             level.number = Read<int>(g_level, GameAddress::kLevelNumberOffset);
             level.time = Read<float>(g_level, GameAddress::kLevelTimeOffset);
             level.musicStart = Read<float>(g_level, GameAddress::kLevelMusicStartOffset);
-
             level.isBonus = Read<uint8_t>(g_level, GameAddress::kLevelBonusOffset) != 0 ? 1 : 0;
             level.bonusTime = Read<float>(g_level, GameAddress::kLevelBonusTimeOffset);
             level.bonusCount = Read<int>(g_level, GameAddress::kLevelBonusCountOffset);
-
             level.isDemoLevel = Read<uint8_t>(g_level, GameAddress::kLevelDemoLevelOffset) != 0 ? 1 : 0;
             level.useForDemo = Read<uint8_t>(g_level, GameAddress::kLevelUseForDemoOffset) != 0 ? 1 : 0;
-
             level.roomCount = RoomCount();
             level.mazeRows = Read<int>(g_level, GameAddress::kLevelMazeHeightOffset);
-
             level.startMazeX = Read<int>(g_level, GameAddress::kLevelStartRoomXOffset);
             level.startMazeY = Read<int>(g_level, GameAddress::kLevelStartRoomYOffset);
             level.startCellX = Read<float>(g_level, GameAddress::kLevelStartCellOffset);
             level.startCellY = Read<float>(g_level, GameAddress::kLevelStartCellOffset + sizeof(float));
-
             return CopyOut(out, out->structSize, &level, sizeof(level));
         }
 
@@ -379,23 +533,18 @@ namespace Forge
             {
                 return 0;
             }
-
             const uint8_t* const room = entry + GameAddress::kRoomEntryRoomOffset;
-
             AmodWorldRoom filled = {};
             filled.structSize = sizeof(AmodWorldRoom);
             filled.index = index;
             filled.id = Read<int>(entry, GameAddress::kRoomEntryIdOffset);
             filled.file = ReadText(room, GameAddress::kRoomFileOffset);
             filled.music = ReadText(entry, GameAddress::kRoomEntryMusicOffset);
-
             FindMazePos(filled.id, filled.mazeX, filled.mazeY);
-
             filled.isLoaded = Read<uint8_t>(room, GameAddress::kRoomLoadedOffset) != 0 ? 1 : 0;
             filled.hasBackWall = Read<int>(room, GameAddress::kRoomHasBackWallOffset) != 0 ? 1 : 0;
             filled.collisionBoxCount = Read<int>(room, GameAddress::kRoomCollisionBoxCountOffset);
             filled.lightTriangleCount = Read<int>(room, GameAddress::kRoomLightTriangleCountOffset);
-
             return CopyOut(out, out->structSize, &filled, sizeof(filled));
         }
 
@@ -428,7 +577,6 @@ namespace Forge
             {
                 return;
             }
-
             if (x != nullptr)
             {
                 *x = Read<int>(g_level, GameAddress::kLevelMazeXOffset);
@@ -449,8 +597,7 @@ namespace Forge
             return Resolve(mod) != nullptr ? MazeRoomId(x, y) : 0;
         }
 
-        // A cell is a record of eight bytes and the type character is the first of them; the
-        // rest is what the room's geometry made of that cell and is not read here.
+        // Cell record is 8 bytes; type character is the first.
         const uint8_t* Cell(int index, int column, int row)
         {
             const uint8_t* const room = Room(index);
@@ -460,7 +607,6 @@ namespace Forge
             {
                 return nullptr;
             }
-
             const size_t cell = static_cast<size_t>(row) * GameAddress::kRoomGridColumns + column;
             return room + GameAddress::kRoomCellsOffset + cell * GameAddress::kRoomCellStride;
         }
@@ -471,7 +617,6 @@ namespace Forge
             {
                 return '\0';
             }
-
             const uint8_t* const cell = Cell(index, column, row);
             return cell != nullptr ? static_cast<char>(*cell) : '\0';
         }
@@ -479,23 +624,21 @@ namespace Forge
         int __cdecl ApiGetRoomCells(AmodMod mod, int index, char* buffer, int capacity)
         {
             const int cells = static_cast<int>(GameAddress::kRoomGridColumns *
-                                               GameAddress::kRoomGridRows);
+                GameAddress::kRoomGridRows);
             if (Resolve(mod) == nullptr || buffer == nullptr || capacity < cells ||
                 Room(index) == nullptr)
             {
                 return 0;
             }
-
             for (int row = 0; row < static_cast<int>(GameAddress::kRoomGridRows); ++row)
             {
                 for (int column = 0; column < static_cast<int>(GameAddress::kRoomGridColumns);
-                     ++column)
+                    ++column)
                 {
                     buffer[row * static_cast<int>(GameAddress::kRoomGridColumns) + column] =
                         static_cast<char>(*Cell(index, column, row));
                 }
             }
-
             return cells;
         }
 
@@ -507,19 +650,15 @@ namespace Forge
             {
                 return 0;
             }
-
             const uint8_t* const boxes =
                 reinterpret_cast<const uint8_t*>(Read<uintptr_t>(room, GameAddress::kRoomCollisionBoxesOffset));
             if (boxes == nullptr)
             {
                 return 0;
             }
-
-            // The record does not hold two corners in order: the near z comes first, then the
-            // near x and y, a gap, and then the far x, y and z.
+            // Layout: minZ, minX, minY, gap, maxX, maxY, maxZ.
             const uint8_t* const box =
                 boxes + static_cast<size_t>(boxIndex) * GameAddress::kRoomCollisionBoxStride;
-
             out->min[0] = Read<float>(box, GameAddress::kRoomBoxMinXOffset);
             out->min[1] = Read<float>(box, GameAddress::kRoomBoxMinYOffset);
             out->min[2] = Read<float>(box, GameAddress::kRoomBoxMinZOffset);
@@ -529,22 +668,133 @@ namespace Forge
             return 1;
         }
 
+        int __cdecl ApiGetSpawnCount(AmodMod mod, int roomIndex)
+        {
+            const uint8_t* const room = Room(roomIndex);
+            if (Resolve(mod) == nullptr || room == nullptr)
+            {
+                return 0;
+            }
+            const int count = Read<int>(room, GameAddress::kRoomSpawnCountOffset);
+            return (count > 0 && count < 0x4000) ? count : 0;
+        }
+
+        int __cdecl ApiGetSpawn(AmodMod mod, int roomIndex, int index, AmodWorldEntity* out)
+        {
+            const uint8_t* const room = Room(roomIndex);
+            if (Resolve(mod) == nullptr || out == nullptr || room == nullptr ||
+                index < 0 || index >= ApiGetSpawnCount(mod, roomIndex) ||
+                out->structSize < sizeof(uint32_t))
+            {
+                return 0;
+            }
+            const uint8_t* const* const records = reinterpret_cast<const uint8_t* const*>(
+                Read<uintptr_t>(room, GameAddress::kRoomSpawnListOffset));
+            if (!Readable(records, sizeof(void*) * static_cast<size_t>(index + 1)))
+            {
+                return 0;
+            }
+            const uint8_t* const record = records[index];
+            if (!LooksLikeSpawnRecord(record))
+            {
+                return 0;
+            }
+            AmodWorldEntity filled = {};
+            filled.structSize = sizeof(AmodWorldEntity);
+            filled.kind = Read<int>(record, GameAddress::kSpawnKindOffset);
+            const GameAddress::SpawnLayout* const layout = LayoutOf(filled.kind);
+            filled.name = SpawnNameOf(record, layout);
+            filled.isLive = (layout != nullptr && layout->liveByte != 0)
+                ? Read<uint8_t>(record, layout->liveByte)
+                : 1;
+            if (layout != nullptr && Readable(record + layout->position, 3 * sizeof(float)))
+            {
+                for (int axis = 0; axis < 3; ++axis)
+                {
+                    filled.position[axis] =
+                        Read<float>(record, layout->position +
+                            static_cast<uintptr_t>(axis) * sizeof(float));
+                    filled.previousPosition[axis] = filled.position[axis];
+                }
+            }
+            const uint32_t copied = out->structSize < sizeof(filled)
+                ? out->structSize
+                : static_cast<uint32_t>(sizeof(filled));
+            memcpy(out, &filled, copied);
+            memcpy(out, &copied, sizeof(copied));
+            return 1;
+        }
+
+        int __cdecl ApiGetRoomCellRecord(AmodMod mod, int index, int column, int row,
+            unsigned char* out, int capacity)
+        {
+            const uint8_t* const room = Room(index);
+            if (Resolve(mod) == nullptr || room == nullptr || out == nullptr ||
+                capacity < static_cast<int>(GameAddress::kRoomCellStride) ||
+                column < 0 || column >= static_cast<int>(GameAddress::kRoomGridColumns) ||
+                row < 0 || row >= static_cast<int>(GameAddress::kRoomGridRows))
+            {
+                return 0;
+            }
+            const size_t cell = (static_cast<size_t>(row) * GameAddress::kRoomGridColumns +
+                static_cast<size_t>(column)) * GameAddress::kRoomCellStride;
+            memcpy(out, room + GameAddress::kRoomCellsOffset + cell, GameAddress::kRoomCellStride);
+            return 1;
+        }
+
+        int __cdecl ApiGetEntityCount(AmodMod mod, int roomIndex)
+        {
+            return Resolve(mod) != nullptr ? EntityCount(roomIndex) : 0;
+        }
+
+        int __cdecl ApiGetEntity(AmodMod mod, int roomIndex, int index, AmodWorldEntity* out)
+        {
+            const uint8_t* const entity = Resolve(mod) != nullptr && out != nullptr
+                ? EntityAt(roomIndex, index)
+                : nullptr;
+            if (entity == nullptr || out->structSize < sizeof(uint32_t))
+            {
+                return 0;
+            }
+            AmodWorldEntity filled = {};
+            filled.structSize = sizeof(AmodWorldEntity);
+            const uint8_t* const record = SpawnRecord(entity);
+            filled.kind = record != nullptr ? Read<int>(record, GameAddress::kSpawnKindOffset) : 0;
+            filled.name = record != nullptr ? SpawnName(record) : "";
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                const uintptr_t offset = static_cast<uintptr_t>(axis) * sizeof(float);
+                filled.position[axis] =
+                    Read<float>(entity, GameAddress::kEntityPositionOffset + offset);
+                filled.previousPosition[axis] =
+                    Read<float>(entity, GameAddress::kEntityPreviousPositionOffset + offset);
+            }
+            filled.state = Read<int>(entity, GameAddress::kEntityStateOffset);
+            filled.subState = Read<int>(entity, GameAddress::kEntitySubStateOffset);
+            filled.flags = Read<uint32_t>(entity, GameAddress::kEntityFlagsOffset);
+            filled.isDead = Read<uint8_t>(entity, GameAddress::kEntityDeadOffset) != 0 ? 1 : 0;
+            const uint32_t copied = out->structSize < sizeof(filled)
+                ? out->structSize
+                : static_cast<uint32_t>(sizeof(filled));
+            memcpy(out, &filled, copied);
+            memcpy(out, &copied, sizeof(copied));
+            return 1;
+        }
+
         AmodToken __cdecl ApiAddEventHandler(AmodMod mod, AmodWorldEvent event,
-                                             AmodWorldEventHandler handler, void* user)
+            AmodWorldEventHandler handler, void* user)
         {
             ModContext* const context = Resolve(mod);
             if (context == nullptr || handler == nullptr)
             {
                 return AMOD_INVALID_TOKEN;
             }
-
             if (event != AMOD_WORLD_EVENT_LEVEL_LOADED &&
                 event != AMOD_WORLD_EVENT_LEVEL_UNLOADED &&
                 event != AMOD_WORLD_EVENT_ROOM_CHANGED)
             {
                 return AMOD_INVALID_TOKEN;
             }
-
             Subscription item;
             item.id = g_nextSubscriptionId++;
             item.owner = context;
@@ -552,9 +802,8 @@ namespace Forge
             item.handler = handler;
             item.user = user;
             g_subscriptions.push_back(item);
-
             return context->owned.Add(&ReleaseSubscription,
-                                      reinterpret_cast<void*>(static_cast<uintptr_t>(item.id)));
+                reinterpret_cast<void*>(static_cast<uintptr_t>(item.id)));
         }
 
         void __cdecl ApiRemoveEventHandler(AmodMod mod, AmodToken token)
@@ -566,11 +815,9 @@ namespace Forge
             }
         }
 
-        // Installs one detour, refusing when the routine does not open the way the reverse says
-        // it does. All three have to hold for the interface to be offered at all: a mod told a
-        // level is loaded but never told it changed would be worse than no interface.
+        // All three hooks must succeed or the interface is not offered.
         bool InstallHook(InlineHook& hook, GameSymbol symbol, void* detour,
-                         const uint8_t* prologue, size_t prologueLength, const char* name)
+            const uint8_t* prologue, size_t prologueLength, const char* name)
         {
             void* const target = GameSymbols::Address(symbol);
             if (target == nullptr)
@@ -578,21 +825,18 @@ namespace Forge
                 FORGE_LOG_WARN("%s was not located, so the world interface is not offered", name);
                 return false;
             }
-
             std::string mismatch;
             if (!GameModule::VerifyBytes(target, prologue, prologueLength, mismatch))
             {
                 FORGE_LOG_ERROR("%s does not open as expected (%s)", name, mismatch.c_str());
                 return false;
             }
-
             std::string error;
             if (!hook.Install(target, detour, prologue, prologueLength, error))
             {
                 FORGE_LOG_ERROR("Cannot hook %s: %s", name, error.c_str());
                 return false;
             }
-
             return true;
         }
     }
@@ -607,12 +851,12 @@ namespace Forge
         }
 
         if (!InstallHook(g_loadHook, GameSymbol::LevelLoad, reinterpret_cast<void*>(&LoadDetour),
-                         kLevelLoadPrologue, sizeof(kLevelLoadPrologue), "Level_Load") ||
+            kLevelLoadPrologue, sizeof(kLevelLoadPrologue), "Level_Load") ||
             !InstallHook(g_freeHook, GameSymbol::LevelFree, reinterpret_cast<void*>(&FreeDetour),
-                         kLevelFreePrologue, sizeof(kLevelFreePrologue), "Level_Free") ||
+                kLevelFreePrologue, sizeof(kLevelFreePrologue), "Level_Free") ||
             !InstallHook(g_activateHook, GameSymbol::LevelActivateRoom,
-                         reinterpret_cast<void*>(&ActivateRoomDetour), kLevelActivateRoomPrologue,
-                         sizeof(kLevelActivateRoomPrologue), "Level_ActivateRoom"))
+                reinterpret_cast<void*>(&ActivateRoomDetour), kLevelActivateRoomPrologue,
+                sizeof(kLevelActivateRoomPrologue), "Level_ActivateRoom"))
         {
             Uninstall();
             return false;
@@ -639,6 +883,11 @@ namespace Forge
         g_table.GetRoomCollisionBox = &ApiGetRoomCollisionBox;
         g_table.AddEventHandler = &ApiAddEventHandler;
         g_table.RemoveEventHandler = &ApiRemoveEventHandler;
+        g_table.GetEntityCount = &ApiGetEntityCount;
+        g_table.GetEntity = &ApiGetEntity;
+        g_table.GetRoomCellRecord = &ApiGetRoomCellRecord;
+        g_table.GetSpawnCount = &ApiGetSpawnCount;
+        g_table.GetSpawn = &ApiGetSpawn;
 
         FORGE_LOG_INFO("World interface installed");
         return true;
@@ -649,14 +898,42 @@ namespace Forge
         g_activateHook.Uninstall();
         g_freeHook.Uninstall();
         g_loadHook.Uninstall();
-
         g_originalActivate = nullptr;
         g_originalFree = nullptr;
         g_originalLoad = nullptr;
         g_level = nullptr;
-
         g_subscriptions.clear();
         g_table = AmodWorldApi{};
+    }
+
+    bool WorldApi::IsLevelLoaded()
+    {
+        return RoomCount() > 0;
+    }
+
+    uint8_t* WorldApi::CurrentRoom()
+    {
+        return Room(CurrentRoomIndex());
+    }
+
+    uint8_t* WorldApi::FirstLiveEntity()
+    {
+        return FirstEntity(CurrentRoomIndex());
+    }
+
+    uint8_t* WorldApi::NextLiveEntity(const uint8_t* entity)
+    {
+        return NextEntity(entity);
+    }
+
+    const uint8_t* WorldApi::Player()
+    {
+        return FindPlayer();
+    }
+
+    uint8_t* WorldApi::Session()
+    {
+        return FindSession();
     }
 
     const AmodWorldApi* WorldApi::Table()

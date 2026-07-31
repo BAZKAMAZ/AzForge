@@ -1,16 +1,3 @@
-/*
- * LauncherApi.h - the start-up launcher.
- *
- * The dialog the game shows before it starts: renderer choice, language, logo, and the
- * buttons that play, register, buy or quit. Its text and layout come from
- * scripts/local/dialog_<lang>.txt, so a mod that only wants different wording can replace
- * that file instead. This interface covers what the file cannot express: reacting to
- * buttons, changing controls while the dialog is up, and the logo, which the game loads
- * straight from disk without passing through the resource layer.
- *
- * Reached through AmodApi::launcher, null on a loader older than API version 2.
- */
-
 #ifndef AZFORGE_LAUNCHER_API_H
 #define AZFORGE_LAUNCHER_API_H
 
@@ -22,30 +9,17 @@ extern "C" {
 
 typedef enum AmodLauncherEvent
 {
-    /* The dialog is up and the game has applied its own layout. Data is null. */
-    AMOD_LAUNCHER_OPENED = 0,
-
-    /* A control was used, before the game acts on it. Data is AmodLauncherCommand. */
-    AMOD_LAUNCHER_COMMAND = 1,
-
-    /* The dialog has closed and the window handle is gone. Data is null. */
-    AMOD_LAUNCHER_CLOSING = 2,
-
-    /* The game has finished styling the dialog from its script, which happens once while
-     * the dialog comes up and again on every language change. Data is null.
-     *
-     * This is where a mod undoes something the game decides in code rather than in script:
-     * the registration and purchase controls are force-hidden after the script is applied,
-     * so showing them from AMOD_LAUNCHER_OPENED alone would last only until the player
-     * switched language. */
-    AMOD_LAUNCHER_LAYOUT_APPLIED = 3
+    AMOD_LAUNCHER_OPENED = 0,           /* dialog up; data = null */
+    AMOD_LAUNCHER_COMMAND = 1,          /* control used; data = AmodLauncherCommand */
+    AMOD_LAUNCHER_CLOSING = 2,          /* dialog closed; data = null */
+    AMOD_LAUNCHER_LAYOUT_APPLIED = 3    /* script layout applied (also on language change) */
 } AmodLauncherEvent;
 
 typedef struct AmodLauncherCommand
 {
-    int commandId;      /* one of AMOD_LAUNCHER_ID_* */
-    int notifyCode;     /* BN_CLICKED, CBN_SELCHANGE and so on */
-    int handled;        /* set non-zero to stop the game handling this command */
+    int commandId;      /* AMOD_LAUNCHER_ID_* */
+    int notifyCode;     /* BN_CLICKED, CBN_SELCHANGE, … */
+    int handled;        /* set non-zero to stop the game handling this */
 } AmodLauncherCommand;
 
 #define AMOD_LAUNCHER_ID_RASTER_COMBO                               0x3E8
@@ -70,37 +44,29 @@ typedef struct AmodLauncherApi
                                    AmodLauncherCallback callback, void* user);
     void (__cdecl* Unsubscribe)(AmodMod mod, AmodToken token);
 
-    /* Non-zero while the dialog exists. Everything below only works then. */
     int (__cdecl* IsOpen)(AmodMod mod);
 
-    /* Control id for a name the game's dialog script uses, such as "IDC_HELP_BUTTON",
-     * or 0. Safer than a literal id, which only holds for this build. */
+    /* Control id by script name ("IDC_HELP_BUTTON"), or 0. */
     int (__cdecl* FindControl)(AmodMod mod, const char* name);
 
-    /* Non-zero on success, zero when the launcher is not up or the control does not
-     * exist. */
     int (__cdecl* SetText)(AmodMod mod, int controlId, const char* text);
     int (__cdecl* GetText)(AmodMod mod, int controlId, char* buffer, uint32_t size);
     int (__cdecl* SetVisible)(AmodMod mod, int controlId, int visible);
     int (__cdecl* SetEnabled)(AmodMod mod, int controlId, int enabled);
     int (__cdecl* SetCaption)(AmodMod mod, const char* text);
 
-    /* Zero for any of x, y, width or height keeps the control's current value, the same
-     * rule the game's dialog script follows. */
+    /* Zero for any of x/y/width/height keeps the current value. */
     int (__cdecl* SetBounds)(AmodMod mod, int controlId, int x, int y, int width, int height);
 
-    /* Replaces the logo with a BMP held in memory. */
+    /* Replace logo with an in-memory BMP. */
     int (__cdecl* SetLogo)(AmodMod mod, const void* bitmapFile, uint32_t size);
 
-    /* The dialog's HWND, for creating controls, subclassing or custom drawing. Null unless
-     * expectedGameBuild matches AmodApi::GetGameBuild. */
+    /* Dialog HWND; null unless expectedGameBuild matches. */
     void* (__cdecl* GetWindow)(AmodMod mod, uint32_t expectedGameBuild);
-
-    /* Fields added in later API versions go here, and nowhere else. */
 } AmodLauncherApi;
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
 
 #ifdef __cplusplus

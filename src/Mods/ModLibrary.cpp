@@ -1,7 +1,4 @@
-#include "pch.h"
-
 #include "src/Mods/ModLibrary.h"
-
 #include "src/Api/BlockExpressionApi.h"
 #include "src/Api/BoxMenuApi.h"
 #include "src/Api/ConsoleApi.h"
@@ -10,6 +7,9 @@
 #include "src/Api/LauncherApi.h"
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/RenderApi.h"
+#include "src/Api/BonusesApi.h"
+#include "src/Api/HudApi.h"
+#include "src/Api/InventoryApi.h"
 #include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
@@ -34,7 +34,7 @@ namespace Forge
                 return "the DLL is not a 32-bit module; mods must be built for Win32";
             case ERROR_MOD_NOT_FOUND:
                 return "the DLL depends on a library that is not present; build mods with the "
-                       "static runtime (/MT)";
+                    "static runtime (/MT)";
             default:
                 break;
             }
@@ -68,7 +68,7 @@ namespace Forge
     }
 
     bool ModLibrary::WriteTransientCopy(const std::filesystem::path& path,
-                                        const std::vector<uint8_t>& bytes, std::string& error)
+        const std::vector<uint8_t>& bytes, std::string& error)
     {
         std::error_code creation;
         std::filesystem::create_directories(path.parent_path(), creation);
@@ -79,9 +79,9 @@ namespace Forge
         }
 
         const HANDLE writer = CreateFileW(path.c_str(), GENERIC_WRITE,
-                                          FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr,
-                                          CREATE_ALWAYS,
-                                          FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_HIDDEN, nullptr);
+            FILE_SHARE_READ | FILE_SHARE_DELETE, nullptr,
+            CREATE_ALWAYS,
+            FILE_ATTRIBUTE_TEMPORARY | FILE_ATTRIBUTE_HIDDEN, nullptr);
         if (writer == INVALID_HANDLE_VALUE)
         {
             char buffer[96];
@@ -92,8 +92,8 @@ namespace Forge
 
         DWORD written = 0;
         const bool ok = !bytes.empty() &&
-                        WriteFile(writer, bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr) &&
-                        written == bytes.size();
+            WriteFile(writer, bytes.data(), static_cast<DWORD>(bytes.size()), &written, nullptr) &&
+            written == bytes.size();
         CloseHandle(writer);
 
         if (!ok)
@@ -104,12 +104,11 @@ namespace Forge
             return false;
         }
 
-        // Reopened purely to hold the delete-on-close reference. Sharing is left wide open
-        // so the module loader can map the file while this handle stays alive.
+        // Hold delete-on-close; share so LoadLibrary can map while this handle lives.
         m_transientFile = CreateFileW(path.c_str(), GENERIC_READ | DELETE,
-                                      FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
-                                      OPEN_EXISTING,
-                                      FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_TEMPORARY | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
         if (m_transientFile == INVALID_HANDLE_VALUE)
         {
             char buffer[96];
@@ -134,8 +133,6 @@ namespace Forge
 
         if (!m_transientPath.empty())
         {
-            // Closing the last handle is what removes the file. Deleting explicitly covers
-            // the case where the module loader still held it a moment ago.
             std::error_code removal;
             std::filesystem::remove(m_transientPath, removal);
             m_transientPath.clear();
@@ -158,15 +155,13 @@ namespace Forge
             return false;
         }
 
-        // Checked before the DLL is copied out and mapped: a mod that cannot work here should
-        // cost nothing and say why, rather than load and discover a null table it may never
-        // have checked for.
+        // Refuse before mapping if a required subsystem is missing.
         for (const std::string& subsystem : record.manifest.requiredSubsystems)
         {
             if (!Subsystems::IsAvailable(subsystem))
             {
                 error = "the mod requires the '" + subsystem +
-                        "' subsystem, which this loader did not install";
+                    "' subsystem, which this loader did not install";
                 return false;
             }
         }
@@ -183,9 +178,7 @@ namespace Forge
             return false;
         }
 
-        // Asked before the bytes reach the disk or the loader, which is the last point at
-        // which refusing costs nothing: once LoadLibrary runs, the mod's DllMain has already
-        // had its turn.
+        // Last cheap refusal point — DllMain runs inside LoadLibrary.
         if (!ModScan::IsClean(record.manifest.id, bytes, error))
         {
             return false;
@@ -226,9 +219,6 @@ namespace Forge
         m_context.privileged = record.privileged;
         BuildApiTable(m_context);
 
-        // Written out because it is what a player will want to see in the mod list, and
-        // because a mod reaching for something it never declared should be traceable to a
-        // line in the log rather than to a null it did not expect.
         for (const std::string& capability : m_context.capabilities)
         {
             FORGE_LOG_INFO("[%s] declares '%s'", m_context.id.c_str(), capability.c_str());
@@ -238,13 +228,11 @@ namespace Forge
         if (result != AMOD_OK)
         {
             error = DescribeInitResult(result);
-            m_shutdown = nullptr; // AmodInit failed, so AmodShutdown must not be called
+            m_shutdown = nullptr; // AmodInit failed — do not call AmodShutdown
             Unload();
             return false;
         }
 
-        // Optional, and resolved only once the mod is up: a mod that exports AmodUpdate is
-        // driven every frame until it is unloaded.
         FrameApi::Register(&m_context,
             reinterpret_cast<AmodUpdateRoutine>(GetProcAddress(m_module, "AmodUpdate")));
 
@@ -254,8 +242,6 @@ namespace Forge
 
     void ModLibrary::Unload()
     {
-        // Released before AmodShutdown, so nothing the loader holds calls into code that is
-        // about to unload.
         FrameApi::ForgetMod(&m_context);
         LauncherApi::ForgetMod(&m_context);
         ObjectsMenuApi::ForgetMod(&m_context);
@@ -264,10 +250,11 @@ namespace Forge
         ConsoleApi::ForgetMod(&m_context);
         RenderApi::ForgetMod(&m_context);
         WorldApi::ForgetMod(&m_context);
+        BonusesApi::ForgetMod(&m_context);
+        InventoryApi::ForgetMod(&m_context);
+        HudApi::ForgetMod(&m_context);
 
-        // Last of the release calls and before anything unmaps this mod: a detour of the
-        // mod's own points into the DLL that is about to go, so the game's code has to stop
-        // referring to it first.
+        // Detours last — they point into the DLL about to go.
         InteropApi::ForgetMod(&m_context);
         m_context.owned.ReleaseAll();
 

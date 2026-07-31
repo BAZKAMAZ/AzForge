@@ -1,278 +1,239 @@
-#include <d3d8.h>        // from the DirectX 8 SDK headers in inc_d3d8; include before ForgeApi.h
+#include <d3d8.h>
 #include <ForgeApi.h>
-
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-// A console command that reads the world out through the world interface:
-//   world          - the level as a whole, and where the player is in it
-//   world rooms    - every room of the level, with its maze cell
-//   world maze     - the maze, as the room ids it holds
-//   world cells    - the current room's cell grid, the one movement is expressed in
-//   world boxes    - the current room's collision boxes
-//
-// It also subscribes to the three world events, so entering a level and walking between rooms
-// reports itself in the console without anything being asked for.
+static const char* const kRedKnife = "red_knife";
+static const float kRedKnifeSeconds = 20.0f;
 
-static void PrintLevel()
+static const char* const kRedTexture = "textures/bonus/knife_red.jpg";
+static const char* const kRedIcon = "textures/bonus/knife_red_icon.png";
+static const char* const kPlainTexture = "textures/bonus/knife.jpg";
+static const char* const kPlainIcon = "textures/bonus/knife_icon.png";
+
+static float g_redKnifeLeft = 0.0f;
+static float g_blink = 0.0f;
+static bool g_red = true;
+static unsigned g_mine = 0;
+
+static bool SlotHolds(int slot, const char* name)
 {
-    AmodWorldLevel level;
-    if (!Amod::World::GetLevel(level))
+    return strcmp(Amod::Inventory::At(slot).Name(), name) == 0;
+}
+
+static void DropTheKnives()
+{
+    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
     {
-        Amod::Console::Printf("world: no level is loaded\n");
-        return;
+        if ((g_mine & (1u << slot)) != 0 &&
+            (SlotHolds(slot, kRedKnife) || SlotHolds(slot, "knife")))
+        {
+            Amod::Inventory::Clear(slot);
+        }
+    }
+    g_mine = 0;
+}
+
+static void FillWithKnives()
+{
+    const int count = Amod::Inventory::SlotCount();
+
+    if (Amod::Inventory::SlotOf(kRedKnife) < 0)
+    {
+        const int mine = Amod::Inventory::FreeSlot();
+        if (mine >= 0 && Amod::Inventory::Put(mine, kRedKnife, kRedKnifeSeconds, AMOD_BONUS_TIMER_MOD))
+        {
+            g_mine |= 1u << mine;
+            Amod::Inventory::Slot(mine)["icon"].Set(kRedIcon);
+        }
     }
 
-    Amod::Console::Printf("level '%s' (#%d) from '%s'\n", level.name, level.number, level.script);
-    Amod::Console::Printf("  rooms %d, maze %d rows, next '%s'\n",
-                          level.roomCount, level.mazeRows, level.nextLevel);
-    Amod::Console::Printf("  music '%s' from %.2f, background '%s'\n",
-                          level.music, level.musicStart, level.background);
-    Amod::Console::Printf("  time %.1f, bonus %d (time %.1f, count %d), demo %d/%d\n",
-                          level.time, level.isBonus, level.bonusTime, level.bonusCount,
-                          level.isDemoLevel, level.useForDemo);
-    Amod::Console::Printf("  start at maze %d,%d cell %.2f,%.2f\n",
-                          level.startMazeX, level.startMazeY, level.startCellX, level.startCellY);
-
-    int x = -1;
-    int y = -1;
-    Amod::World::MazeCursor(x, y);
-
-    const int current = Amod::World::CurrentRoom();
-    AmodWorldRoom room;
-    if (current >= 0 && Amod::World::GetRoom(current, room))
+    int empty = 0;
+    for (int slot = 0; slot < count; ++slot)
     {
-        Amod::Console::Printf("  in room %d (id %d, '%s') at maze %d,%d\n",
-                              room.index, room.id, room.file, x, y);
+        empty += Amod::Inventory::At(slot).IsEmpty() ? 1 : 0;
     }
-    else
+
+    for (int slot = 0; slot < count; ++slot)
     {
-        Amod::Console::Printf("  no room is current; maze cursor %d,%d\n", x, y);
+        if (empty > 1 && Amod::Inventory::At(slot).IsEmpty() &&
+            Amod::Inventory::Put(slot, "knife", 0.0f, AMOD_BONUS_TIMER_NONE))
+        {
+            g_mine |= 1u << slot;
+            --empty;
+        }
+        if (SlotHolds(slot, kRedKnife))
+        {
+            Amod::Inventory::Slot(slot)["time_left"].Set(g_redKnifeLeft);
+        }
     }
 }
 
-static void PrintRooms()
+static AmodBonusTakeResult __cdecl OnBonusTaken(const AmodBonusTakeInfo* info, void*)
 {
-    const int count = Amod::World::RoomCount();
-    if (count == 0)
+    if (strcmp(info->resourceId, kRedKnife) != 0)
     {
-        Amod::Console::Printf("world: no level is loaded\n");
+        return AMOD_BONUS_TAKE_DEFAULT;
+    }
+
+    g_redKnifeLeft = kRedKnifeSeconds;
+    FillWithKnives();
+
+    Amod::Bonuses::TakeChainLink(info->pointsOnTake, info->position);
+    return AMOD_BONUS_TAKE_HANDLED;
+}
+
+static void __cdecl SpendCommand(int, const char**, void*)
+{
+    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
+    {
+        if (SlotHolds(slot, "knife"))
+        {
+            Amod::Inventory::Clear(slot);
+            Amod::Console::Printf("spent the knife in slot %d\n", slot);
+            return;
+        }
+    }
+    Amod::Console::Printf("no knife is carried\n");
+}
+
+static void __cdecl FloaterCommand(int argc, const char** argv, void*)
+{
+    if (argc < 3)
+    {
+        Amod::Console::Printf("floater <column> <row>\n");
         return;
     }
 
-    const int current = Amod::World::CurrentRoom();
+    const int column = atoi(argv[1]);
+    const int row = atoi(argv[2]);
+
+    Amod::Console::Printf(Amod::Bonuses::NewPlacement("floater", column, row).Put()
+                              ? "a floater on cell %d,%d\n"
+                              : "could not put a floater on cell %d,%d\n",
+                          column, row);
+}
+
+static void __cdecl PlaceCommand(int argc, const char** argv, void*)
+{
+    if (argc < 4)
+    {
+        Amod::Console::Printf("place <name> <column> <row>   e.g. place diamond 20 14\n");
+        return;
+    }
+
+    const int column = atoi(argv[2]);
+    const int row = atoi(argv[3]);
+
+    Amod::Console::Printf(Amod::Bonuses::Place(argv[1], column, row)
+                              ? "put a '%s' on cell %d,%d\n"
+                              : "could not put a '%s' on cell %d,%d - is that a name from "
+                                "bonus_res.txt?\n",
+                          argv[1], column, row);
+}
+
+static bool g_ownRow = false;
+static int g_holders = 0;
+
+static void SetHolders(int count)
+{
+    if (!g_ownRow)
+    {
+        for (int i = 0; i < 10; ++i)
+        {
+            Amod::Hud::RemoveImage(0);
+        }
+        g_ownRow = true;
+    }
+
+    for (int i = 0; i < g_holders; ++i)
+    {
+        Amod::Hud::RemoveImage(Amod::Hud::ImageCount() - 1);
+    }
+    g_holders = 0;
+
+    for (int half = 0; half < count * 2; ++half)
+    {
+        char fragment[320];
+        sprintf_s(fragment, sizeof(fragment),
+                  "$images\n{\n\t$image\n\t{\n"
+                  "\t\t$texture \"textures/ui/derjatel.png\"\n"
+                  "\t\t$pos %d 480\n\t\t$size 30 30\n%s\t}\n}\n",
+                  half * 30, (half % 2) != 0 ? "\t\t$horz_flip\n" : "");
+
+        g_holders += Amod::Hud::AddImages(fragment);
+    }
+}
+
+static void __cdecl InventoryCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        Amod::Console::Printf("inv <count>   now %d, up to %d\n", Amod::Inventory::SlotCount(),
+                              AMOD_INVENTORY_SLOTS_MAX);
+        return;
+    }
+
+    const int count = atoi(argv[1]);
+
+    if (Amod::Inventory::SetSlotCount(count))
+    {
+        // Nothing in the game shortens the step when there are more slots to fit, so the row is
+        // squeezed by hand until it would run off a 640-wide screen.
+        const float start = Amod::Hud::At("items.start_pos").Number(0, 30.0f);
+        const float step = (640.0f - start) / static_cast<float>(count);
+
+        Amod::Hud::At("items.offs").Set(step < 60.0f ? step : 60.0f, 0.0f);
+        SetHolders(count);
+
+        Amod::Console::Printf("the player carries %d slot(s)\n", count);
+    }
+    else
+    {
+        Amod::Console::Printf("%d slots is refused - 1 to %d is what there is room for\n", count,
+                              AMOD_INVENTORY_SLOTS_MAX);
+    }
+}
+
+static void __cdecl KindsCommand(int, const char**, void*)
+{
+    const int count = Amod::Bonuses::TypeCount();
+    Amod::Console::Printf("%d kinds of bonus\n", count);
+
     for (int index = 0; index < count; ++index)
     {
-        AmodWorldRoom room;
-        if (!Amod::World::GetRoom(index, room))
+        AmodBonusType type;
+        if (!Amod::Bonuses::GetType(index, type))
         {
             continue;
         }
 
-        Amod::Console::Printf("%s%3d  id %-4d maze %2d,%-2d  boxes %-3d %s'%s'\n",
-                              index == current ? "->" : "  ", room.index, room.id,
-                              room.mazeX, room.mazeY, room.collisionBoxCount,
-                              room.isLoaded ? "" : "(not loaded) ", room.file);
+        Amod::Console::Printf("%2d  %-12s %-12s %5d pts%s%s%s\n", index, type.resourceId,
+                              type.name, type.pointsOnTake,
+                              type.isTorch != 0 ? "  torch" : (type.isTotem != 0 ? "  totem" : ""),
+                              type.makesTrain != 0 ? "  train" : "",
+                              type.time > 0.0f ? "  timed" : "");
     }
 }
 
-static void PrintMaze()
+// The game carries the slots from one level into the next, so they are emptied on the first frame
+// the new player exists - the carried state is restored after the event.
+static bool g_emptyThem = false;
+
+static void __cdecl OnWorldEvent(const AmodWorldEventInfo*, void*)
 {
-    AmodWorldLevel level;
-    if (!Amod::World::GetLevel(level))
-    {
-        Amod::Console::Printf("world: no level is loaded\n");
-        return;
-    }
-
-    int cursorX = -1;
-    int cursorY = -1;
-    Amod::World::MazeCursor(cursorX, cursorY);
-
-    // The maze is ragged, so each row is asked for its own width rather than the level for one.
-    for (int y = 0; y < level.mazeRows; ++y)
-    {
-        char line[256];
-        int used = 0;
-        const int width = Amod::World::MazeRowWidth(y);
-
-        for (int x = 0; x < width && used < static_cast<int>(sizeof(line)) - 8; ++x)
-        {
-            const int id = Amod::World::MazeRoomId(x, y);
-            const size_t left = sizeof(line) - static_cast<size_t>(used);
-
-            // A zero is a hole in the maze rather than a room; the brackets mark where the
-            // player is standing.
-            if (id == 0)
-            {
-                used += snprintf(line + used, left, "  .  ");
-            }
-            else
-            {
-                used += snprintf(line + used, left,
-                                 (x == cursorX && y == cursorY) ? "[%3d]" : " %3d ", id);
-            }
-        }
-
-        line[used] = '\0';
-        Amod::Console::Printf("%2d %s\n", y, line);
-    }
+    g_redKnifeLeft = 0.0f;
+    g_emptyThem = true;
 }
 
-static void PrintCells()
+static void EmptyEverySlot()
 {
-    const int current = Amod::World::CurrentRoom();
-    char cells[AMOD_ROOM_COLUMNS * AMOD_ROOM_ROWS];
-    if (current < 0 || Amod::World::Cells(current, cells, static_cast<int>(sizeof(cells))) == 0)
+    for (int slot = 0; slot < Amod::Inventory::SlotCount(); ++slot)
     {
-        Amod::Console::Printf("world: no room is current\n");
-        return;
+        Amod::Inventory::Clear(slot);
     }
-
-    // A row at a time, exactly as the game indexes it: row 0 is the top of the room.
-    for (int row = 0; row < AMOD_ROOM_ROWS; ++row)
-    {
-        char line[AMOD_ROOM_COLUMNS + 1];
-        for (int column = 0; column < AMOD_ROOM_COLUMNS; ++column)
-        {
-            const char cell = cells[row * AMOD_ROOM_COLUMNS + column];
-            line[column] = cell == '\0' ? ' ' : cell;
-        }
-        line[AMOD_ROOM_COLUMNS] = '\0';
-        Amod::Console::Printf("%2d |%s|\n", row, line);
-    }
-}
-
-static void PrintBoxes()
-{
-    const int current = Amod::World::CurrentRoom();
-    AmodWorldRoom room;
-    if (current < 0 || !Amod::World::GetRoom(current, room))
-    {
-        Amod::Console::Printf("world: no room is current\n");
-        return;
-    }
-
-    Amod::Console::Printf("room %d has %d collision boxes\n", room.index, room.collisionBoxCount);
-    for (int index = 0; index < room.collisionBoxCount; ++index)
-    {
-        AmodWorldBox box;
-        if (Amod::World::CollisionBox(current, index, box))
-        {
-            Amod::Console::Printf("%3d  %7.3f %7.3f %7.3f  ->  %7.3f %7.3f %7.3f\n", index,
-                                  box.min[0], box.min[1], box.min[2],
-                                  box.max[0], box.max[1], box.max[2]);
-        }
-    }
-}
-
-static void __cdecl WorldCommand(int argc, const char** argv, void*)
-{
-    const char* const what = argc > 1 ? argv[1] : "";
-
-    if (strcmp(what, "rooms") == 0)      { PrintRooms(); }
-    else if (strcmp(what, "maze") == 0)  { PrintMaze(); }
-    else if (strcmp(what, "cells") == 0) { PrintCells(); }
-    else if (strcmp(what, "boxes") == 0) { PrintBoxes(); }
-    else if (what[0] == '\0')            { PrintLevel(); }
-    else
-    {
-        Amod::Console::Printf("world: rooms | maze | cells | boxes\n");
-    }
-}
-
-static void __cdecl WorldEvent(const AmodWorldEventInfo* info, void*)
-{
-    switch (info->event)
-    {
-    case AMOD_WORLD_EVENT_LEVEL_LOADED:
-    {
-        AmodWorldLevel level;
-        if (Amod::World::GetLevel(level))
-        {
-            Amod::Console::Printf("[world] level '%s' loaded, %d rooms\n",
-                                  level.name, level.roomCount);
-        }
-        break;
-    }
-
-    case AMOD_WORLD_EVENT_LEVEL_UNLOADED:
-        // The level is still readable here, which is what makes it worth reporting by name.
-        Amod::Console::Printf("[world] level unloaded (%d rooms)\n", Amod::World::RoomCount());
-        break;
-
-    case AMOD_WORLD_EVENT_ROOM_CHANGED:
-    {
-        AmodWorldRoom room;
-        if (Amod::World::GetRoom(info->roomIndex, room))
-        {
-            Amod::Console::Printf("[world] room %d (id %d, '%s') at maze %d,%d, from room %d\n",
-                                  room.index, room.id, room.file, info->mazeX, info->mazeY,
-                                  info->previousRoomIndex);
-        }
-        break;
-    }
-    }
-}
-
-// Everything below reaches the game directly, without the loader knowing anything about what
-// is being reached. Room_Load is a routine AzForge exposes through no interface at all: the
-// mod finds it by its own byte signature, detours it, and reports every .room the game opens.
-//
-//   Room_Load  __thiscall (room, file) -> bool
-//     55              PUSH EBP
-//     8D 6C 24 CC     LEA EBP,[ESP-0x34]
-//     83 EC 34        SUB ESP,0x34
-//
-// Eight bytes, three whole instructions, none of them position-dependent and none of them a
-// jump target from inside the routine - which is what the loader has to be told, because only
-// the code that reversed it knows.
-static const unsigned char kRoomLoadPrologue[] = { 0x55, 0x8D, 0x6C, 0x24, 0xCC, 0x83, 0xEC, 0x34 };
-
-static const char kRoomLoadPattern[] =
-    "55 8D 6C 24 CC 83 EC 34 6A FF 68 ?? ?? ?? ?? 64 A1 00 00 00 00 50 83 EC 64 "
-    "53 56 57 A1 ?? ?? ?? ?? 33 C5 50 8D 45 F4";
-
-// __thiscall is __fastcall with the second register argument unused.
-typedef char(__fastcall* RoomLoadRoutine)(void* room, void* unused, const char* file);
-static RoomLoadRoutine g_originalRoomLoad = nullptr;
-
-static char __fastcall RoomLoadDetour(void* room, void* unused, const char* file)
-{
-    const char result = g_originalRoomLoad(room, unused, file);
-    Amod::Console::Printf("[interop] Room_Load('%s') -> %d\n", file, result);
-    return result;
-}
-
-static void HookRoomLoad()
-{
-    if (!Amod::Interop::IsAvailable())
-    {
-        Amod::Log(AMOD_LOG_WARNING, "the direct interface is missing, Room_Load is not hooked");
-        return;
-    }
-
-    AmodFindResult why = AMOD_FIND_NOT_FOUND;
-    const uintptr_t target = Amod::Interop::Find(kRoomLoadPattern, &why);
-    if (target == 0)
-    {
-        Amod::Log(AMOD_LOG_WARNING, "Room_Load was not found (result %d)", why);
-        return;
-    }
-
-    void* trampoline = nullptr;
-    const AmodToken token = Amod::Interop::Hook(target, &RoomLoadDetour, kRoomLoadPrologue,
-                                                sizeof(kRoomLoadPrologue), &trampoline);
-    if (token == AMOD_INVALID_TOKEN)
-    {
-        Amod::Log(AMOD_LOG_WARNING, "Room_Load at 0x%08X could not be hooked",
-                  static_cast<unsigned>(target));
-        return;
-    }
-
-    g_originalRoomLoad = reinterpret_cast<RoomLoadRoutine>(trampoline);
-    Amod::Log(AMOD_LOG_INFO, "Room_Load found at 0x%08X and hooked by the mod itself",
-              static_cast<unsigned>(target));
+    g_mine = 0;
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -282,21 +243,96 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Amod::Console::AddCommand("world", &WorldCommand);
+    Amod::Console::AddCommand("place", &PlaceCommand);
+    Amod::Console::AddCommand("kinds", &KindsCommand);
+    Amod::Console::AddCommand("spend", &SpendCommand);
+    Amod::Console::AddCommand("floater", &FloaterCommand);
+    Amod::Console::AddCommand("inv", &InventoryCommand);
+    Amod::Bonuses::OnTake(&OnBonusTaken);
+    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_LOADED, &OnWorldEvent);
+    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_UNLOADED, &OnWorldEvent);
 
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_LOADED, &WorldEvent);
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_LEVEL_UNLOADED, &WorldEvent);
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_ROOM_CHANGED, &WorldEvent);
+    // The game has not read bonus_res.txt yet at this point, so the loader holds these until it has.
+    AmodBonusType known;
 
-    HookRoomLoad();
+    if (!Amod::Bonuses::FindType(kRedKnife, known))
+    {
+        Amod::Bonuses::NewType(kRedKnife, "knife")
+            .Glow(1.0f, 0.15f, 0.1f, 1.0f)
+            .Glow2(1.0f, 0.3f, 0.2f, 1.0f)
+            .Timer(kRedKnifeSeconds, AMOD_BONUS_TIMER_MOD)
+            .PointsOnTake(50)
+            .Define();
+    }
 
-    Amod::Log(AMOD_LOG_INFO, "world interface %s", Amod::World::IsAvailable() ? "ready" : "missing");
+    if (!Amod::Bonuses::FindType("floater", known))
+    {
+        Amod::Bonuses::NewType("floater", "bonus_1")
+            .Behaves(AMOD_BONUS_LIKE_SCORED)
+            .PointsOnTake(4000)
+            .Glow(1.0f, 0.4f, 0.1f, 1.0f)
+            .Rocking(0.15f, 2.0f, 0.0f, 0.0f, 1.0f)
+            .Define();
+    }
+
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
 {
-    (void)frame;
+    g_blink += frame->delta;
+    if (g_blink >= 0.3f)
+    {
+        g_blink = 0.0f;
+        g_red = !g_red;
+
+        Amod::Bonuses::Type(kRedKnife)["texture"].Set(g_red ? kRedTexture : kPlainTexture);
+
+        const int carried = Amod::Inventory::SlotOf(kRedKnife);
+        if (carried >= 0)
+        {
+            Amod::Inventory::Slot(carried)["icon"].Set(g_red ? kRedIcon : kPlainIcon);
+        }
+    }
+
+    if (!Amod::Inventory::HasPlayer())
+    {
+        return;
+    }
+
+    if (g_emptyThem)
+    {
+        EmptyEverySlot();
+        g_emptyThem = false;
+    }
+
+    if (g_redKnifeLeft <= 0.0f)
+    {
+        const int carried = Amod::Inventory::SlotOf(kRedKnife);
+        if (carried < 0)
+        {
+            return;
+        }
+
+        g_redKnifeLeft = kRedKnifeSeconds;
+        g_mine |= 1u << carried;
+        Amod::Inventory::Slot(carried)["icon"].Set(kRedIcon);
+    }
+
+    g_redKnifeLeft -= frame->delta;
+    if (g_redKnifeLeft > 0.0f)
+    {
+        FillWithKnives();
+        return;
+    }
+
+    g_redKnifeLeft = 0.0f;
+
+    AmodBonusType type;
+    const int left = Amod::Bonuses::FindType(kRedKnife, type) ? type.pointsOnRunOut : 0;
+
+    DropTheKnives();
+    Amod::Bonuses::AwardPoints(left);
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

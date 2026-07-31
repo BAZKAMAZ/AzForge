@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Game/GameFunctions.h"
 
 #include "src/Core/ForgeLog.h"
@@ -12,11 +10,6 @@ namespace Forge
     {
         typedef void*(__cdecl* AllocateRoutine)(int size, const char* sourceFile, int sourceLine);
         typedef void(__cdecl* FreeRoutine)(void* block);
-
-        // __thiscall on a free function is not expressible in MSVC, so the game's
-        // convention is reproduced with __fastcall: ECX carries the destination buffer,
-        // EDX is unused, and the single stack argument is cleaned by the callee, which is
-        // what NameBuffer_Assign @0x004022b0 does with RET 0x4.
         typedef char*(__fastcall* AssignNameRoutine)(char* destination, void* unused, const char* text);
 
         AllocateRoutine g_allocate = nullptr;

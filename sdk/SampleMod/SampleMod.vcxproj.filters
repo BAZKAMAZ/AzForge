@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <!-- Api is a virtual folder: the headers live in the SDK, wherever that is installed, and are
+       only shown here. A mod links nothing - the implementation is in AzForge.dll. -->
+  <ItemGroup>
+    <Filter Include="Api">
+      <UniqueIdentifier>{a1f0c3d2-5b47-4e19-9c8a-3f7d21b6e401}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Package">
+      <UniqueIdentifier>{b2e1d4c3-6c58-4f2a-8d9b-4a8e32c7f512}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="SampleMod.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="$(SolutionDir)sdk\include\ForgeApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\ForgeTypes.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\BlockExpressionApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\BonusesApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\BoxMenuApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\ConsoleApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\CtrlsApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\InputApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\InteropApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\LauncherApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\ModManagerApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\MonstersApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\ObjectsMenuApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\RenderApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="$(SolutionDir)sdk\include\WorldApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="package\mod.json">
+      <Filter>Package</Filter>
+    </None>
+  </ItemGroup>
+</Project>

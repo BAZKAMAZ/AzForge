@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Mods/ModFileSystem.h"
 
 #include "src/Mods/ModState.h"
@@ -37,9 +35,6 @@ namespace Forge
 
         for (const ModRecord& record : loadOrder)
         {
-            // A mod switched off provides no files either. Leaving its overrides in place
-            // would make "off" mean "its code is off", which is not what a player switching
-            // it off is asking for.
             if (record.archive == nullptr || !ModState::IsEnabled(record.manifest.id))
             {
                 continue;
@@ -83,8 +78,7 @@ namespace Forge
         g_index.clear();
     }
 
-    ModFileResult ModFileSystem::Read(const char* resourcePath, std::vector<uint8_t>& out,
-                                      std::string& providerId, std::string& error)
+    ModFileResult ModFileSystem::Read(const char* resourcePath, std::vector<uint8_t>& out, std::string& providerId, std::string& error)
     {
         out.clear();
         providerId.clear();

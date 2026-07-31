@@ -1,12 +1,12 @@
 {
-  "id": "azforge.sample",
-  "name": "AzForge Sample Mod",
+  "id": "azforge.boninv",
+  "name": "AzForge New bonuses",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "Template mod: reads the level through the world interface, and finds and hooks a game routine of its own through the direct interface.",
-  "api_version": 18,
-  "requires": ["world", "console", "interop"],
-  "capabilities": ["interop"],
+  "description": "Adding two bonuses, as well as adding new slots to the inventory",
+  "api_version": 28,
+  "requires": ["world", "console"],
   "game_version": "1.0",
-  "entry": "bin/SampleMod.dll"
+  "entry": "bin/SampleMod.dll",
+  "icon": "icon.bmp"
 }

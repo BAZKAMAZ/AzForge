@@ -1,7 +1,4 @@
-#include "pch.h"
-
 #include "src/Mods/ModRegistry.h"
-
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgeText.h"
 #include "src/Core/ForgeVersion.h"
@@ -69,9 +66,7 @@ namespace Forge
             return false;
         }
 
-        // Read the same way as any other mod, then marked. What makes it privileged is where
-        // it came from and nothing it says about itself: a manifest claiming to be core, sat
-        // in the mods folder, is just a mod with a hopeful id.
+        // Read the same way as any other mod, then marked
         std::vector<ModRecord> records;
         LoadArchive(archivePath, records);
         if (records.empty())
@@ -82,11 +77,9 @@ namespace Forge
         records.front().privileged = true;
 
         // First in the order, because whatever manages the others should be there before
-        // them - and because it is the one mod a player cannot switch off.
         m_loadOrder.insert(m_loadOrder.begin(), std::move(records.front()));
 
-        FORGE_LOG_INFO("'%s' loaded from beside the loader and is the mod manager",
-                       m_loadOrder.front().manifest.id.c_str());
+        FORGE_LOG_INFO("'%s' loaded from beside the loader and is the mod manager", m_loadOrder.front().manifest.id.c_str());
         return true;
     }
 
@@ -106,8 +99,7 @@ namespace Forge
         return m_rejected;
     }
 
-    bool ModRegistry::CollectArchives(const std::filesystem::path& modsDirectory,
-                                      std::vector<std::filesystem::path>& out)
+    bool ModRegistry::CollectArchives(const std::filesystem::path& modsDirectory, std::vector<std::filesystem::path>& out)
     {
         std::error_code status;
         if (!std::filesystem::exists(modsDirectory, status))
@@ -162,8 +154,7 @@ namespace Forge
         return true;
     }
 
-    void ModRegistry::LoadArchive(const std::filesystem::path& archivePath,
-                                  std::vector<ModRecord>& out)
+    void ModRegistry::LoadArchive(const std::filesystem::path& archivePath, std::vector<ModRecord>& out)
     {
         const std::string archiveText = PathToUtf8(archivePath.filename());
 
@@ -361,8 +352,7 @@ namespace Forge
                 }
             }
 
-            FORGE_LOG_ERROR("load_after forms a cycle between %s; none of them is loaded",
-                            cycle.c_str());
+            FORGE_LOG_ERROR("load_after forms a cycle between %s; none of them is loaded", cycle.c_str());
             m_rejected += records.size() - sequence.size();
         }
 

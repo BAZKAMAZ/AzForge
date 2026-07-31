@@ -1,28 +1,33 @@
 #pragma once
-
+ 
 #include <WorldApi.h>
-
+ 
+#include <stdint.h>
+ 
 namespace Forge
 {
     struct ModContext;
 
-    // Loader side of the game world.
-    //
-    // The game keeps one level, a static object rather than a pointer, so reading it is a
-    // matter of reaching a known address; what needs hooks is knowing when it changed.
-    // Three detours give the three edges: Level_Load for a level arriving, Level_Free for one
-    // going away, and Level_ActivateRoom for the player moving between rooms - the one route
-    // by which a room becomes current, the first of a level included.
-    //
-    // Nothing here writes to the world. Available only when all three were located.
     class WorldApi
     {
     public:
         static bool                                                 Install();
         static void                                                 Uninstall();
-
+ 
         static const AmodWorldApi*                                  Table();
-
+ 
         static void                                                 ForgetMod(ModContext* owner);
+ 
+        static bool                                                 IsLevelLoaded();
+        static uint8_t*                                             CurrentRoom();
+ 
+        // Live entity list of the current room. Null ends the walk.
+        static uint8_t*                                             FirstLiveEntity();
+        static uint8_t*                                             NextLiveEntity(const uint8_t* entity);
+ 
+        // Null before a game is running.
+        static const uint8_t*                                       Player();
+        static uint8_t*                                             Session();
     };
 }
+ 

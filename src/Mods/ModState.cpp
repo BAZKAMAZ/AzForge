@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Mods/ModState.h"
 
 #include "src/Core/ForgeLog.h"
@@ -13,8 +11,6 @@ namespace Forge
 {
     namespace
     {
-        // Only the mods someone has an opinion about. Absence means enabled, so a fresh
-        // install has no file at all.
         std::map<std::string, bool> g_state;
         bool g_loaded = false;
 

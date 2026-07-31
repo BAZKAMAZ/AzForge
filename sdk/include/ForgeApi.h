@@ -1,13 +1,3 @@
-/*
- * ForgeApi.h - the interface between AzForge and a mod. Include this one; it pulls in the
- * subsystem headers.
- *
- * A mod is a 32-bit DLL in an .amod container. The loader resolves its exports and passes
- * tables of function pointers - no linking against AzForge.dll. The boundary is C linkage and
- * __cdecl, UTF-8 strings, tables that only grow at the end and carry their structSize, and
- * registrations that are released automatically when the mod unloads.
- */
-
 #ifndef AZFORGE_FORGE_API_H
 #define AZFORGE_FORGE_API_H
 
@@ -19,6 +9,9 @@
 #include "ConsoleApi.h"
 #include "RenderApi.h"
 #include "WorldApi.h"
+#include "BonusesApi.h"
+#include "HudApi.h"
+#include "InventoryApi.h"
 #include "InteropApi.h"
 #include "ModManagerApi.h"
 #include "InputApi.h"
@@ -65,19 +58,24 @@ typedef struct AmodApi
     /* The keyboard and the mouse as the game sees them. */
     const AmodInputApi* input;
 
+    /* The bonus table */
+    const AmodBonusesApi* bonuses;
+
+    /* What the player is carrying and the chain the scoring is on */
+    const AmodInventoryApi* inventory;
+
+    /* The screen the game plays behind. A file replaces it whole; this changes it while it runs. */
+    const AmodHudApi* hud;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
-/* Called once, before the game starts. Anything other than AMOD_OK unloads the mod. The
- * tables stay valid until AmodShutdown returns. */
+/* Called once, before the game starts. Anything other than AMOD_OK unloads the mod. The * tables stay valid until AmodShutdown returns. */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
 
 /* Called once, after everything the mod registered has already been released. */
 AMOD_EXPORT void __cdecl AmodShutdown(void);
 
-/* Optional. Exported by a mod that wants to run every frame - the game's frame, in every
- * state, menu and gameplay alike - after the game has advanced the world. A mod that does
- * not export it simply gets no frame ticks. The pointer is valid only for the call. */
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame);
 
 #ifdef __cplusplus
@@ -94,8 +92,7 @@ namespace Amod
 {
     inline const AmodApi* g_api = nullptr;
 
-    /* Checks the loader can serve what this mod was built against and wires up the subsystem
-     * namespaces. False means the mod should return AMOD_ERROR_API_VERSION. */
+    /* Checks the loader can serve what this mod was built against and wires up the subsystem * namespaces */
     inline bool                                                     Attach(const AmodApi* api)
     {
         if (api == nullptr ||
@@ -113,6 +110,9 @@ namespace Amod
         Console::Attach(api->console, api->self);
         Render::Attach(api->render, api->self);
         World::Attach(api->world, api->self);
+        Bonuses::Attach(api->bonuses, api->self);
+        Inventory::Attach(api->inventory, api->self);
+        Hud::Attach(api->hud, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

@@ -1,9 +1,15 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Core/ForgeLog.h"
 
 #include <stdarg.h>
 #include <stdio.h>
+
+// windows.h reaches sdk/include/ConsoleApi.h rather than the SDK's own <consoleapi.h> - the file
+// system does not tell those two names apart, and sdk\include is searched first - so the console
+// pair it would have declared is declared here.
+extern "C" __declspec(dllimport) BOOL WINAPI AllocConsole(void);
+extern "C" __declspec(dllimport) BOOL WINAPI FreeConsole(void);
 
 namespace Forge
 {
@@ -44,12 +50,7 @@ namespace Forge
             g_console = GetStdHandle(STD_OUTPUT_HANDLE);
         }
 
-        // durable forces the record past the operating system's cache. A process that crashes
-        // does not need this - the kernel writes the cache out when it tears the handle down,
-        // so an ordinary record survives one - but a machine that hangs hard does, and a bad
-        // detour is exactly the kind of fault that hangs one. It is worth the seek for the
-        // records that explain a failure and not for the rest, which is why the level decides:
-        // a mod logging every frame must not pay for a flush every frame.
+        // durable=true flushes past the OS cache (WARN/ERROR only — Info must not pay per frame).
         void Emit(const char* text, size_t length, bool durable)
         {
             DWORD written = 0;
@@ -78,14 +79,13 @@ namespace Forge
 
         if (!g_lockReady)
         {
-            // The spin-count form does not raise on a machine that is out of memory, which
-            // the plain one is documented to do on older Windows.
+            // Spin-count form does not raise on OOM (unlike the plain one on older Windows).
             InitializeCriticalSectionAndSpinCount(&g_lock, 4000);
             g_lockReady = true;
         }
 
         g_file = CreateFileW(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
-                             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+            CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
         if (g_file == INVALID_HANDLE_VALUE)
         {
             return false;
@@ -144,8 +144,8 @@ namespace Forge
 
         char record[2176];
         const int length = snprintf(record, sizeof(record), "[%02u:%02u:%02u.%03u] [%s] %s\r\n",
-                                    now.wHour, now.wMinute, now.wSecond, now.wMilliseconds,
-                                    LevelTag(level), message);
+            now.wHour, now.wMinute, now.wSecond, now.wMilliseconds,
+            LevelTag(level), message);
         if (length <= 0)
         {
             return;
@@ -173,8 +173,6 @@ namespace Forge
             EnterCriticalSection(&g_lock);
         }
 
-        // A separator carries no timestamp or level of its own on purpose: it is there to be
-        // told apart from the records at a glance.
         Emit(kSeparator, sizeof(kSeparator) - 1, false);
 
         if (g_lockReady)

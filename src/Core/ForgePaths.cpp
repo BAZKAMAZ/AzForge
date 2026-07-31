@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Core/ForgePaths.h"
 
 namespace Forge

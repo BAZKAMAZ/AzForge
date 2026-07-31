@@ -1,5 +1,7 @@
 #pragma once
 
+#include <windows.h>
+
 #include "src/Api/ModContext.h"
 #include "src/Mods/ModRegistry.h"
 

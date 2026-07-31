@@ -1,12 +1,11 @@
 #pragma once
 
+#include <windows.h>
+
 #include <filesystem>
 
 namespace Forge
 {
-    // Every path the loader uses is derived from the location of AzForge.dll, which sits
-    // next to game.exe. Deriving from the module rather than the working directory keeps
-    // the layout correct when the game is started through a shortcut.
     class Paths
     {
     public:

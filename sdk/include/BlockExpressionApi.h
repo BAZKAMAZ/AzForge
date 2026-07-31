@@ -1,18 +1,3 @@
-/*
- * BlockExpressionApi.h - a mod's own blocks and expressions.
- *
- * The game's scripts are blocks ($name { ... }) of expressions ($key value ...). This gives a
- * mod the same shape for its own data: a tree it authors in that syntax, reads and writes by
- * key, and either keeps to itself as configuration or state, or hangs off any game object as
- * fields the engine never sees.
- *
- * It is tied to nothing in the game. The values are the same AmodValue the menu interface
- * uses, but the tree is the mod's - the engine does not parse these keys or draw them; only
- * the mod that wrote them reads them back.
- *
- * Reached through AmodApi::blockExpression, null on a loader older than API version 8.
- */
-
 #ifndef AZFORGE_BLOCK_EXPRESSION_API_H
 #define AZFORGE_BLOCK_EXPRESSION_API_H
 
@@ -22,48 +7,37 @@
 extern "C" {
 #endif
 
-/* A block: a node in a mod-owned tree, holding expressions and child blocks. Opaque, and
- * owned by the mod - valid until it is freed, detached, or the mod is unloaded. */
+/* Opaque block node; owned by the mod until Free / Detach / unload. */
 typedef void* AmodBlock;
 
 typedef struct AmodBlockExpressionApi
 {
     uint32_t structSize;
 
-    /* Standalone trees the mod owns. Parse reads a fragment in the game's script syntax into
-     * a tree; NewTree starts an empty one. Free releases a root and its subtree, though
-     * everything a mod made is freed when it unloads regardless. */
     AmodBlock (__cdecl* NewTree)(AmodMod mod, const char* name);
     AmodBlock (__cdecl* Parse)(AmodMod mod, const char* fragment);
     void      (__cdecl* Free)(AmodMod mod, AmodBlock root);
 
-    /* A tree hung off a game object, keyed by its handle - a menu element, a room object,
-     * anything. Attach get-or-creates, Find answers null when there is none, Detach frees
-     * it. The mod owns the lifetime: a handle the game reused is the mod's to detach. */
+    /* Tree hung off a game object by handle. */
     AmodBlock (__cdecl* Attach)(AmodMod mod, void* object);
     AmodBlock (__cdecl* Find)(AmodMod mod, void* object);
     void      (__cdecl* Detach)(AmodMod mod, void* object);
 
-    /* Child blocks. Child get-or-creates one by name; the rest walk what is there. */
     AmodBlock   (__cdecl* Child)(AmodMod mod, AmodBlock block, const char* name);
     int         (__cdecl* ChildCount)(AmodMod mod, AmodBlock block);
     AmodBlock   (__cdecl* ChildAt)(AmodMod mod, AmodBlock block, int index);
     const char* (__cdecl* Name)(AmodMod mod, AmodBlock block);
 
-    /* Expressions on a block. Set creates or replaces one, Get and Has query, Remove drops
-     * one. A value read points into the block and stays valid until that key is set again. */
     int         (__cdecl* GetExpr)(AmodMod mod, AmodBlock block, const char* key, AmodValue* value);
     int         (__cdecl* SetExpr)(AmodMod mod, AmodBlock block, const char* key, const AmodValue* value);
     int         (__cdecl* HasExpr)(AmodMod mod, AmodBlock block, const char* key);
     int         (__cdecl* ExprCount)(AmodMod mod, AmodBlock block);
     const char* (__cdecl* ExprNameAt)(AmodMod mod, AmodBlock block, int index);
     void        (__cdecl* RemoveExpr)(AmodMod mod, AmodBlock block, const char* key);
-
-    /* Fields added in later API versions go here, and nowhere else. */
 } AmodBlockExpressionApi;
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
 
 #ifdef __cplusplus
@@ -86,7 +60,6 @@ namespace Amod
             return g_data != nullptr;
         }
 
-        /* One expression of one block. Holds nothing, meant to be used on the spot. */
         class Expression
         {
         public:
@@ -230,7 +203,6 @@ namespace Amod
                 return Expression(m_block, key);
             }
 
-            /* The child block of this name, made if it is not there yet. */
             Block                                                   Child(const char* name) const
             {
                 return Block(g_data != nullptr ? g_data->Child(g_self, m_block, name) : nullptr);
@@ -291,7 +263,6 @@ namespace Amod
             return Block(g_data != nullptr ? g_data->Parse(g_self, fragment) : nullptr);
         }
 
-        /* The tree hung off a game object, made if it is not there yet. */
         inline Block                                                On(void* object)
         {
             return Block(g_data != nullptr ? g_data->Attach(g_self, object) : nullptr);

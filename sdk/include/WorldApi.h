@@ -1,22 +1,3 @@
-/*
- * WorldApi.h - the level the game has loaded and the rooms it is made of.
- *
- * A level is a maze of rooms. The maze is a ragged grid of room ids: the player stands on one
- * of its cells, and walking off the edge of a room steps the cursor to the neighbour. Each room
- * carries its own geometry, its own 40x29 grid of cells - the grid movement and collision are
- * expressed in - and the collision boxes the .room was built with.
- *
- * This is a reading interface. Nothing here moves the player, spawns anything or changes the
- * world; it answers what the world is and tells a mod when it changed. The entities living in
- * the rooms - monsters, bonuses, ctrl objects, the player - are their own subsystems.
- *
- * A room is named by its index, 0 to Level.roomCount-1, which is stable for as long as the
- * level is loaded and means nothing once it is not. A room also carries an $id, which is what
- * the maze holds and what a level script refers to; FindRoomById turns one into the other.
- *
- * Reached through AmodApi::world, null on a loader older than API version 17.
- */
-
 #ifndef AZFORGE_WORLD_API_H
 #define AZFORGE_WORLD_API_H
 
@@ -26,23 +7,16 @@
 extern "C" {
 #endif
 
-/* The cell grid every room has, and where it sits in the world. A cell is a tenth of a world
- * unit square; column 0 begins at AMOD_ROOM_ORIGIN_X and row 0 at AMOD_ROOM_ORIGIN_Y, with rows
- * running downwards. */
 #define AMOD_ROOM_COLUMNS                                           40
 #define AMOD_ROOM_ROWS                                              29
 #define AMOD_ROOM_CELL_SIZE                                         0.1f
 #define AMOD_ROOM_ORIGIN_X                                          (-2.0f)
 #define AMOD_ROOM_ORIGIN_Y                                          1.45f
 
-/* What a cell holds. The grid is a character per cell, and these are the ones the game's own
- * movement tests for; a room may carry others, so a mod should treat an unlisted character as
- * scenery rather than assume it is empty. */
 #define AMOD_CELL_EMPTY                                             ' '
 #define AMOD_CELL_WALL                                              'W'
 
-/* The level as a whole. Every string points into the game and stays valid until the level is
- * unloaded; a key the script left out is an empty string, never null. */
+/* Level fields. Strings valid until unload; missing keys are "". */
 typedef struct AmodWorldLevel
 {
     uint32_t structSize;    /* sizeof(AmodWorldLevel) as the running loader built it */
@@ -61,8 +35,7 @@ typedef struct AmodWorldLevel
     float time;             /* $level_time */
     float musicStart;       /* $music_start */
 
-    /* A bonus level is the timed diamond run: the game loads neither monsters nor bonuses
-     * from the room scripts, so a mod that finds a room empty on one is seeing the truth. */
+    /* Timed diamond run: no monsters/bonuses from room scripts. */
     int isBonus;            /* $bonus */
     float bonusTime;        /* $bonus_time */
     int bonusCount;         /* $bonus_count */
@@ -73,7 +46,7 @@ typedef struct AmodWorldLevel
     int roomCount;
     int mazeRows;           /* rows of the maze; each row has its own width */
 
-    /* Where $player_start put the player: the maze cell, and the cell within that room. */
+    /* Player start on maze and in-room cell. */
     int startMazeX;
     int startMazeY;
     float startCellX;
@@ -82,8 +55,7 @@ typedef struct AmodWorldLevel
     /* New fields are appended, never inserted. */
 } AmodWorldLevel;
 
-/* One room of the level. The strings point into the game and stay valid until the level is
- * unloaded. */
+/* One room. Strings valid until unload. */
 typedef struct AmodWorldRoom
 {
     uint32_t structSize;    /* sizeof(AmodWorldRoom) as the running loader built it */
@@ -94,13 +66,11 @@ typedef struct AmodWorldRoom
     const char* file;       /* the .room the geometry came from */
     const char* music;      /* $music of the room, "" when it keeps the level's */
 
-    /* Where the room sits on the maze, or -1 for both when no maze cell names it - a room
-     * the level carries but never reaches. */
+    /* Maze cell, or -1 if unreachable. */
     int mazeX;
     int mazeY;
 
-    /* A room entry whose .room failed to load is still an entry, so a mod checking anything
-     * about the geometry should check this first. */
+    /* Geometry loaded successfully. */
     int isLoaded;
 
     int hasBackWall;
@@ -110,105 +80,126 @@ typedef struct AmodWorldRoom
     /* New fields are appended, never inserted. */
 } AmodWorldRoom;
 
-/* One of the room's collision boxes, as two corners in world space. */
+/* Collision box corners. */
 typedef struct AmodWorldBox
 {
     float min[3];
     float max[3];
 } AmodWorldBox;
 
+#define AMOD_ENTITY_MONSTER                                         10
+#define AMOD_ENTITY_BONUS                                           9
+#define AMOD_ENTITY_DOOR                                            2
+
+/* Snapshot for this call only; entity is recycled when dead. */
+typedef struct AmodWorldEntity
+{
+    uint32_t structSize;
+
+    /* AMOD_ENTITY_* or 0 if no record. */
+    int kind;
+
+    /* Spawn $name, or "". */
+    const char* name;
+
+    float position[3];
+    float previousPosition[3];  /* where it was last frame, which is its direction of travel */
+
+    int state;                  /* what it is doing, and the sub-state under it */
+    int subState;
+    uint32_t flags;
+
+    /* Put on free list at end of frame. */
+    int isDead;
+
+    
+    int isLive;
+
+    /* New fields are appended, never inserted. */
+} AmodWorldEntity;
+
 typedef enum AmodWorldEvent
 {
-    /* The level has been parsed and its rooms loaded. No room is current yet. */
-    AMOD_WORLD_EVENT_LEVEL_LOADED = 0,
-
-    /* The level is about to be freed. It is still readable for the length of the call, and
-     * every index and pointer a mod is holding stops meaning anything once it returns. */
-    AMOD_WORLD_EVENT_LEVEL_UNLOADED = 1,
-
-    /* A room became the current one. This fires for the first room of a level as well as for
-     * every step through the maze afterwards. */
-    AMOD_WORLD_EVENT_ROOM_CHANGED = 2
+    AMOD_WORLD_EVENT_LEVEL_LOADED = 0,   /* level parsed; no room current yet */
+    AMOD_WORLD_EVENT_LEVEL_UNLOADED = 1, /* still readable during the call */
+    AMOD_WORLD_EVENT_ROOM_CHANGED = 2    /* also fires for the first room */
 } AmodWorldEvent;
 
 typedef struct AmodWorldEventInfo
 {
-    uint32_t structSize;    /* sizeof(AmodWorldEventInfo) as the running loader built it */
+    uint32_t structSize;
     AmodWorldEvent event;
 
-    /* The room now current, and the one before it, or -1 where there is none. Filled in for
-     * AMOD_WORLD_EVENT_ROOM_CHANGED; -1 for the other two. */
+    /* Filled for ROOM_CHANGED; -1 otherwise. */
     int roomIndex;
     int roomId;
     int previousRoomIndex;
 
-    /* Where the cursor now sits on the maze, or -1 for both outside a room change. */
-    int mazeX;
+    int mazeX;   /* -1 outside a room change */
     int mazeY;
-
-    /* New fields are appended, never inserted. */
 } AmodWorldEventInfo;
 
-/* The info pointer is valid only for the call. */
+/* Info valid only for the call. */
 typedef void (__cdecl* AmodWorldEventHandler)(const AmodWorldEventInfo* info, void* user);
 
 typedef struct AmodWorldApi
 {
     uint32_t structSize;
 
-    /* Whether a level is loaded. Everything below answers nothing while one is not: the game
-     * keeps a single level object and empties it rather than freeing it. */
+    /* False while no level is loaded. */
     int (__cdecl* IsLevelLoaded)(AmodMod mod);
 
-    /* Fills in the level. Non-zero on success. The caller sets out->structSize first, and the
-     * loader fills what fits, so a mod built against a later version still works here. */
+    /* Caller sets out->structSize first. */
     int (__cdecl* GetLevel)(AmodMod mod, AmodWorldLevel* out);
 
     int (__cdecl* GetRoomCount)(AmodMod mod);
 
-    /* Fills in one room by index. Non-zero on success; zero when the index names no room.
-     * The caller sets out->structSize first, as for GetLevel. */
+    /* Caller sets out->structSize first. */
     int (__cdecl* GetRoom)(AmodMod mod, int index, AmodWorldRoom* out);
 
-    /* The index of the room with this $id, or -1. */
+    /* Index of room with this $id, or -1. */
     int (__cdecl* FindRoomById)(AmodMod mod, int id);
 
-    /* The room the player is in, or -1 before the first one is activated. */
+    /* Current room index, or -1. */
     int (__cdecl* GetCurrentRoom)(AmodMod mod);
 
-    /* The room the player was in before that, or -1. */
+    /* Previous room index, or -1. */
     int (__cdecl* GetPreviousRoom)(AmodMod mod);
 
-    /* Where the player is on the maze. Either pointer may be null; both are left alone when
-     * no level is loaded. */
+    /* Maze cursor; either pointer may be null. */
     void (__cdecl* GetMazeCursor)(AmodMod mod, int* x, int* y);
 
-    /* The maze is ragged: every row carries its own width, so a row is asked for its own.
-     * Zero for a row that is not there. */
+    /* Width of maze row y, or 0. */
     int (__cdecl* GetMazeRowWidth)(AmodMod mod, int y);
 
-    /* The $id of the room at this maze cell, or 0 for a hole in the maze or a cell that is
-     * not there. Note this is an id, not an index - pass it through FindRoomById. */
+    /* Room $id at maze cell, or 0. Pass through FindRoomById. */
     int (__cdecl* GetMazeRoomId)(AmodMod mod, int x, int y);
 
-    /* The character at one cell of a room's grid, or 0 when the room or the cell is not
-     * there. Columns run 0..AMOD_ROOM_COLUMNS-1 left to right and rows 0..AMOD_ROOM_ROWS-1
-     * downwards, the same way the game indexes them. */
+    
     char (__cdecl* GetRoomCell)(AmodMod mod, int index, int column, int row);
 
-    /* The whole grid at once, row by row, for a mod that walks it every frame. Writes
-     * AMOD_ROOM_COLUMNS * AMOD_ROOM_ROWS characters and returns how many it wrote, or 0 when
-     * the room is not there or the buffer is too small. */
+    
     int (__cdecl* GetRoomCells)(AmodMod mod, int index, char* buffer, int capacity);
 
-    /* One of the room's collision boxes. Non-zero on success. */
+    /* One collision box. */
     int (__cdecl* GetRoomCollisionBox)(AmodMod mod, int index, int boxIndex, AmodWorldBox* out);
 
-    /* Calls the handler whenever this happens, until the mod drops it or is unloaded. Zero
-     * when the event is not one this loader knows. */
+    /* Subscribe; 0 if event unknown. */
     AmodToken (__cdecl* AddEventHandler)(AmodMod mod, AmodWorldEvent event,
                                          AmodWorldEventHandler handler, void* user);
     void (__cdecl* RemoveEventHandler)(AmodMod mod, AmodToken token);
+
+    
+    int (__cdecl* GetEntityCount)(AmodMod mod, int roomIndex);
+    int (__cdecl* GetEntity)(AmodMod mod, int roomIndex, int index, AmodWorldEntity* out);
+
+    
+    int (__cdecl* GetRoomCellRecord)(AmodMod mod, int index, int column, int row,
+                                     unsigned char* out, int capacity);
+
+    
+    int (__cdecl* GetSpawnCount)(AmodMod mod, int roomIndex);
+    int (__cdecl* GetSpawn)(AmodMod mod, int roomIndex, int index, AmodWorldEntity* out);
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodWorldApi;
@@ -326,9 +317,98 @@ namespace Amod
             }
         }
 
-        /* Where a cell sits in the world. The x is the left edge of the column and the y the
-         * top edge of the row, so a cell spans to those plus AMOD_ROOM_CELL_SIZE, downwards
-         * for y. The game's own movement works in these coordinates. */
+        
+        inline int                                                  EntityCount(int roomIndex)
+        {
+            return (g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi))
+                       ? g_world->GetEntityCount(g_self, roomIndex)
+                       : 0;
+        }
+
+        inline bool                                                 GetEntity(int roomIndex, int index, AmodWorldEntity& out)
+        {
+            out = AmodWorldEntity{};
+            out.structSize = sizeof(AmodWorldEntity);
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                   g_world->GetEntity(g_self, roomIndex, index, &out) != 0;
+        }
+
+        /* Spawns in the current room. */
+        inline int                                                  CurrentSpawnCount()
+        {
+            return (g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi))
+                       ? g_world->GetSpawnCount(g_self, CurrentRoom())
+                       : 0;
+        }
+
+        inline bool                                                 GetSpawn(int index, AmodWorldEntity& out)
+        {
+            out = AmodWorldEntity{};
+            out.structSize = sizeof(AmodWorldEntity);
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                   g_world->GetSpawn(g_self, CurrentRoom(), index, &out) != 0;
+        }
+
+        /* 8-byte cell record. */
+        inline bool                                                 CellRecord(int roomIndex, int column, int row, unsigned char out[8])
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                   g_world->GetRoomCellRecord(g_self, roomIndex, column, row, out, 8) != 0;
+        }
+
+        
+        class Entity
+        {
+        public:
+            Entity() { m_data = AmodWorldEntity{}; }
+            explicit Entity(const AmodWorldEntity& data) : m_data(data) {}
+
+            bool                                                    IsValid() const { return m_data.structSize != 0; }
+
+            int                                                     Kind() const { return m_data.kind; }
+            const char*                                             Name() const { return m_data.name != nullptr ? m_data.name : ""; }
+            bool                                                    Is(const char* name) const;
+
+            float                                                   GetX() const { return m_data.position[0]; }
+            float                                                   GetY() const { return m_data.position[1]; }
+            float                                                   GetZ() const { return m_data.position[2]; }
+
+            /* Previous-frame position. */
+            float                                                   GetPreviousX() const { return m_data.previousPosition[0]; }
+            float                                                   GetPreviousY() const { return m_data.previousPosition[1]; }
+            float                                                   GetPreviousZ() const { return m_data.previousPosition[2]; }
+
+            /* Grid cell under the entity. */
+            int                                                     GetColumn() const;
+            int                                                     GetRow() const;
+
+            int                                                     GetState() const { return m_data.state; }
+            int                                                     GetSubState() const { return m_data.subState; }
+            uint32_t                                                GetFlags() const { return m_data.flags; }
+            bool                                                    IsDead() const { return m_data.isDead != 0; }
+
+            /* Placement live byte. */
+            int                                                     LiveByte() const { return m_data.isLive; }
+
+            const AmodWorldEntity&                                  Raw() const { return m_data; }
+
+        private:
+            AmodWorldEntity m_data;
+        };
+
+        /* Entities of the current room. */
+        inline int                                                  CurrentEntityCount()
+        {
+            return EntityCount(CurrentRoom());
+        }
+
+        inline Entity                                               CurrentEntity(int index)
+        {
+            AmodWorldEntity data;
+            return GetEntity(CurrentRoom(), index, data) ? Entity(data) : Entity();
+        }
+
+        
         inline float                                                ColumnLeft(int column)
         {
             return AMOD_ROOM_ORIGIN_X + column * AMOD_ROOM_CELL_SIZE;
@@ -339,11 +419,7 @@ namespace Amod
             return AMOD_ROOM_ORIGIN_Y - row * AMOD_ROOM_CELL_SIZE;
         }
 
-        /* And the other way. The result may fall outside the grid, which is what a caller
-         * checks for rather than being given a clamped answer that reads as a real cell.
-         * Rounding is towards the lower cell, so a point on a boundary belongs to the cell
-         * that begins there and a point left of or above the grid gives a negative index
-         * rather than folding back onto cell zero. */
+        
         inline int                                                  FloorToInt(float value)
         {
             const int truncated = static_cast<int>(value);
@@ -359,6 +435,33 @@ namespace Amod
         inline int                                                  RowAt(float y)
         {
             return FloorToInt((AMOD_ROOM_ORIGIN_Y - y) / AMOD_ROOM_CELL_SIZE);
+        }
+
+        
+        inline int                                                  Entity::GetColumn() const
+        {
+            return ColumnAt(GetX());
+        }
+
+        inline int                                                  Entity::GetRow() const
+        {
+            return RowAt(GetY());
+        }
+
+        inline bool                                                 Entity::Is(const char* name) const
+        {
+            const char* mine = Name();
+            if (name == nullptr)
+            {
+                return false;
+            }
+
+            while (*mine != '\0' && *name != '\0' && *mine == *name)
+            {
+                ++mine;
+                ++name;
+            }
+            return *mine == *name;
         }
     }
 }

@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Game/ShutdownHook.h"
 
 #include "src/Core/ForgeLog.h"

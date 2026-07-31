@@ -9,8 +9,6 @@
 // It is also what a mod project calls as a post-build step, which is what lets mods be
 // written in plain Visual Studio without any part of the AzForge tooling installed.
 
-#include "pch.h"
-
 #include "src/Core/ForgeText.h"
 #include "src/Core/ForgeVersion.h"
 #include "src/Mods/ModManifest.h"

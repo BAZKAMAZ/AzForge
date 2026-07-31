@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Json/JsonValue.h"
 
 #include <stdio.h>
@@ -29,13 +27,11 @@ namespace Forge
                 {
                     return false;
                 }
-
                 SkipWhitespace();
                 if (m_position != m_text.size())
                 {
                     return Fail("trailing data after the top-level value");
                 }
-
                 return true;
             }
 
@@ -91,7 +87,6 @@ namespace Forge
                 {
                     return Fail("nesting is too deep");
                 }
-
                 if (AtEnd())
                 {
                     return Fail("unexpected end of document");
@@ -127,8 +122,6 @@ namespace Forge
                 return !AtEnd() && Peek() >= '0' && Peek() <= '9';
             }
 
-            // Consumes one or more digits. The caller has already said what it is reading, so
-            // the message names that rather than "a digit" on its own.
             bool TakeDigits(const char* what)
             {
                 if (!AtDigit())
@@ -142,10 +135,7 @@ namespace Forge
                 return true;
             }
 
-            // Reads a JSON number by its grammar rather than by scanning everything that looks
-            // vaguely numeric and letting strtod object afterwards. The difference is where the
-            // reader stops: "1.2.3" stops at the second dot and reports it, instead of taking
-            // the whole run and reporting the token as a whole.
+            // Grammar-driven: "1.2.3" stops at the second dot instead of consuming the whole run.
             bool ParseNumber(JsonValue& out)
             {
                 const size_t start = m_position;
@@ -155,7 +145,7 @@ namespace Forge
                     ++m_position;
                 }
 
-                // A leading zero stands alone: JSON has no octal, and "01" is two tokens.
+                // Leading zero stands alone — JSON has no octal.
                 if (!AtEnd() && Peek() == '0')
                 {
                     ++m_position;
@@ -194,9 +184,6 @@ namespace Forge
                 const std::string token = m_text.substr(start, m_position - start);
                 char* stop = nullptr;
                 const double value = strtod(token.c_str(), &stop);
-
-                // The grammar above has already established the shape, so anything left here
-                // is the value being out of range rather than the text being malformed.
                 if (stop == nullptr || *stop != '\0')
                 {
                     return Fail("the number cannot be represented");
@@ -255,14 +242,12 @@ namespace Forge
                 {
                     const char c = m_text[m_position + i];
                     unsigned int digit = 0;
-                    if (c >= '0' && c <= '9')      digit = static_cast<unsigned int>(c - '0');
+                    if (c >= '0' && c <= '9') digit = static_cast<unsigned int>(c - '0');
                     else if (c >= 'a' && c <= 'f') digit = static_cast<unsigned int>(c - 'a' + 10);
                     else if (c >= 'A' && c <= 'F') digit = static_cast<unsigned int>(c - 'A' + 10);
                     else return Fail("malformed \\u escape");
-
                     out = (out << 4) | digit;
                 }
-
                 m_position += 4;
                 return true;
             }
@@ -275,7 +260,6 @@ namespace Forge
                 }
 
                 out.clear();
-
                 while (true)
                 {
                     if (AtEnd())
@@ -288,7 +272,6 @@ namespace Forge
                     {
                         return true;
                     }
-
                     if (c != '\\')
                     {
                         out.push_back(c);
@@ -326,7 +309,6 @@ namespace Forge
                             {
                                 return Fail("high surrogate without a low surrogate");
                             }
-
                             m_position += 2;
 
                             unsigned int low = 0;
@@ -334,12 +316,10 @@ namespace Forge
                             {
                                 return false;
                             }
-
                             if (low < 0xDC00 || low > 0xDFFF)
                             {
                                 return Fail("invalid low surrogate");
                             }
-
                             codePoint = 0x10000 + ((codePoint - 0xD800) << 10) + (low - 0xDC00);
                         }
                         else if (codePoint >= 0xDC00 && codePoint <= 0xDFFF)
@@ -364,7 +344,6 @@ namespace Forge
                 }
 
                 std::vector<JsonValue>& items = out.MutableArray();
-
                 SkipWhitespace();
                 if (!AtEnd() && Peek() == ']')
                 {
@@ -375,7 +354,6 @@ namespace Forge
                 while (true)
                 {
                     SkipWhitespace();
-
                     JsonValue element;
                     if (!ParseValue(element, depth + 1))
                     {
@@ -410,7 +388,6 @@ namespace Forge
                 }
 
                 std::map<std::string, JsonValue>& members = out.MutableObject();
-
                 SkipWhitespace();
                 if (!AtEnd() && Peek() == '}')
                 {
@@ -421,13 +398,11 @@ namespace Forge
                 while (true)
                 {
                     SkipWhitespace();
-
                     std::string key;
                     if (!ParseString(key))
                     {
                         return false;
                     }
-
                     if (members.find(key) != members.end())
                     {
                         return Fail("duplicate object key");
@@ -440,7 +415,6 @@ namespace Forge
                     }
 
                     SkipWhitespace();
-
                     JsonValue value;
                     if (!ParseValue(value, depth + 1))
                     {
@@ -509,7 +483,6 @@ namespace Forge
         {
             return nullptr;
         }
-
         const auto found = m_object.find(name);
         return found == m_object.end() ? nullptr : &found->second;
     }

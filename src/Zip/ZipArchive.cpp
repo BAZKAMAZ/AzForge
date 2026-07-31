@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Zip/ZipArchive.h"
 
 #include "src/Core/ForgeText.h"

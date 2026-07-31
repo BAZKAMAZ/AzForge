@@ -1,7 +1,4 @@
-#include "pch.h"
-
 #include "src/Game/PackageHook.h"
-
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameFunctions.h"
@@ -17,22 +14,16 @@ namespace Forge
 {
     namespace
     {
-        // Package_OpenFile is __thiscall: the package object arrives in ECX, the path is the
-        // only stack argument and the callee clears it (RET 0x4 @0x00422f32). __fastcall
-        // reproduces that from C++, with the EDX slot unused.
-        typedef void*(__fastcall* PackageOpenFileRoutine)(void* self, void* unused, const char* path);
+        // Package_OpenFile is __thiscall: ECX = self, path on stack, RET 4
+        typedef void* (__fastcall* PackageOpenFileRoutine)(void* self, void* unused, const char* path);
 
-        // Recorded in the header of every block AzForge allocates, so the game's memory
-        // tracker attributes them to the loader instead of to Package.cpp.
         constexpr char kAllocationTag[] = ".\\AzForge\\PackageHook.cpp";
 
         InlineHook g_hook;
         PackageOpenFileRoutine g_original = nullptr;
         unsigned long long g_served = 0;
 
-        // Reproduces what Package_ReadFromDisk @0x00422660 builds: the block itself, the
-        // name in the 0x100-byte field, the true length, and a payload of length + 1 bytes
-        // whose last byte is zero.
+        // Same layout as Package_ReadFromDisk: name[0x100], size, data of size+1 (NUL-terminated).
         GamePackageFile* BuildPackageFile(const char* path, const std::vector<uint8_t>& bytes)
         {
             if (bytes.size() > 0x7FFFFFFEu)
@@ -40,8 +31,7 @@ namespace Forge
                 return nullptr;
             }
 
-            GamePackageFile* file = static_cast<GamePackageFile*>(
-                GameFunctions::Allocate(static_cast<int>(sizeof(GamePackageFile)), kAllocationTag, __LINE__));
+            GamePackageFile* file = static_cast<GamePackageFile*>(GameFunctions::Allocate(static_cast<int>(sizeof(GamePackageFile)), kAllocationTag, __LINE__));
             if (file == nullptr)
             {
                 return nullptr;
@@ -82,17 +72,17 @@ namespace Forge
                 {
                     ++g_served;
                     FORGE_LOG_INFO("'%s' served by '%s' (%zu bytes)",
-                                   path, providerId.c_str(), bytes.size());
+                        path, providerId.c_str(), bytes.size());
                     return file;
                 }
 
                 FORGE_LOG_ERROR("'%s' from '%s' could not be allocated through the game allocator, "
-                                "the game's own copy is used instead", path, providerId.c_str());
+                    "the game's own copy is used instead", path, providerId.c_str());
             }
             else if (result == ModFileResult::Failed)
             {
                 FORGE_LOG_ERROR("'%s' from '%s': %s; the game's own copy is used instead",
-                                path, providerId.c_str(), error.c_str());
+                    path, providerId.c_str(), error.c_str());
             }
 
             return g_original(self, unused, path);
@@ -119,21 +109,17 @@ namespace Forge
             return false;
         }
 
-        // The signature already established that this is the right routine. This second
-        // check is about the five bytes that are physically replaced: they must be exactly
-        // the instructions the trampoline was built to reproduce.
+        // Verify the five bytes the trampoline will steal.
         std::string mismatch;
-        if (!GameModule::VerifyBytes(target, kPackageOpenFilePrologue,
-                                     sizeof(kPackageOpenFilePrologue), mismatch))
+        if (!GameModule::VerifyBytes(target, kPackageOpenFilePrologue, sizeof(kPackageOpenFilePrologue), mismatch))
         {
             FORGE_LOG_ERROR("Package_OpenFile does not open with the instructions AzForge steals (%s); "
-                            "the resource hook is not installed", mismatch.c_str());
+                "the resource hook is not installed", mismatch.c_str());
             return false;
         }
 
         std::string error;
-        if (!g_hook.Install(target, reinterpret_cast<void*>(&PackageOpenFileDetour),
-                            kPackageOpenFilePrologue, sizeof(kPackageOpenFilePrologue), error))
+        if (!g_hook.Install(target, reinterpret_cast<void*>(&PackageOpenFileDetour), kPackageOpenFilePrologue, sizeof(kPackageOpenFilePrologue), error))
         {
             FORGE_LOG_ERROR("Cannot hook Package_OpenFile: %s", error.c_str());
             return false;
@@ -142,8 +128,8 @@ namespace Forge
         g_original = reinterpret_cast<PackageOpenFileRoutine>(g_hook.Trampoline());
 
         FORGE_LOG_INFO("Package_OpenFile hooked at 0x%08X, original reachable at 0x%08X",
-                       static_cast<unsigned>(reinterpret_cast<uintptr_t>(target)),
-                       static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_original)));
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(target)),
+            static_cast<unsigned>(reinterpret_cast<uintptr_t>(g_original)));
         return true;
     }
 

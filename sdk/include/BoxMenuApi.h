@@ -1,11 +1,3 @@
-/*
- * BoxMenuApi.h - the menus as a whole, and moving between them.
- *
- * ObjectsMenuApi reaches inside one menu; this reaches across them: register a menu of your
- * own for $sub_menu buttons to reach, ask which is on screen, and drive the navigation.
- * Reached through AmodApi::boxMenu.
- */
-
 #ifndef AZFORGE_BOX_MENU_API_H
 #define AZFORGE_BOX_MENU_API_H
 
@@ -19,48 +11,26 @@ typedef struct AmodBoxMenuApi
 {
     uint32_t structSize;
 
-    /* Registers an empty menu under this id, for $sub_menu buttons to reach and for
-     * ObjectsMenu::Add to fill. Non-zero on success; zero if the id is already taken or the
-     * menu system is not up. The menu persists for the life of the process. */
+    /* Empty menu for $sub_menu / ObjectsMenu::Add. */
     int (__cdecl* Register)(AmodMod mod, const char* menuId);
 
-    /* Registers a menu built from a script file, the way the game builds its own. The file
-     * is opened through the game's resource system, so a script a mod ships under files/
-     * is found there without it having to exist on disk. Non-zero on success; zero if the
-     * id is taken, the script is missing or the menu system is not up.
-     *
-     * This is what makes a screen's layout a file rather than code: the same script another
-     * menu would have been written in, restyled without rebuilding the mod. */
+    /* Menu from a script file (resource system; files/ works). */
     int (__cdecl* RegisterFromScript)(AmodMod mod, const char* menuId, const char* scriptFile);
 
-    /* Whether a menu with this id exists, whether the game's or a mod's. */
     int (__cdecl* Exists)(AmodMod mod, const char* menuId);
 
-    /* The $menu_id of the menu on screen, and of the overlay over it, or "" for none. The
-     * pointers stay valid until the menu changes. */
+    /* $menu_id of the screen / overlay, or "". */
     const char* (__cdecl* Current)(AmodMod mod);
     const char* (__cdecl* Box)(AmodMod mod);
 
-    /* Steps into a menu, remembering the current one so Back returns to it - the same thing a
-     * $sub_menu button does. Non-zero when the menu exists. */
-    int (__cdecl* Open)(AmodMod mod, const char* menuId);
-
-    /* Steps back one level: closes the overlay if one is up, otherwise pops the stack. The
-     * same thing an ID_BACK button does. */
+    int (__cdecl* Open)(AmodMod mod, const char* menuId);       /* push, like $sub_menu */
     void (__cdecl* Back)(AmodMod mod);
-
-    /* Lays a menu over the current one as an overlay rather than replacing it, as a $box_menu
-     * button does. Non-zero when the menu exists. */
-    int (__cdecl* ShowBox)(AmodMod mod, const char* menuId);
-
-    /* Closes the overlay, the current menu and the whole stack, as ID_CLOSE_MENU does. */
+    int (__cdecl* ShowBox)(AmodMod mod, const char* menuId);    /* overlay, like $box_menu */
     void (__cdecl* CloseAll)(AmodMod mod);
-
-    /* Fields added in later API versions go here, and nowhere else. */
 } AmodBoxMenuApi;
 
 #ifdef __cplusplus
-} /* extern "C" */
+}
 #endif
 
 #ifdef __cplusplus

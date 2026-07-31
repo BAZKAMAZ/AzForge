@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Mods/ModManifest.h"
 
 #include "src/Core/ForgeVersion.h"

@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Core/ForgeSubsystems.h"
 
 #include "src/Core/ForgeLog.h"

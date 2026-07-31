@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/ConsoleApi.h"
 
 #include "src/Api/FrameApi.h"
@@ -42,11 +40,8 @@ namespace Forge
             void* user;
         };
 
-        // All mod commands share one game handler; argv[0] selects the owner from this map.
         std::map<std::string, Command> g_commands;
 
-        // Names already in the game's table. The console does not exist until the game starts
-        // (a mod loads while the launcher is up), so early commands wait here for PumpPending.
         std::set<std::string> g_gameRegistered;
 
         ModContext* Resolve(AmodMod mod)
@@ -81,10 +76,6 @@ namespace Forge
             *reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(node) + offset) = value;
         }
 
-        // Takes one command back out of the game's table. Nothing in the game does this, so it
-        // is done here: unlink the node from its bucket and give back what registering it
-        // allocated. Mem_FreeTracked tests its own header magic, so a pointer that is not one
-        // of its blocks is refused rather than turned into a corrupted heap.
         void UnregisterFromGame(const std::string& name)
         {
             uint32_t* const table = CommandTable();
@@ -105,8 +96,6 @@ namespace Forge
             }
             else
             {
-                // The head of its bucket. Which bucket that is takes the game's hash to work
-                // out, so it is looked for instead - there are only 256 of them.
                 for (size_t bucket = 0; bucket < GameAddress::kCmdBuckets; ++bucket)
                 {
                     if (table[bucket] == reinterpret_cast<uint32_t>(node))
@@ -138,7 +127,6 @@ namespace Forge
             g_gameRegistered.erase(name);
         }
 
-        // The single handler the game calls for every mod command; argv[0] names the owner.
         void __cdecl Dispatch(int argc, char** argv)
         {
             if (argc < 1 || argv == nullptr || argv[0] == nullptr)
@@ -217,8 +205,6 @@ namespace Forge
 
         void __cdecl ApiRemoveCommand(AmodMod mod, const char* name)
         {
-            // The game has no unregister, so the name stays in its table; dropping it from the
-            // owner map is what stops it, and the dispatch then reports it gone.
             if (Resolve(mod) != nullptr && name != nullptr)
             {
                 g_commands.erase(name);
@@ -248,8 +234,6 @@ namespace Forge
         g_execute = reinterpret_cast<ConsoleExecuteRoutine>(
             GameSymbols::Address(GameSymbol::ConsoleExecute));
 
-        // Neither is signature-resolved: they are only ever reached from here, and the loader
-        // has already proved by the symbols above that this is the build they belong to.
         g_cmdFind = reinterpret_cast<CmdFindRoutine>(GameModule::Resolve(GameAddress::kCmdFind));
         g_freeTracked = reinterpret_cast<FreeTrackedRoutine>(
             GameSymbols::Address(GameSymbol::MemFreeTracked));
@@ -267,8 +251,6 @@ namespace Forge
         g_table.RemoveCommand = &ApiRemoveCommand;
         g_table.Execute = &ApiExecute;
 
-        // The console does not exist yet - the game builds it after the launcher - so a
-        // per-frame pump hands over commands added early, once it is there.
         FrameApi::AddInternalTick(&PumpPending);
 
         FORGE_LOG_INFO("Console interface installed");
@@ -277,8 +259,6 @@ namespace Forge
 
     void ConsoleApi::Uninstall()
     {
-        // Taken out of the game's table rather than left in it: Dispatch lives in AzForge, and
-        // a name still standing after the loader has gone would call into an unmapped page.
         for (const auto& entry : g_commands)
         {
             UnregisterFromGame(entry.first);
@@ -287,8 +267,6 @@ namespace Forge
         g_commands.clear();
         g_table = {};
 
-        // The console routines point into game.exe rather than into AzForge, so they are left
-        // as they are; g_gameRegistered is emptied by the unregistering above.
     }
 
     const AmodConsoleApi* ConsoleApi::Table()
@@ -307,8 +285,6 @@ namespace Forge
             }
 
             UnregisterFromGame(it->first);
-            FORGE_LOG_INFO("Console command '%s' was taken out of the game's table",
-                           it->first.c_str());
             it = g_commands.erase(it);
         }
     }

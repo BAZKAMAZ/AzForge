@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Game/Signature.h"
 
 namespace Forge

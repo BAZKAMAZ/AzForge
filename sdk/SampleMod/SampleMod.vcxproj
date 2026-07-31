@@ -88,7 +88,26 @@
     <ClCompile Include="SampleMod.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The whole public interface, so a mod project shows what it can reach without anybody
+         going looking for the folder. Nothing here is compiled or linked: the headers are the
+         interface and the implementation is in AzForge.dll, reached through the tables handed
+         to AmodInit. -->
     <ClInclude Include="$(SolutionDir)sdk\include\ForgeApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\ForgeTypes.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\BlockExpressionApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\BonusesApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\BoxMenuApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\ConsoleApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\CtrlsApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\InputApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\InteropApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\InventoryApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\LauncherApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\ModManagerApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\MonstersApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\ObjectsMenuApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\RenderApi.h" />
+    <ClInclude Include="$(SolutionDir)sdk\include\WorldApi.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="package\mod.json" />

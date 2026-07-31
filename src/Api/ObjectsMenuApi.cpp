@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/ObjectsMenuApi.h"
 
@@ -60,9 +60,6 @@ namespace Forge
         std::vector<Subscription> g_subscriptions;
         uint32_t g_nextSubscriptionId = 1;
 
-        // These game routines answer in AL and leave the rest of EAX holding whatever was
-        // there, so only the low byte carries the result. The full value is still what gets
-        // returned to the caller, untouched.
         bool Succeeded(int result)
         {
             return (result & 0xFF) != 0;
@@ -84,7 +81,6 @@ namespace Forge
             return reinterpret_cast<float*>(Field(item, offset));
         }
 
-        // A handle is only followed when it is still one of the elements of a parsed menu.
         bool IsLive(AmodMenuItem item)
         {
             return item != nullptr && g_validElements.find(item) != g_validElements.end();
@@ -111,9 +107,6 @@ namespace Forge
         // allocator header, are recorded here as the menu is walked.
         std::map<void*, ElementKind> g_kindByElement;
 
-        // Read out of the allocation the element lives in rather than watched for during
-        // parsing: Menu_ParseScript @0x004527a0 builds each kind at a distinct size, and
-        // Mem_AllocTracked @0x00421df0 records that size in its header.
         ElementKind KindOf(AmodMenuItem item)
         {
             const auto recorded = g_kindByElement.find(item);
@@ -169,7 +162,6 @@ namespace Forge
 
 
         // --- geometry ------------------------------------------------------------------
-
         // Repeats what MenuButton_ParseCommon @0x0045a600 works out once the rectangle is
         // known, with the same two expressions. This is what MenuItem_Render @0x0045f620
         // actually draws at, so a rectangle changed without this changes nothing on screen.
@@ -182,14 +174,6 @@ namespace Forge
             centre[1] = rect[1] + (rect[3] - rect[1]) * 0.5f;
         }
 
-        // Places the rectangle from the position, a size and the alignment flags, mirroring
-        // FUN_0044a450 @0x0044a450 branch for branch.
-        //
-        // That routine is not called instead, because it is destructive: on entry it reads
-        // the first two rectangle floats as a width and a height and replaces them with
-        // edges, so running it a second time would read edges as a size. Reproducing it
-        // here means the size can be supplied explicitly and the element re-placed as often
-        // as a mod likes.
         void ApplyGeometry(void* item, float width, float height)
         {
             const float* const pos = Floats(item, GameAddress::kMenuElementPosOffset);
@@ -254,9 +238,6 @@ namespace Forge
             return 1u << static_cast<uint32_t>(kind);
         }
 
-        // Which kinds carry a key. The same offset means different things from one kind to
-        // the next - +0x758 is the drawn text on an item and a texture handle on an image
-        // button - so this is what keeps a write from landing on the wrong field.
         constexpr uint32_t kAnyKind = 0xFFFFFFFFu;
         constexpr uint32_t kItem = KindBit(ElementKind::Item);
         constexpr uint32_t kLogo = KindBit(ElementKind::Logo);
@@ -271,15 +252,9 @@ namespace Forge
         constexpr uint32_t kAnimImage = KindBit(ElementKind::AnimImage);
         constexpr uint32_t kStaticText = KindBit(ElementKind::StaticText);
 
-        // Everything that went through MenuButton_ParseCommon and therefore shares the
-        // common layout. A decorative image is deliberately not one of them: it is a forty
-        // byte record with a layout of its own, so a common key read from it would run off
-        // the end.
         constexpr uint32_t kElementKinds =
             kItem | kLogo | kTextBtn | kImgBtn | kHotkeyBtn | kCastleBtn | kList | kSlider;
 
-        // The same minus the logo, which builds its rectangle by hand and so takes its own
-        // rows for every key that places an element.
         constexpr uint32_t kAlignedKinds = kElementKinds & ~kLogo;
 
         struct PropertyDescriptor
@@ -294,18 +269,11 @@ namespace Forge
             bool (*read)(void* item, AmodValue& value);              // null: plain load
             bool (*write)(void* item, const AmodValue& value);       // null: plain store
 
-            // Set only by a key that addresses a collection: "items" answers how many there
-            // are, "items[2]" reaches one of them. The offset above is then the field's
-            // place inside a record rather than inside the element, which is what lets four
-            // keys share one array the way a table's columns do.
             uintptr_t arrayOffset;
             uintptr_t countOffset;
             size_t stride;      // zero on every key that is not a collection
         };
 
-        // "items[3]" names one entry of a collection. Splits into the key the table holds
-        // and the index to hand its accessor, and leaves the index negative when there is
-        // no subscript at all.
         bool SplitKey(const char* key, char* base, size_t baseSize, int& index)
         {
             index = -1;
@@ -381,9 +349,6 @@ namespace Forge
             return true;
         }
 
-        // Alignment decides how the rectangle hangs off the position, so changing it has to
-        // place the element again. The size is what the element currently occupies, which is
-        // the same thing $rect_size gave the parser.
         bool WriteAlign(void* item, const AmodValue& value)
         {
             float width = 0.0f;
@@ -404,15 +369,11 @@ namespace Forge
                 rect[i] = value.numbers[i];
             }
 
-            // The position at +0x5b8 is deliberately left alone: it is what the script asked
-            // for, while the rectangle is what the element ended up occupying, and a caller
-            // that sets the edges outright is speaking in the second of those.
             RecomputeCentre(item);
             return true;
         }
 
         // --- logo ----------------------------------------------------------------------
-
         // Reproduces the tail of MenuLogo_Parse @0x0045f2d0. A logo is the one kind that
         // ignores $align: MenuButton_ParseCommon lays it out like everything else and the
         // logo parser then throws that away and builds the edges from $pos and $size, with
@@ -428,18 +389,12 @@ namespace Forge
             rect[2] = pos[0] + size[0];
             rect[3] = pos[1];
 
-            // What the parser does with the caption rectangle, whether or not the logo has
-            // a $caption block to put there.
             float* const copy = Floats(item, GameAddress::kMenuElementCaptionRectOffset);
             for (int i = 0; i < 4; ++i)
             {
                 copy[i] = rect[i];
             }
 
-            // The parser leaves the drawing centre where MenuButton_ParseCommon put it, so
-            // the game itself lets the two disagree. Bringing it along costs nothing if a
-            // logo draws from its edges, and is the difference between a move showing and
-            // not showing if it does not.
             RecomputeCentre(item);
         }
 
@@ -463,19 +418,11 @@ namespace Forge
             return true;
         }
 
-        // Every string capacity below is the distance to the next field the parser writes,
-        // so none of them is a guess.
         constexpr PropertyDescriptor g_properties[] =
         {
             // key                  offset store          n  cap    kinds                          writable read        write
             { "kind",               0,     Store::String, 0, 0,     kAnyKind,     false,   &ReadKind,  nullptr },
 
-            // Everything MenuButton_ParseCommon @0x0045a600 gives every element.
-            //
-            // The parser reads every string with a limit of 0x100 whatever field it fills,
-            // so a long $id in a script overruns into what follows it. The capacities here
-            // are the distance to the next field instead, stricter than the game is with
-            // itself.
             { "id",                 0x715, Store::String, 0, 0x43,  kElementKinds,                 true,    nullptr,    nullptr },
             { "sub_menu",           0x014, Store::String, 0, 0x40,  kElementKinds,                 true,    nullptr,    nullptr },
             { "box_menu",           0x054, Store::String, 0, 0x40,  kElementKinds,                 true,    nullptr,    nullptr },
@@ -488,31 +435,19 @@ namespace Forge
             { "pos",                0x5B8, Store::Float,  2, 0,     kAlignedKinds,true,    nullptr,    &WritePosition },
             { "rect",               0x294, Store::Float,  4, 0,     kElementKinds,true,    nullptr,    &WriteRect },
             { "size",               0,     Store::Float,  2, 0,     kAlignedKinds,true,    &ReadSize,  &WriteSize },
-            // What $rect_size meant. The parser consumes that key and keeps only the edges
-            // it produced, so this reads back the width and height those edges describe.
             { "rect_size",          0,     Store::Float,  2, 0,     kAlignedKinds,true,    &ReadSize,  &WriteSize },
             { "centre",             0x5C0, Store::Float,  2, 0,     kElementKinds,false,   nullptr,    nullptr },
-            // 1 left, 2 right, 4 centred, 8 top, 0x20 centred vertically, as
-            // Layout_ApplyAlignment @0x0044a450 reads them.
             { "align",              0x5C8, Store::Int,    0, 0,     kAlignedKinds,true,    nullptr,    &WriteAlign },
             { "font_id",            0x5F8, Store::Int,    0, 0,     kElementKinds,false,   nullptr,    nullptr },
             { "caption.text",       0x5FF, Store::String, 0, 0x101, kElementKinds,                 true,    nullptr,    nullptr },
             { "caption.offs",       0x700, Store::Float,  2, 0,     kElementKinds,true,    nullptr,    nullptr },
             { "caption.rect_len",   0x708, Store::Float,  1, 0,     kElementKinds,true,    nullptr,    nullptr },
-            // Derived from $rect_len when the $caption block is there. A logo puts its own
-            // edges here instead, which is the only thing it uses the field for.
             { "caption.rect",       0x2A4, Store::Float,  4, 0,     kElementKinds,true,    nullptr,    nullptr },
             { "caption.enabled",    0x2B4, Store::Bool,   0, 0,     kElementKinds,true,    nullptr,    nullptr },
             { "visible",            0x714, Store::Bool,   0, 0,     kElementKinds,true,    nullptr,    nullptr },
 
-            // The drawn label. MenuItem_Parse and TextButton_Parse @0x0045ec60 both put it
-            // at +0x758, and a hotkey button inherits it by running the text button parser.
-            // An image button keeps a texture handle at that same offset, which is why this
-            // is not offered to every kind.
             { "text",               0x758, Store::String, 0, 0x40,  kItem | kTextBtn | kHotkeyBtn, true,    nullptr,    nullptr },
             { "plank_width",        0x798, Store::Int,    0, 0,     kItem,                         true,    nullptr,    nullptr },
-            // The $cursor3d block: whether the script gave one, and where the model sits.
-            // Both are three floats, not two - this is the 3d cursor beside the item.
             { "cursor3d",           0x79C, Store::Bool,   0, 0,     kItem,                         true,    nullptr,    nullptr },
             { "cursor3d.orient",    0x7A4, Store::Float,  3, 0,     kItem,                         true,    nullptr,    nullptr },
             { "cursor3d.pos",       0x7B0, Store::Float,  3, 0,     kItem,                         true,    nullptr,    nullptr },
@@ -522,13 +457,6 @@ namespace Forge
             { "img_disabled",       0x75C, Store::Int,    0, 0,     kImgBtn | kCastleBtn,          true,    nullptr,    nullptr },
             { "horz_flip",          0x760, Store::Bool,   0, 0,     kImgBtn | kCastleBtn,          true,    nullptr,    nullptr },
 
-            // MenuLogo_Parse @0x0045f2d0. A logo is a link rather than a button: activating
-            // it opens website.url next to the executable. It carries two sprites and swaps
-            // between them as the cursor comes and goes, so $sp2 is the focused one.
-            //
-            // Its geometry keys are its own because it does not use $align: the parser puts
-            // the edges at $pos and extends them by $size, and keeps a copy of them at
-            // +0x2a4. Writing "pos" or "size" here rebuilds both the way the parser does.
             { "sp1",                0x758, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
             { "sp2",                0x75C, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
             { "sprite",             0x760, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
@@ -536,21 +464,11 @@ namespace Forge
             { "swap_on_focus",      0x765, Store::Bool,   0, 0,     kLogo,                         true,    nullptr,    nullptr },
             { "pos",                0x5B8, Store::Float,  2, 0,     kLogo,                         true,    nullptr,    &WriteLogoPosition },
             { "size",               0x768, Store::Float,  2, 0,     kLogo,                         true,    nullptr,    &WriteLogoSize },
-            // Present because MenuButton_ParseCommon filled it, and read back for what the
-            // script said, but nothing draws by it on a logo.
             { "align",              0x5C8, Store::Int,    0, 0,     kLogo,                         true,    nullptr,    nullptr },
 
-            // MenuList_Parse @0x0045cae0. A list is the horizontal chooser the options
-            // screens are built from: an arrow, the current entry, an arrow.
-            //
-            // "items" answers how many entries there are, and "items[2]" reaches one of
-            // them. Writing the count can only drop entries from the end; adding one is an
-            // allocation, and belongs with creating objects rather than editing them.
             { "items",              0x00,  Store::String, 0, 0x40,  kList,                         true,    nullptr,    nullptr,    0x758, 0x75C, 0x48 },
             // How many entries fit across, which the parser works out from the width.
             { "columns",            0x764, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
-            // The three sub-buttons the list draws itself from, and the keys that work
-            // them: VK_LEFT, space and VK_RIGHT as the parser bound them.
             { "left.rect",          0x7B4, Store::Float,  4, 0,     kList,                         true,    nullptr,    nullptr },
             { "left.key",           0x7C8, Store::Int,    0, 0,     kList,                         true,    nullptr,    nullptr },
             { "text.rect",          0x820, Store::Float,  4, 0,     kList,                         true,    nullptr,    nullptr },
@@ -583,13 +501,6 @@ namespace Forge
             { "start_play",         0xCA1, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
             { "start_demo",         0xDA1, Store::String, 0, 0x100, kCastleBtn,                    true,    nullptr,    nullptr },
 
-            // $item_anim, laid out by ButtonAnim_Parse @0x004445e0. Five colours and five
-            // scales, one pair for each state a button can be in.
-            //
-            // A castle button parses the block twice: once as the image button it is built
-            // on, into "anim", and once as itself, into "anim_castle". The script fills both
-            // from the same $item_anim, and each falls back to its own template out of
-            // menu.cfg when there is none.
             { "anim.color_passive",    0x764, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
             { "anim.color_active",     0x774, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
             { "anim.color_disabled",   0x784, Store::Float, 4, 0, kImgBtn | kCastleBtn,         true,    nullptr,    nullptr },
@@ -612,10 +523,6 @@ namespace Forge
             { "anim_castle.scale_blocked",    0xB44, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
             { "anim_castle.scale_nof_active", 0xB4C, Store::Float, 2, 0, kCastleBtn,           true,    nullptr,    nullptr },
 
-            // A $table, laid out by MenuTable_Parse @0x0045a0b0. It is not an element and
-            // shares nothing with one: no position, no rectangle, no alignment. Its rows are
-            // placed from $line_pos and $line_step, and its columns are a collection, so
-            // "col.title" answers how many there are and "col.title[1]" names the second.
             { "id",                 0x004, Store::String, 0, 0x40,  kTable,                        true,    nullptr,    nullptr },
             { "header_color",       0x044, Store::Float,  4, 0,     kTable,                        true,    nullptr,    nullptr },
             { "header_scale",       0x054, Store::Float,  2, 0,     kTable,                        true,    nullptr,    nullptr },
@@ -633,11 +540,6 @@ namespace Forge
             { "col.align",          0x44,  Store::Int,    0, 0,     kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
             { "col.fixed",          0x4C,  Store::Float,  1, 0,     kTable,                        true,    nullptr,    nullptr,    0x98, 0x94, 0x50 },
 
-            // A decorative $image, laid out by FUN_00449950 @0x00449950. Forty bytes with
-            // nothing in common with the elements above, which is why every key here is
-            // gated to this kind alone.
-            //
-            // "pos" holds $offs instead when "is_offset" is set, exactly as the script chose.
             { "texture",            0x00,  Store::Int,    0, 0,     kImage,                        true,    nullptr,    nullptr },
             { "pos",                0x04,  Store::Float,  2, 0,     kImage,                        true,    nullptr,    nullptr },
             { "is_offset",          0x0C,  Store::Bool,   0, 0,     kImage,                        false,   nullptr,    nullptr },
@@ -648,16 +550,11 @@ namespace Forge
             { "vert_rept",          0x20,  Store::Float,  1, 0,     kImage,                        true,    nullptr,    nullptr },
             { "unreg_only",         0x24,  Store::Int,    0, 0,     kImage,                        true,    nullptr,    nullptr },
 
-            // An $images_anim entry, from Menu_ParseAnimatedImages @0x0044b5c0. Twenty four
-            // bytes, written field by field at the end of that routine: where it sits, how
-            // big it is, $unreg_only, and the animation the $frames block built.
             { "pos",                0x00,  Store::Float,  2, 0,     kAnimImage,                    true,    nullptr,    nullptr },
             { "size",               0x08,  Store::Float,  2, 0,     kAnimImage,                    true,    nullptr,    nullptr },
             { "unreg_only",         0x10,  Store::Int,    0, 0,     kAnimImage,                    true,    nullptr,    nullptr },
             { "animation",          0x14,  Store::Int,    0, 0,     kAnimImage,                    true,    nullptr,    nullptr },
 
-            // A $static_text entry, from Menu_ParseStaticText @0x0044b7e0. The same 0x470
-            // byte block the castle button keeps for its own $text_castle.
             { "id",                 0x000, Store::String, 0, 0x40,  kStaticText,                   true,    nullptr,    nullptr },
             { "text",               0x040, Store::String, 0, 0x400, kStaticText,                   true,    nullptr,    nullptr },
             { "pos",                0x440, Store::Float,  2, 0,     kStaticText,                   true,    nullptr,    nullptr },
@@ -671,11 +568,6 @@ namespace Forge
 
         constexpr size_t kPropertyCount = sizeof(g_properties) / sizeof(g_properties[0]);
 
-        // A key may appear more than once when different kinds keep it at different offsets,
-        // as pos and size do for a decorative image. That only works while the kind masks of
-        // those rows are disjoint: lookup answers with the first row that matches, so an
-        // overlap would silently resolve to whichever comes first in the table and read the
-        // wrong offset. Checked once, because that is the mistake this table invites.
         bool ValidatePropertyTable()
         {
             bool sound = true;
@@ -704,10 +596,6 @@ namespace Forge
             return sound;
         }
 
-        // A collection is a pointer to records laid end to end with the number of them in a
-        // field beside it. The game builds every one of them that way - the decorations on a
-        // menu, the entries of a list, the columns of a table - because they all grow
-        // through the same pair of helpers.
         int CollectionCount(void* item, const PropertyDescriptor& descriptor)
         {
             const uint8_t* const entries =
@@ -744,11 +632,6 @@ namespace Forge
                     continue;
                 }
 
-                // Keep looking rather than giving up here. A key can appear more than once,
-                // for kinds that keep it at different offsets, so a row that does not apply
-                // to this kind only rules out that row. Ending the search on it would hide
-                // the row that does apply, which is what "pos" on an image would hit: the
-                // common row is reached first and is not the one wanted.
                 if ((descriptor.kinds & KindBit(KindOf(item))) == 0)
                 {
                     continue;
@@ -888,9 +771,6 @@ namespace Forge
 
         void RecordMenu(void* menu)
         {
-            // Publish reaches here from both Menu_Register and Menu_LoadFromScript, and the
-            // same menu can go through both. Dropping what was recorded before makes a
-            // second pass replace the previous one instead of piling on top of it.
             ForgetMenu(menu);
 
             std::vector<void*> elements;
@@ -919,8 +799,6 @@ namespace Forge
                 }
             }
 
-            // Decorations are not in the groups. The menu keeps each collection - { record*
-            // items; int count } - of its own, records laid end to end.
             const struct
             {
                 uintptr_t offset;
@@ -962,8 +840,6 @@ namespace Forge
                 }
             }
 
-            // Tables live in an array of pointers at menu+0x54, one level deeper than the
-            // decorations.
             void** const tables =
                 *reinterpret_cast<void***>(Field(menu, GameAddress::kMenuTablesOffset));
             const int tableCount =
@@ -1042,9 +918,6 @@ namespace Forge
             uintptr_t destroySlot;      // vtable slot that frees a refused block
         };
 
-        // The element rows Menu_ParseScript @0x004527a0 walks, in order. A $table is left out:
-        // it has no draw method of its own and is rendered only by the score screen, so one
-        // built anywhere else would never appear.
         constexpr BlockDescriptor kBlocks[] =
         {
             { "menu_items",     "item",   GameAddress::kSizeMenuItem,
@@ -1098,7 +971,6 @@ namespace Forge
             return true;
         }
 
-        // Disposes of an object the parser refused, through its scalar deleting destructor.
         void DestroyObject(void* object, uintptr_t destroySlot)
         {
             void** const vtable = *reinterpret_cast<void***>(object);
@@ -1146,8 +1018,6 @@ namespace Forge
             return false;
         }
 
-        // Builds every element of one block into the menu. The parser is already sitting on
-        // the container.
         void* BuildBlock(void* menu, void* parser, const BlockDescriptor& block, int& built)
         {
             if (!Succeeded(g_parserEnter(parser, block.element)))
@@ -1236,10 +1106,6 @@ namespace Forge
               GameAddress::kStaticTextStride, GameSymbol::MenuParseStaticText,     false },
         };
 
-        // Kept apart from everything else because a function using __try may hold nothing
-        // that needs unwinding. The guard is here for one case the fragment cannot be
-        // inspected for: Menu_ParseAnimatedImages throws when its block is present but
-        // yields no image at all.
         void* ParseDecorationGuarded(const DecorationDescriptor& decoration, void* parser)
         {
             __try
@@ -1308,8 +1174,6 @@ namespace Forge
             *items = grown;
             *count += freshCount;
 
-            // The records were copied out of it, so the collection the parser made is ours
-            // to release.
             if (g_freeTracked != nullptr)
             {
                 g_freeTracked(fresh);
@@ -1320,8 +1184,6 @@ namespace Forge
             return grown + before;
         }
 
-        // Answers true when the fragment really carries this block, which is what keeps the
-        // two "missing block" throws out of reach rather than caught.
         bool FragmentHas(void* parser, const DecorationDescriptor& decoration)
         {
             if (!Succeeded(g_parserEnter(parser, decoration.container)))
@@ -1449,7 +1311,6 @@ namespace Forge
         }
 
         // --- detours -------------------------------------------------------------------
-
         // The id is read out of the object, never taken from the caller's argument: a menu
         // built from a script gets it from the $menu_id of its own $header, and the argument
         // is null in that case. Menu_Register has already copied the argument in by the time
@@ -1479,16 +1340,12 @@ namespace Forge
 
         int __fastcall ParseScriptDetour(void* menu, void* unused, const char* scriptFile)
         {
-            // Rebuilding a menu frees whatever it held, so the old handles stop being live
-            // before the new ones appear.
             ForgetMenu(menu);
 
             g_parsingMenu = menu;
             const int result = g_originalParse(menu, unused, scriptFile);
             g_parsingMenu = nullptr;
 
-            // Nothing is read out of the object here. This routine also serves callers that
-            // pass something other than a menu, and only Menu_Register tells the two apart.
             if (Succeeded(result))
             {
                 g_lastParsedMenu = menu;
@@ -1510,12 +1367,6 @@ namespace Forge
             return result;
         }
 
-        // Menu_TakeClickResult drains the clicked (menu, button, sub_menu, box_menu,
-        // reg_menu) out of the menu into the five-pointer block Menu_Update then acts on. By
-        // the time the trampoline returns, the click is in dest but not yet acted on, so a
-        // mod hears it here and, by clearing dest, can keep the game from acting - which is
-        // what turns a custom button into one that does something and lets a mod take over
-        // one of the game's.
         void __fastcall TakeClickResultDetour(void* menu, void* unused, void* dest)
         {
             g_originalTakeClick(menu, unused, dest);
@@ -1535,8 +1386,6 @@ namespace Forge
             clicked.handled = 0;
             Dispatch(AMOD_MENU_CLICKED, &clicked);
 
-            // A claimed click is erased from the block, so neither Menu_Update's own
-            // navigation nor the game-flow dispatcher that reads it afterwards sees anything.
             if (clicked.handled != 0)
             {
                 result[GameAddress::kClickResultMenuId / sizeof(char*)] = nullptr;
@@ -1574,10 +1423,6 @@ namespace Forge
                 return found->second;
             }
 
-            // A menu this interface never saw parsed is still reachable through the game's
-            // own registry - a menu a mod registered through BoxMenu is the case that matters.
-            // Record it so its elements become live handles, and cache it so later calls and
-            // the walking functions find it the same way.
             if (g_findMenu != nullptr)
             {
                 void** const slot = static_cast<void**>(
@@ -1615,13 +1460,6 @@ namespace Forge
             item.user = user;
             g_subscriptions.push_back(item);
 
-            // A menu that already exists is announced to the new subscriber at once, so that
-            // whether a mod hears about a menu does not depend on which of the two came first.
-            // Mods load before the game registers its own menus, so at startup this normally
-            // finds nothing; what it catches is a menu an earlier mod registered.
-            //
-            // Delivered to this subscriber alone, not through Dispatch, so nobody who has
-            // already been told hears it twice.
             if (event == AMOD_MENU_LOADED)
             {
                 for (const auto& entry : g_menusById)
@@ -1645,9 +1483,6 @@ namespace Forge
             }
         }
 
-        // Menu_FindItemById walks the groups, and a decoration is not in them: a $static
-        // declares an $id like any element but lives in the menu's static-text collection. The
-        // recorded elements are the whole menu, so the id is matched against those instead.
         void* FindRecordedById(void* menu, const char* itemId)
         {
             const auto found = g_elementsByMenu.find(menu);
@@ -1719,10 +1554,6 @@ namespace Forge
 
         const char* __cdecl ApiGetItemId(AmodMod mod, AmodMenuItem item)
         {
-            // Answered through the table rather than from a fixed offset: a static text
-            // entry also declares an $id, but keeps it somewhere else entirely, and a kind
-            // with no id at all has to answer an empty string rather than hand back
-            // whatever bytes follow a shorter record.
             if (Resolve(mod) == nullptr || !IsLive(item))
             {
                 return "";
@@ -1771,8 +1602,6 @@ namespace Forge
                 return (record != nullptr && LoadProperty(record, *descriptor, *value)) ? 1 : 0;
             }
 
-            // A subscript on a key that names one field and not a collection of them is a
-            // mistake rather than something to quietly ignore.
             if (index >= 0)
             {
                 return 0;
@@ -1809,9 +1638,6 @@ namespace Forge
                     return 0;
                 }
 
-                // Writing the count can only drop records from the end. Making one means
-                // reallocating the array, which is creating an object rather than editing
-                // one, so a larger count is refused outright rather than half honoured.
                 if (index < 0)
                 {
                     if ((value->kind != AMOD_VALUE_INT && value->kind != AMOD_VALUE_BOOL) ||
@@ -1857,8 +1683,6 @@ namespace Forge
                 return 0;
             }
 
-            // A subscript is only there if that record is, so a mod can walk a collection
-            // until it runs out instead of asking for the count first.
             if (index >= 0)
             {
                 return (descriptor->stride != 0 &&
@@ -1934,9 +1758,6 @@ namespace Forge
                 return nullptr;
             }
 
-            // Menu_AddElement put them in a group, so walking the menu again is all it takes
-            // for them to become handles the property interface accepts. Without this it
-            // would refuse the very handle it just returned.
             RecordMenu(menu);
 
             FORGE_LOG_INFO("[%s] added %d object(s) to menu '%s'",
@@ -2001,14 +1822,9 @@ namespace Forge
             return false;
         }
 
-        // Optional: lets Add and the walking functions reach a menu the game registered but
-        // this interface never saw parsed, such as one a mod added through BoxMenu.
         g_findMenu = reinterpret_cast<FindMenuRoutine>(
             GameSymbols::Address(GameSymbol::MenuFindByMenuId));
 
-        // Object creation is a separate capability: it calls into the game rather than
-        // detouring it, so a build where one of these cannot be located still gets a working
-        // interface for everything a menu already holds.
         g_parserCreate = reinterpret_cast<ParserCreateRoutine>(
             GameSymbols::Address(GameSymbol::ParserCreateFromBuffer));
         g_parserDestroy = reinterpret_cast<ParserDestroyRoutine>(
@@ -2050,8 +1866,6 @@ namespace Forge
         g_originalLoad = reinterpret_cast<LoadFromScriptRoutine>(g_loadHook.Trampoline());
         g_originalRegister = reinterpret_cast<RegisterRoutine>(g_registerHook.Trampoline());
 
-        // The click event is optional: a build where its one routine cannot be found still
-        // reads, writes and builds menus, it just cannot report their buttons.
         if (InstallOne(g_clickHook, GameSymbol::MenuTakeClickResult,
                        reinterpret_cast<void*>(&TakeClickResultDetour),
                        kMenuTakeClickResultPrologue, sizeof(kMenuTakeClickResultPrologue)))
@@ -2081,8 +1895,6 @@ namespace Forge
 
         ValidatePropertyTable();
 
-        // Counted rather than assumed: a kind with no row of its own is one the interface
-        // does not actually reach, whatever the enumeration says.
         int kinds = 0;
         for (int k = 1; k <= static_cast<int>(ElementKind::StaticText); ++k)
         {

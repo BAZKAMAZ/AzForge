@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/RenderApi.h"
 
@@ -16,14 +16,13 @@ namespace Forge
 {
     namespace
     {
-        // Render_Present and every element's render method are __thiscall (this in ecx); both
-        // are emulated as __fastcall with an unused edx, the way the menu routines are.
+        // Present / element render: __thiscall → __fastcall (ECX = this, EDX unused).
         typedef void(__fastcall* PresentRoutine)(void* manager, void* unused);
         typedef char(__fastcall* BeginRoutine)(void* manager, void* unused);
         typedef void(__fastcall* ElementRenderRoutine)(void* element, void* unused);
         typedef void(__fastcall* DecorationsRoutine)(void* menu, void* unused);
 
-        // The game's styled-text draw, called through a global pointer; see kDrawStyledTextPtr.
+        // g_pfnDrawStyledText (kDrawStyledTextPtr).
         typedef void(__cdecl* DrawStyledTextRoutine)(void* font, const char* text, int zero,
                                                      const float* centre, float* scale,
                                                      float* color, int align, int zero2);
@@ -80,15 +79,9 @@ namespace Forge
         PresentRoutine g_originalPresent = nullptr;
         const float* g_delta = nullptr;
 
-        // A detour on Render_Begin drives the frame-begin callbacks, run after BeginScene and
-        // before the game draws - where a mod sets render state for the whole frame or draws
-        // under everything.
         InlineHook g_beginHook;
         BeginRoutine g_originalBegin = nullptr;
 
-        // Slot 0 (the render) of each element kind's vtable is patched with ElementRenderThunk;
-        // the render it held is kept here, found again by the vtable an element carries at
-        // element+0. One thunk in every vtable is what makes the element hooks cover every kind.
         struct HookedVtable
         {
             void* vtable;                   // patched slot 0 address, == the element's vtable
@@ -113,22 +106,13 @@ namespace Forge
         std::vector<BgSub> g_bgSubs;
         AmodToken g_nextToken = 1;
 
-        // The game's styled-text pointer (kDrawStyledTextPtr) and the routine it held before it
-        // was pointed at the thunk. g_currentStyleItem is the item being drawn while the thunk
-        // runs, so the thunk knows which style callbacks apply.
         void** g_drawSlot = nullptr;
         DrawStyledTextRoutine g_originalDraw = nullptr;
         void* g_currentStyleItem = nullptr;
 
-        // The sprite blit pointer and the routine it held; the sprite kinds are styled by
-        // adjusting the colour it is handed, the way the text kinds are through g_originalDraw.
         void** g_spriteSlot = nullptr;
         DrawSpriteRoutine g_originalSprite = nullptr;
 
-        // The $static_text draw pointer and the routine it held. This one is used only for
-        // $static_text decorations, so every call through it is one, and no per-element context
-        // is needed: the wildcard style callbacks apply, and the record's colour is restored
-        // after the draw so the decoration itself is not permanently changed.
         void** g_staticTextSlot = nullptr;
         DrawStaticTextRoutine g_originalStaticText = nullptr;
 
@@ -149,8 +133,6 @@ namespace Forge
             return slot != nullptr ? *slot : nullptr;
         }
 
-        // The live device, or null when there is no manager yet or the device is lost. Reading
-        // the lost flag keeps a callback from drawing on a device the game itself is skipping.
         void* Device()
         {
             void* const manager = Manager();
@@ -273,9 +255,6 @@ namespace Forge
                                          AmodItemStyleCallback callback, void* user)
         {
             ModContext* const context = Resolve(mod);
-            // Styling rides on the element-render hooks and the draw pointers; without the
-            // element hooks, or with neither draw pointer to adjust, there is nothing to hang
-            // it on.
             if (context == nullptr || callback == nullptr || g_vtables.empty() ||
                 (g_drawSlot == nullptr && g_spriteSlot == nullptr))
             {
@@ -344,10 +323,6 @@ namespace Forge
             return g_findFont(name);   // a null name resolves to the default font
         }
 
-        // Draws text with a menu font (or the system font when font is null), centred at (x, y),
-        // through the same routine the menu draws its labels with. Coordinates are in the
-        // projection active when it runs - logical 640x480 inside a menu-render callback, the
-        // backbuffer otherwise.
         void __cdecl ApiDrawText(AmodMod mod, void* font, float x, float y, const char* text,
                                  float scale, uint32_t color)
         {
@@ -394,10 +369,6 @@ namespace Forge
             return false;
         }
 
-        // Replaces the game's styled-text draw. When an item with a style callback is being
-        // drawn (g_currentStyleItem set by the item detour), the callbacks adjust the colour
-        // and scale in place; then the real routine draws the item with the adjusted values.
-        // For every other styled-text draw it is a straight pass-through.
         void __cdecl DrawStyledTextThunk(void* font, const char* text, int zero,
                                          const float* centre, float* scale, float* color,
                                          int align, int zero2)
@@ -422,9 +393,6 @@ namespace Forge
             }
         }
 
-        // Points the game's styled-text pointer at the thunk, capturing the real routine. Lazy
-        // because the game fills the pointer only once it is running, and recaptures if the game
-        // ever writes a fresh routine over it.
         void EnsureDrawSwapped()
         {
             if (g_drawSlot == nullptr)
@@ -455,8 +423,6 @@ namespace Forge
             return nullptr;
         }
 
-        // The sprite counterpart of DrawStyledTextThunk: adjusts the colour a sprite element is
-        // drawn with while it draws, then blits it. A null colour (a logo) is left alone.
         void __cdecl DrawSpriteThunk(int sprite, float x, float y, float w, float h, int zero,
                                      float* color, int a7, int a8)
         {
@@ -496,10 +462,6 @@ namespace Forge
             *g_spriteSlot = reinterpret_cast<void*>(&DrawSpriteThunk);
         }
 
-        // Recolours a $static_text decoration. Every call through this pointer is a static_text
-        // draw, so the wildcard (id-less) style callbacks apply, keyed by the record's colour
-        // buffer. The record's colour is saved and restored around the draw so the decoration is
-        // adjusted only for this frame, not permanently.
         void __cdecl DrawStaticTextThunk(void* a1, void* a2, int a3, void* a4, void* a5,
                                          float* color, int a7)
         {
@@ -566,11 +528,6 @@ namespace Forge
             return nullptr;
         }
 
-        // Runs in place of the render of an element of any kind: fires the BEFORE callbacks, draws
-        // the element through its own original render unless a callback asked to replace it, then
-        // fires the AFTER callbacks. While it draws, the element is named to the styled-text thunk
-        // so style callbacks recolour and resize it. The scene is open, so a callback can draw
-        // through the device.
         void __fastcall ElementRenderThunk(void* element, void* unused)
         {
             if (element == nullptr)
@@ -613,9 +570,6 @@ namespace Forge
 
             if (!replace)
             {
-                // Style callbacks act through the text and sprite thunks while the element draws,
-                // so it is named to them only for the length of its own draw. Text kinds route
-                // through the styled-text thunk, sprite kinds through the sprite thunk.
                 if (!g_styleSubs.empty())
                 {
                     EnsureDrawSwapped();
@@ -640,8 +594,6 @@ namespace Forge
             }
         }
 
-        // Runs at the top of Render_Present, before the game ends the scene: the frame is fully
-        // drawn and the scene is open, so a callback's draw lands over everything.
         void __fastcall PresentDetour(void* manager, void* unused)
         {
             if (!g_subscribers.empty() && manager != nullptr &&
@@ -668,9 +620,6 @@ namespace Forge
             g_originalPresent(manager, unused);
         }
 
-        // Runs at the top of Render_Begin, after BeginScene but before the game draws the world
-        // and menu. A callback here sets render state that the whole frame is then drawn with, or
-        // draws a layer under everything. Only fires when the frame will actually be drawn.
         char __fastcall BeginDetour(void* manager, void* unused)
         {
             const char result = g_originalBegin(manager, unused);
@@ -695,10 +644,6 @@ namespace Forge
             return result;
         }
 
-        // Runs in place of a menu's background-decoration draw. When a mod draws the background,
-        // the callback returns non-zero and the game's own decorations are skipped; the menu's
-        // text and buttons still draw afterwards, on top. The scene is open here, so a callback
-        // can draw through the device.
         void __fastcall DecorationsDetour(void* menu, void* unused)
         {
             if (g_bgSubs.empty() || menu == nullptr)
@@ -756,8 +701,6 @@ namespace Forge
 
         g_originalPresent = reinterpret_cast<PresentRoutine>(g_hook.Trampoline());
 
-        // The frame-begin hook is additive: without it the overlay and the rest still work, and
-        // OnFrameBegin simply refuses registrations.
         void* const beginTarget = GameSymbols::Address(GameSymbol::RenderBegin);
         if (beginTarget != nullptr &&
             GameModule::VerifyBytes(beginTarget, kRenderBeginPrologue,
@@ -772,9 +715,6 @@ namespace Forge
             FORGE_LOG_WARN("Render_Begin was not hooked, frame-begin callbacks are unavailable");
         }
 
-        // Element-draw hooking patches slot 0 (the render) of every element kind's vtable with a
-        // shared thunk. It is additive: a build without these vtables still gets the frame
-        // overlay, and the element callbacks simply refuse registrations.
         for (const uintptr_t vtableAddress : GameAddress::kElementVtables)
         {
             void** const slot = static_cast<void**>(GameModule::Resolve(vtableAddress));
@@ -797,16 +737,12 @@ namespace Forge
             FORGE_LOG_WARN("No element vtables were patched, element-draw callbacks are unavailable");
         }
 
-        // The draw pointers are null until the game is running, so they are only located here;
-        // each swap is done lazily once an element with a style callback is first drawn.
         g_drawSlot = static_cast<void**>(GameModule::Resolve(GameAddress::kDrawStyledTextPtr));
         g_spriteSlot = static_cast<void**>(GameModule::Resolve(GameAddress::kDrawSpritePtr));
         g_staticTextSlot = static_cast<void**>(GameModule::Resolve(GameAddress::kDrawStaticTextPtr));
         g_findFont = reinterpret_cast<FindFontRoutine>(
             GameSymbols::Address(GameSymbol::MenuFindFont));
 
-        // Custom-background hooking is additive too: without it the rest of the render interface
-        // still works, and OnMenuBackground refuses registrations.
         void* const decorTarget = GameSymbols::Address(GameSymbol::MenuDrawDecorations);
         if (decorTarget != nullptr &&
             GameModule::VerifyBytes(decorTarget, kMenuDrawDecorationsPrologue,

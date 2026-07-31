@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Zip/ZipWriter.h"
 
 #include "src/Zip/Crc32.h"

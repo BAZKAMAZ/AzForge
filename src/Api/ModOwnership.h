@@ -5,15 +5,6 @@
 
 namespace Forge
 {
-    // Everything a mod creates through the API is recorded here against that mod.
-    //
-    // The point is that a mod cannot leave something behind that outlives it. Unloading a
-    // mod releases its registrations in the reverse of the order they were made, so a
-    // registration that depends on an earlier one is always undone first, and a mod author
-    // never has to write teardown code that mirrors their setup code.
-    //
-    // A token is only ever handed back to the mod that owns it, so releasing one by hand
-    // cannot touch another mod's registration.
     class ModOwnership
     {
     public:

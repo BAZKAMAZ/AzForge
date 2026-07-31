@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/InputApi.h"
 
@@ -16,10 +16,7 @@ namespace Forge
     {
         using namespace GameAddress;
 
-        // Both end in RET 8, so they clean their own arguments: __stdcall, not __cdecl.
-        // Calling them as __cdecl let the caller pop the arguments a second time, which walked
-        // the stack pointer eight bytes past the frame and handed garbage back to whoever had
-        // called through the mod - a crash with no bad pointer anywhere near it.
+        // Both RET 8 → __stdcall.
         typedef void(__stdcall* GetCursorRoutine)(float* x, float* y);
         typedef void(__stdcall* SetCursorRoutine)(float x, float y);
 
@@ -29,14 +26,8 @@ namespace Forge
         GetCursorRoutine g_getCursor = nullptr;
         SetCursorRoutine g_setCursor = nullptr;
 
-        // The game keeps only what is down now, so the edge has to be worked out here. Copied
-        // once a frame, after the game's own update, which is what makes "pressed" mean
-        // "between the previous frame and this one" rather than "since somebody last asked".
         uint8_t g_previous[kInputKeyCount] = {};
 
-        // The wheel, which the game never sees. g_wheel gathers notches as the messages arrive;
-        // g_wheelFrame is what a mod reads, held still for the length of a frame so every mod
-        // sees the same turn.
         HWND g_window = nullptr;
         WNDPROC g_originalProc = nullptr;
         int g_wheel = 0;
@@ -51,8 +42,6 @@ namespace Forge
             return CallWindowProcA(g_originalProc, window, message, wparam, lparam);
         }
 
-        // The window does not exist when the loader starts - the launcher has not run yet - so
-        // it is picked up on the first frame that has one.
         void AttachToWindow()
         {
             HWND* const slot = static_cast<HWND*>(GameModule::Resolve(kGameWindow));
@@ -148,8 +137,6 @@ namespace Forge
                 return;
             }
 
-            // Asked for both even when the caller wants one, because the game's routine writes
-            // through both pointers and has no way to be told otherwise.
             float cursorX = 0.0f;
             float cursorY = 0.0f;
             g_getCursor(&cursorX, &cursorY);
@@ -203,8 +190,6 @@ namespace Forge
             return false;
         }
 
-        // After the mods, not before them: the copy this takes is what the next frame's edges
-        // are measured against, and taking it first would answer every WasKeyPressed with false.
         FrameApi::AddInternalTick(&RememberFrame, true);
 
         g_table.structSize = sizeof(AmodInputApi);

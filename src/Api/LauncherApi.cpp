@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Api/LauncherApi.h"
 
@@ -64,8 +64,6 @@ namespace Forge
 
         void Dispatch(AmodLauncherEvent event, void* data)
         {
-            // A callback may unsubscribe itself or another, so the list is walked over a
-            // copy rather than in place.
             const std::vector<Subscription> snapshot = g_subscriptions;
 
             for (const Subscription& item : snapshot)
@@ -107,8 +105,6 @@ namespace Forge
         {
             g_originalHideOptional(self, unused);
 
-            // The window is needed to reach the controls, and at the first call this runs
-            // inside Launcher_OnInitDialog, before that detour has recorded it.
             if (g_window == nullptr)
             {
                 g_object = self;
@@ -286,8 +282,6 @@ namespace Forge
                 return 0;
             }
 
-            // Zero keeps the current value, which is the rule Dialog_MoveItem @0x004243a0
-            // follows for the game's own dialog script.
             RECT bounds = {};
             GetWindowRect(control, &bounds);
             ScreenToClient(g_window, reinterpret_cast<LPPOINT>(&bounds.left));
@@ -349,8 +343,6 @@ namespace Forge
             }
             *slot = bitmap;
 
-            // The game paints from a memory DC it creates when it first loads a logo; a mod
-            // that replaces the logo before that happened has to provide one.
             HDC* const memoryDc = reinterpret_cast<HDC*>(object + GameAddress::kLauncherLogoDcOffset);
             if (*memoryDc == nullptr)
             {

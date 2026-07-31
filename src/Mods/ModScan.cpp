@@ -1,4 +1,4 @@
-#include "pch.h"
+#include <windows.h>
 
 #include "src/Mods/ModScan.h"
 
@@ -9,21 +9,15 @@ namespace Forge
 {
     namespace
     {
-        // Declared here rather than taken from amsi.h so the loader carries no header or
-        // import dependency on it: amsi.dll is absent on Windows 8 and earlier, and a missing
-        // import would stop AzForge from loading at all rather than degrading quietly.
         typedef struct HAMSICONTEXT__* ForgeAmsiContext;
         typedef struct HAMSISESSION__* ForgeAmsiSession;
 
-        // AMSI_RESULT. Anything from 32768 up is malware; the values below it run from
-        // "clean" through "not detected" and are all acceptable.
+        // AMSI_RESULT. Anything from 32768 up is malware; the values below it run from "clean" through "not detected" and are all acceptable.
         constexpr int kAmsiResultMalwareThreshold = 32768;
 
         typedef HRESULT(WINAPI* AmsiInitializeRoutine)(LPCWSTR appName, ForgeAmsiContext* context);
         typedef void(WINAPI* AmsiUninitializeRoutine)(ForgeAmsiContext context);
-        typedef HRESULT(WINAPI* AmsiScanBufferRoutine)(ForgeAmsiContext context, void* buffer,
-                                                       ULONG length, LPCWSTR contentName,
-                                                       ForgeAmsiSession session, int* result);
+        typedef HRESULT(WINAPI* AmsiScanBufferRoutine)(ForgeAmsiContext context, void* buffer, ULONG length, LPCWSTR contentName, ForgeAmsiSession session, int* result);
 
         HMODULE g_amsi = nullptr;
         ForgeAmsiContext g_context = nullptr;
@@ -80,26 +74,19 @@ namespace Forge
         }
     }
 
-    bool ModScan::IsClean(const std::string& modId, const std::vector<uint8_t>& payload,
-                          std::string& reason)
+    bool ModScan::IsClean(const std::string& modId, const std::vector<uint8_t>& payload, std::string& reason)
     {
         reason.clear();
 
-        // Nothing to ask, so nothing is claimed. Saying a mod is clean because no scanner
-        // answered would be worse than saying nothing.
         if (g_scan == nullptr || g_context == nullptr || payload.empty())
         {
             return true;
         }
 
-        // The content name is what the scanner reports the detection against, so it names the
-        // mod rather than the temporary file the bytes are about to become.
         const std::wstring name = FromUtf8(modId);
 
         int result = 0;
-        const HRESULT scanned = g_scan(g_context, const_cast<uint8_t*>(payload.data()),
-                                       static_cast<ULONG>(payload.size()), name.c_str(),
-                                       nullptr, &result);
+        const HRESULT scanned = g_scan(g_context, const_cast<uint8_t*>(payload.data()), static_cast<ULONG>(payload.size()), name.c_str(), nullptr, &result);
 
         // A scan that could not run is not a detection.
         if (FAILED(scanned))

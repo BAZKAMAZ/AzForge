@@ -1,45 +1,141 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Исходные файлы">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="Файлы заголовков">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="Файлы ресурсов">
-      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
-      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    <Filter Include="Api">
+      <UniqueIdentifier>{9c6db2f6-1693-4557-94f9-058ab85f0e6f}</UniqueIdentifier>
     </Filter>
     <Filter Include="Core">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a01}</UniqueIdentifier>
+      <UniqueIdentifier>{ae480e2b-6225-421f-b935-2a9dff3b483d}</UniqueIdentifier>
     </Filter>
     <Filter Include="Game">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a05}</UniqueIdentifier>
+      <UniqueIdentifier>{c7058aba-4b90-41e3-9574-5b52903b25cc}</UniqueIdentifier>
     </Filter>
     <Filter Include="Hook">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a06}</UniqueIdentifier>
+      <UniqueIdentifier>{de10fde9-5328-4c03-a306-8397d9133a17}</UniqueIdentifier>
     </Filter>
     <Filter Include="Json">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a02}</UniqueIdentifier>
+      <UniqueIdentifier>{ede91f88-4fac-4ac6-9b84-5cd21eec82de}</UniqueIdentifier>
     </Filter>
     <Filter Include="Mods">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a03}</UniqueIdentifier>
+      <UniqueIdentifier>{81a1ab08-5b8c-4106-b046-5c08587a176d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="SDK">
+      <UniqueIdentifier>{4575d809-7291-46f4-8c44-e3507c14824e}</UniqueIdentifier>
     </Filter>
     <Filter Include="Zip">
-      <UniqueIdentifier>{0b1d5c2a-8e64-4f39-9a7c-2d4b1e6f8a04}</UniqueIdentifier>
+      <UniqueIdentifier>{6222644e-66e1-4ef2-9751-e4b69b8da2c5}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
-      <Filter>Файлы заголовков</Filter>
+    <ClInclude Include="sdk\include\BlockExpressionApi.h">
+      <Filter>SDK</Filter>
     </ClInclude>
-    <ClInclude Include="pch.h">
-      <Filter>Файлы заголовков</Filter>
+    <ClInclude Include="sdk\include\BonusesApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\BoxMenuApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\CtrlsApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\MonstersApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ConsoleApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ForgeApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ForgeTypes.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\LauncherApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ObjectsMenuApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\RenderApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\WorldApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\InteropApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\HudApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\InventoryApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\BlockExpressionApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\BoxMenuApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ConsoleApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\FrameApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\LauncherApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ObjectsMenuApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\RenderApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ApiProperty.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ApiRead.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\BonusesApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\HudApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\InventoryApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\WorldApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\InteropApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ModManagerApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\InputApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\InputApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ModManagerApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ModContext.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ModOwnership.h">
+      <Filter>Api</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\ForgeBoot.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeCrash.h">
       <Filter>Core</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\ForgeLog.h">
@@ -47,6 +143,18 @@
     </ClInclude>
     <ClInclude Include="src\Core\ForgePaths.h">
       <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeSubsystems.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModScan.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModLoadScreen.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModState.h">
+      <Filter>Mods</Filter>
     </ClInclude>
     <ClInclude Include="src\Core\ForgeText.h">
       <Filter>Core</Filter>
@@ -61,6 +169,18 @@
       <Filter>Game</Filter>
     </ClInclude>
     <ClInclude Include="src\Game\GameModule.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\GameSymbols.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\GameSymbolTable.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\ShutdownHook.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Signature.h">
       <Filter>Game</Filter>
     </ClInclude>
     <ClInclude Include="src\Game\PackageFile.h">
@@ -78,105 +198,43 @@
     <ClInclude Include="src\Mods\ModFileSystem.h">
       <Filter>Mods</Filter>
     </ClInclude>
+    <ClInclude Include="src\Mods\ModHost.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModLibrary.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
     <ClInclude Include="src\Mods\ModManifest.h">
       <Filter>Mods</Filter>
     </ClInclude>
     <ClInclude Include="src\Mods\ModRegistry.h">
       <Filter>Mods</Filter>
     </ClInclude>
+    <ClInclude Include="src\Zip\Crc32.h">
+      <Filter>Zip</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Zip\Inflate.h">
+      <Filter>Zip</Filter>
+    </ClInclude>
     <ClInclude Include="src\Zip\ZipArchive.h">
       <Filter>Zip</Filter>
     </ClInclude>
-    <ClInclude Include="sdk\include\BlockExpressionApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\BoxMenuApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\ConsoleApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\ForgeApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\ForgeTypes.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\LauncherApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\ObjectsMenuApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="sdk\include\RenderApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\BlockExpressionApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\BoxMenuApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\ConsoleApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\FrameApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\LauncherApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\ObjectsMenuApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\RenderApi.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\ModContext.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Api\ModOwnership.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\GameSymbols.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\GameSymbolTable.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\ShutdownHook.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Game\Signature.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mods\ModHost.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Mods\ModLibrary.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Zip\Crc32.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Zip\Inflate.h">
-      <Filter>Файлы заголовков</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dllmain.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="pch.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
+    <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="src\Core\ForgeBoot.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeCrash.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Core\ForgeLog.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Core\ForgePaths.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeSubsystems.cpp">
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Core\ForgeText.cpp">
@@ -188,6 +246,15 @@
     <ClCompile Include="src\Game\GameModule.cpp">
       <Filter>Game</Filter>
     </ClCompile>
+    <ClCompile Include="src\Game\GameSymbols.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\ShutdownHook.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\Signature.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
     <ClCompile Include="src\Game\PackageHook.cpp">
       <Filter>Game</Filter>
     </ClCompile>
@@ -197,7 +264,76 @@
     <ClCompile Include="src\Json\JsonValue.cpp">
       <Filter>Json</Filter>
     </ClCompile>
+    <ClCompile Include="src\Api\ForgeApiImpl.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\LauncherApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\BlockExpressionApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\BoxMenuApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ConsoleApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\FrameApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ObjectsMenuApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\RenderApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ApiProperty.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ApiRead.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\BonusesApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\HudApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\InventoryApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\WorldApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\InteropApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ModManagerApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\InputApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ModOwnership.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
     <ClCompile Include="src\Mods\ModFileSystem.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModHost.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModScan.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModLoadScreen.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModState.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModLibrary.cpp">
       <Filter>Mods</Filter>
     </ClCompile>
     <ClCompile Include="src\Mods\ModManifest.cpp">
@@ -206,56 +342,14 @@
     <ClCompile Include="src\Mods\ModRegistry.cpp">
       <Filter>Mods</Filter>
     </ClCompile>
-    <ClCompile Include="src\Zip\ZipArchive.cpp">
+    <ClCompile Include="src\Zip\Crc32.cpp">
       <Filter>Zip</Filter>
     </ClCompile>
-    <ClCompile Include="src\Game\GameSymbols.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Game\ShutdownHook.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Game\Signature.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\ForgeApiImpl.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\LauncherApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\BlockExpressionApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\BoxMenuApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\ConsoleApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\FrameApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\ObjectsMenuApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\RenderApi.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Api\ModOwnership.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mods\ModHost.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Mods\ModLibrary.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Zip\Crc32.cpp">
-      <Filter>Исходные файлы</Filter>
-    </ClCompile>
     <ClCompile Include="src\Zip\Inflate.cpp">
-      <Filter>Исходные файлы</Filter>
+      <Filter>Zip</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Zip\ZipArchive.cpp">
+      <Filter>Zip</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

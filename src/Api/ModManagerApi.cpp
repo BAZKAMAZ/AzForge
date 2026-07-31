@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/ModManagerApi.h"
 
 #include "src/Api/FrameApi.h"
@@ -25,8 +23,6 @@ namespace Forge
     {
         AmodModManagerApi g_table = {};
 
-        // Anything read once and handed out as a pointer lives here, because the interface
-        // promises those pointers outlive the call.
         std::map<std::string, std::string> g_iconPaths;
 
         // Asked for by the screen, applied on the frame tick.
@@ -50,8 +46,6 @@ namespace Forge
                                                                            : nullptr;
         }
 
-        // A mod carrying no code is as loaded as it can be whenever it is enabled: its files
-        // are the whole of it, and they are in the override table.
         bool IsInForce(const ModRecord& record)
         {
             return record.manifest.entry.empty()
@@ -64,8 +58,6 @@ namespace Forge
             return ModState::IsEnabled(record.manifest.id) != IsInForce(record);
         }
 
-        // Nothing here runs while a mod is on the stack: this is a frame tick of the loader's
-        // own, and those run after the game's frame and before any mod's update.
         void __cdecl ApplyPending()
         {
             if (g_pending.empty())
@@ -77,9 +69,6 @@ namespace Forge
             const std::vector<int> pending = g_pending;
             g_pending.clear();
 
-            // The game's own loading screen for as long as this takes. It is where a player
-            // already knows to wait for mods, and a mod with a lot of content takes long enough
-            // to be worth showing.
             const bool onScreen = ModLoadScreen::Enter();
             size_t done = 0;
 
@@ -116,14 +105,9 @@ namespace Forge
                 ModLoadScreen::Leave();
             }
 
-            // The files a mod provides go with the mod, and this table is what the game reads
-            // resources through. Whatever it has already read stays as it was.
             ModFileSystem::Build(Records());
         }
 
-        // Unpacks the mod's icon next to the loader's cache, once, and answers where it went.
-        // The screen wants something it can hand to a texture loader, and the icon is inside
-        // an archive nothing else can open.
         const char* IconFile(const ModRecord& record)
         {
             const auto found = g_iconPaths.find(record.manifest.id);
@@ -132,12 +116,8 @@ namespace Forge
                 return found->second.c_str();
             }
 
-            // Remembered even when there is none, so a mod without an icon is not unpacked
-            // again once per frame for as long as the screen is open.
             std::string& slot = g_iconPaths[record.manifest.id];
 
-            // Named or not, the same file is looked for: a mod that simply puts an icon.bmp in
-            // its archive gets an icon without having to say so.
             const bool declared = !record.manifest.icon.empty();
             const std::string name = declared ? record.manifest.icon : "icon.bmp";
 
@@ -146,8 +126,6 @@ namespace Forge
             if (record.archive == nullptr || !record.archive->ReadByName(name, bytes, error) ||
                 bytes.empty())
             {
-                // Only when the mod said it had one: a mod that never claimed an icon is not
-                // doing anything wrong by not having one.
                 if (declared)
                 {
                     FORGE_LOG_WARN("[%s] declares the icon '%s', which is not in its archive",
@@ -215,8 +193,6 @@ namespace Forge
             entry.enabled = ModState::IsEnabled(manifest.id) ? 1 : 0;
             entry.loaded = IsInForce(*record) ? 1 : 0;
 
-            // Everything else Reload settles in this run; a mod that has to be up before the
-            // launcher is the one that genuinely cannot be, whatever the switch now says.
             entry.needsRestart = (manifest.Declares("launcher") && OutOfStep(*record)) ? 1 : 0;
 
             const uint32_t copied = out->structSize < sizeof(entry)
@@ -256,8 +232,6 @@ namespace Forge
                 return 0;
             }
 
-            // The manager cannot switch itself off. It is not installed where the switch
-            // reaches, and a screen that can remove the only way back to itself is a trap.
             if (record->privileged)
             {
                 FORGE_LOG_WARN("The mod manager cannot be switched off from its own screen");
@@ -267,8 +241,6 @@ namespace Forge
             return ModState::SetEnabled(record->manifest.id, enabled != 0) ? 1 : 0;
         }
 
-        // Worked out rather than remembered, so it answers false again of its own accord once
-        // every switch has been acted on.
         int __cdecl ApiIsDirty(AmodMod mod)
         {
             if (Resolve(mod) == nullptr)
@@ -330,9 +302,6 @@ namespace Forge
 
     void ModManagerApi::Clear()
     {
-        // The icons were unpacked into the cache and nothing else knows they are there, so they
-        // go with the interface that made them. The directory follows once it is empty - the
-        // mod libraries have already released their own copies by now.
         for (const auto& entry : g_iconPaths)
         {
             if (!entry.second.empty())

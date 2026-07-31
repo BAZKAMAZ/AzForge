@@ -20,17 +20,12 @@ namespace Forge
         MenuParseScript,
         MenuItemParse,
         MenuFindItemById,
-
-        // What building an object out of a script fragment needs.
         ParserCreateFromBuffer,
         ParserDestroy,
         ParserEnterBlock,
         ParserNextBlock,
         ParserLeaveBlock,
         MenuAddElement,
-
-        // A constructor per kind, and the two parsers besides MenuItem_Parse that
-        // Menu_ParseScript calls directly instead of through the vtable.
         MenuItemCreate,
         MenuLogoCreate,
         TextButtonCreate,
@@ -41,78 +36,40 @@ namespace Forge
         MenuSliderCreate,
         MenuLogoParse,
         MenuListParse,
-
-        // A table is not an element either: it has its own constructor and parser, goes to
-        // Menu_AddTable rather than Menu_AddElement, and is destroyed through a different
-        // vtable slot.
         MenuTableCreate,
         MenuTableParse,
         MenuAddTable,
-
-        // Decorations are not elements: these answer a whole collection, so what they build
-        // has to be merged into what the menu already holds.
         MenuParseImages,
         MenuParseAnimatedImages,
         MenuParseStaticText,
         MemReallocTracked,
-
-        // Menu navigation: registering a whole menu, and moving between them.
         MenuFindByMenuId,
         CBaseMenuConstruct,
         MenuEnterMenu,
         MenuGoBack,
         MenuShowBox,
         MenuCloseAll,
-
-        // Where a click is drained out of the menu just before the game acts on it.
         MenuTakeClickResult,
-
-        // The per-frame tick, and the frame delta it works out.
         GameFrameTick,
-
-        // The developer console: output, command registration, and running a line.
         GameConsoleWrite,
         CmdRegister,
         ConsoleExecute,
-
-        // The D3D8 render manager's Begin and Present, hooked to run a mod at the start and end
-        // of each frame.
         RenderBegin,
         RenderPresent,
-
-        // A $item's vtable render, hooked so a mod can draw before/after or replace it.
         MenuItemRender,
-
-        // A menu's background-decoration draw, hooked so a mod can supply its own background.
         MenuDrawDecorations,
-
-        // Resolves a named menu font to its font object, for Render::Text with a chosen font.
         MenuFindFont,
-
-        // The level coming and going, and the one route by which a room becomes current.
         LevelLoad,
         LevelFree,
         LevelActivateRoom,
-
-        // The loading screen's progress step, called to repaint it while mods load.
         LoadingSetProgress,
-
-        // Registers every menu the game ships. Mods are loaded on its way in.
         MenuRegisterAll,
+        BonusOnTouch,
+        BonusesFreeResources,
 
         Count
     };
 
-    // Locates the game routines AzForge binds to.
-    //
-    // Each symbol carries a byte signature and the address it sits at in the build it was
-    // reversed from. The address is a hint, not the answer: the signature is checked there
-    // first because that costs nothing, and only when it does not match is the executable
-    // scanned. A build where the code moved but was not rewritten therefore still works.
-    //
-    // Resolution never guesses. A signature that matches nowhere fails, and so does one
-    // that matches more than once - an ambiguous signature is a defect in the signature,
-    // and picking the first hit would silently bind to the wrong function.
     class GameSymbols
     {
     public:

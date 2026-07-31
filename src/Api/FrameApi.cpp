@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/FrameApi.h"
 
 #include "src/Core/ForgeLog.h"
@@ -33,7 +31,6 @@ namespace Forge
         double g_elapsed = 0.0;
         uint64_t g_frameIndex = 0;
 
-        // Runs after the game's frame, so a mod sees the advanced world and this frame's delta.
         void __cdecl FrameTickDetour(void)
         {
             g_originalTick();

@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Zip/Inflate.h"
 
 namespace Forge

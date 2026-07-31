@@ -1,5 +1,3 @@
-#include "pch.h"
-
 #include "src/Api/ModContext.h"
 
 #include "src/Api/BlockExpressionApi.h"
@@ -9,7 +7,10 @@
 #include "src/Api/ObjectsMenuApi.h"
 #include "src/Api/InteropApi.h"
 #include "src/Api/ModManagerApi.h"
+#include "src/Api/BonusesApi.h"
+#include "src/Api/HudApi.h"
 #include "src/Api/InputApi.h"
+#include "src/Api/InventoryApi.h"
 #include "src/Api/RenderApi.h"
 #include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
@@ -22,7 +23,6 @@ namespace Forge
 {
     namespace
     {
-        // Turns the handle a mod passed back into a context, or nullptr when it is not one.
         ModContext* Resolve(AmodMod mod)
         {
             ModContext* context = static_cast<ModContext*>(mod);
@@ -53,8 +53,6 @@ namespace Forge
                 return;
             }
 
-            // "%s" rather than the text itself: a mod's message is data, and passing it as a
-            // format string would let a stray percent sign read the stack.
             Log::Write(TranslateLevel(level), "[%s] %s", context->id.c_str(), text);
         }
 
@@ -77,8 +75,6 @@ namespace Forge
 
         const char* __cdecl ApiGetGameDirectory(void)
         {
-            // Built once and kept alive for the process: the API promises the pointer stays
-            // valid for as long as the mod is loaded.
             static const std::string directory = ToUtf8(Paths::GameDirectory().wstring());
             return directory.c_str();
         }
@@ -90,8 +86,6 @@ namespace Forge
 
         uint32_t __cdecl ApiGetGameBuild(void)
         {
-            // The loader refuses to run at all unless every signature matched, so reaching
-            // this point means the executable is the one AzForge was reversed against.
             return AMOD_GAME_BUILD_AZANGARA_10;
         }
     }
@@ -134,15 +128,11 @@ namespace Forge
         context.table.console = ConsoleApi::Table();
         context.table.render = RenderApi::Table();
         context.table.world = WorldApi::Table();
+        context.table.bonuses = BonusesApi::Table();
+        context.table.inventory = InventoryApi::Table();
+        context.table.hud = HudApi::Table();
         context.table.input = InputApi::Table();
 
-        // The one capability the loader can hold back and mean it. Everything else a mod
-        // declares is a statement about itself; this is the table that lets it detour the
-        // game and write to its memory, and it is handed over only to a mod that said so.
-        // Nothing is lost by being strict here - the interop table is new in API version 18,
-        // so no mod written before it can be surprised.
-        // The manager, and only for core. Every other mod sees the same null it sees for a
-        // subsystem that is not there.
         context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;
 
         if (context.Declares("interop"))

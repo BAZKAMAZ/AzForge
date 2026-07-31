@@ -1,7 +1,4 @@
-#include "pch.h"
-
 #include "src/Mods/ModLoadScreen.h"
-
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
@@ -18,7 +15,7 @@ namespace Forge
     {
         using namespace GameAddress;
 
-        // All three are __thiscall, emulated as __fastcall.
+        // All three are __thiscall → __fastcall (EDX unused).
         typedef void(__fastcall* SetProgressRoutine)(void* manager, void* unused, int percent);
         typedef int(__fastcall* RegisterAllRoutine)(void* menuManager, void* unused);
         typedef void(__fastcall* SetEventRoutine)(void* manager, void* unused, int id, int a, int b);
@@ -29,21 +26,14 @@ namespace Forge
         SetEventRoutine g_setEvent = nullptr;
         uint8_t* g_manager = nullptr;
 
-        // What the game was doing when the screen was borrowed: the event id and both of its
-        // arguments, which is all GameState_SetEvent needs to put it back.
+        // Saved event id + args for Leave().
         int g_previous[3] = {};
         bool g_borrowed = false;
 
         const std::vector<ModRecord>* g_loadOrder = nullptr;
-
-        // Loading happens once, whatever else reaches the routine this hangs off.
         bool g_done = false;
-
-        // How many there were to load, so the line can say "3 of 7" while it is still 3.
         size_t g_total = 0;
 
-        // The screen the game is on, or null when it is not the loading screen. Read each time
-        // rather than cached: a stale pointer here would be written through.
         uint8_t* CurrentLoadingScreen()
         {
             if (g_manager == nullptr)
@@ -71,9 +61,6 @@ namespace Forge
             }
         }
 
-        // Turns the help line on by claiming the music has started, which is the second of the
-        // two flags Menu_DrawHelpText wants. Put back afterwards: Loading_ShouldStay reads it
-        // to decide whether it still has its own one-time work to do.
         void ShowHelpText(uint8_t* screen, bool show)
         {
             if (screen != nullptr)
@@ -82,9 +69,7 @@ namespace Forge
             }
         }
 
-        // Menu_SetHelpText copied $press_key into the help object at +0x138 when the script was
-        // parsed, and that copy is the one drawn. $press_key is written too, so anything reading
-        // the screen back sees the same line.
+        // Drawn string lives in help object (+0x13C); $press_key is mirrored
         void SetLine(uint8_t* screen, const char* text)
         {
             if (screen == nullptr || text == nullptr)
@@ -92,10 +77,8 @@ namespace Forge
                 return;
             }
 
-            strncpy_s(reinterpret_cast<char*>(screen + kLoadingHelpTextOffset),
-                      kLoadingHelpTextLength, text, _TRUNCATE);
-            strncpy_s(reinterpret_cast<char*>(screen + kLoadingPressKeyOffset),
-                      kLoadingPressKeyLength, text, _TRUNCATE);
+            strncpy_s(reinterpret_cast<char*>(screen + kLoadingHelpTextOffset), kLoadingHelpTextLength, text, _TRUNCATE);
+            strncpy_s(reinterpret_cast<char*>(screen + kLoadingPressKeyOffset), kLoadingPressKeyLength, text, _TRUNCATE);
         }
 
         void WriteProgressLine(uint8_t* screen)
@@ -116,14 +99,13 @@ namespace Forge
             else
             {
                 snprintf(line, sizeof(line), "Mods loaded %zu out of %zu (%zu were not loaded)",
-                         loaded, g_total, failed);
+                    loaded, g_total, failed);
             }
 
             SetLine(screen, line);
         }
 
-        // Draws a frame with the bar left where it stands. The game's own load is only part way
-        // through at this point, so moving the bar would report work that has not been done.
+        // Leave the bar where the game put it — only repaint the caption
         void Repaint(uint8_t* screen)
         {
             if (g_setProgress == nullptr || g_manager == nullptr || screen == nullptr)
@@ -150,20 +132,18 @@ namespace Forge
                 return;
             }
 
-            // Claimed first, so a routine reached from inside the load cannot start it again.
             g_done = true;
 
             uint8_t* const screen = CurrentLoadingScreen();
             if (screen == nullptr)
             {
                 FORGE_LOG_WARN("The loading screen was not up when the game came to register "
-                               "its menus, so the mods are loaded without it");
+                    "its menus, so the mods are loaded without it");
                 ModHost::Load(*g_loadOrder, ModPhase::LoadingScreen, nullptr);
                 return;
             }
 
-            // Held open and left held: Loading_ShouldStay reads this to decide whether the game
-            // may fall through into the main menu, so the player gets to read how it went.
+            // Hold the screen open so the player can read the result.
             SetWaitKey(screen, true);
             ShowHelpText(screen, true);
 
@@ -176,15 +156,12 @@ namespace Forge
             WriteProgressLine(screen);
             Repaint(screen);
 
-            // Handed back to the game, which has its own first-time work behind this flag.
             ShowHelpText(screen, false);
         }
 
         int __fastcall RegisterAllDetour(void* menuManager, void* unused)
         {
-            // Mods go first. The manager exists by now and not one menu is registered, so a mod
-            // that subscribes at AmodInit hears every menu the game builds, in order and once
-            // each, and can register one of its own alongside them.
+            // Mods first — manager exists, no menus registered yet.
             LoadMods();
             return g_originalRegisterAll(menuManager, unused);
         }
@@ -199,8 +176,7 @@ namespace Forge
 
         memcpy(g_previous, g_manager + kGameStateIdOffset, sizeof(g_previous));
 
-        // The flag says "this is the startup screen", which is what the help line along the
-        // bottom is drawn behind - and that line is the whole point of borrowing the screen.
+        // arg=1 → startup-screen flag (help line drawn).
         g_setEvent(g_manager, nullptr, kGameStateLoading, 1, 0);
 
         uint8_t* const screen = CurrentLoadingScreen();
@@ -238,16 +214,14 @@ namespace Forge
         if (target == nullptr)
         {
             FORGE_LOG_WARN("Menu_RegisterAll was not located, so mods cannot be loaded on the "
-                           "loading screen");
+                "loading screen");
             return false;
         }
 
-        g_setProgress = reinterpret_cast<SetProgressRoutine>(
-            GameSymbols::Address(GameSymbol::LoadingSetProgress));
-        // Not signature-resolved: it is only ever reached from here, and the symbols around it
-        // have already proved this is the build it belongs to.
+        g_setProgress = reinterpret_cast<SetProgressRoutine>(GameSymbols::Address(GameSymbol::LoadingSetProgress));
         g_setEvent = reinterpret_cast<SetEventRoutine>(GameModule::Resolve(kGameStateSetEvent));
         g_manager = static_cast<uint8_t*>(GameModule::Resolve(kGameStateManager));
+
         if (g_setProgress == nullptr || g_manager == nullptr)
         {
             FORGE_LOG_WARN("The loading screen was not located, so mods cannot be loaded on it");
@@ -256,7 +230,7 @@ namespace Forge
 
         std::string mismatch;
         if (!GameModule::VerifyBytes(target, kMenuRegisterAllPrologue,
-                                     sizeof(kMenuRegisterAllPrologue), mismatch))
+            sizeof(kMenuRegisterAllPrologue), mismatch))
         {
             FORGE_LOG_ERROR("Menu_RegisterAll does not open as expected (%s)", mismatch.c_str());
             return false;
@@ -264,7 +238,7 @@ namespace Forge
 
         std::string error;
         if (!g_hook.Install(target, reinterpret_cast<void*>(&RegisterAllDetour),
-                            kMenuRegisterAllPrologue, sizeof(kMenuRegisterAllPrologue), error))
+            kMenuRegisterAllPrologue, sizeof(kMenuRegisterAllPrologue), error))
         {
             FORGE_LOG_ERROR("Cannot hook Menu_RegisterAll: %s", error.c_str());
             return false;
@@ -275,7 +249,7 @@ namespace Forge
         g_done = false;
 
         FORGE_LOG_INFO("Mods will be loaded on the loading screen, before the game registers "
-                       "its menus");
+            "its menus");
         return true;
     }
 

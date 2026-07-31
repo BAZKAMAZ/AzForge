@@ -49,11 +49,10 @@
     <ClCompile>
       <WarningLevel>Level4</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
@@ -69,11 +68,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;NDEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;AZFORGE_EXPORTS;_WINDOWS;_USRDLL;WIN32_LEAN_AND_MEAN;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
-      <PrecompiledHeader>Use</PrecompiledHeader>
-      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)sdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -88,10 +86,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h" />
-    <ClInclude Include="pch.h" />
     <ClInclude Include="sdk\include\BlockExpressionApi.h" />
+    <ClInclude Include="sdk\include\BonusesApi.h" />
     <ClInclude Include="sdk\include\BoxMenuApi.h" />
+    <ClInclude Include="sdk\include\CtrlsApi.h" />
+    <ClInclude Include="sdk\include\MonstersApi.h" />
     <ClInclude Include="sdk\include\ConsoleApi.h" />
     <ClInclude Include="sdk\include\ForgeApi.h" />
     <ClInclude Include="sdk\include\ForgeTypes.h" />
@@ -100,6 +99,8 @@
     <ClInclude Include="sdk\include\RenderApi.h" />
     <ClInclude Include="sdk\include\WorldApi.h" />
     <ClInclude Include="sdk\include\InteropApi.h" />
+    <ClInclude Include="sdk\include\HudApi.h" />
+    <ClInclude Include="sdk\include\InventoryApi.h" />
     <ClInclude Include="src\Api\BlockExpressionApi.h" />
     <ClInclude Include="src\Api\BoxMenuApi.h" />
     <ClInclude Include="src\Api\ConsoleApi.h" />
@@ -107,6 +108,11 @@
     <ClInclude Include="src\Api\LauncherApi.h" />
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\RenderApi.h" />
+    <ClInclude Include="src\Api\ApiProperty.h" />
+    <ClInclude Include="src\Api\ApiRead.h" />
+    <ClInclude Include="src\Api\BonusesApi.h" />
+    <ClInclude Include="src\Api\HudApi.h" />
+    <ClInclude Include="src\Api\InventoryApi.h" />
     <ClInclude Include="src\Api\WorldApi.h" />
     <ClInclude Include="src\Api\InteropApi.h" />
     <ClInclude Include="src\Api\ModManagerApi.h" />
@@ -147,10 +153,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="pch.cpp">
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-    </ClCompile>
     <ClCompile Include="src\Core\ForgeBoot.cpp" />
     <ClCompile Include="src\Core\ForgeCrash.cpp" />
     <ClCompile Include="src\Core\ForgeLog.cpp" />
@@ -173,6 +175,11 @@
     <ClCompile Include="src\Api\FrameApi.cpp" />
     <ClCompile Include="src\Api\ObjectsMenuApi.cpp" />
     <ClCompile Include="src\Api\RenderApi.cpp" />
+    <ClCompile Include="src\Api\ApiProperty.cpp" />
+    <ClCompile Include="src\Api\ApiRead.cpp" />
+    <ClCompile Include="src\Api\BonusesApi.cpp" />
+    <ClCompile Include="src\Api\HudApi.cpp" />
+    <ClCompile Include="src\Api\InventoryApi.cpp" />
     <ClCompile Include="src\Api\WorldApi.cpp" />
     <ClCompile Include="src\Api\InteropApi.cpp" />
     <ClCompile Include="src\Api\ModManagerApi.cpp" />
