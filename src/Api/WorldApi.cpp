@@ -936,6 +936,11 @@ namespace Forge
         return NextEntity(entity);
     }
 
+    uint8_t* WorldApi::LiveEntityAt(int roomIndex, int index)
+    {
+        return EntityAt(roomIndex < 0 ? CurrentRoomIndex() : roomIndex, index);
+    }
+
     const uint8_t* WorldApi::Player()
     {
         return FindPlayer();

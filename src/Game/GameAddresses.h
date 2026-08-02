@@ -4,8 +4,6 @@
 
 namespace Forge
 {
-    // Addresses reversed from the shipped game.exe, linked at 0x00400000.
-    // Hints only — GameSymbols resolves by byte signature.
     namespace GameAddress
     {
         constexpr uintptr_t kPreferredImageBase = 0x00400000;
@@ -143,7 +141,7 @@ namespace Forge
         // MenuItem_Parse  (parser, float itemsOffs)  RET 8
         // MenuLogo_Parse  (parser, float itemsOffs)  RET 8
         // MenuList_Parse  (parser, Menu* menu)       RET 8
-        //   MenuTable_Parse (parser)
+        // MenuTable_Parse (parser)
         // Others go through vtable +0x30 (parser alone).
         constexpr uintptr_t kMenuLogoParse = 0x0045F2D0;
         constexpr uintptr_t kMenuListParse = 0x0045CAE0;
@@ -435,7 +433,7 @@ namespace Forge
         // Inventory_IsCarrying      83 FF 05   CMP EDI,5
         // Inventory_FindSlot        83 FE 05   CMP ESI,5
         // Inventory_FindSlotIndexed 83 FF 05   CMP EDI,5
-        //   Inventory_FirstFreeSlot   83 F8 05   CMP EAX,5
+        // Inventory_FirstFreeSlot   83 F8 05   CMP EAX,5
         // Inventory_Update          BB 05..    MOV EBX,5
         // Hud_DrawInventory         BD 05..    MOV EBP,5
 
@@ -446,9 +444,6 @@ namespace Forge
             uintptr_t opcodeAt;
         };
 
-        // index is already in a register of its own at the three that compute one.
-
-        // the player. An inventory of more than five therefore does not survive a save.
         constexpr size_t kInventorySlotsMax = 32;
 
         struct SlotBaseSite
@@ -482,8 +477,6 @@ namespace Forge
             // ADD EDI,0x2ac  ->  MOV EDI,buffer
             { 0x0044E730, 6, 1, { 0xBF, 0x00 }, 0, { 0x81, 0xC7, 0xAC, 0x02, 0x00, 0x00, 0x00 } },
 
-            // the size, and the loop behind it resolves each slot's type again by $res_id. The
-
             // is a save the game can still read.
 
             // ADD ECX,0x2ac  ->  MOV ECX,buffer
@@ -514,7 +507,6 @@ namespace Forge
         constexpr int kEntityKindPlayer = 1;
         constexpr uintptr_t kEntityNameOffset = 0x04;
 
-        // The session object: Score_Add takes it as its this, the HUD reaches the player
         // through it. Null until a game is running.
         constexpr uintptr_t kGameSession = 0x006928F0;
         constexpr uintptr_t kSessionPlayerOffset = 0x04;
@@ -599,7 +591,6 @@ namespace Forge
         constexpr uintptr_t kEntityThinkOffset = 0x5B8;
         constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
 
-        // out of the type, added to the position. Nothing writes the position itself.
         constexpr uintptr_t kEntityRockingAxisOffset = 0x4FC;
         constexpr uintptr_t kEntityRockingOffset = 0x508;
 
@@ -668,7 +659,6 @@ namespace Forge
         constexpr uintptr_t kMonsterSpawnWaitTimeOffset = 0x118;
         constexpr uintptr_t kMonsterSpawnTypeOffset = 0x120;    // the definition record
 
-        // and how long until it changes. Both are rolled and stepped by Monster_Think.
         constexpr uintptr_t kMonsterSpawnStateOffset = 0x0E0;   // 0 "move", 1 "sit"
         constexpr uintptr_t kMonsterSpawnTimerOffset = 0x0E8;
         constexpr int kMonsterStateMove = 0;
@@ -713,7 +703,6 @@ namespace Forge
             const char* name;
             uintptr_t think;
 
-            // instead, every frame. So which of the two is "the speed" depends on the kind.
             bool speedInEntity;
         };
 
@@ -783,8 +772,6 @@ namespace Forge
         // with no level loaded.
         constexpr uintptr_t kBonusResAppend = 0x00431690;
 
-        // The gameplay HUD: one static object, built by Hud_Init @0x0044e0f0 out of
-
         // author already knows. Zeroes until then.
         constexpr uintptr_t kHud = 0x006947D8;
         constexpr uintptr_t kHudInit = 0x0044E0F0;
@@ -799,7 +786,7 @@ namespace Forge
         constexpr uintptr_t kHudItemFrameOffset = 0x5C;         // $item_frame, its texture
         constexpr uintptr_t kHudItemFrameSizeOffset = 0x6C;     // and its size
         constexpr uintptr_t kHudPointsPosOffset = 0xC4;
-        // The script's fields end at 0xCC; the quest-bonus bag begins there (QuestBag_Load
+
         // 0x0044EC60), two heap pointers the game refills every level and frees.
         constexpr size_t kHudSize = 0xD0;
 
@@ -808,7 +795,6 @@ namespace Forge
         // Image_ParseRecord __cdecl (parser, record)
         // Images_Append     __stdcall (record**, int* count) -> the new record   RET 8, not cdecl
 
-        // the count and removing records shortens it: nothing may be written past it.
         constexpr uintptr_t kHudImagesOffset = 0x10;            // $standard_level $images
         constexpr uintptr_t kHudBonusImagesOffset = 0x14;       // $bonus_level $images
         constexpr uintptr_t kImageParseRecord = 0x00449950;
@@ -827,6 +813,210 @@ namespace Forge
         constexpr uintptr_t kResolveModelSlot = 0x006912B8;
         constexpr uintptr_t kResolveTextureSlot = 0x006912A4;
         constexpr uintptr_t kResolveSoundSlot = 0x00691344;
+
+        constexpr uintptr_t kModelManager = 0x00503520;
+        constexpr uintptr_t kModelListHead = 0x00503524;
+        constexpr uintptr_t kMeshManager = 0x00503528;
+
+        // The renderer, a pointer. vtable +0x70 creates a vertex buffer, +0x74 releases one,
+        // +0x78 draws one, all __thiscall.
+        constexpr uintptr_t kRenderDevice = 0x00503590;
+        constexpr uintptr_t kRenderDeviceSetTexture = 0x28;
+        constexpr uintptr_t kRenderDeviceMultiplyWorld = 0x58;  // world = given * world
+        constexpr uintptr_t kRenderDeviceReleaseVertices = 0x74;
+        constexpr uintptr_t kRenderDeviceDrawVertices = 0x78;
+
+        constexpr uintptr_t kLoadOrFindModel = 0x00406B80;      // __cdecl (path) -> model
+        constexpr uintptr_t kModelRelease = 0x00406300;         // __cdecl (model)
+        constexpr uintptr_t kModelCreateFromMesh = 0x004068B0;  // __cdecl (0, mesh) -> model
+        constexpr uintptr_t kModelBuildFromMesh = 0x004065C0;   // __stdcall (model) -> bool, RET 4
+        constexpr uintptr_t kModelRender = 0x004061E0;          // __cdecl (model)
+
+        constexpr uintptr_t kModelDrawNode = 0x00408470;        // __stdcall (node), RET 4
+        constexpr uintptr_t kSceneDrawObjects = 0x0040AC20;     // __thiscall (scene)
+        constexpr uintptr_t kSceneObjectListsOffset = 0xE53C;   // four heads, linked by node+0x64
+
+        constexpr uintptr_t kDrawNodeFlagsOffset = 0x00;        // 2 a second stage, 0x10 animated
+        constexpr uintptr_t kDrawNodeModelOffset = 0x04;
+        constexpr uintptr_t kDrawNodeTextureOffset = 0x08;
+        constexpr uintptr_t kDrawNodeMatrixOffset = 0x0C;       // 4x4 floats, model -> world
+        constexpr uintptr_t kDrawNodeFrameAOffset = 0x4C;
+        constexpr uintptr_t kDrawNodeFrameBOffset = 0x50;
+        constexpr uintptr_t kDrawNodeBlendOffset = 0x54;
+        constexpr uintptr_t kDrawNodeSecondTextureOffset = 0x58;
+        constexpr uintptr_t kDrawNodeKindOffset = 0x60;
+        constexpr uintptr_t kDrawNodeNextOffset = 0x64;
+        constexpr uint8_t kDrawNodeIsAnimated = 0x10;
+        constexpr uintptr_t kModelRenderAnimated = 0x00406760;  // __cdecl (model, from, to, blend)
+        constexpr uintptr_t kMeshCreate = 0x00406CF0;           // __cdecl () -> mesh, 0x34 zeroed
+        constexpr uintptr_t kMeshFree = 0x00406C60;             // __cdecl (mesh)
+        constexpr uintptr_t kMeshLoadFile = 0x004075D0;         // __cdecl (path) -> mesh
+        constexpr uintptr_t kMeshComputeCenter = 0x00406FB0;    // __stdcall (mesh, frame), RET 8
+        constexpr uintptr_t kMeshComputeExtents = 0x00407040;   // __stdcall (mesh, frame), RET 8
+        constexpr uintptr_t kMeshMakeWorkingCopy = 0x00406E00;  // __stdcall (mesh) -> bool, RET 4
+
+        constexpr size_t kModelSize = 0x13C;
+        constexpr uintptr_t kModelMagicOffset = 0x000;
+        constexpr uint32_t kModelMagic = 0x2222;
+        constexpr uintptr_t kModelNameOffset = 0x004;           // the path it was loaded by
+        constexpr size_t kModelNameLength = 0x100;
+        constexpr uintptr_t kModelKindOffset = 0x104;
+        constexpr uintptr_t kModelMeshOffset = 0x108;           // kept for kind 0 and kind 2
+        constexpr uintptr_t kModelVertexBufferOffset = 0x10C;
+        constexpr uintptr_t kModelVertexCountOffset = 0x110;
+        constexpr uintptr_t kModelPrimitiveCountOffset = 0x114;
+        constexpr uintptr_t kModelCentreOffset = 0x118;         // three floats
+        constexpr uintptr_t kModelReferencesOffset = 0x124;     // extra owners, not owners
+        constexpr uintptr_t kModelExtentsOffset = 0x128;        // three floats
+        constexpr uintptr_t kModelPreviousOffset = 0x134;
+        constexpr uintptr_t kModelNextOffset = 0x138;
+
+        constexpr int kModelKindMesh = 0;
+        constexpr int kModelKindStatic = 1;
+        constexpr int kModelKindAnimated = 2;
+
+        // interpolated into before it is drawn.
+        constexpr size_t kMeshSize = 0x34;
+        constexpr uintptr_t kMeshFramesOffset = 0x14;
+        constexpr uintptr_t kMeshFrameCountOffset = 0x18;
+        constexpr uintptr_t kMeshCentreOffset = 0x1C;
+        constexpr uintptr_t kMeshExtentsOffset = 0x28;
+
+        constexpr size_t kMeshFrameStride = 0x14;
+        constexpr uintptr_t kMeshFrameVerticesOffset = 0x00;
+        constexpr uintptr_t kMeshFrameVertexCountOffset = 0x04;
+        constexpr uintptr_t kMeshFrameIndicesOffset = 0x08;
+        constexpr uintptr_t kMeshFrameIndexCountOffset = 0x0C;
+        constexpr uintptr_t kMeshFramePrimitiveCountOffset = 0x10;
+
+        // A .mmd vertex is x y z nx ny nz u v, all floats; an index is a uint16.
+        constexpr size_t kMeshVertexSize = 0x20;
+
+        // identity view and a perspective of its own, so an item's matrix is model -> camera, not
+        // model -> world. Nothing in the game ever puts anything in it: it is a mod's to use.
+        // 
+
+        constexpr uintptr_t kMatrixPerspective = 0x004080C0;    // __thiscall (m, fov, aspect, n, f)
+        constexpr uintptr_t kScene = 0x00505AA8;
+        constexpr uintptr_t kSceneDrawListOffset = 0x00004;     // items, stride 0x7C
+        constexpr uintptr_t kSceneDrawCountOffset = 0x00F84;
+        constexpr size_t kSceneDrawCapacity = 0x20;
+        constexpr uintptr_t kSceneViewOffset = 0x111A8;         // both are 4x4 floats
+        constexpr uintptr_t kSceneProjectionOffset = 0x111E8;
+
+        constexpr uintptr_t kSceneAddModel = 0x0040CD50;        // __cdecl (item)
+        constexpr uintptr_t kSceneDrawModels = 0x0040A0A0;      // __thiscall (scene)
+
+        constexpr size_t kDrawItemSize = 0x7C;
+        constexpr uintptr_t kDrawItemFlagsOffset = 0x00;
+        constexpr uintptr_t kDrawItemModelOffset = 0x04;        // refused when null
+        constexpr uintptr_t kDrawItemTextureOffset = 0x08;
+        constexpr uintptr_t kDrawItemPositionOffset = 0x0C;     // three floats
+        constexpr uintptr_t kDrawItemAngleXOffset = 0x18;       // radians, applied last
+        constexpr uintptr_t kDrawItemAngleYOffset = 0x1C;
+        constexpr uintptr_t kDrawItemAngleZOffset = 0x20;       // applied first
+        constexpr uintptr_t kDrawItemFrameOffset = 0x24;        // 0 draws the model still
+        constexpr uintptr_t kDrawItemMatrixOffset = 0x2C;
+        constexpr uintptr_t kDrawItemAxisOffset = 0x6C;
+        constexpr uintptr_t kDrawItemAxisAngleOffset = 0x78;
+
+        constexpr uint8_t kDrawItemTurnsAboutAxis = 0x01;
+
+        // Without it the game builds an identity itself and drops the three floats at +0x0C in as
+
+        constexpr uint8_t kDrawItemHasMatrix = 0x02;
+
+        // reference count. CAnimManager is the static object at 0x005176E8.
+        constexpr uintptr_t kAnimManager = 0x005176E8;
+        constexpr uintptr_t kAnimListHead = 0x005176EC;
+        constexpr uintptr_t kLoadOrFindAnim = 0x004146B0;       // __cdecl (path) -> animation
+
+        constexpr uintptr_t kResolveAnimSlot = 0x0069136C;      // = LoadOrFindAnim
+        constexpr uintptr_t kAnimPlaySlot = 0x00691370;         // = kAnimPlay
+        constexpr uintptr_t kAnimIsPlayingSlot = 0x00691374;    // = kAnimIsPlaying
+        constexpr uintptr_t kAnimReleaseSlot = 0x00691378;      // = kAnimRelease
+
+        // __cdecl (animation, frameset, state, position, flags), five arguments. The position is
+        // three floats and is what the frameset's sounds are emitted from.
+        constexpr uintptr_t kAnimPlay = 0x004148F0;
+        // __cdecl (animation, frameset, state) -> bool. The animation is not even read: it
+        // compares the frameset the state is on by name.
+        constexpr uintptr_t kAnimIsPlaying = 0x00414A50;
+        constexpr uintptr_t kAnimRelease = 0x00414710;          // __cdecl (animation)
+        constexpr uint32_t kAnimMagic = 0x5555;                 // at animation+0
+
+        constexpr uint32_t kAnimFlagStopped = 0x4;
+        constexpr uint32_t kAnimFlagFinished = 0x8;
+
+        // between them are the pose the model is actually drawn in.
+        constexpr uintptr_t kAnimStateAnimationOffset = 0x04;
+        constexpr uintptr_t kAnimStateFramesetOffset = 0x08;    // the frameset record, or null
+        constexpr uintptr_t kAnimStatePositionOffset = 0x2C;    // three floats, for the sounds
+        constexpr uintptr_t kAnimStateFlagsOffset = 0x40;
+        constexpr uintptr_t kAnimStateSpeedOffset = 0x44;
+        constexpr uintptr_t kAnimStateDirectionOffset = 0x48;   // below zero runs the range down
+        constexpr uintptr_t kAnimStateFrameAOffset = 0x4C;
+        constexpr uintptr_t kAnimStateFrameBOffset = 0x50;
+        constexpr uintptr_t kAnimStateBlendOffset = 0x54;       // 0..1 from A to B
+
+        constexpr uintptr_t kAnimNameOffset = 0x004;
+        constexpr size_t kAnimNameLength = 0x100;
+        constexpr uintptr_t kAnimFramesetsOffset = 0x104;
+        constexpr uintptr_t kAnimFramesetCountOffset = 0x108;
+        constexpr uintptr_t kAnimBoxOffset = 0x10C;             // $anim_bbox
+        constexpr uintptr_t kAnimBoxEntityOffset = 0x110;       // $anim_bbox_entity
+        constexpr uintptr_t kAnimNextOffset = 0x118;
+        constexpr uintptr_t kAnimReferencesOffset = 0x11C;
+
+        // One $frameset block of the .anm, as CAnimBox::Parse reads it.
+        constexpr size_t kFramesetStride = 0xB8;
+        constexpr uintptr_t kFramesetNameOffset = 0x00;         // 0x40
+        constexpr uintptr_t kFramesetFpsOffset = 0x40;
+        constexpr uintptr_t kFramesetDirectionOffset = 0x44;    // 1.0 up the range, -1.0 down
+        constexpr uintptr_t kFramesetStartFrameOffset = 0x48;   // $startframe, clamped to the range
+        constexpr uintptr_t kFramesetFromOffset = 0x4C;         // $range
+        constexpr uintptr_t kFramesetToOffset = 0x50;
+        constexpr uintptr_t kFramesetLoopOffset = 0x54;
+        constexpr uintptr_t kFramesetBreakOffset = 0x58;        // forced to 1 when it loops
+        constexpr uintptr_t kFramesetFollowOffset = 0x60;       // 0x40, what plays after it
+
+        // Where a live entity keeps the two halves of playing one.
+        constexpr uintptr_t kEntityAnimationOffset = 0x27C;
+        constexpr uintptr_t kEntityAnimStateOffset = 0x4A0;
+
+        // names, a reference count and a magic of their own.
+        constexpr uintptr_t kTextureManager = 0x00695D38;       // its first dword is the list head
+        constexpr uintptr_t kTextureListHead = 0x00695D38;
+        constexpr uintptr_t kLoadOrFindTexture = 0x0047C200;    // __thiscall (mgr, name, mip, alpha)
+        constexpr uintptr_t kFindTextureInList = 0x0047BDB0;    // matches all three, not just name
+        constexpr uintptr_t kTextureRelease = 0x0047C400;       // __thiscall (mgr, texture)
+        constexpr uintptr_t kTextureUnlink = 0x0047BFB0;        // __thiscall (mgr, texture)
+        constexpr uintptr_t kTextureConstruct = 0x0047BFE0;     // __fastcall (texture)
+
+        constexpr uintptr_t kTextureBuild = 0x0047C000;         // __stdcall (texture) -> bool, RET 4
+        constexpr uintptr_t kTextureLoadFromFile = 0x0047BC90;  // when it has a name
+        constexpr uintptr_t kTextureFromPixels = 0x0047B950;    // when it has pixels instead
+
+        constexpr size_t kTextureSize = 0x130;
+        constexpr uintptr_t kTextureNextOffset = 0x004;
+        constexpr uintptr_t kTexturePreviousOffset = 0x008;
+        constexpr uintptr_t kTextureMagicOffset = 0x00C;
+        constexpr uint32_t kTextureMagic = 0x1111;
+
+        // so a buffer handed over must come from the game's own allocator.
+        constexpr uintptr_t kTextureFromPixelsOffset = 0x010;
+        constexpr uintptr_t kTextureNameOffset = 0x011;         // what Package_OpenFile is given
+        constexpr uintptr_t kTexturePixelsOffset = 0x114;       // width*height, 4 bytes each, RGBx
+        constexpr uintptr_t kTextureAlphaOffset = 0x118;        // picks one of two D3DFORMATs
+        constexpr uintptr_t kTextureSurfaceOffset = 0x11C;      // IDirect3DTexture8*
+        constexpr uintptr_t kTextureMipOffset = 0x120;          // zero: one level, else a chain
+        constexpr uintptr_t kTextureWidthOffset = 0x124;
+        constexpr uintptr_t kTextureHeightOffset = 0x128;
+        constexpr uintptr_t kTextureReferencesOffset = 0x12C;
+
+        constexpr uintptr_t kD3dDevice = 0x00695C74;
+        constexpr uintptr_t kTextureFormatAlpha = 0x00695D3C;
+        constexpr uintptr_t kTextureFormatPlain = 0x00695D40;
 
         constexpr size_t kRoomGridColumns = 40;
         constexpr size_t kRoomGridRows = 29;
@@ -938,12 +1128,43 @@ namespace Forge
     constexpr uint8_t kMonsterParseSpawnPrologue[] =
     { 0x81, 0xEC, 0x5C, 0x01, 0x00, 0x00 };
 
+    // LoadOrFindModel: PUSH EDI / MOV EDI,[ESP+8]  → 5. __cdecl.
+    constexpr uint8_t kLoadOrFindModelPrologue[] =
+    { 0x57, 0x8B, 0x7C, 0x24, 0x08 };
+
+    // Model_Release: PUSH ESI / MOV ESI,[ESP+8]  → 5. __cdecl.
+    constexpr uint8_t kModelReleasePrologue[] =
+    { 0x56, 0x8B, 0x74, 0x24, 0x08 };
+
+    // LoadOrFindTexture: PUSH ECX / PUSH EDI / MOV EDI,[ESP+0xc]  → 6. __thiscall, RET 0xC.
+    constexpr uint8_t kLoadOrFindTexturePrologue[] =
+    { 0x51, 0x57, 0x8B, 0x7C, 0x24, 0x0C };
+
+    // Model_DrawNode: MOV ECX,[0x00503590]  → 6, one instruction. __cdecl.
+    constexpr uint8_t kModelDrawNodePrologue[] =
+    { 0x8B, 0x0D, 0x90, 0x35, 0x50, 0x00 };
+
+    // Model_Render: MOV EAX,[ESP+4] / TEST EAX,EAX  → 6. __cdecl.
+    constexpr uint8_t kModelRenderPrologue[] =
+    { 0x8B, 0x44, 0x24, 0x04, 0x85, 0xC0 };
+
+    // Model_RenderAnimated: PUSH EBX / MOV EBX,[ESP+8]  → 5. __cdecl.
+    constexpr uint8_t kModelRenderAnimatedPrologue[] =
+    { 0x53, 0x8B, 0x5C, 0x24, 0x08 };
+
+    // Scene_DrawModels: SUB ESP,0x8c  → 6, one instruction. __thiscall, scene in ECX.
+    constexpr uint8_t kSceneDrawModelsPrologue[] =
+    { 0x81, 0xEC, 0x8C, 0x00, 0x00, 0x00 };
+
+    // LoadOrFindAnim: PUSH ESI / MOV ESI,[ESP+8]  → 5. __cdecl.
+    constexpr uint8_t kLoadOrFindAnimPrologue[] =
+    { 0x56, 0x8B, 0x74, 0x24, 0x08 };
+
     // Monsters_FreeResources: CMP [0x00691458],0  → 7
     constexpr uint8_t kMonstersFreeResourcesPrologue[] =
     { 0x83, 0x3D, 0x58, 0x14, 0x69, 0x00, 0x00 };
 
     // The six touch handlers, one per family, all __cdecl (monster, other, side). Between them
-    // they hold every rule of what a monster does to the player and the player to it.
     struct MonsterTouchSite
     {
         uintptr_t address;

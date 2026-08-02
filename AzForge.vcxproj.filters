@@ -42,6 +42,12 @@
     <ClInclude Include="sdk\include\MonstersApi.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\MmdApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\TextureApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
     <ClInclude Include="sdk\include\ConsoleApi.h">
       <Filter>SDK</Filter>
     </ClInclude>
@@ -222,6 +228,12 @@
     <ClInclude Include="src\Api\MonstersApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="src\Api\MmdApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\TextureApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -355,6 +367,12 @@
       <Filter>Zip</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\MonstersApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\MmdApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\TextureApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

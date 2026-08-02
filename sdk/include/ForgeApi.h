@@ -13,6 +13,8 @@
 #include "HudApi.h"
 #include "InventoryApi.h"
 #include "MonstersApi.h"
+#include "MmdApi.h"
+#include "TextureApi.h"
 #include "InteropApi.h"
 #include "ModManagerApi.h"
 #include "InputApi.h"
@@ -71,6 +73,12 @@ typedef struct AmodApi
     /* The monsters a level is filled with */
     const AmodMonstersApi* monsters;
 
+    /* Every 3D model the game has: its triangles, models of the mod's own, and standing in for */
+    const AmodMmdApi* mmd;
+
+    /* Every texture the game has, and textures a mod draws itself. */
+    const AmodTextureApi* textures;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
@@ -118,6 +126,8 @@ namespace Amod
         Inventory::Attach(api->inventory, api->self);
         Hud::Attach(api->hud, api->self);
         Monsters::Attach(api->monsters, api->self);
+        Mmd::Attach(api->mmd, api->self);
+        Textures::Attach(api->textures, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

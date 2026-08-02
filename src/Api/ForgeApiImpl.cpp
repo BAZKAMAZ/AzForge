@@ -10,6 +10,8 @@
 #include "src/Api/BonusesApi.h"
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
+#include "src/Api/MmdApi.h"
+#include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/RenderApi.h"
@@ -133,6 +135,8 @@ namespace Forge
         context.table.inventory = InventoryApi::Table();
         context.table.hud = HudApi::Table();
         context.table.monsters = MonstersApi::Table();
+        context.table.mmd = MmdApi::Table();
+        context.table.textures = TextureApi::Table();
         context.table.input = InputApi::Table();
 
         context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;
