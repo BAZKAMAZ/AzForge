@@ -10,48 +10,52 @@ typedef uint32_t AmodTextureId;
 extern "C" {
 #endif
 
-    typedef struct AmodTexture
-    {
-        uint32_t structSize;
+typedef struct AmodTexture
+{
+    uint32_t structSize;
 
-        const char* name;           /* "" when it was made from pixels rather than read */
-        int width;
-        int height;
-        int mipmapped;
-        int hasAlpha;               /* which of the two formats it was created in */
-        int madeHere;               /* built from pixels, by a mod or by the game */
-        int references;             /* extra owners besides the first */
+    const char* name;           /* "" when it was made from pixels rather than read */
+    int width;
+    int height;
+    int mipmapped;
+    int hasAlpha;               /* which of the two formats it was created in */
+    int madeHere;               /* built from pixels, by a mod or by the game */
+    int references;             /* extra owners besides the first */
 
-        /* New fields are appended, never inserted. */
-    } AmodTexture;
+    /* New fields are appended, never inserted. */
+} AmodTexture;
 
-    typedef struct AmodTextureApi
-    {
-        uint32_t structSize;
+AMOD_LAST_FIELD(AmodTexture, references, 0x1C);
 
-        int(__cdecl* GetCount)(AmodMod mod);
-        AmodTextureId(__cdecl* GetAt)(AmodMod mod, int index);
-        AmodTextureId(__cdecl* Find)(AmodMod mod, const char* name);
-        int(__cdecl* Get)(AmodMod mod, AmodTextureId texture, AmodTexture* out);
-        int(__cdecl* IsValid)(AmodMod mod, AmodTextureId texture);
+typedef struct AmodTextureApi
+{
+    uint32_t structSize;
 
-        /* Through the game's own door */
-        AmodTextureId(__cdecl* Load)(AmodMod mod, const char* path, int mipmapped, int hasAlpha);
-        int(__cdecl* Release)(AmodMod mod, AmodTextureId texture);
+    int(__cdecl* GetCount)(AmodMod mod);
+    AmodTextureId(__cdecl* GetAt)(AmodMod mod, int index);
+    AmodTextureId(__cdecl* Find)(AmodMod mod, const char* name);
+    int(__cdecl* Get)(AmodMod mod, AmodTextureId texture, AmodTexture* out);
+    int(__cdecl* IsValid)(AmodMod mod, AmodTextureId texture);
 
-        /* Out of pixels, with no file anywhere */
-        AmodTextureId(__cdecl* Create)(AmodMod mod, int width, int height, const void* pixels,
-            int mipmapped, int hasAlpha);
+    /* Through the game's own door */
+    AmodTextureId(__cdecl* Load)(AmodMod mod, const char* path, int mipmapped, int hasAlpha);
+    int(__cdecl* Release)(AmodMod mod, AmodTextureId texture);
 
-        /* New pixels into a texture that already exists, whether it was made or read from a file */
-        int(__cdecl* Replace)(AmodMod mod, AmodTextureId texture, int width, int height, const void* pixels);
+    /* Out of pixels, with no file anywhere */
+    AmodTextureId(__cdecl* Create)(AmodMod mod, int width, int height, const void* pixels,
+        int mipmapped, int hasAlpha);
 
-        /* Every request for that path is answered with this texture instead, whoever asks */
-        int(__cdecl* Override)(AmodMod mod, const char* path, AmodTextureId texture);
-        int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
+    /* New pixels into a texture that already exists, whether it was made or read from a file */
+    int(__cdecl* Replace)(AmodMod mod, AmodTextureId texture, int width, int height, const void* pixels);
 
-        /* Fields added in later API versions go here, and nowhere else. */
-    } AmodTextureApi;
+    /* Every request for that path is answered with this texture instead, whoever asks */
+    int(__cdecl* Override)(AmodMod mod, const char* path, AmodTextureId texture);
+    int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
+
+    /* Fields added in later API versions go here, and nowhere else. */
+} AmodTextureApi;
+
+AMOD_LAST_FIELD(AmodTextureApi, ClearOverride, 0x2C);
 
 #ifdef __cplusplus
 } /* extern "C" */

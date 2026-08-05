@@ -22,6 +22,8 @@ typedef struct AmodLauncherCommand
     int handled;        /* set non-zero to stop the game handling this */
 } AmodLauncherCommand;
 
+AMOD_LAST_FIELD(AmodLauncherCommand, handled, 0x08);
+
 #define AMOD_LAUNCHER_ID_RASTER_COMBO                               0x3E8
 #define AMOD_LAUNCHER_ID_CONFIG_BUTTON                              0x3E9
 #define AMOD_LAUNCHER_ID_REGISTER_BUTTON                            0x3EA
@@ -64,6 +66,8 @@ typedef struct AmodLauncherApi
     /* Dialog HWND; null unless expectedGameBuild matches. */
     void* (__cdecl* GetWindow)(AmodMod mod, uint32_t expectedGameBuild);
 } AmodLauncherApi;
+
+AMOD_LAST_FIELD(AmodLauncherApi, GetWindow, 0x30);
 
 #ifdef __cplusplus
 }

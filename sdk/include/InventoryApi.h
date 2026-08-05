@@ -34,6 +34,8 @@ typedef struct AmodInventoryItem
     /* New fields are appended, never inserted. */
 } AmodInventoryItem;
 
+AMOD_LAST_FIELD(AmodInventoryItem, burnTime, 0x1C);
+
 /* The scoring chain */
 typedef struct AmodBonusChain
 {
@@ -46,6 +48,8 @@ typedef struct AmodBonusChain
 
     /* New fields are appended, never inserted. */
 } AmodBonusChain;
+
+AMOD_LAST_FIELD(AmodBonusChain, window, 0x10);
 
 typedef struct AmodInventoryApi
 {
@@ -99,6 +103,8 @@ typedef struct AmodInventoryApi
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodInventoryApi;
+
+AMOD_LAST_FIELD(AmodInventoryApi, SetSlotCount, 0x50);
 
 #ifdef __cplusplus
 } /* extern "C" */

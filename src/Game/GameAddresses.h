@@ -588,6 +588,28 @@ namespace Forge
         constexpr uintptr_t kEntityMoveStep = 0x0043F140;
         constexpr uintptr_t kEntityMoveStateOffset = 0x120;
 
+        // Entity_MoveStep only sorts out the way
+        // speed at entity+0x224 and steps by speed * direction * delta
+        // way: a hard $level was folded into 0x224 at spawn, and entity+0x4E4 is read by nobody.
+        constexpr uintptr_t kEntityStepWalk = 0x0043E480;
+
+        // The body, entity-relative
+        //is what says the mapping is right.
+        constexpr uintptr_t kEntityMoveFlagsOffset = 0x120;      // what this body is allowed to do
+        constexpr uintptr_t kEntityMoveStateNowOffset = 0x17C;   // 1 and 6 are the two walking ones
+        constexpr uintptr_t kEntityMoveLastDirOffset = 0x1A4;
+        constexpr uintptr_t kEntityMoveStateTimeOffset = 0x1A8;
+        constexpr uintptr_t kEntityMoveVelocityOffset = 0x1AC;   // along the way it faces
+        constexpr uintptr_t kEntityMoveVertVelocityOffset = 0x1B4;
+        constexpr uintptr_t kEntityMoveHitFlagsOffset = 0x1C4;   // what the last step ran into
+        constexpr uintptr_t kEntityMoveHeightOffset = 0x220;     // how far above the floor
+        constexpr uintptr_t kEntityMoveGravityOffset = 0x22C;    // multiplies the one below
+        constexpr uintptr_t kEntityMoveFallSpeedOffset = 0x230;  // copied from a global at spawn
+
+        // Zero on every monster, only the player's body is given one - which is why a monster is at
+        //full pace on its first frame. Write one and it has to work up to its speed.
+        constexpr uintptr_t kEntityMoveAccelOffset = 0x248;
+
         constexpr uintptr_t kEntityThinkOffset = 0x5B8;
         constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
 
@@ -654,6 +676,9 @@ namespace Forge
         constexpr uintptr_t kMonsterSpawnDecorOffset = 0x0DC;
         constexpr uintptr_t kMonsterSpawnMoveTypeOffset = 0x0F0;
         constexpr uintptr_t kMonsterSpawnWalkTimeOffset = 0x100;
+
+        // One reader, Monster_StepMove 0x004457D0, and it has one caller: Monster_ThinkMummy2
+        //the key moves a mummy2 and nothing else, whatever it is set on.
         constexpr uintptr_t kMonsterSpawnWalkWaitOffset = 0x108;
         constexpr uintptr_t kMonsterSpawnSitTimeOffset = 0x110;
         constexpr uintptr_t kMonsterSpawnWaitTimeOffset = 0x118;
@@ -663,6 +688,16 @@ namespace Forge
         constexpr uintptr_t kMonsterSpawnTimerOffset = 0x0E8;
         constexpr int kMonsterStateMove = 0;
         constexpr int kMonsterStateSit = 1;
+
+        // A second cycle inside the "move" one: the mummy2 walks while the timer lasts, then stands
+        // through a "stay"
+        constexpr uintptr_t kMonsterSpawnWalkStateOffset = 0x0E4;   // 0 walking, 1 standing still
+        constexpr uintptr_t kMonsterSpawnWalkTimerOffset = 0x0EC;
+        constexpr int kMonsterWalkStep = 0;
+        constexpr int kMonsterWalkStay = 1;
+
+        constexpr uintptr_t kMonsterStepMove = 0x004457D0;      // __cdecl (entity, placement)
+        constexpr uintptr_t kMonsterStepSit = 0x00445A40;
 
         // A live monster. The placement is kind 10, the entity itself is kind 2.
         constexpr int kEntityKindMonster = 2;
@@ -894,9 +929,30 @@ namespace Forge
 
         // identity view and a perspective of its own, so an item's matrix is model -> camera, not
         // model -> world. Nothing in the game ever puts anything in it: it is a mod's to use.
-        // 
 
         constexpr uintptr_t kMatrixPerspective = 0x004080C0;    // __thiscall (m, fov, aspect, n, f)
+        // Scene_SortObjects builds the draw nodes: once a frame it walks the live entity list and
+        // takes the next node out of the pool for every entity that is not hidden and carries a
+        // model, filling node+0x04 from entity+0x274 and node+0x08 from +0x278
+        // +0x284 takes the node right behind
+        //back is that order, walked again.
+        constexpr uintptr_t kSceneSortObjects = 0x0040A640;
+        constexpr uintptr_t kSceneNodePoolOffset = 0x1538;
+        constexpr size_t kSceneNodeStride = 0x68;
+        constexpr uintptr_t kSceneNodeCountOffset = 0xE538;
+        constexpr size_t kSceneNodeCapacity = 0x200;
+
+        constexpr uint32_t kEntityHiddenFlag = 0x100;           // in kEntityFlagsOffset
+
+        // Bit 0x80 sends the node to the second list of a pair, and Scene_DrawObjects turns render
+        // state 0x8C on around exactly those two - which is what makes a colour's alpha count.
+        constexpr uint32_t kEntityBlendFlag = 0x80;
+
+        // A second model with its own texture, drawn in the same place: one texture per draw, so
+        //this is how the game itself puts two materials on one thing.
+        constexpr uintptr_t kEntitySecondModelOffset = 0x284;
+        constexpr uintptr_t kEntitySecondTextureOffset = 0x288;
+
         constexpr uintptr_t kScene = 0x00505AA8;
         constexpr uintptr_t kSceneDrawListOffset = 0x00004;     // items, stride 0x7C
         constexpr uintptr_t kSceneDrawCountOffset = 0x00F84;
@@ -965,6 +1021,19 @@ namespace Forge
         constexpr uintptr_t kAnimFramesetCountOffset = 0x108;
         constexpr uintptr_t kAnimBoxOffset = 0x10C;             // $anim_bbox
         constexpr uintptr_t kAnimBoxEntityOffset = 0x110;       // $anim_bbox_entity
+
+        // Both point at an AnimBox, 0x24, built by AnimBox_Create 0x00414330
+        constexpr uintptr_t kAnimBoxParse = 0x00414040;
+        constexpr uintptr_t kAnimBoxSample = 0x00414250;        // (frameA, frameB, blend, animBox, out)
+        constexpr uintptr_t kEntityFrameBoxOffset = 0x13C;      // where that result lands
+        constexpr size_t kAnimBoxSize = 0x24;
+        constexpr uintptr_t kAnimBoxDefaultOffset = 0x00;       // $default_bbox
+        constexpr uintptr_t kAnimBoxFramesOffset = 0x1C;
+        constexpr uintptr_t kAnimBoxFrameCountOffset = 0x20;
+
+        constexpr size_t kAnimBoxFrameStride = 0x20;
+        constexpr uintptr_t kAnimBoxFrameUsedOffset = 0x00;     // that frame has one of its own
+        constexpr uintptr_t kAnimBoxFrameBoxOffset = 0x04;
         constexpr uintptr_t kAnimNextOffset = 0x118;
         constexpr uintptr_t kAnimReferencesOffset = 0x11C;
 
@@ -1022,14 +1091,23 @@ namespace Forge
         constexpr size_t kRoomGridRows = 29;
         constexpr size_t kRoomCellStride = 0x08;
 
-        // Collision box 0x1C: minZ, minX, minY, gap, maxX, maxY, maxZ
+        // Box_Parse 0x0043FB60 reads $min into +0x04, +0x08, +0x0C and $max into +0x10, +0x14,
+        // +0x18, in plain x y z order
+        // of the box - writing a coordinate into it makes a monster fall through the floor.
+        constexpr uintptr_t kBoxParse = 0x0043FB60;
+        constexpr uintptr_t kBoxMinXOffset = 0x04;
+        constexpr uintptr_t kBoxMinYOffset = 0x08;
+        constexpr uintptr_t kBoxMinZOffset = 0x0C;
+        constexpr uintptr_t kBoxMaxXOffset = 0x10;
+        constexpr uintptr_t kBoxMaxYOffset = 0x14;
+        constexpr uintptr_t kBoxMaxZOffset = 0x18;
+
+        // A room's boxes are that same 0x1C
+        // reads *box as an int and picks a colour by it, so +0x00 is the kind and the corners are
+        //where Box_Parse puts them. Use kBox*Offset above.
+        constexpr uintptr_t kRoomDrawBox = 0x00405D60;
         constexpr size_t kRoomCollisionBoxStride = 0x1C;
-        constexpr uintptr_t kRoomBoxMinZOffset = 0x00;
-        constexpr uintptr_t kRoomBoxMinXOffset = 0x04;
-        constexpr uintptr_t kRoomBoxMinYOffset = 0x08;
-        constexpr uintptr_t kRoomBoxMaxXOffset = 0x10;
-        constexpr uintptr_t kRoomBoxMaxYOffset = 0x14;
-        constexpr uintptr_t kRoomBoxMaxZOffset = 0x18;
+        constexpr uintptr_t kRoomBoxKindOffset = 0x00;      // 0..3, what the debug view colours by
     }
 
     // Package_OpenFile: PUSH ESI / MOV ESI,[ESP+8]  → 5 bytes

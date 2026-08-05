@@ -9,10 +9,12 @@
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
+#include "src/Game/GameSymbols.h"
 #include "src/Hook/InlineHook.h"
 
 #include <math.h>
 #include <stddef.h>
+#include <stdlib.h>
 #include <string.h>
 #include <string>
 #include <vector>
@@ -91,6 +93,13 @@ namespace Forge
                 out.partColorHard[at] =
                     Read<float>(record, GameAddress::kMonsterResPartColorHardOffset + step);
             }
+
+            //The record keeps the model, not its path: the path lives on the model, and that is what Find takes.
+            const uint8_t* const model = Read<const uint8_t*>(record, GameAddress::kMonsterResModelOffset);
+            out.model = (model != nullptr && Readable(model, GameAddress::kModelNameOffset + 4) &&
+                         Read<uint32_t>(model, GameAddress::kModelMagicOffset) == GameAddress::kModelMagic)
+                            ? ReadText(model, GameAddress::kModelNameOffset)
+                            : "";
         }
 
         int __cdecl ApiGetTypeCount(AmodMod mod)
@@ -244,7 +253,7 @@ namespace Forge
                 return true;
             }
 
-            void* const target = GameModule::Resolve(GameAddress::kMonstersFreeResources);
+            void* const target = GameSymbols::Address(GameSymbol::MonstersFreeResources);
             std::string mismatch;
 
             if (target == nullptr ||
@@ -429,6 +438,7 @@ namespace Forge
             { "tex_easy",        GameAddress::kMonsterResTexEasyOffset,       Kind::Resource, 0, 0, GameAddress::kResolveTextureSlot, true },
             { "tex_hard",        GameAddress::kMonsterResTexHardOffset,       Kind::Resource, 0, 0, GameAddress::kResolveTextureSlot, true },
             { "model",           GameAddress::kMonsterResModelOffset,         Kind::Resource, 0, 0, GameAddress::kResolveModelSlot,   true },
+            { "animation",       GameAddress::kMonsterResAnimationOffset,     Kind::Resource, 0, 0, GameAddress::kResolveAnimSlot,    true },
             { "speed_up",        GameAddress::kMonsterResSpeedUpOffset,       Kind::Float,    0, 0, 0, true },
             { "speed",           GameAddress::kMonsterResSpeedOffset,         Kind::Float,    0, 0, 0, true },
             { "vert_speed",      GameAddress::kMonsterResVertSpeedOffset,     Kind::Float,    0, 0, 0, true },
@@ -467,20 +477,60 @@ namespace Forge
             const uint8_t* const record = Caller(mod) != nullptr ? TypeByName(name) : nullptr;
             const Field* const field = ApiProperty::Find(kTypeFields, kTypeFieldCount, key);
 
-            return (record != nullptr && field != nullptr) ? ApiProperty::Get(record, *field, value)
-                                                           : 0;
+            if (record == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "the game knows no monster called '%s'",
+                            name != nullptr ? name : "");
+            }
+            if (field == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "a monster definition has no property called '%s'",
+                            key != nullptr ? key : "");
+            }
+            return ApiProperty::Get(record, *field, value);
         }
+
+        //Defined with the rest of the rollback, below.
+        void KeepType(ModContext* owner, uint8_t* record);
 
         int __cdecl ApiSetTypeProperty(AmodMod mod, const char* name, const char* key,
                                        const AmodValue* value)
         {
             ModContext* const caller = Caller(mod);
-            uint8_t* const record = OwnsType(caller, name) ? TypeByName(name) : nullptr;
+            uint8_t* const record = caller != nullptr ? TypeByName(name) : nullptr;
             const Field* const field = ApiProperty::Find(kTypeFields, kTypeFieldCount, key);
 
-            return (record != nullptr && field != nullptr && value != nullptr)
-                       ? ApiProperty::Set(record, *field, *value)
-                       : 0;
+            if (record == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "the game knows no monster called '%s'",
+                            name != nullptr ? name : "");
+            }
+            if (field == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "a monster definition has no property called '%s'",
+                            key != nullptr ? key : "");
+            }
+            if (value == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetTypeProperty was given no value for '%s'", key);
+            }
+
+            //A type the game owns may be written to as well: the whole record is kept first and put back.
+            if (!OwnsType(caller, name))
+            {
+                KeepType(caller, record);
+            }
+
+            if (ApiProperty::Set(record, *field, *value) != 0)
+            {
+                return 1;
+            }
+
+            //A resource goes through the game's own resolver, and a zero means it will not load that file.
+            return field->kind == Kind::Resource && value->kind == AMOD_VALUE_STRING
+                       ? Fail(mod, AMOD_FAIL_REFUSED, "the game will not load '%s' for '%s'",
+                              value->text != nullptr ? value->text : "", key)
+                       : Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "'%s' would not take that value", key);
         }
 
         // would shift every number after it for the rest of the frame.
@@ -525,6 +575,9 @@ namespace Forge
             }
             return nullptr;
         }
+
+        //Defined with the id registry, which needs MonsterAt and MonsterPlacement first.
+        uint32_t IdOfMonster(const uint8_t* entity);
 
         int __cdecl ApiGetCount(AmodMod mod)
         {
@@ -609,9 +662,14 @@ namespace Forge
         {
             const uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
             const uint8_t* const record = entity != nullptr ? MonsterPlacement(entity) : nullptr;
-            if (record == nullptr || out == nullptr)
+            if (record == nullptr)
             {
-                return 0;
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d; the room has %d",
+                            index, ApiGetCount(mod));
+            }
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Get was given nowhere to put the monster");
             }
 
             const int level = Read<int>(record, GameAddress::kMonsterSpawnLevelOffset);
@@ -637,6 +695,7 @@ namespace Forge
                                   : 0.0f;
             filled.isHard = (level == 1 || level == 3) ? 1 : 0;
             filled.isDecor = record[GameAddress::kMonsterSpawnDecorOffset] != 0 ? 1 : 0;
+            filled.id = IdOfMonster(entity);
 
             for (int axis = 0; axis < 3; ++axis)
             {
@@ -658,6 +717,7 @@ namespace Forge
 
             if (entity == nullptr || step == nullptr)
             {
+                Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to move", index);
                 return -1;
             }
 
@@ -674,11 +734,11 @@ namespace Forge
             uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
             const uint8_t* const record = entity != nullptr ? MonsterPlacement(entity) : nullptr;
             const KillRoutine kill =
-                reinterpret_cast<KillRoutine>(GameModule::Resolve(GameAddress::kMonsterKill));
+                reinterpret_cast<KillRoutine>(GameSymbols::Address(GameSymbol::MonsterKill));
 
             if (record == nullptr || kill == nullptr)
             {
-                return 0;
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to kill", index);
             }
 
             const bool counts = record[GameAddress::kMonsterSpawnDecorOffset] == 0;
@@ -703,10 +763,16 @@ namespace Forge
             { "time_left",   GameAddress::kMonsterSpawnTimerOffset,      Kind::Float, 0, 0, 0, true },
             { "level",       GameAddress::kMonsterSpawnLevelOffset,      Kind::Int,   0, 0, 0, true },
             { "dir",         GameAddress::kMonsterSpawnDirOffset,        Kind::Int,   0, 0, 0, true },
+            { "radius",      GameAddress::kMonsterSpawnRadiusOffset,      Kind::Float,  0, 0, 0, true },
+            { "axis",        GameAddress::kMonsterSpawnAxisOffset,        Kind::Floats, 3, 0, 0, true },
+            { "phase",       GameAddress::kMonsterSpawnPhaseOffset,       Kind::Float,  0, 0, 0, true },
             { "attack_dist", GameAddress::kMonsterSpawnAttackDistOffset, Kind::Float,  0, 0, 0, true },
             { "attack_time", GameAddress::kMonsterSpawnAttackTimeOffset, Kind::Floats, 2, 0, 0, true },
             { "bluff_time",  GameAddress::kMonsterSpawnBluffTimeOffset,  Kind::Floats, 2, 0, 0, true },
             { "walk_time",   GameAddress::kMonsterSpawnWalkTimeOffset,   Kind::Floats, 2, 0, 0, true },
+            { "walk_wait",   GameAddress::kMonsterSpawnWalkWaitOffset,   Kind::Floats, 2, 0, 0, true },
+            { "walk_state",  GameAddress::kMonsterSpawnWalkStateOffset,  Kind::Int,    0, 0, 0, true },
+            { "walk_left",   GameAddress::kMonsterSpawnWalkTimerOffset,  Kind::Float,  0, 0, 0, true },
             { "sit_time",    GameAddress::kMonsterSpawnSitTimeOffset,    Kind::Floats, 2, 0, 0, true },
             { "wait_time",   GameAddress::kMonsterSpawnWaitTimeOffset,   Kind::Floats, 2, 0, 0, true },
             { "pos_lerp",    GameAddress::kMonsterSpawnPosLerpOffset,    Kind::Float, 0, 0, 0, true },
@@ -721,6 +787,16 @@ namespace Forge
         constexpr Field kEntityFields[] =
         {
             { "facing",  GameAddress::kMonsterEntityFacingOffset,   Kind::Int,   0, 0, 0, true },
+            { "hard",    GameAddress::kMonsterEntityHardOffset,     Kind::Float, 0, 0, 0, true },
+
+            //The body that walks it. "accel" is the one the game leaves at zero on every monster.
+            { "accel",         GameAddress::kEntityMoveAccelOffset,        Kind::Float, 0, 0, 0, true },
+            { "gravity",       GameAddress::kEntityMoveGravityOffset,      Kind::Float, 0, 0, 0, true },
+            { "fall_speed",    GameAddress::kEntityMoveFallSpeedOffset,    Kind::Float, 0, 0, 0, true },
+            { "velocity",      GameAddress::kEntityMoveVelocityOffset,     Kind::Float, 0, 0, 0, true },
+            { "vert_velocity", GameAddress::kEntityMoveVertVelocityOffset, Kind::Float, 0, 0, 0, true },
+            { "height",        GameAddress::kEntityMoveHeightOffset,       Kind::Float, 0, 0, 0, true },
+            { "move_state",    GameAddress::kEntityMoveStateNowOffset,     Kind::Int,   0, 0, 0, true },
             { "x",       GameAddress::kEntityPositionOffset,        Kind::Float, 0, 0, 0, true },
             { "y",       GameAddress::kEntityPositionOffset + 0x04, Kind::Float, 0, 0, 0, true },
             { "z",       GameAddress::kEntityPositionOffset + 0x08, Kind::Float, 0, 0, 0, true },
@@ -728,6 +804,13 @@ namespace Forge
             // dressed differently from the rest of its kind without touching the type.
             { "model",   GameAddress::kEntityModelOffset,   Kind::Resource, 0, 0, GameAddress::kResolveModelSlot,   true },
             { "texture", GameAddress::kEntityTextureOffset, Kind::Resource, 0, 0, GameAddress::kResolveTextureSlot, true },
+
+            //One draw carries one texture, so a second material is a second model - the game's own answer.
+            { "model2",   GameAddress::kEntitySecondModelOffset,   Kind::Resource, 0, 0, GameAddress::kResolveModelSlot,   true },
+            { "texture2", GameAddress::kEntitySecondTextureOffset, Kind::Resource, 0, 0, GameAddress::kResolveTextureSlot, true },
+
+            //The pass that blends, which is what makes a colour's alpha count for anything.
+            { "blend",   GameAddress::kEntityFlagsOffset, Kind::Flag, 0, GameAddress::kEntityBlendFlag, 0, true },
         };
 
         constexpr size_t kEntityFieldCount = sizeof(kEntityFields) / sizeof(Field);
@@ -779,9 +862,15 @@ namespace Forge
         {
             const uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
             const uint8_t* const record = entity != nullptr ? MonsterPlacement(entity) : nullptr;
-            if (record == nullptr || value == nullptr)
+            if (record == nullptr)
             {
-                return 0;
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to read '%s' off",
+                            index, key != nullptr ? key : "");
+            }
+            if (value == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetProperty was given nowhere to put '%s'",
+                            key != nullptr ? key : "");
             }
 
             if (SpeedKey(key))
@@ -796,23 +885,33 @@ namespace Forge
             }
 
             const Field* const field = ApiProperty::Find(kMonsterFields, kMonsterFieldCount, key);
-            return field != nullptr ? ApiProperty::Get(record, *field, value) : 0;
+            return field != nullptr
+                       ? ApiProperty::Get(record, *field, value)
+                       : Fail(mod, AMOD_FAIL_NO_SUCH, "a monster has no property called '%s'",
+                              key != nullptr ? key : "");
         }
 
         int __cdecl ApiSetProperty(AmodMod mod, int index, const char* key, const AmodValue* value)
         {
             uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
             uint8_t* const record = entity != nullptr ? MonsterPlacement(entity) : nullptr;
-            if (record == nullptr || value == nullptr)
+            if (record == nullptr)
             {
-                return 0;
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to write '%s' on",
+                            index, key != nullptr ? key : "");
+            }
+            if (value == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetProperty was given no value for '%s'",
+                            key != nullptr ? key : "");
             }
 
             if (SpeedKey(key))
             {
                 if (value->kind != AMOD_VALUE_FLOAT || value->count < 1)
                 {
-                    return 0;
+                    return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "'speed' is one number, and was given %s",
+                                value->kind == AMOD_VALUE_FLOAT ? "none" : "something else");
                 }
                 SetSpeed(entity, record, value->numbers[0]);
                 return 1;
@@ -821,11 +920,20 @@ namespace Forge
             const Field* const mine = ApiProperty::Find(kEntityFields, kEntityFieldCount, key);
             if (mine != nullptr)
             {
-                return ApiProperty::Set(entity, *mine, *value);
+                return ApiProperty::Set(entity, *mine, *value) != 0
+                           ? 1
+                           : Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "'%s' would not take that value", key);
             }
 
             const Field* const field = ApiProperty::Find(kMonsterFields, kMonsterFieldCount, key);
-            return field != nullptr ? ApiProperty::Set(record, *field, *value) : 0;
+            if (field == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "a monster has no property called '%s'",
+                            key != nullptr ? key : "");
+            }
+            return ApiProperty::Set(record, *field, *value) != 0
+                       ? 1
+                       : Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "'%s' would not take that value", key);
         }
 
         // built from, which is what a mod reaches here.
@@ -866,6 +974,136 @@ namespace Forge
                 ++seen;
             }
             return nullptr;
+        }
+
+        bool AllDigits(const char* text)
+        {
+            if (text == nullptr || *text == '\0')
+            {
+                return false;
+            }
+            for (const char* at = text; *at != '\0'; ++at)
+            {
+                if (*at < '0' || *at > '9')
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        //Read from the RIGHT: a name carries underscores of its own, so "j_skull_15_7" is a j_skull.
+        //A key with no numbers on the end is a name alone and means the first of its kind.
+        bool ParseKey(const char* key, char* name, size_t size, int& column, int& row)
+        {
+            column = -1;
+            row = -1;
+
+            if (key == nullptr || *key == '\0')
+            {
+                return false;
+            }
+            strncpy_s(name, size, key, _TRUNCATE);
+
+            char* const rowAt = strrchr(name, '_');
+            if (rowAt == nullptr || !AllDigits(rowAt + 1))
+            {
+                return true;
+            }
+
+            *rowAt = '\0';
+            char* const columnAt = strrchr(name, '_');
+            if (columnAt == nullptr || !AllDigits(columnAt + 1))
+            {
+                *rowAt = '_';
+                return true;
+            }
+
+            column = atoi(columnAt + 1);
+            row = atoi(rowAt + 1);
+            *columnAt = '\0';
+            return true;
+        }
+
+        //The record keeps only the position $pos became, so the cell is matched back through it with
+        //half a cell of room. A bat is the exception: its record holds the middle of the arc it flies.
+        bool PlacementIs(const uint8_t* record, const char* name, int column, int row)
+        {
+            if (record == nullptr || !NameAt(record, GameAddress::kMonsterSpawnNameOffset) ||
+                strcmp(ReadText(record, GameAddress::kMonsterSpawnNameOffset), name) != 0)
+            {
+                return false;
+            }
+            if (column < 0)
+            {
+                return true;
+            }
+
+            const float wantX = column * GameAddress::kCellToWorld + GameAddress::kCellOriginX + GameAddress::kCellCentre;
+            const float wantY = GameAddress::kCellOriginY - row * GameAddress::kCellToWorld - GameAddress::kCellCentre;
+            const float half = GameAddress::kCellToWorld * 0.5f;
+
+            return fabsf(Read<float>(record, GameAddress::kMonsterSpawnPositionOffset) - wantX) < half &&
+                   fabsf(Read<float>(record, GameAddress::kMonsterSpawnPositionOffset + 0x04) - wantY) < half;
+        }
+
+        AmodMonsterId __cdecl ApiFind(AmodMod mod, const char* key)
+        {
+            char name[64];
+            int column = 0;
+            int row = 0;
+
+            if (Caller(mod) == nullptr || !ParseKey(key, name, sizeof(name), column, row))
+            {
+                Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Find wants a name and a cell, like 'spider_15_7'");
+                return AMOD_MONSTER_NONE;
+            }
+
+            for (uint8_t* entity = WorldApi::FirstLiveEntity();
+                 entity != nullptr && Readable(entity, GameAddress::kEntitySize);
+                 entity = WorldApi::NextLiveEntity(entity))
+            {
+                if (PlacementIs(MonsterPlacement(entity), name, column, row))
+                {
+                    return IdOfMonster(entity);
+                }
+            }
+
+            Fail(mod, AMOD_FAIL_NO_SUCH, column < 0 ? "no '%s' is standing in this room"
+                                                    : "no '%s' is standing on %d,%d in this room",
+                 name, column, row);
+            return AMOD_MONSTER_NONE;
+        }
+
+        int __cdecl ApiFindPlaced(AmodMod mod, int roomIndex, const char* key)
+        {
+            char name[64];
+            int column = 0;
+            int row = 0;
+
+            if (Caller(mod) == nullptr || !ParseKey(key, name, sizeof(name), column, row))
+            {
+                Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "FindPlaced wants a name and a cell, like 'spider_15_7'");
+                return -1;
+            }
+
+            for (int index = 0; ; ++index)
+            {
+                const uint8_t* const record = PlacementAt(roomIndex, index);
+                if (record == nullptr)
+                {
+                    break;
+                }
+                if (PlacementIs(record, name, column, row))
+                {
+                    return index;
+                }
+            }
+
+            Fail(mod, AMOD_FAIL_NO_SUCH, column < 0 ? "room %d was given no '%s'"
+                                                    : "room %d was given no '%s' on %d,%d",
+                 roomIndex, name, column, row);
+            return -1;
         }
 
         int __cdecl ApiGetPlacedCount(AmodMod mod, int roomIndex)
@@ -1150,7 +1388,7 @@ namespace Forge
 
         bool InstallParseHook()
         {
-            void* const target = GameModule::Resolve(GameAddress::kMonsterParseSpawnRoutine);
+            void* const target = GameSymbols::Address(GameSymbol::MonsterParseSpawn);
             if (target == nullptr)
             {
                 return false;
@@ -1213,6 +1451,191 @@ namespace Forge
             return -1;
         }
 
+        //The placement is kept beside the entity because the game reuses a dead monster's memory: same
+        //address, different placement, and the newcomer would otherwise inherit the dead one's id.
+        struct TrackedMonster
+        {
+            uint32_t id;
+            uint8_t* entity;
+            uint8_t* record;
+        };
+
+        std::vector<TrackedMonster> g_tracked;
+        uint32_t g_nextMonsterId = 1;
+
+        void SyncIds()
+        {
+            std::vector<TrackedMonster> present;
+            present.reserve(g_tracked.size());
+
+            for (uint8_t* entity = WorldApi::FirstLiveEntity();
+                 entity != nullptr && Readable(entity, GameAddress::kEntitySize);
+                 entity = WorldApi::NextLiveEntity(entity))
+            {
+                uint8_t* const record = MonsterPlacement(entity);
+                if (record == nullptr)
+                {
+                    continue;
+                }
+
+                TrackedMonster kept = { 0, entity, record };
+                for (const TrackedMonster& known : g_tracked)
+                {
+                    if (known.entity == entity && known.record == record)
+                    {
+                        kept.id = known.id;
+                        break;
+                    }
+                }
+
+                //Never handed out twice, so an id a mod kept means its monster or nothing.
+                kept.id = kept.id != 0 ? kept.id : g_nextMonsterId++;
+                present.push_back(kept);
+            }
+
+            g_tracked.swap(present);
+        }
+
+        uint32_t IdOfMonster(const uint8_t* entity)
+        {
+            SyncIds();
+            for (const TrackedMonster& known : g_tracked)
+            {
+                if (known.entity == entity)
+                {
+                    return known.id;
+                }
+            }
+            return AMOD_MONSTER_NONE;
+        }
+
+        uint8_t* MonsterById(AmodMonsterId id)
+        {
+            if (id == AMOD_MONSTER_NONE)
+            {
+                return nullptr;
+            }
+
+            SyncIds();
+            for (const TrackedMonster& known : g_tracked)
+            {
+                if (known.id == id)
+                {
+                    return known.entity;
+                }
+            }
+            return nullptr;
+        }
+
+        //A draw back to its monster. The node keeps no way back, so the walk that filled the pool is
+        //repeated and counted.
+        uint8_t* EntityOfNode(uint32_t item)
+        {
+            uint8_t* const scene = static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kScene));
+            uint8_t* const node = reinterpret_cast<uint8_t*>(static_cast<uintptr_t>(item));
+
+            //The field, not everything up to it: the scene is long enough to step over the end of the one
+            //region VirtualQuery answers about.
+            if (scene == nullptr || node == nullptr ||
+                !Readable(scene + GameAddress::kSceneNodeCountOffset, sizeof(int)))
+            {
+                return nullptr;
+            }
+
+            uint8_t* const pool = scene + GameAddress::kSceneNodePoolOffset;
+            const int filled = Read<int>(scene, GameAddress::kSceneNodeCountOffset);
+            const size_t span = node >= pool ? static_cast<size_t>(node - pool) : 0;
+
+            if (node < pool || span % GameAddress::kSceneNodeStride != 0 || filled <= 0 ||
+                filled > static_cast<int>(GameAddress::kSceneNodeCapacity) ||
+                span / GameAddress::kSceneNodeStride >= static_cast<size_t>(filled))
+            {
+                return nullptr;
+            }
+
+            const size_t wanted = span / GameAddress::kSceneNodeStride;
+            uint8_t** const head =
+                static_cast<uint8_t**>(GameModule::Resolve(GameAddress::kEntities + GameAddress::kEntitiesLiveOffset));
+
+            size_t seen = 0;
+            for (uint8_t* entity = head != nullptr ? *head : nullptr;
+                 entity != nullptr && Readable(entity, GameAddress::kEntitySize);
+                 entity = Read<uint8_t*>(entity, GameAddress::kEntityNextOffset))
+            {
+                if ((Read<uint32_t>(entity, GameAddress::kEntityFlagsOffset) & GameAddress::kEntityHiddenFlag) != 0 ||
+                    Read<uintptr_t>(entity, GameAddress::kEntityModelOffset) == 0)
+                {
+                    continue;
+                }
+
+                if (seen == wanted)
+                {
+                    return entity;
+                }
+                ++seen;
+
+                //A second model takes the node right behind the first and belongs to the same entity.
+                if (Read<uintptr_t>(entity, GameAddress::kEntitySecondModelOffset) != 0)
+                {
+                    if (seen == wanted)
+                    {
+                        return entity;
+                    }
+                    ++seen;
+                }
+            }
+            return nullptr;
+        }
+
+        AmodMonsterId __cdecl ApiIdOfDraw(AmodMod mod, uint32_t item)
+        {
+            if (Caller(mod) == nullptr)
+            {
+                return AMOD_MONSTER_NONE;
+            }
+
+            uint8_t* const entity = EntityOfNode(item);
+            if (entity == nullptr)
+            {
+                Fail(mod, AMOD_FAIL_NO_SUCH, "that draw is not one of the world's entities - a room's own mesh, or a mod's own");
+                return AMOD_MONSTER_NONE;
+            }
+            if (MonsterPlacement(entity) == nullptr)
+            {
+                Fail(mod, AMOD_FAIL_NO_SUCH, "that draw belongs to something that is not a monster");
+                return AMOD_MONSTER_NONE;
+            }
+            return IdOfMonster(entity);
+        }
+
+        AmodMonsterId __cdecl ApiIdAt(AmodMod mod, int index)
+        {
+            uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
+            if (entity == nullptr)
+            {
+                Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d in this room", index);
+                return AMOD_MONSTER_NONE;
+            }
+            return IdOfMonster(entity);
+        }
+
+        int __cdecl ApiIndexOf(AmodMod mod, AmodMonsterId id)
+        {
+            if (Caller(mod) == nullptr)
+            {
+                return -1;
+            }
+
+            const uint8_t* const entity = MonsterById(id);
+            if (entity == nullptr)
+            {
+                Fail(mod, id == AMOD_MONSTER_NONE ? AMOD_FAIL_BAD_ARGUMENT : AMOD_FAIL_NO_SUCH,
+                     "monster %u is not in this room any more", id);
+                return -1;
+            }
+            return IndexOfMonster(entity);
+        }
+
         // movement it borrowed rather than left with a think that does nothing.
         void __cdecl ThinkThunk(void* self)
         {
@@ -1237,6 +1660,7 @@ namespace Forge
             AmodMonsterThinkInfo info = {};
             info.structSize = sizeof(info);
             info.index = IndexOfMonster(entity);
+            info.id = IdOfMonster(entity);
             info.delta = Read<float>(entity, GameAddress::kEntityDeltaOffset);
             info.facing = Read<int>(entity, GameAddress::kMonsterEntityFacingOffset);
 
@@ -1268,24 +1692,99 @@ namespace Forge
             memcpy(entity + GameAddress::kMonsterEntityFacingOffset, &dir, sizeof(dir));
         }
 
+        struct SpawnHandler
+        {
+            uint32_t id;
+            ModContext* owner;
+            AmodMonsterSpawnHandler handler;
+            void* user;
+        };
+
+        std::vector<SpawnHandler> g_spawnHandlers;
+        uint32_t g_nextSpawnHandlerId = 1;
+
+        //Its place in the room's list, or -1 when the room being built is not the one being walked in.
+        int IndexOfPlacement(const uint8_t* record)
+        {
+            for (int index = 0; ; ++index)
+            {
+                const uint8_t* const at = PlacementAt(-1, index);
+                if (at == nullptr)
+                {
+                    return -1;
+                }
+                if (at == record)
+                {
+                    return index;
+                }
+            }
+        }
+
+        //After the game built it, so the monster already answers to an index and an id.
+        void TellSpawned(const uint8_t* record)
+        {
+            uint8_t* const entity = !g_spawnHandlers.empty() ? EntityOf(record) : nullptr;
+            if (entity == nullptr)
+            {
+                return;
+            }
+
+            AmodMonsterSpawnInfo info = {};
+            info.structSize = sizeof(info);
+            info.id = IdOfMonster(entity);
+            info.index = IndexOfMonster(entity);
+            info.placed = IndexOfPlacement(record);
+            info.name = NameAt(record, GameAddress::kMonsterSpawnNameOffset)
+                            ? ReadText(record, GameAddress::kMonsterSpawnNameOffset)
+                            : "";
+            info.tag = NameAt(record, GameAddress::kMonsterSpawnTagOffset)
+                           ? ReadText(record, GameAddress::kMonsterSpawnTagOffset)
+                           : "";
+            info.level = Read<int>(record, GameAddress::kMonsterSpawnLevelOffset);
+            info.isDecor = record[GameAddress::kMonsterSpawnDecorOffset] != 0 ? 1 : 0;
+
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                info.position[axis] = Read<float>(entity, GameAddress::kEntityPositionOffset +
+                                                              static_cast<uintptr_t>(axis) * sizeof(float));
+            }
+
+            const std::vector<SpawnHandler> snapshot = g_spawnHandlers;
+            for (const SpawnHandler& entry : snapshot)
+            {
+                if (entry.handler != nullptr)
+                {
+                    entry.handler(&info, entry.user);
+                }
+            }
+        }
+
         void __cdecl SpawnDetour(void* placement)
         {
             uint8_t* const record = static_cast<uint8_t*>(placement);
-            const bool ours = !g_kinds.empty() && record != nullptr &&
-                              Readable(record, GameAddress::kMonsterSpawnSize) &&
-                              Read<int>(record, GameAddress::kSpawnKindOffset) ==
-                                  GameAddress::kSpawnKindMonster &&
-                              record[GameAddress::kMonsterSpawnLiveOffset] != 0;
+
+            //Every monster being built, not only a mod's own kinds - which is the point of the handlers.
+            const bool monster = record != nullptr &&
+                                 Readable(record, GameAddress::kMonsterSpawnSize) &&
+                                 Read<int>(record, GameAddress::kSpawnKindOffset) ==
+                                     GameAddress::kSpawnKindMonster &&
+                                 record[GameAddress::kMonsterSpawnLiveOffset] != 0;
 
             DefinedKind* const kind =
-                ours ? KindOf(ReadText(record, GameAddress::kMonsterSpawnNameOffset)) : nullptr;
+                (monster && !g_kinds.empty()) ? KindOf(ReadText(record, GameAddress::kMonsterSpawnNameOffset))
+                                              : nullptr;
 
             if (kind == nullptr)
             {
                 g_originalSpawn(placement);
-                if (ours)
+                if (monster)
                 {
-                    CarryOverSpeed(record);
+                    //Left as it was: carried over only when a mod has taught the spawner a name of its own.
+                    if (!g_kinds.empty())
+                    {
+                        CarryOverSpeed(record);
+                    }
+                    TellSpawned(record);
                 }
                 return;
             }
@@ -1309,11 +1808,14 @@ namespace Forge
                     memcpy(entity + GameAddress::kEntityThinkOffset, &mine, sizeof(mine));
                 }
             }
+
+            //Last, so a handler sees the monster as it will actually be - its own think already in.
+            TellSpawned(record);
         }
 
         bool InstallSpawnHook()
         {
-            void* const target = GameModule::Resolve(GameAddress::kMonsterSpawnPlacement);
+            void* const target = GameSymbols::Address(GameSymbol::MonsterSpawnPlacement);
             if (target == nullptr)
             {
                 return false;
@@ -1429,6 +1931,7 @@ namespace Forge
                            : "";
             info.level = Read<int>(record, GameAddress::kMonsterSpawnLevelOffset);
             info.isDecor = record[GameAddress::kMonsterSpawnDecorOffset] != 0 ? 1 : 0;
+            info.id = IdOfMonster(entity);
 
             for (int axis = 0; axis < 3; ++axis)
             {
@@ -1480,7 +1983,7 @@ namespace Forge
 
         bool InstallKillHook()
         {
-            void* const target = GameModule::Resolve(GameAddress::kMonsterKill);
+            void* const target = GameSymbols::Address(GameSymbol::MonsterKill);
             if (target == nullptr)
             {
                 return false;
@@ -1534,7 +2037,7 @@ namespace Forge
             const AppendPlacementRoutine append =
                 reinterpret_cast<AppendPlacementRoutine>(GameModule::Resolve(GameAddress::kRoomSpawnsAppend));
             const SpawnOneRoutine spawn =
-                reinterpret_cast<SpawnOneRoutine>(GameModule::Resolve(GameAddress::kMonsterSpawnPlacement));
+                reinterpret_cast<SpawnOneRoutine>(GameSymbols::Address(GameSymbol::MonsterSpawnPlacement));
 
             if (type == nullptr || room == nullptr || clone == nullptr || append == nullptr ||
                 spawn == nullptr)
@@ -1758,6 +2261,7 @@ namespace Forge
             AmodMonsterTouchInfo info = {};
             info.structSize = sizeof(info);
             info.index = IndexOfMonster(monster);
+            info.id = IdOfMonster(monster);
             info.name = NameAt(record, GameAddress::kMonsterSpawnNameOffset)
                             ? ReadText(record, GameAddress::kMonsterSpawnNameOffset)
                             : "";
@@ -1910,8 +2414,255 @@ namespace Forge
             entry.user = user;
             g_killHandlers.push_back(entry);
 
-            return context->owned.Add(&ReleaseKillHandler,
-                                      reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+            return context->owned.Add(&ReleaseKillHandler, reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+        }
+
+        void ReleaseSpawnHandler(void* payload)
+        {
+            const uint32_t id = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(payload));
+            for (auto it = g_spawnHandlers.begin(); it != g_spawnHandlers.end(); ++it)
+            {
+                if (it->id == id)
+                {
+                    g_spawnHandlers.erase(it);
+                    return;
+                }
+            }
+        }
+
+        AmodToken __cdecl ApiAddSpawnHandler(AmodMod mod, AmodMonsterSpawnHandler handler, void* user)
+        {
+            ModContext* const context = Caller(mod);
+            if (context == nullptr || handler == nullptr || g_originalSpawn == nullptr)
+            {
+                Fail(mod, handler == nullptr ? AMOD_FAIL_BAD_ARGUMENT : AMOD_FAIL_NOT_OFFERED,
+                     "the spawner is not hooked, so nothing can be told about a monster appearing");
+                return AMOD_INVALID_TOKEN;
+            }
+
+            SpawnHandler entry;
+            entry.id = g_nextSpawnHandlerId++;
+            entry.owner = context;
+            entry.handler = handler;
+            entry.user = user;
+            g_spawnHandlers.push_back(entry);
+
+            return context->owned.Add(&ReleaseSpawnHandler, reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+        }
+
+        void __cdecl ApiRemoveSpawnHandler(AmodMod mod, AmodToken token)
+        {
+            ModContext* const context = Caller(mod);
+            if (context != nullptr)
+            {
+                context->owned.Remove(token);
+            }
+        }
+
+        //The game's order is its own, so it is untangled on the way out and put back on the way in.
+        void ReadBox(const uint8_t* box, AmodBox& out)
+        {
+            out.min[0] = Read<float>(box, GameAddress::kBoxMinXOffset);
+            out.min[1] = Read<float>(box, GameAddress::kBoxMinYOffset);
+            out.min[2] = Read<float>(box, GameAddress::kBoxMinZOffset);
+            out.max[0] = Read<float>(box, GameAddress::kBoxMaxXOffset);
+            out.max[1] = Read<float>(box, GameAddress::kBoxMaxYOffset);
+            out.max[2] = Read<float>(box, GameAddress::kBoxMaxZOffset);
+        }
+
+        void WriteBox(uint8_t* box, const AmodBox& from)
+        {
+            memcpy(box + GameAddress::kBoxMinXOffset, &from.min[0], sizeof(float));
+            memcpy(box + GameAddress::kBoxMinYOffset, &from.min[1], sizeof(float));
+            memcpy(box + GameAddress::kBoxMinZOffset, &from.min[2], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxXOffset, &from.max[0], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxYOffset, &from.max[1], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxZOffset, &from.max[2], sizeof(float));
+        }
+
+        uintptr_t TypeBoxOffset(int which)
+        {
+            switch (which)
+            {
+            case AMOD_MONSTER_BOX_SECOND: return GameAddress::kMonsterResBox2Offset;
+            case AMOD_MONSTER_BOX_OBJECT: return GameAddress::kMonsterResObjBoxOffset;
+            case AMOD_MONSTER_BOX_MAIN:   return GameAddress::kMonsterResBoxOffset;
+            }
+            return 0;
+        }
+
+        int __cdecl ApiGetTypeBox(AmodMod mod, const char* name, int which, AmodBox* out)
+        {
+            const uintptr_t offset = TypeBoxOffset(which);
+            const uint8_t* const record = Caller(mod) != nullptr ? TypeByName(name) : nullptr;
+            if (record == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "the game knows no monster called '%s'",
+                            name != nullptr ? name : "");
+            }
+            if (offset == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "%d is not one of the three boxes", which);
+            }
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetTypeBox was given nowhere to put the box");
+            }
+
+            AmodBox filled = {};
+            filled.structSize = sizeof(filled);
+            ReadBox(record + offset, filled);
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        //Kept so unloading puts it back: a monster left on a box nobody owns is a disabled mod still
+        //breaking the game.
+        struct BoxSnapshot
+        {
+            ModContext* owner;
+            uint8_t* record;
+            int which;
+            uint8_t bytes[GameAddress::kRoomCollisionBoxStride];
+        };
+
+        std::vector<BoxSnapshot> g_boxSnapshots;
+
+        //All 0xDC of it: cheaper than tracking which fields were touched, and the rollback is exact.
+        struct TypeSnapshot
+        {
+            ModContext* owner;
+            uint8_t* record;
+            uint8_t bytes[GameAddress::kMonsterResStride];
+        };
+
+        std::vector<TypeSnapshot> g_typeSnapshots;
+
+        void KeepType(ModContext* owner, uint8_t* record)
+        {
+            for (const TypeSnapshot& kept : g_typeSnapshots)
+            {
+                if (kept.record == record)
+                {
+                    return;
+                }
+            }
+
+            TypeSnapshot kept;
+            kept.owner = owner;
+            kept.record = record;
+            memcpy(kept.bytes, record, sizeof(kept.bytes));
+            g_typeSnapshots.push_back(kept);
+        }
+
+        void KeepBox(ModContext* owner, uint8_t* record, int which, uintptr_t offset)
+        {
+            for (const BoxSnapshot& kept : g_boxSnapshots)
+            {
+                if (kept.record == record && kept.which == which)
+                {
+                    return;
+                }
+            }
+
+            BoxSnapshot kept;
+            kept.owner = owner;
+            kept.record = record;
+            kept.which = which;
+            memcpy(kept.bytes, record + offset, sizeof(kept.bytes));
+            g_boxSnapshots.push_back(kept);
+        }
+
+        int __cdecl ApiSetTypeBox(AmodMod mod, const char* name, int which, const AmodBox* box)
+        {
+            const uintptr_t offset = TypeBoxOffset(which);
+            ModContext* const caller = Caller(mod);
+            uint8_t* const record = caller != nullptr ? TypeByName(name) : nullptr;
+            if (record == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "the game knows no monster called '%s'",
+                            name != nullptr ? name : "");
+            }
+            if (offset == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "%d is not one of the three boxes", which);
+            }
+            if (box == nullptr || box->structSize < sizeof(AmodBox))
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetTypeBox was given no box to write");
+            }
+
+            KeepBox(caller, record, which, offset);
+            WriteBox(record + offset, *box);
+            return 1;
+        }
+
+        //A living monster carries two of the three: $bbox became +0x13C, $obj_bbox became +0x158.
+        //$bbox2 was only ever another source for the first, never a slot of its own.
+        uintptr_t LiveBoxOffset(int which)
+        {
+            switch (which)
+            {
+            case AMOD_MONSTER_BOX_MAIN:   return GameAddress::kEntityFrameBoxOffset;
+            case AMOD_MONSTER_BOX_OBJECT: return GameAddress::kMonsterEntityObjBoxOffset;
+            }
+            return 0;
+        }
+
+        int __cdecl ApiGetLiveBox(AmodMod mod, int index, int which, AmodBox* out)
+        {
+            const uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
+            const uintptr_t offset = LiveBoxOffset(which);
+
+            if (entity == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to read a box off", index);
+            }
+            if (offset == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "a living monster carries the main box and the object box, not %d", which);
+            }
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetBox was given nowhere to put the box");
+            }
+
+            AmodBox filled = {};
+            filled.structSize = sizeof(filled);
+            ReadBox(entity + offset, filled);
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetLiveBox(AmodMod mod, int index, int which, const AmodBox* box)
+        {
+            uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
+            const uintptr_t offset = LiveBoxOffset(which);
+
+            if (entity == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no monster %d to write a box on", index);
+            }
+            if (offset == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "a living monster carries the main box and the object box, not %d", which);
+            }
+            if (box == nullptr || box->structSize < sizeof(AmodBox))
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetBox was given no box to write");
+            }
+
+            WriteBox(entity + offset, *box);
+            return 1;
+        }
+
+        //What GetBox and SetBox always meant, now said out loud.
+        int __cdecl ApiGetBox(AmodMod mod, int index, AmodBox* out)
+        {
+            return ApiGetLiveBox(mod, index, AMOD_MONSTER_BOX_OBJECT, out);
+        }
+
+        int __cdecl ApiSetBox(AmodMod mod, int index, const AmodBox* box)
+        {
+            return ApiSetLiveBox(mod, index, AMOD_MONSTER_BOX_OBJECT, box);
         }
 
         void __cdecl ApiRemoveKillHandler(AmodMod mod, AmodToken token)
@@ -1953,6 +2704,19 @@ namespace Forge
         g_table.GetPlaced = &ApiGetPlaced;
         g_table.GetPlacedProperty = &ApiGetPlacedProperty;
         g_table.SetPlacedProperty = &ApiSetPlacedProperty;
+        g_table.GetTypeBox = &ApiGetTypeBox;
+        g_table.SetTypeBox = &ApiSetTypeBox;
+        g_table.GetBox = &ApiGetBox;
+        g_table.SetBox = &ApiSetBox;
+        g_table.IdAt = &ApiIdAt;
+        g_table.IndexOf = &ApiIndexOf;
+        g_table.Find = &ApiFind;
+        g_table.FindPlaced = &ApiFindPlaced;
+        g_table.AddSpawnHandler = &ApiAddSpawnHandler;
+        g_table.RemoveSpawnHandler = &ApiRemoveSpawnHandler;
+        g_table.IdOfDraw = &ApiIdOfDraw;
+        g_table.GetLiveBox = &ApiGetLiveBox;
+        g_table.SetLiveBox = &ApiSetLiveBox;
 
         FrameApi::AddInternalTick(&ApplyPendingTypes);
 
@@ -2004,6 +2768,10 @@ namespace Forge
         g_touchHandlers.clear();
         g_pendingTypes.clear();
         g_definedTypes.clear();
+        g_boxSnapshots.clear();
+        g_typeSnapshots.clear();
+        g_tracked.clear();
+        g_spawnHandlers.clear();
         g_table = AmodMonstersApi{};
     }
 
@@ -2030,6 +2798,45 @@ namespace Forge
                 memcpy(entity + GameAddress::kEntityThinkOffset, &kind->borrowedThink,
                        sizeof(void*));
             }
+        }
+
+        for (auto it = g_typeSnapshots.begin(); it != g_typeSnapshots.end();)
+        {
+            if (it->owner == owner && Readable(it->record, GameAddress::kMonsterResStride))
+            {
+                memcpy(it->record, it->bytes, sizeof(it->bytes));
+            }
+            it = it->owner == owner ? g_typeSnapshots.erase(it) : ++it;
+        }
+
+        //Boxes first, and every monster of that kind still standing gets the restored one.
+        for (auto it = g_boxSnapshots.begin(); it != g_boxSnapshots.end();)
+        {
+            if (it->owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            const uintptr_t offset = TypeBoxOffset(it->which);
+            if (offset != 0 && Readable(it->record, GameAddress::kMonsterResStride))
+            {
+                memcpy(it->record + offset, it->bytes, sizeof(it->bytes));
+
+                if (it->which == AMOD_MONSTER_BOX_OBJECT)
+                {
+                    const char* const kind = ReadText(it->record, GameAddress::kMonsterResNameOffset);
+                    for (uint8_t* entity = WorldApi::FirstLiveEntity(); entity != nullptr && Readable(entity, GameAddress::kEntitySize); entity = WorldApi::NextLiveEntity(entity))
+                    {
+                        const uint8_t* const record = MonsterPlacement(entity);
+                        if (record != nullptr && strcmp(ReadText(record, GameAddress::kMonsterSpawnNameOffset), kind) == 0)
+                        {
+                            memcpy(entity + GameAddress::kMonsterEntityObjBoxOffset, it->bytes, sizeof(it->bytes));
+                        }
+                    }
+                }
+            }
+            it = g_boxSnapshots.erase(it);
         }
 
         for (auto it = g_kinds.begin(); it != g_kinds.end();)

@@ -2,10 +2,32 @@
 
 #include "src/Api/ApiRead.h"
 
+#include <stdarg.h>
+#include <stdio.h>
+
 namespace Forge
 {
     namespace ApiRead
     {
+        int Fail(AmodMod mod, int code, const char* format, ...)
+        {
+            ModContext* const context = static_cast<ModContext*>(mod);
+            if (context == nullptr || context->magic != kModContextMagic || format == nullptr)
+            {
+                return 0;
+            }
+
+            char text[512];
+            va_list arguments;
+            va_start(arguments, format);
+            const int produced = vsnprintf(text, sizeof(text), format, arguments);
+            va_end(arguments);
+
+            context->failCode = code;
+            context->failText = produced >= 0 ? text : "";
+            return 0;
+        }
+
         bool Readable(const void* address, size_t size)
         {
             if (address == nullptr)

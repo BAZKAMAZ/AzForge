@@ -10,7 +10,7 @@ namespace Forge
     struct GameSymbolDefinition
     {
         const char* name;
-        uintptr_t hint;         // address in the build this was reversed from
+        uintptr_t hint;
         const char* pattern;
     };
 
@@ -431,6 +431,84 @@ namespace Forge
             // console call and every global are absolutes, so they are wildcarded.
             "68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? A1 ?? ?? ?? ?? 83 C4 08 85 C0 74 0A "
             "50 FF 15 ?? ?? ?? ?? 83 C4 04 57 B9 ?? ?? ?? ?? E8 ?? ?? ?? ?? 33 FF"
+        },
+
+        // Everything below is detoured or called with arguments. The prologue a hook checks only
+        // says the bytes are what was expected; a signature can find the routine when it moves.
+        {
+            "Monsters_FreeResources", GameAddress::kMonstersFreeResources,
+            // The table at 0x00691458 tested against zero, its banner, then the count at
+            // 0x0069145c against a zeroed EDI - the free and nothing else.
+            "83 3D ?? ?? ?? ?? 00 0F 84 ?? ?? ?? ?? 57 68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? "
+            "33 FF 83 C4 08 39 3D ?? ?? ?? ?? 7E 77 56"
+        },
+        {
+            "Monster_ParseSpawn", GameAddress::kMonsterParseSpawn,
+            // SUB ESP,0x15c is the 0x124 record plus its locals, and no other parser asks for
+            // that much. The cookie global is an absolute.
+            "81 EC 5C 01 00 00 A1 ?? ?? ?? ?? 33 C4 89 84 24 58 01 00 00 56 8B B4 24 6C 01 00 00 "
+            "57 8B BC 24 68 01 00 00"
+        },
+        {
+            "Monster_SpawnPlacement", GameAddress::kMonsterSpawnPlacement,
+            // The kind test CMP [EDI],0xA - a placement must be a monster - then the live byte
+            // at +0x54, both structure-relative, so nothing needs wildcarding.
+            "57 8B 7C 24 08 85 FF 74 45 83 3F 0A 75 40 80 7F 54 00 74 3A 53 56 33 F6 8D 5F 04 "
+            "EB 03 8D 49 00"
+        },
+        {
+            "Monster_Kill", GameAddress::kMonsterKill,
+            // Reaches for the placement at entity+0x5cc and tests the same kind 0xA, which is the
+            // pair that tells it from every other killer.
+            "83 EC 0C 56 8B 74 24 14 57 8B BE CC 05 00 00 85 FF 74 7B 83 3F 0A 75 76 8D 44 24 08 "
+            "50 8D 8E 20 01 00 00"
+        },
+        {
+            "LoadOrFindModel", GameAddress::kLoadOrFindModel,
+            // Inline strlen of the path, then the banner push and the log call. Its prologue is
+            // shared with Monster_SpawnPlacement, which is why the whole head is here.
+            "57 8B 7C 24 08 85 FF 74 78 8B C7 8D 50 01 8B FF 8A 08 40 84 C9 75 F9 2B C2 74 66 "
+            "56 57 68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ??"
+        },
+        {
+            "Model_Release", GameAddress::kModelRelease,
+            // CMP [ESI],0x2222 is the model magic, and the reference count at +0x124 right after.
+            "56 8B 74 24 08 85 F6 0F 84 B4 00 00 00 81 3E 22 22 00 00 0F 85 A8 00 00 00 "
+            "8B 86 24 01 00 00 85 C0"
+        },
+        {
+            "Model_DrawNode", GameAddress::kModelDrawNode,
+            // Two calls straight through the render manager's vtable, +0x28 then +0x50, around
+            // the node it is given. __stdcall, RET 4.
+            "8B 0D ?? ?? ?? ?? 8B 01 8B 40 28 56 8B 74 24 08 8B 56 08 52 FF D0 8B 0D ?? ?? ?? ?? "
+            "8B 11 8B 52 50 8D 46 0C 50 FF D2"
+        },
+        {
+            "Model_RenderAnimated", GameAddress::kModelRenderAnimated,
+            // The same 0x2222 magic as Model_Release, then the model's kind at +0x104 against 2,
+            // which is what makes it the animated path.
+            "53 8B 5C 24 08 85 DB 0F 84 39 01 00 00 81 3B 22 22 00 00 0F 85 2D 01 00 00 "
+            "83 BB 04 01 00 00 02 74 17 68 ?? ?? ?? ??"
+        },
+        {
+            "Scene_DrawModels", GameAddress::kSceneDrawModels,
+            // SUB ESP,0x8c, the scene's own list at +4, then the render manager global.
+            "81 EC 8C 00 00 00 56 57 8B F9 8D 77 04 89 7C 24 10 85 F6 0F 84 6D 02 00 00 "
+            "8B 0D ?? ?? ?? ?? 8B 01 8B 50 3C"
+        },
+        {
+            "LoadOrFindAnim", GameAddress::kLoadOrFindAnim,
+            // Banner, then MOV ECX with the animation manager: it loads its own this, which is
+            // both the calling convention note and what identifies it.
+            "56 8B 74 24 08 56 68 ?? ?? ?? ?? 6A 01 E8 ?? ?? ?? ?? 83 C4 0C 56 B9 ?? ?? ?? ?? "
+            "E8 ?? ?? ?? ?? 85 C0 74 08"
+        },
+        {
+            "LoadOrFindTexture", GameAddress::kLoadOrFindTexture,
+            // The early out returns zero with RET 0xC, which is the whole of its calling
+            // convention written into the bytes.
+            "51 57 8B 7C 24 0C 57 89 4C 24 08 E8 ?? ?? ?? ?? 83 C4 04 84 C0 75 07 33 C0 5F 59 "
+            "C2 0C 00 53 8B 5C 24 14 55 8B 6C 24 1C"
         }
     };
 }

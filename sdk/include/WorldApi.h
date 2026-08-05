@@ -1,4 +1,4 @@
-#ifndef AZFORGE_WORLD_API_H
+﻿#ifndef AZFORGE_WORLD_API_H
 #define AZFORGE_WORLD_API_H
 
 #include "ForgeTypes.h"
@@ -55,6 +55,8 @@ typedef struct AmodWorldLevel
     /* New fields are appended, never inserted. */
 } AmodWorldLevel;
 
+AMOD_LAST_FIELD(AmodWorldLevel, startCellY, 0x5C);
+
 /* One room. Strings valid until unload. */
 typedef struct AmodWorldRoom
 {
@@ -80,12 +82,17 @@ typedef struct AmodWorldRoom
     /* New fields are appended, never inserted. */
 } AmodWorldRoom;
 
+AMOD_LAST_FIELD(AmodWorldRoom, lightTriangleCount, 0x28);
+
 /* Collision box corners. */
+// Six floats and nothing else - no structSize, so this one can never grow: a mod built before the g...
 typedef struct AmodWorldBox
 {
     float min[3];
     float max[3];
 } AmodWorldBox;
+
+AMOD_LAST_FIELD(AmodWorldBox, max, 0x0C);
 
 #define AMOD_ENTITY_MONSTER                                         10
 #define AMOD_ENTITY_BONUS                                           9
@@ -118,6 +125,8 @@ typedef struct AmodWorldEntity
     /* New fields are appended, never inserted. */
 } AmodWorldEntity;
 
+AMOD_LAST_FIELD(AmodWorldEntity, isLive, 0x34);
+
 typedef enum AmodWorldEvent
 {
     AMOD_WORLD_EVENT_LEVEL_LOADED = 0,   /* level parsed; no room current yet */
@@ -138,6 +147,8 @@ typedef struct AmodWorldEventInfo
     int mazeX;   /* -1 outside a room change */
     int mazeY;
 } AmodWorldEventInfo;
+
+AMOD_LAST_FIELD(AmodWorldEventInfo, mazeY, 0x18);
 
 /* Info valid only for the call. */
 typedef void (__cdecl* AmodWorldEventHandler)(const AmodWorldEventInfo* info, void* user);
@@ -203,6 +214,8 @@ typedef struct AmodWorldApi
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodWorldApi;
+
+AMOD_LAST_FIELD(AmodWorldApi, GetSpawn, 0x50);
 
 #ifdef __cplusplus
 } /* extern "C" */

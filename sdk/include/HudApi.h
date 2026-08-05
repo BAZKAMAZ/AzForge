@@ -25,6 +25,8 @@ typedef struct AmodHudApi
     int (__cdecl* RemoveImage)(AmodMod mod, int index);
 } AmodHudApi;
 
+AMOD_LAST_FIELD(AmodHudApi, RemoveImage, 0x20);
+
 #ifdef __cplusplus
 }
 #endif

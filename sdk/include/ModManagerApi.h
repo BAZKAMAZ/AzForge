@@ -26,6 +26,8 @@ typedef struct AmodModEntry
     int capabilityCount;
 } AmodModEntry;
 
+AMOD_LAST_FIELD(AmodModEntry, capabilityCount, 0x30);
+
 typedef struct AmodModManagerApi
 {
     uint32_t structSize;
@@ -43,6 +45,8 @@ typedef struct AmodModManagerApi
     /* Load/unload at next frame start. Refused for launcher-phase mods. */
     int (__cdecl* Reload)(AmodMod mod, int index);
 } AmodModManagerApi;
+
+AMOD_LAST_FIELD(AmodModManagerApi, Reload, 0x1C);
 
 #ifdef __cplusplus
 }

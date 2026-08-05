@@ -24,6 +24,8 @@ typedef struct AmodConsoleApi
     void (__cdecl* Execute)(AmodMod mod, const char* line);
 } AmodConsoleApi;
 
+AMOD_LAST_FIELD(AmodConsoleApi, Execute, 0x10);
+
 #ifdef __cplusplus
 }
 #endif

@@ -13,8 +13,6 @@ namespace Forge
         {
             typedef uint32_t (__cdecl* ResolveRoutine)(const char* name);
 
-            // The resolvers the game's own parsers go through. Zero for a name it has nothing
-            // under, which is a refusal rather than something to write into a record.
             uint32_t Resolve(uintptr_t slot, const char* name)
             {
                 void** const at = static_cast<void**>(GameModule::Resolve(slot));
@@ -158,7 +156,6 @@ namespace Forge
             }
 
             case Kind::Text:
-                // Names identify records — not writable.
                 return 0;
             }
 
@@ -196,7 +193,6 @@ namespace Forge
                 return 1;
 
             case Kind::Text:
-                // Names identify records — not writable.
                 return 0;
             }
 

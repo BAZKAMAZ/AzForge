@@ -36,6 +36,8 @@ typedef struct AmodInteropApi
     void (__cdecl* Unhook)(AmodMod mod, AmodToken token);
 } AmodInteropApi;
 
+AMOD_LAST_FIELD(AmodInteropApi, Unhook, 0x1C);
+
 #ifdef __cplusplus
 }
 #endif

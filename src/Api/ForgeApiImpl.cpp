@@ -91,6 +91,18 @@ namespace Forge
         {
             return AMOD_GAME_BUILD_AZANGARA_10;
         }
+
+        const char* __cdecl ApiLastError(AmodMod mod)
+        {
+            const ModContext* const context = Resolve(mod);
+            return context != nullptr ? context->failText.c_str() : "";
+        }
+
+        int __cdecl ApiLastErrorCode(AmodMod mod)
+        {
+            const ModContext* const context = Resolve(mod);
+            return context != nullptr ? context->failCode : AMOD_FAIL_NONE;
+        }
     }
 
     bool ModContext::Declares(const char* capability) const
@@ -124,6 +136,8 @@ namespace Forge
         context.table.GetGameDirectory = &ApiGetGameDirectory;
         context.table.GetGameModuleBase = &ApiGetGameModuleBase;
         context.table.GetGameBuild = &ApiGetGameBuild;
+        context.table.LastError = &ApiLastError;
+        context.table.LastErrorCode = &ApiLastErrorCode;
         context.table.launcher = LauncherApi::Table();
         context.table.objectsMenu = ObjectsMenuApi::Table();
         context.table.boxMenu = BoxMenuApi::Table();

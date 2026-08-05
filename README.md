@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="res/AFlogo.gif" width="760" alt="AzForge">
+</p>
+
 # AzForge
 
 A modding platform for **Azangara**, a 2.5D platformer by AxySoft.

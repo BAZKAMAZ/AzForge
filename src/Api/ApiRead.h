@@ -13,8 +13,17 @@ namespace Forge
         inline ModContext*                                          Caller(AmodMod mod)
         {
             ModContext* context = static_cast<ModContext*>(mod);
-            return (context != nullptr && context->magic == kModContextMagic) ? context : nullptr;
+            if (context == nullptr || context->magic != kModContextMagic)
+            {
+                return nullptr;
+            }
+
+            context->failCode = AMOD_FAIL_NONE;
+            context->failText.clear();
+            return context;
         }
+
+        int                                                         Fail(AmodMod mod, int code, const char* format, ...);
 
         template <typename T>
         T                                                           Read(const uint8_t* base, uintptr_t offset)

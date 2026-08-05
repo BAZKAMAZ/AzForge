@@ -47,6 +47,8 @@ typedef struct AmodInputApi
     int (__cdecl* WheelDelta)(AmodMod mod);
 } AmodInputApi;
 
+AMOD_LAST_FIELD(AmodInputApi, WheelDelta, 0x20);
+
 #ifdef __cplusplus
 }
 #endif

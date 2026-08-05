@@ -69,6 +69,8 @@ typedef struct AmodRenderApi
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodRenderApi;
 
+AMOD_LAST_FIELD(AmodRenderApi, DrawTextLine, 0x34);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

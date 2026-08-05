@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 
 #include "src/Api/WorldApi.h"
 #include "src/Api/FrameApi.h"
@@ -656,15 +656,17 @@ namespace Forge
             {
                 return 0;
             }
-            // Layout: minZ, minX, minY, gap, maxX, maxY, maxZ.
+            //The same 0x1C as every box in the game: +0x00 says what kind it is, the two corners
+            //follow at +0x04 and +0x10. The Z of the minimum used to be read from +0x00, so it
+            //came back as that kind seen as a float - which is where the nonsense in it came from.
             const uint8_t* const box =
                 boxes + static_cast<size_t>(boxIndex) * GameAddress::kRoomCollisionBoxStride;
-            out->min[0] = Read<float>(box, GameAddress::kRoomBoxMinXOffset);
-            out->min[1] = Read<float>(box, GameAddress::kRoomBoxMinYOffset);
-            out->min[2] = Read<float>(box, GameAddress::kRoomBoxMinZOffset);
-            out->max[0] = Read<float>(box, GameAddress::kRoomBoxMaxXOffset);
-            out->max[1] = Read<float>(box, GameAddress::kRoomBoxMaxYOffset);
-            out->max[2] = Read<float>(box, GameAddress::kRoomBoxMaxZOffset);
+            out->min[0] = Read<float>(box, GameAddress::kBoxMinXOffset);
+            out->min[1] = Read<float>(box, GameAddress::kBoxMinYOffset);
+            out->min[2] = Read<float>(box, GameAddress::kBoxMinZOffset);
+            out->max[0] = Read<float>(box, GameAddress::kBoxMaxXOffset);
+            out->max[1] = Read<float>(box, GameAddress::kBoxMaxYOffset);
+            out->max[2] = Read<float>(box, GameAddress::kBoxMaxZOffset);
             return 1;
         }
 

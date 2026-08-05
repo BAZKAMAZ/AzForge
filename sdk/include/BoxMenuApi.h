@@ -29,6 +29,8 @@ typedef struct AmodBoxMenuApi
     void (__cdecl* CloseAll)(AmodMod mod);
 } AmodBoxMenuApi;
 
+AMOD_LAST_FIELD(AmodBoxMenuApi, CloseAll, 0x24);
+
 #ifdef __cplusplus
 }
 #endif

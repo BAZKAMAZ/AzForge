@@ -66,6 +66,17 @@ namespace Forge
         MenuRegisterAll,
         BonusOnTouch,
         BonusesFreeResources,
+        MonstersFreeResources,
+        MonsterParseSpawn,
+        MonsterSpawnPlacement,
+        MonsterKill,
+        LoadOrFindModel,
+        ModelRelease,
+        ModelDrawNode,
+        ModelRenderAnimated,
+        SceneDrawModels,
+        LoadOrFindAnim,
+        LoadOrFindTexture,
 
         Count
     };

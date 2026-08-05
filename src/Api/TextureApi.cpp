@@ -7,6 +7,7 @@
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameFunctions.h"
 #include "src/Game/GameModule.h"
+#include "src/Game/GameSymbols.h"
 #include "src/Hook/InlineHook.h"
 
 #include <ctype.h>
@@ -550,7 +551,7 @@ namespace Forge
         g_table.Create = &ApiCreate;
         g_table.Replace = &ApiReplace;
 
-        void* const load = GameModule::Resolve(GameAddress::kLoadOrFindTexture);
+        void* const load = GameSymbols::Address(GameSymbol::LoadOrFindTexture);
         std::string error;
 
         if (load != nullptr && g_loadHook.Install(load, reinterpret_cast<void*>(&LoadOrFindDetour), kLoadOrFindTexturePrologue, sizeof(kLoadOrFindTexturePrologue), error))

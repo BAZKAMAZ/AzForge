@@ -36,6 +36,8 @@ typedef struct AmodBlockExpressionApi
     void        (__cdecl* RemoveExpr)(AmodMod mod, AmodBlock block, const char* key);
 } AmodBlockExpressionApi;
 
+AMOD_LAST_FIELD(AmodBlockExpressionApi, RemoveExpr, 0x40);
+
 #ifdef __cplusplus
 }
 #endif

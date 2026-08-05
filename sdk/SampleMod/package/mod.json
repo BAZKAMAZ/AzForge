@@ -1,10 +1,10 @@
 {
-  "id": "azforge.mmd",
-  "name": "AzForge MMD",
+  "id": "azforge.monstersnew",
+  "name": "AzForge change monsters",
   "version": "1.0.0",
   "author": "AzForge",
   "description": "",
-  "api_version": 28,
+  "api_version": 41,
   "requires": ["world", "console"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll",

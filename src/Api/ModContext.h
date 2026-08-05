@@ -25,6 +25,10 @@ namespace Forge
         // Everything this mod registered, released in reverse when it is unloaded.
         ModOwnership owned;
 
+        // Why the mod's last call refused. Cleared by Caller, so it never outlives one call.
+        int failCode = AMOD_FAIL_NONE;
+        std::string failText;
+
         bool                                                        Declares(const char* capability) const;
     };
 

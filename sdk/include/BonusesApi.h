@@ -35,6 +35,8 @@ typedef struct AmodBonusType
     /* New fields are appended, never inserted. */
 } AmodBonusType;
 
+AMOD_LAST_FIELD(AmodBonusType, bonusLightRadius, 0x4C);
+
 typedef enum AmodBonusTimer
 {
     AMOD_BONUS_TIMER_NONE = 0,  /* sits in the slot until something takes it out */
@@ -99,6 +101,8 @@ typedef struct AmodBonusTypeDef
     /* New fields are appended, never inserted. */
 } AmodBonusTypeDef;
 
+AMOD_LAST_FIELD(AmodBonusTypeDef, lightRadius, 0x80);
+
 /* Where a bonus goes and what that particular one is, as against what its type is. */
 typedef struct AmodBonusPlacement
 {
@@ -114,6 +118,8 @@ typedef struct AmodBonusPlacement
 
     /* New fields are appended, never inserted. */
 } AmodBonusPlacement;
+
+AMOD_LAST_FIELD(AmodBonusPlacement, decor, 0x18);
 
 /* What a handler says should happen to the bonus it was told about. */
 typedef enum AmodBonusTakeResult
@@ -140,6 +146,8 @@ typedef struct AmodBonusTakeInfo
 
     /* New fields are appended, never inserted. */
 } AmodBonusTakeInfo;
+
+AMOD_LAST_FIELD(AmodBonusTakeInfo, isDecor, 0x28);
 
 /* Called when the player touches a bonus, before the game has done anything about it */
 typedef AmodBonusTakeResult (__cdecl* AmodBonusTakeHandler)(const AmodBonusTakeInfo* info, void* user);
@@ -188,6 +196,8 @@ typedef struct AmodBonusesApi
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodBonusesApi;
+
+AMOD_LAST_FIELD(AmodBonusesApi, TypePropertyNameAt, 0x44);
 
 #ifdef __cplusplus
 } /* extern "C" */

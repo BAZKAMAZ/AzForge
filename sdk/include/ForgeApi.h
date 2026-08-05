@@ -79,10 +79,16 @@ typedef struct AmodApi
     /* Every texture the game has, and textures a mod draws itself. */
     const AmodTextureApi* textures;
 
+    // Why the call before this one refused to the last one made
+    const char* (__cdecl* LastError)(AmodMod mod);
+    int (__cdecl* LastErrorCode)(AmodMod mod);
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
-/* Called once, before the game starts. Anything other than AMOD_OK unloads the mod. The * tables stay valid until AmodShutdown returns. */
+AMOD_LAST_FIELD(AmodApi, LastErrorCode, 0x6C);
+
+/* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
 
 /* Called once, after everything the mod registered has already been released. */
@@ -194,6 +200,17 @@ namespace Amod
     inline uint32_t                                                 GameBuild()
     {
         return g_api != nullptr ? g_api->GetGameBuild() : AMOD_GAME_BUILD_UNKNOWN;
+    }
+
+    // Worth asking straight after a refusal: the next call, whatever it is, clears it.
+    inline const char*                                              LastError()
+    {
+        return (g_api != nullptr && g_api->LastError != nullptr) ? g_api->LastError(g_api->self) : "";
+    }
+
+    inline int                                                      LastErrorCode()
+    {
+        return (g_api != nullptr && g_api->LastErrorCode != nullptr) ? g_api->LastErrorCode(g_api->self) : AMOD_FAIL_NONE;
     }
 }
 

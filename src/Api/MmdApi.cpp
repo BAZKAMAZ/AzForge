@@ -11,6 +11,7 @@
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameFunctions.h"
 #include "src/Game/GameModule.h"
+#include "src/Game/GameSymbols.h"
 #include "src/Hook/InlineHook.h"
 
 #include <ctype.h>
@@ -141,6 +142,9 @@ namespace Forge
         void RepaintAll(const uint8_t* model);
         void ForgetPaint(const uint8_t* model);
         void* RenderDevice();
+
+        //Moves what a mod hung on the old model onto the one that replaced it. Defined further down.
+        void CarryOverDrawings(const uint8_t* was, uint8_t* fresh);
 
         // geometry, as a mod hands it over and as a snapshot keeps it
 
@@ -413,6 +417,11 @@ namespace Forge
             uint8_t* model = nullptr;
             ModContext* creator = nullptr;      // null when the game built it
 
+            //A save load reads monster_res.txt again, so the models come back as different objects. The path
+            //is remembered so the id can be put back on the new one, and what hangs off the id follows.
+            std::string name;
+            bool resident = true;
+
             uint32_t validatedAt = 0;
 
             bool snapshotTaken = false;
@@ -469,7 +478,7 @@ namespace Forge
         {
             for (Tracked& entry : g_tracked)
             {
-                if (entry.model == model)
+                if (entry.model == model && entry.resident)
                 {
                     return &entry;
                 }
@@ -484,6 +493,11 @@ namespace Forge
                 if (entry.id != id)
                 {
                     continue;
+                }
+
+                if (!entry.resident)
+                {
+                    return nullptr;
                 }
 
                 if (entry.validatedAt == g_listGeneration && entry.model != nullptr)
@@ -518,6 +532,7 @@ namespace Forge
             entry.id = g_nextId++;
             entry.model = model;
             entry.creator = creator;
+            entry.name = NameAt(model, GameAddress::kModelNameOffset) ? ReadText(model, GameAddress::kModelNameOffset) : "";
             g_tracked.push_back(entry);
             return entry.id;
         }
@@ -525,21 +540,38 @@ namespace Forge
         void Forget(const uint8_t* model)
         {
             uint32_t id = AMOD_INVALID_MODEL;
+            bool waiting = false;
+
             for (auto it = g_tracked.begin(); it != g_tracked.end();)
             {
-                if (it->model == model)
-                {
-                    id = it->id;
-                    it = g_tracked.erase(it);
-                }
-                else
+                if (it->model != model)
                 {
                     ++it;
+                    continue;
                 }
+
+                id = it->id;
+
+                //A model with a path can come back under it; one built out of a mesh never will.
+                if (it->name.empty())
+                {
+                    it = g_tracked.erase(it);
+                    continue;
+                }
+
+                it->resident = false;
+                it->validatedAt = 0;
+                waiting = true;
+                ++it;
             }
 
             ForgetFileGeometry(model);
-            ForgetPaint(model);
+
+            //The colour waits with the id, and goes on again when the model comes back.
+            if (!waiting)
+            {
+                ForgetPaint(model);
+            }
 
             if (id == AMOD_INVALID_MODEL)
             {
@@ -596,6 +628,41 @@ namespace Forge
 
         // the detours
 
+        //The model is back under a path some id was waiting on, and what a mod hung off that id was hung
+        //off the old object.
+        void CarryOver(uint8_t* fresh)
+        {
+            if (!IsModel(fresh) || !NameAt(fresh, GameAddress::kModelNameOffset))
+            {
+                return;
+            }
+
+            const std::string name = Normalised(ReadText(fresh, GameAddress::kModelNameOffset));
+
+            for (Tracked& entry : g_tracked)
+            {
+                if (entry.resident || entry.name.empty() || Normalised(entry.name.c_str()) != name)
+                {
+                    continue;
+                }
+
+                uint8_t* const was = entry.model;
+
+                entry.model = fresh;
+                entry.resident = true;
+                entry.validatedAt = 0;
+                entry.snapshotTaken = false;    // the snapshot belonged to a mesh that is gone
+                entry.snapshot = Geometry{};
+
+                //Both of them live further down the file.
+                CarryOverDrawings(was, fresh);
+
+                FORGE_LOG_INFO("'%s' was loaded again and model %u went with it, colours and draw "
+                    "handlers and all", entry.name.c_str(), entry.id);
+                break;
+            }
+        }
+
         uint8_t* __cdecl LoadOrFindDetour(const char* path)
         {
             uint8_t* const standing = SubstituteFor(path);
@@ -608,6 +675,11 @@ namespace Forge
 
             uint8_t* const loaded = g_originalLoad != nullptr ? g_originalLoad(path) : nullptr;
             ++g_listGeneration;
+
+            if (loaded != nullptr)
+            {
+                CarryOver(loaded);
+            }
             return loaded;
         }
 
@@ -626,8 +698,8 @@ namespace Forge
 
         bool InstallHooks()
         {
-            void* const load = GameModule::Resolve(GameAddress::kLoadOrFindModel);
-            void* const release = GameModule::Resolve(GameAddress::kModelRelease);
+            void* const load = GameSymbols::Address(GameSymbol::LoadOrFindModel);
+            void* const release = GameSymbols::Address(GameSymbol::ModelRelease);
             if (load == nullptr || release == nullptr)
             {
                 return false;
@@ -817,8 +889,8 @@ namespace Forge
 
         bool InstallDrawHooks()
         {
-            void* const draw = GameModule::Resolve(GameAddress::kSceneDrawModels);
-            void* const loadAnim = GameModule::Resolve(GameAddress::kLoadOrFindAnim);
+            void* const draw = GameSymbols::Address(GameSymbol::SceneDrawModels);
+            void* const loadAnim = GameSymbols::Address(GameSymbol::LoadOrFindAnim);
             if (draw == nullptr || loadAnim == nullptr)
             {
                 return false;
@@ -1920,6 +1992,286 @@ namespace Forge
             return 0;
         }
 
+
+        //For naming the animation a refusal is about.
+        const char* AnimName(const uint8_t* animation)
+        {
+            return (animation != nullptr && NameAt(animation, GameAddress::kAnimNameOffset))
+                       ? ReadText(animation, GameAddress::kAnimNameOffset)
+                       : "";
+        }
+
+        //The AnimBox an animation keeps for itself or for the entity carrying it.
+        uint8_t* AnimBoxOf(const uint8_t* animation, int which)
+        {
+            const uintptr_t offset = which == AMOD_ANIM_BOX_ENTITY ? GameAddress::kAnimBoxEntityOffset : GameAddress::kAnimBoxOffset;
+            uint8_t* const box = reinterpret_cast<uint8_t*>(Read<uintptr_t>(animation, offset));
+            return (box != nullptr && Readable(box, GameAddress::kAnimBoxSize)) ? box : nullptr;
+        }
+
+        //A frame below zero is the default, and a frame without a box of its own READS as the default.
+        //Writing is the other way round: `claim` gives that frame the slot it never declared.
+        uint8_t* AnimBoxFace(uint8_t* animBox, int frame, bool claim = false)
+        {
+            if (frame < 0)
+            {
+                return animBox + GameAddress::kAnimBoxDefaultOffset;
+            }
+
+            const int total = Read<int>(animBox, GameAddress::kAnimBoxFrameCountOffset);
+            uint8_t* const frames = reinterpret_cast<uint8_t*>(Read<uintptr_t>(animBox, GameAddress::kAnimBoxFramesOffset));
+
+            if (frames == nullptr || frame >= total || total <= 0 || !Readable(frames, static_cast<size_t>(total) * GameAddress::kAnimBoxFrameStride))
+            {
+                return nullptr;
+            }
+
+            uint8_t* const entry = frames + static_cast<size_t>(frame) * GameAddress::kAnimBoxFrameStride;
+            if (entry[GameAddress::kAnimBoxFrameUsedOffset] == 0)
+            {
+                if (!claim)
+                {
+                    return animBox + GameAddress::kAnimBoxDefaultOffset;
+                }
+                memcpy(entry + GameAddress::kAnimBoxFrameBoxOffset,
+                       animBox + GameAddress::kAnimBoxDefaultOffset, GameAddress::kRoomCollisionBoxStride);
+                entry[GameAddress::kAnimBoxFrameUsedOffset] = 1;
+            }
+            return entry + GameAddress::kAnimBoxFrameBoxOffset;
+        }
+
+        void ReadBox(const uint8_t* box, AmodBox& out)
+        {
+            out.min[0] = Read<float>(box, GameAddress::kBoxMinXOffset);
+            out.min[1] = Read<float>(box, GameAddress::kBoxMinYOffset);
+            out.min[2] = Read<float>(box, GameAddress::kBoxMinZOffset);
+            out.max[0] = Read<float>(box, GameAddress::kBoxMaxXOffset);
+            out.max[1] = Read<float>(box, GameAddress::kBoxMaxYOffset);
+            out.max[2] = Read<float>(box, GameAddress::kBoxMaxZOffset);
+        }
+
+        void WriteBox(uint8_t* box, const AmodBox& from)
+        {
+            memcpy(box + GameAddress::kBoxMinXOffset, &from.min[0], sizeof(float));
+            memcpy(box + GameAddress::kBoxMinYOffset, &from.min[1], sizeof(float));
+            memcpy(box + GameAddress::kBoxMinZOffset, &from.min[2], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxXOffset, &from.max[0], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxYOffset, &from.max[1], sizeof(float));
+            memcpy(box + GameAddress::kBoxMaxZOffset, &from.max[2], sizeof(float));
+        }
+
+        //The animation and which face, not the address of the face: the frame array moves when it grows.
+        struct AnimBoxSnapshot
+        {
+            ModContext* owner;
+            uint8_t* animation;
+            int which;
+            int frame;
+            uint8_t bytes[GameAddress::kRoomCollisionBoxStride];
+        };
+
+        std::vector<AnimBoxSnapshot> g_animBoxSnapshots;
+
+        void KeepAnimBox(ModContext* owner, uint8_t* animation, int which, int frame, const uint8_t* face)
+        {
+            for (const AnimBoxSnapshot& kept : g_animBoxSnapshots)
+            {
+                if (kept.animation == animation && kept.which == which && kept.frame == frame)
+                {
+                    return;
+                }
+            }
+
+            AnimBoxSnapshot kept;
+            kept.owner = owner;
+            kept.animation = animation;
+            kept.which = which;
+            kept.frame = frame;
+            memcpy(kept.bytes, face, sizeof(kept.bytes));
+            g_animBoxSnapshots.push_back(kept);
+        }
+
+        //Apart from the snapshots above because putting this back is not a copy of bytes: the pointer has
+        //to go back and what was allocated has to be handed back.
+        struct AnimBoxMade
+        {
+            ModContext* owner;
+            uint8_t* animation;
+            int which;
+
+            bool createdSet;        // the whole 0x24 is ours, and +0x10C/+0x110 was null before
+            uint8_t* madeFrames;    // the array we allocated
+            uint8_t* wasFrames;     // and what stood there before it
+            int wasCount;
+        };
+
+        std::vector<AnimBoxMade> g_animBoxesMade;
+
+        uintptr_t AnimBoxSlot(int which)
+        {
+            return which == AMOD_ANIM_BOX_ENTITY ? GameAddress::kAnimBoxEntityOffset : GameAddress::kAnimBoxOffset;
+        }
+
+        AnimBoxMade& MadeFor(ModContext* owner, uint8_t* animation, int which)
+        {
+            for (AnimBoxMade& made : g_animBoxesMade)
+            {
+                if (made.animation == animation && made.which == which)
+                {
+                    return made;
+                }
+            }
+
+            AnimBoxMade fresh = {};
+            fresh.owner = owner;
+            fresh.animation = animation;
+            fresh.which = which;
+            g_animBoxesMade.push_back(fresh);
+            return g_animBoxesMade.back();
+        }
+
+        int __cdecl ApiEnsureAnimBox(AmodMod mod, AmodAnimationId animation, int which, int frames)
+        {
+            ModContext* const caller = Caller(mod);
+            const TrackedAnim* const tracked = caller != nullptr ? AnimById(animation) : nullptr;
+
+            if (tracked == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "animation %u is not one this loader is holding", animation);
+            }
+            if (frames < 0 || frames > 0x1000)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "%d is not a sane number of frames", frames);
+            }
+
+            uint8_t* const anim = tracked->animation;
+            const uintptr_t slot = AnimBoxSlot(which);
+            uint8_t* animBox = AnimBoxOf(anim, which);
+
+            //anim_skull.txt is the case this exists for: nine $frame_bbox and no block to read them into.
+            if (animBox == nullptr)
+            {
+                animBox = static_cast<uint8_t*>(GameFunctions::Allocate(static_cast<int>(GameAddress::kAnimBoxSize), ".\\AnimBox.cpp", 0xc));
+                if (animBox == nullptr)
+                {
+                    return Fail(mod, AMOD_FAIL_REFUSED, "the game would not give room for a box set");
+                }
+
+                memset(animBox, 0, GameAddress::kAnimBoxSize);
+                AnimBoxMade& made = MadeFor(caller, anim, which);
+                made.createdSet = true;
+                WritePointer(anim, slot, animBox);
+            }
+
+            const int have = Read<int>(animBox, GameAddress::kAnimBoxFrameCountOffset);
+            if (frames <= have)
+            {
+                return 1;
+            }
+
+            uint8_t* const grown = static_cast<uint8_t*>(GameFunctions::Allocate(static_cast<int>(static_cast<size_t>(frames) * GameAddress::kAnimBoxFrameStride), ".\\AnimBox.cpp", 0x1a));
+            if (grown == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "the game would not give room for %d frame(s)", frames);
+            }
+
+            memset(grown, 0, static_cast<size_t>(frames) * GameAddress::kAnimBoxFrameStride);
+
+            uint8_t* const had = reinterpret_cast<uint8_t*>(Read<uintptr_t>(animBox, GameAddress::kAnimBoxFramesOffset));
+            if (had != nullptr && have > 0 && Readable(had, static_cast<size_t>(have) * GameAddress::kAnimBoxFrameStride))
+            {
+                memcpy(grown, had, static_cast<size_t>(have) * GameAddress::kAnimBoxFrameStride);
+            }
+
+            //The old array is not freed: it is the game's, and it is what the rollback puts back.
+            AnimBoxMade& made = MadeFor(caller, anim, which);
+            if (made.madeFrames == nullptr)
+            {
+                made.wasFrames = had;
+                made.wasCount = have;
+            }
+            else
+            {
+                GameFunctions::Free(made.madeFrames);
+            }
+            made.madeFrames = grown;
+
+            WritePointer(animBox, GameAddress::kAnimBoxFramesOffset, grown);
+            WriteInt(animBox, GameAddress::kAnimBoxFrameCountOffset, frames);
+            return 1;
+        }
+
+        int __cdecl ApiGetAnimBox(AmodMod mod, AmodAnimationId animation, int which, int frame, AmodBox* out)
+        {
+            const TrackedAnim* const tracked = Caller(mod) != nullptr ? AnimById(animation) : nullptr;
+            uint8_t* const animBox = tracked != nullptr ? AnimBoxOf(tracked->animation, which) : nullptr;
+            const uint8_t* const face = animBox != nullptr ? AnimBoxFace(animBox, frame) : nullptr;
+
+            //Three different noes, and telling them apart is the whole point.
+            if (tracked == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "animation %u is not one this loader is holding", animation);
+            }
+            if (animBox == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_DECLARED, "'%s' declares no %s block",
+                            AnimName(tracked->animation),
+                            which == AMOD_ANIM_BOX_ENTITY ? "$anim_bbox_entity" : "$anim_bbox");
+            }
+            if (face == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "'%s' has no frame %d; it has %d",
+                            AnimName(tracked->animation), frame,
+                            Read<int>(animBox, GameAddress::kAnimBoxFrameCountOffset));
+            }
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetAnimBox was given nowhere to put the box");
+            }
+
+            AmodBox filled = {};
+            filled.structSize = sizeof(filled);
+            ReadBox(face, filled);
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetAnimBox(AmodMod mod, AmodAnimationId animation, int which, int frame, const AmodBox* box)
+        {
+            const TrackedAnim* const tracked = Caller(mod) != nullptr ? AnimById(animation) : nullptr;
+            uint8_t* const animBox = tracked != nullptr ? AnimBoxOf(tracked->animation, which) : nullptr;
+            uint8_t* const face = animBox != nullptr ? AnimBoxFace(animBox, frame, true) : nullptr;
+
+            if (tracked == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "animation %u is not one this loader is holding", animation);
+            }
+            if (animBox == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_DECLARED, "'%s' declares no %s block, so there is nothing to write over",
+                            AnimName(tracked->animation),
+                            which == AMOD_ANIM_BOX_ENTITY ? "$anim_bbox_entity" : "$anim_bbox");
+            }
+            if (face == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "'%s' has no frame %d", AnimName(tracked->animation), frame);
+            }
+            if (box == nullptr || box->structSize < sizeof(AmodBox))
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetAnimBox was given no box to write");
+            }
+
+            KeepAnimBox(Caller(mod), tracked->animation, which, frame, face);
+            WriteBox(face, *box);
+            return 1;
+        }
+
+        int __cdecl ApiGetAnimBoxFrames(AmodMod mod, AmodAnimationId animation, int which)
+        {
+            const TrackedAnim* const tracked = Caller(mod) != nullptr ? AnimById(animation) : nullptr;
+            const uint8_t* const animBox = tracked != nullptr ? AnimBoxOf(tracked->animation, which) : nullptr;
+            return animBox != nullptr ? Read<int>(animBox, GameAddress::kAnimBoxFrameCountOffset) : 0;
+        }
+
         int __cdecl ApiOverrideAnimation(AmodMod mod, const char* path, AmodAnimationId animation)
         {
             ModContext* const context = Caller(mod);
@@ -1981,6 +2333,108 @@ namespace Forge
             const size_t bytes = static_cast<size_t>(count) * GameAddress::kMeshVertexSize;
             return (vertices != nullptr && count > 0 && Readable(vertices, bytes)) ? vertices
                 : nullptr;
+        }
+
+        //Moving a vertex leaves its normal facing the old shape. Worked out again the way a mesh tool
+        //does it: every triangle gives its normal to its three corners.
+        bool RebuildNormals(const uint8_t* model, int frame)
+        {
+            const uint8_t* const mesh = ModelMesh(model);
+            const uint8_t* const at = mesh != nullptr ? MeshFrame(mesh, frame) : nullptr;
+
+            int count = 0;
+            uint8_t* const vertices = FrameVertices(model, frame, count);
+            const uint16_t* const indices = at != nullptr
+                ? reinterpret_cast<const uint16_t*>(Read<uintptr_t>(at, GameAddress::kMeshFrameIndicesOffset))
+                : nullptr;
+            const int total = at != nullptr ? Read<int>(at, GameAddress::kMeshFrameIndexCountOffset) : 0;
+
+            if (vertices == nullptr || indices == nullptr || total < 3 ||
+                !Readable(indices, static_cast<size_t>(total) * sizeof(uint16_t)))
+            {
+                return false;
+            }
+
+            std::vector<float> built(static_cast<size_t>(count) * 3, 0.0f);
+
+            for (int corner = 0; corner + 2 < total; corner += 3)
+            {
+                const uint16_t a = indices[corner];
+                const uint16_t b = indices[corner + 1];
+                const uint16_t c = indices[corner + 2];
+
+                if (a >= count || b >= count || c >= count)
+                {
+                    continue;
+                }
+
+                const float* const pa = reinterpret_cast<const float*>(vertices + static_cast<size_t>(a) * GameAddress::kMeshVertexSize);
+                const float* const pb = reinterpret_cast<const float*>(vertices + static_cast<size_t>(b) * GameAddress::kMeshVertexSize);
+                const float* const pc = reinterpret_cast<const float*>(vertices + static_cast<size_t>(c) * GameAddress::kMeshVertexSize);
+
+                const float u[3] = { pb[0] - pa[0], pb[1] - pa[1], pb[2] - pa[2] };
+                const float v[3] = { pc[0] - pa[0], pc[1] - pa[1], pc[2] - pa[2] };
+
+                //Not normalised on purpose: the cross product is twice the area, so a big face pulls harder.
+                const float face[3] =
+                {
+                    u[1] * v[2] - u[2] * v[1],
+                    u[2] * v[0] - u[0] * v[2],
+                    u[0] * v[1] - u[1] * v[0]
+                };
+
+                for (const uint16_t which : { a, b, c })
+                {
+                    for (int axis = 0; axis < 3; ++axis)
+                    {
+                        built[static_cast<size_t>(which) * 3 + axis] += face[axis];
+                    }
+                }
+            }
+
+            for (int vertex = 0; vertex < count; ++vertex)
+            {
+                float* const normal = reinterpret_cast<float*>(vertices + static_cast<size_t>(vertex) * GameAddress::kMeshVertexSize) + 3;
+                const float* const sum = &built[static_cast<size_t>(vertex) * 3];
+                const float length = sqrtf(sum[0] * sum[0] + sum[1] * sum[1] + sum[2] * sum[2]);
+
+                //A vertex no triangle uses keeps the normal it had rather than becoming a zero.
+                if (length > 0.000001f)
+                {
+                    normal[0] = sum[0] / length;
+                    normal[1] = sum[1] / length;
+                    normal[2] = sum[2] / length;
+                }
+            }
+            return true;
+        }
+
+        int __cdecl ApiRebuildNormals(AmodMod mod, AmodModelId model, int frame)
+        {
+            const Tracked* const tracked = Caller(mod) != nullptr ? TrackedById(model) : nullptr;
+            if (tracked == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no model %u to work the normals out for", model);
+            }
+
+            const uint8_t* const mesh = ModelMesh(tracked->model);
+            const int frames = mesh != nullptr ? Read<int>(mesh, GameAddress::kMeshFrameCountOffset) : 0;
+
+            if (frames <= 0)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_DECLARED, "that model has no mesh of its own to work from");
+            }
+
+            int done = 0;
+            for (int at = 0; at < frames; ++at)
+            {
+                if (frame < 0 || frame == at)
+                {
+                    done += RebuildNormals(tracked->model, at) ? 1 : 0;
+                }
+            }
+
+            return done > 0 ? 1 : Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "frame %d is not one this model has", frame);
         }
 
         bool Inside(const AmodVertexFilter& filter, const float* position)
@@ -2199,15 +2653,15 @@ namespace Forge
             return lock(buffer);
         }
 
-        bool PaintModel(Painted& painted)
+        bool PaintVertices(const uint8_t* model, const std::vector<uint32_t>& colours)
         {
-            if (!IsModel(painted.model) || !Listed(painted.model))
+            if (!IsModel(model) || !Listed(model))
             {
                 return false;
             }
 
-            const int total = Read<int>(painted.model, GameAddress::kModelVertexCountOffset);
-            uint8_t* const vertices = static_cast<uint8_t*>(LockVertices(painted.model));
+            const int total = Read<int>(model, GameAddress::kModelVertexCountOffset);
+            uint8_t* const vertices = static_cast<uint8_t*>(LockVertices(model));
 
             if (vertices == nullptr || total <= 0 || !Readable(vertices, static_cast<size_t>(total) * kBufferVertexStride))
             {
@@ -2216,15 +2670,53 @@ namespace Forge
 
             for (int at = 0; at < total; ++at)
             {
-                const uint32_t colour = at < static_cast<int>(painted.colours.size())
-                    ? painted.colours[at]
-                    : 0xFFFFFFFFu;
-
+                const uint32_t colour = at < static_cast<int>(colours.size()) ? colours[at] : 0xFFFFFFFFu;
                 memcpy(vertices + static_cast<size_t>(at) * kBufferVertexStride + kBufferDiffuseOffset, &colour, sizeof(colour));
+            }
+            return true;
+        }
+
+        bool PaintModel(Painted& painted)
+        {
+            if (!PaintVertices(painted.model, painted.colours))
+            {
+                return false;
             }
 
             painted.buffer = reinterpret_cast<const void*>(Read<uintptr_t>(painted.model, GameAddress::kModelVertexBufferOffset));
             return true;
+        }
+
+        //Model_RenderAnimated writes the diffuse of every vertex itself while it lerps, so an animated
+        //model cannot be painted ahead of its draw. The one moment that survives is the call it ends
+        //with - the renderer's vtable +0x78 - so the colours are written there, on the way past.
+        typedef void(__thiscall* DrawVerticesRoutine)(void* renderer, void* buffer);
+        constexpr size_t kDrawVerticesSlot = GameAddress::kRenderDeviceDrawVertices / sizeof(void*);
+
+        void** g_drawVtable = nullptr;
+        DrawVerticesRoutine g_originalDrawVertices = nullptr;
+
+        //Put in beside the texture watch, further down, once a colour is actually asked for.
+        bool WatchDraw();
+
+        void __fastcall DrawVerticesThunk(void* renderer, void* unused, void* buffer)
+        {
+            (void)unused;
+
+            for (const Painted& painted : g_painted)
+            {
+                if (!painted.colours.empty() && IsModel(painted.model) &&
+                    reinterpret_cast<void*>(Read<uintptr_t>(painted.model, GameAddress::kModelVertexBufferOffset)) == buffer)
+                {
+                    PaintVertices(painted.model, painted.colours);
+                    break;
+                }
+            }
+
+            if (g_originalDrawVertices != nullptr)
+            {
+                g_originalDrawVertices(renderer, buffer);
+            }
         }
 
         void RepaintIfRebuilt(const uint8_t* model)
@@ -2356,7 +2848,7 @@ namespace Forge
             const Tracked* const tracked = context != nullptr ? TrackedById(model) : nullptr;
             if (tracked == nullptr)
             {
-                return 0;
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no model %u to colour", model);
             }
 
             ForgetPaint(tracked->model);
@@ -2369,6 +2861,12 @@ namespace Forge
                 white.model = tracked->model;
                 white.buffer = nullptr;
                 return PaintModel(white) ? 1 : 0;
+            }
+
+            //An animated model is refilled every draw, diffuse and all, so the colours need writing again.
+            if (Read<int>(tracked->model, GameAddress::kModelKindOffset) == AMOD_MODEL_KIND_ANIMATED && !WatchDraw())
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "the renderer is not up yet, so an animated model cannot be coloured");
             }
 
             Painted painted;
@@ -2469,6 +2967,10 @@ namespace Forge
             uint8_t* model;
             AmodModelDrawHandler handler;
             void* user;
+
+            //One list, two moments: before the node is drawn a mod can still change what is about to appear,
+            //after is where DrawWith hangs something on top.
+            bool before;
         };
 
         std::vector<DrawHandler> g_drawHandlers;
@@ -2551,6 +3053,45 @@ namespace Forge
             return true;
         }
 
+        //The same slot swap as the texture above, on the call that hands a filled buffer to the card.
+        bool WatchDraw()
+        {
+            if (g_originalDrawVertices != nullptr)
+            {
+                return true;
+            }
+
+            void* const device = RenderDevice();
+            void** const vtable = device != nullptr ? *static_cast<void***>(device) : nullptr;
+
+            if (vtable == nullptr || !Readable(&vtable[kDrawVerticesSlot], sizeof(void*)))
+            {
+                return false;
+            }
+
+            const DrawVerticesRoutine original = reinterpret_cast<DrawVerticesRoutine>(vtable[kDrawVerticesSlot]);
+            if (original == nullptr || !WriteVtableSlot(vtable, kDrawVerticesSlot, reinterpret_cast<void*>(&DrawVerticesThunk)))
+            {
+                return false;
+            }
+
+            g_drawVtable = vtable;
+            g_originalDrawVertices = original;
+            FORGE_LOG_INFO("Watching the buffer draw, so an animated model can be coloured after "
+                "the game has filled it in");
+            return true;
+        }
+
+        void UnwatchDraw()
+        {
+            if (g_drawVtable != nullptr && g_originalDrawVertices != nullptr)
+            {
+                WriteVtableSlot(g_drawVtable, kDrawVerticesSlot, reinterpret_cast<void*>(g_originalDrawVertices));
+            }
+            g_drawVtable = nullptr;
+            g_originalDrawVertices = nullptr;
+        }
+
         void UnwatchTexture()
         {
             if (g_deviceVtable != nullptr && g_originalSetTexture != nullptr)
@@ -2628,9 +3169,19 @@ namespace Forge
             return true;
         }
 
-        void FireDrawHandlers(uint8_t* model, int frameA, int frameB, float blend, const uint8_t* node)
+        void FireDrawHandlers(uint8_t* model, int frameA, int frameB, float blend, const uint8_t* node, bool before)
         {
             if (g_drawDepth != 0 || g_drawHandlers.empty() || !IsModel(model))
+            {
+                return;
+            }
+
+            bool any = false;
+            for (const DrawHandler& entry : g_drawHandlers)
+            {
+                any = any || (entry.model == model && entry.before == before && entry.handler != nullptr);
+            }
+            if (!any)
             {
                 return;
             }
@@ -2653,7 +3204,7 @@ namespace Forge
             const std::vector<DrawHandler> firing = g_drawHandlers;
             for (const DrawHandler& entry : firing)
             {
-                if (entry.model == model && entry.handler != nullptr)
+                if (entry.model == model && entry.before == before && entry.handler != nullptr)
                 {
                     info.model = Track(model, nullptr);
                     entry.handler(&info, entry.user);
@@ -2664,6 +3215,25 @@ namespace Forge
 
         void __stdcall ModelDrawNodeDetour(uint8_t* node)
         {
+            //The node is read before the game touches it, so the same numbers serve both moments.
+            const bool readable = Readable(node, GameAddress::kDrawNodeNextOffset);
+            uint8_t* const model = readable ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(node, GameAddress::kDrawNodeModelOffset)) : nullptr;
+            const bool animated = readable && (node[GameAddress::kDrawNodeFlagsOffset] & GameAddress::kDrawNodeIsAnimated) != 0;
+            const int frameA = animated ? Read<int>(node, GameAddress::kDrawNodeFrameAOffset) : -1;
+            const int frameB = animated ? Read<int>(node, GameAddress::kDrawNodeFrameBOffset) : -1;
+            const float blend = animated ? Read<float>(node, GameAddress::kDrawNodeBlendOffset) : 0.0f;
+
+            //Model_DrawNode's first act is to set the texture the node carries, so it is known here without
+            //having had to watch a SetTexture go past - which is what left the first DrawWith nothing to
+            //put back.
+            if (readable)
+            {
+                g_currentTexture = Read<uint32_t>(node, GameAddress::kDrawNodeTextureOffset);
+                g_textureSeen = true;
+
+                FireDrawHandlers(model, frameA, frameB, blend, node, true);
+            }
+
             if (g_originalDrawNode != nullptr)
             {
                 ++g_drawDepth;
@@ -2671,20 +3241,13 @@ namespace Forge
                 --g_drawDepth;
             }
 
-            if (!Readable(node, GameAddress::kDrawNodeNextOffset))
+            if (!readable)
             {
                 return;
             }
 
-            uint8_t* const model = reinterpret_cast<uint8_t*>(Read<uintptr_t>(node, GameAddress::kDrawNodeModelOffset));
-            const bool animated = (node[GameAddress::kDrawNodeFlagsOffset] & GameAddress::kDrawNodeIsAnimated) != 0;
-
             RepaintIfRebuilt(model);
-
-            FireDrawHandlers(model,
-                animated ? Read<int>(node, GameAddress::kDrawNodeFrameAOffset) : -1,
-                animated ? Read<int>(node, GameAddress::kDrawNodeFrameBOffset) : -1,
-                animated ? Read<float>(node, GameAddress::kDrawNodeBlendOffset) : 0.0f, node);
+            FireDrawHandlers(model, frameA, frameB, blend, node, false);
         }
 
         int __cdecl ApiDrawWith(AmodMod mod, AmodModelId model, uint32_t texture, const float* matrix)
@@ -2733,13 +3296,38 @@ namespace Forge
             }
         }
 
-        AmodToken __cdecl ApiAddDrawHandler(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user)
+        //The colour goes on the new buffer straight away, and the handlers watch the new object.
+        void CarryOverDrawings(const uint8_t* was, uint8_t* fresh)
+        {
+            for (Painted& painted : g_painted)
+            {
+                if (painted.model == was)
+                {
+                    painted.model = fresh;
+                    painted.buffer = nullptr;
+                    PaintModel(painted);
+                }
+            }
+
+            for (DrawHandler& handler : g_drawHandlers)
+            {
+                if (handler.model == was)
+                {
+                    handler.model = fresh;
+                }
+            }
+        }
+
+        //Both moments come through here; only the flag differs.
+        AmodToken AddDrawHandler(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user, bool before)
         {
             ModContext* const context = Caller(mod);
             const Tracked* const tracked = context != nullptr ? TrackedById(model) : nullptr;
 
             if (tracked == nullptr || handler == nullptr || g_originalDrawNode == nullptr)
             {
+                Fail(mod, handler == nullptr ? AMOD_FAIL_BAD_ARGUMENT : AMOD_FAIL_NO_SUCH,
+                     "there is no model %u to watch being drawn", model);
                 return AMOD_INVALID_TOKEN;
             }
 
@@ -2751,9 +3339,20 @@ namespace Forge
             entry.model = tracked->model;
             entry.handler = handler;
             entry.user = user;
+            entry.before = before;
             g_drawHandlers.push_back(entry);
 
             return context->owned.Add(&ReleaseDrawHandler, reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+        }
+
+        AmodToken __cdecl ApiAddDrawHandler(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user)
+        {
+            return AddDrawHandler(mod, model, handler, user, false);
+        }
+
+        AmodToken __cdecl ApiAddPreDrawHandler(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user)
+        {
+            return AddDrawHandler(mod, model, handler, user, true);
         }
 
         void __cdecl ApiRemoveDrawHandler(AmodMod mod, AmodToken token)
@@ -2767,7 +3366,7 @@ namespace Forge
 
         bool InstallRenderHooks()
         {
-            void* const node = GameModule::Resolve(GameAddress::kModelDrawNode);
+            void* const node = GameSymbols::Address(GameSymbol::ModelDrawNode);
             if (node == nullptr)
             {
                 return false;
@@ -2782,7 +3381,7 @@ namespace Forge
 
             g_originalDrawNode = reinterpret_cast<DrawNodeRoutine>(g_drawNodeHook.Trampoline());
 
-            void* const animated = GameModule::Resolve(GameAddress::kModelRenderAnimated);
+            void* const animated = GameSymbols::Address(GameSymbol::ModelRenderAnimated);
             if (animated != nullptr &&
                 g_renderAnimHook.Install(animated, reinterpret_cast<void*>(&RenderAnimatedDetour),
                     kModelRenderAnimatedPrologue, sizeof(kModelRenderAnimatedPrologue), error))
@@ -2838,6 +3437,12 @@ namespace Forge
         g_table.GetFrameset = &ApiGetFrameset;
         g_table.LoadAnimation = &ApiLoadAnimation;
         g_table.ReleaseAnimation = &ApiReleaseAnimation;
+        g_table.EnsureAnimBox = &ApiEnsureAnimBox;
+        g_table.RebuildNormals = &ApiRebuildNormals;
+        g_table.AddPreDrawHandler = &ApiAddPreDrawHandler;
+        g_table.GetAnimBox = &ApiGetAnimBox;
+        g_table.SetAnimBox = &ApiSetAnimBox;
+        g_table.GetAnimBoxFrames = &ApiGetAnimBoxFrames;
         g_table.GetVertex = &ApiGetVertex;
         g_table.SelectVertices = &ApiSelectVertices;
         g_table.TransformVertices = &ApiTransformVertices;
@@ -2882,6 +3487,7 @@ namespace Forge
         g_originalRenderAnimated = nullptr;
         ForgetFileGeometry(nullptr);
         UnwatchTexture();
+        UnwatchDraw();
         g_originalLoad = nullptr;
         g_originalRelease = nullptr;
         g_originalDraw = nullptr;
@@ -2899,6 +3505,8 @@ namespace Forge
         g_queued.clear();
         g_textures.clear();
         g_painted.clear();
+        g_animBoxSnapshots.clear();
+        g_animBoxesMade.clear();
         g_table = AmodMmdApi{};
     }
 
@@ -2996,6 +3604,54 @@ namespace Forge
                 Forget(target);
             }
             release(target);
+        }
+
+        for (auto it = g_animBoxSnapshots.begin(); it != g_animBoxSnapshots.end();)
+        {
+            if (it->owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            uint8_t* const animBox = IsAnimation(it->animation) && AnimListed(it->animation) ? AnimBoxOf(it->animation, it->which) : nullptr;
+            uint8_t* const face = animBox != nullptr ? AnimBoxFace(animBox, it->frame) : nullptr;
+            if (face != nullptr)
+            {
+                memcpy(face, it->bytes, sizeof(it->bytes));
+            }
+            it = g_animBoxSnapshots.erase(it);
+        }
+
+        //After the bytes, because a box put back above may live in an array taken away below.
+        for (auto it = g_animBoxesMade.begin(); it != g_animBoxesMade.end();)
+        {
+            if (it->owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            const bool alive = IsAnimation(it->animation) && AnimListed(it->animation);
+            uint8_t* const animBox = alive ? AnimBoxOf(it->animation, it->which) : nullptr;
+
+            if (animBox != nullptr && it->madeFrames != nullptr &&
+                reinterpret_cast<uint8_t*>(Read<uintptr_t>(animBox, GameAddress::kAnimBoxFramesOffset)) == it->madeFrames)
+            {
+                WritePointer(animBox, GameAddress::kAnimBoxFramesOffset, it->wasFrames);
+                WriteInt(animBox, GameAddress::kAnimBoxFrameCountOffset, it->wasCount);
+            }
+            if (it->madeFrames != nullptr)
+            {
+                GameFunctions::Free(it->madeFrames);
+            }
+
+            if (it->createdSet && animBox != nullptr)
+            {
+                WritePointer(it->animation, AnimBoxSlot(it->which), nullptr);
+                GameFunctions::Free(animBox);
+            }
+            it = g_animBoxesMade.erase(it);
         }
 
         std::vector<uint32_t> animsBack;

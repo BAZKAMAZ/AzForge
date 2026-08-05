@@ -45,6 +45,8 @@ extern "C" {
         
     } AmodModel;
 
+    AMOD_LAST_FIELD(AmodModel, edited, 0x3C);
+
     /* One vertex, exactly as a .mmd holds it. */
     typedef struct AmodVertex
     {
@@ -52,6 +54,8 @@ extern "C" {
         float normal[3];
         float uv[2];
     } AmodVertex;
+
+    AMOD_LAST_FIELD(AmodVertex, uv, 0x18);
 
     /* Geometry handed to the loader. Frames follow one another; every frame has the same counts. */
     typedef struct AmodMeshData
@@ -68,6 +72,8 @@ extern "C" {
 
         
     } AmodMeshData;
+
+    AMOD_LAST_FIELD(AmodMeshData, indices, 0x18);
 
     /* Turn about `axis` by `angle` instead of the three eulers. */
 #define AMOD_DRAW_TURNS_ABOUT_AXIS                                  0x01
@@ -95,6 +101,8 @@ extern "C" {
 
     } AmodModelDraw;
 
+    AMOD_LAST_FIELD(AmodModelDraw, frame, 0x78);
+
     /* An animation as long as it is loaded, checked the way a model is. */
     typedef uint32_t AmodAnimationId;
 #define AMOD_INVALID_ANIMATION                                      0
@@ -108,6 +116,8 @@ extern "C" {
         int references;
 
     } AmodAnimation;
+
+    AMOD_LAST_FIELD(AmodAnimation, references, 0x0C);
 
     /* One $frameset of a .anm: which frames it runs and how. */
     typedef struct AmodFrameset
@@ -126,6 +136,12 @@ extern "C" {
         int backwards;              /* the range runs down */
 
     } AmodFrameset;
+
+    AMOD_LAST_FIELD(AmodFrameset, backwards, 0x24);
+
+// Which of an animation's two box sets is meant
+#define AMOD_ANIM_BOX_SELF                                          0   /* $anim_bbox */
+#define AMOD_ANIM_BOX_ENTITY                                        1   /* $anim_bbox_entity */
 
     /* Which vertices of a model an operation touches. Judged on the frame it is given. */
 #define AMOD_VERTICES_ALL                                           0
@@ -149,6 +165,8 @@ extern "C" {
         
     } AmodVertexFilter;
 
+    AMOD_LAST_FIELD(AmodVertexFilter, indexCount, 0x34);
+
     /* What an entity is playing */
     typedef struct AmodAnimState
     {
@@ -168,6 +186,8 @@ extern "C" {
         
     } AmodAnimState;
 
+    AMOD_LAST_FIELD(AmodAnimState, finished, 0x24);
+
     /* A model the game is drawing, right now, with the device already set up for it. */
     typedef struct AmodModelDrawInfo
     {
@@ -186,13 +206,15 @@ extern "C" {
 
     } AmodModelDrawInfo;
 
+    AMOD_LAST_FIELD(AmodModelDrawInfo, position, 0x5C);
+
     typedef void(__cdecl* AmodModelDrawHandler)(const AmodModelDrawInfo* info, void* user);
 
     typedef struct AmodMmdApi
     {
         uint32_t structSize;
 
-        /* --- what the game has in memory --------------------------------------------------- */
+        /* what the game has in memory */
 
         int(__cdecl* GetCount)(AmodMod mod);
         AmodModelId(__cdecl* GetAt)(AmodMod mod, int index);
@@ -200,7 +222,7 @@ extern "C" {
         int(__cdecl* Get)(AmodMod mod, AmodModelId model, AmodModel* out);
         int(__cdecl* IsValid)(AmodMod mod, AmodModelId model);
 
-        /* --- getting hold of one ------------------------------------------------------------ */
+        /* getting hold of one */
 
         /* Through the game's own door: a model already loaded is shared rather than read again. */
         AmodModelId(__cdecl* Load)(AmodMod mod, const char* path);
@@ -208,7 +230,7 @@ extern "C" {
         /* Gives back what Load took */
         int(__cdecl* Release)(AmodMod mod, AmodModelId model);
 
-        /* --- the triangles ------------------------------------------------------------------- */
+        /* the triangles */
 
         /* Fills up to max and returns how many there are, whether they fitted or not */
         int(__cdecl* ReadVertices)(AmodMod mod, AmodModelId model, int frame, AmodVertex* out, int max);
@@ -220,7 +242,7 @@ extern "C" {
         int(__cdecl* WriteIndices)(AmodMod mod, AmodModelId model, int frame,
             const uint16_t* indices, int count);
 
-        /* --- models of the mod's own ---------------------------------------------------------- */
+        /* models of the mod's own */
 
         /* Builds one out of vertices */
         AmodModelId(__cdecl* Create)(AmodMod mod, const char* name, const AmodMeshData* mesh);
@@ -234,25 +256,25 @@ extern "C" {
         /* Writes the model out as a .mmd the game itself can load */
         int(__cdecl* Save)(AmodMod mod, AmodModelId model, const char* path);
 
-        /* --- standing in for a file ------------------------------------------------------------ */
+        /* standing in for a file */
 
         /* Every request for `path` - a monster's $model, a bonus, a room, anything - is answered with this model instead */
         int(__cdecl* Override)(AmodMod mod, const char* path, AmodModelId model);
         int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
 
-        /* --- putting one in the world ---------------------------------------------------------- */
+        /* putting one in the world */
 
         /* The three models a room is drawn from, AMOD_ROOM_MODEL_* */
         AmodModelId(__cdecl* GetRoomModel)(AmodMod mod, int roomIndex, int slot);
         int(__cdecl* SetRoomModel)(AmodMod mod, int roomIndex, int slot, AmodModelId model);
 
-        /* --- drawing ---------------------------------------------------------------------------- */
+        /* drawing */
 
         /* With whatever transform and texture the device is already set to, so only from inside a render callback */
         int(__cdecl* Draw)(AmodMod mod, AmodModelId model);
         int(__cdecl* DrawFrames)(AmodMod mod, AmodModelId model, int from, int to, float blend);
 
-        /* --- being asked -------------------------------------------------------------------------- */
+        /* being asked */
 
         int(__cdecl* GetProperty)(AmodMod mod, AmodModelId model, const char* key, AmodValue* value);
         int(__cdecl* SetProperty)(AmodMod mod, AmodModelId model, const char* key, const AmodValue* value);
@@ -260,7 +282,7 @@ extern "C" {
         int(__cdecl* PropertyCount)(AmodMod mod);
         const char* (__cdecl* PropertyNameAt)(AmodMod mod, int index);
 
-        /* --- the frame's own draw list ------------------------------------------------------------ */
+        /* the frame's own draw list */
 
         /* Puts a model in front of the camera for this frame and this frame only - call it again next frame */
         int(__cdecl* Enqueue)(AmodMod mod, const AmodModelDraw* draw);
@@ -273,7 +295,7 @@ extern "C" {
         int(__cdecl* GetViewMatrix)(AmodMod mod, float* out);
         int(__cdecl* GetProjectionMatrix)(AmodMod mod, float* out);
 
-        /* --- animations ---------------------------------------------------------------------------- */
+        /* animations */
 
         int(__cdecl* GetAnimationCount)(AmodMod mod);
         AmodAnimationId(__cdecl* GetAnimationAt)(AmodMod mod, int index);
@@ -288,7 +310,7 @@ extern "C" {
         int(__cdecl* OverrideAnimation)(AmodMod mod, const char* path, AmodAnimationId animation);
         int(__cdecl* ClearAnimationOverride)(AmodMod mod, const char* path);
 
-        /* --- moving what a model is made of ---------------------------------------------------- */
+        /* moving what a model is made of */
 
         /* One vertex, without a buffer for the whole model */
         int(__cdecl* GetVertex)(AmodMod mod, AmodModelId model, int frame, int index, AmodVertex* out);
@@ -301,14 +323,13 @@ extern "C" {
         int(__cdecl* TransformVertices)(AmodMod mod, AmodModelId model, int frame,
             const AmodVertexFilter* filter, const float* matrix);
 
-        /* --- colour without a texture ------------------------------------------------------------ */
+        /* colour without a texture */
 
         /* One colour per vertex, 0xAARRGGBB, as many as the model has */
         int(__cdecl* SetColours)(AmodMod mod, AmodModelId model, const uint32_t* colours, int count);
         int(__cdecl* ClearColours)(AmodMod mod, AmodModelId model);
 
-        /* --- what an entity is playing ---------------------------------------------------------- */
-
+        /* what an entity is playing */
 
         int(__cdecl* GetEntityAnim)(AmodMod mod, int roomIndex, int index, AmodAnimState* out);
 
@@ -316,7 +337,7 @@ extern "C" {
         int(__cdecl* PlayEntityAnim)(AmodMod mod, int roomIndex, int index, const char* frameset);
         int(__cdecl* StopEntityAnim)(AmodMod mod, int roomIndex, int index);
 
-        /* --- hanging one model off another ------------------------------------------------------ */
+        /* hanging one model off another */
 
         /* Called every time that model is drawn, wherever the game draws it, with the world matrix already set for it */
         AmodToken(__cdecl* AddDrawHandler)(AmodMod mod, AmodModelId model,
@@ -326,8 +347,27 @@ extern "C" {
         /* Only meaningful inside such a handler */
         int(__cdecl* DrawWith)(AmodMod mod, AmodModelId model, uint32_t texture, const float* matrix);
 
+        // What an animation is hit on: $anim_bbox for the whole of it, $frame_bbox for one frame, and a fra...
+        int(__cdecl* GetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, AmodBox* out);
+        int(__cdecl* SetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, const AmodBox* box);
+
+        // Room for how many frames, which is the highest $frame it was given plus one.
+        int(__cdecl* GetAnimBoxFrames)(AmodMod mod, AmodAnimationId animation, int which);
+
+        // Gives an animation a box set it never declared, and room for `frames` only ever made longer SetAn...
+        int(__cdecl* EnsureAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frames);
+
+        // As AddDrawHandler, but told BEFORE the game draws that one - the moment a mod can still change wh...
+        AmodToken(__cdecl* AddPreDrawHandler)(AmodMod mod, AmodModelId model,
+            AmodModelDrawHandler handler, void* user);
+
+        // Works the normals out again from the triangles, which a model needs after its vertices moved
+        int(__cdecl* RebuildNormals)(AmodMod mod, AmodModelId model, int frame);
+
         /* Fields added in later API versions go here, and nowhere else. */
     } AmodMmdApi;
+
+    AMOD_LAST_FIELD(AmodMmdApi, RebuildNormals, 0xE4);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -595,6 +635,34 @@ namespace Amod
                 g_mmd->GetFrameset(g_mmdSelf, animation, index, &out) != 0;
         }
 
+        inline bool                                                 GetAnimBox(AmodAnimationId animation, int which, int frame, AmodBox& out)
+        {
+            out = AmodBox{};
+            out.structSize = sizeof(out);
+            return g_mmd != nullptr && g_mmd->GetAnimBox != nullptr && g_mmd->GetAnimBox(g_mmdSelf, animation, which, frame, &out) != 0;
+        }
+
+        inline bool                                                 SetAnimBox(AmodAnimationId animation, int which, int frame, const AmodBox& box)
+        {
+            return g_mmd != nullptr && g_mmd->SetAnimBox != nullptr && g_mmd->SetAnimBox(g_mmdSelf, animation, which, frame, &box) != 0;
+        }
+
+        inline int                                                  AnimBoxFrames(AmodAnimationId animation, int which)
+        {
+            return (g_mmd != nullptr && g_mmd->GetAnimBoxFrames != nullptr) ? g_mmd->GetAnimBoxFrames(g_mmdSelf, animation, which) : 0;
+        }
+
+        inline bool                                                 EnsureAnimBox(AmodAnimationId animation, int which, int frames)
+        {
+            return g_mmd != nullptr && g_mmd->EnsureAnimBox != nullptr && g_mmd->EnsureAnimBox(g_mmdSelf, animation, which, frames) != 0;
+        }
+
+        // After moving vertices about, so the light shades the shape that is there now.
+        inline bool                                                 RebuildNormals(AmodModelId model, int frame = -1)
+        {
+            return g_mmd != nullptr && g_mmd->RebuildNormals != nullptr && g_mmd->RebuildNormals(g_mmdSelf, model, frame) != 0;
+        }
+
         inline bool                                                 OverrideAnimation(const char* path,
             AmodAnimationId animation)
         {
@@ -787,6 +855,14 @@ namespace Amod
         {
             return (g_mmd != nullptr && g_mmd->AddDrawHandler != nullptr)
                 ? g_mmd->AddDrawHandler(g_mmdSelf, model, handler, user)
+                : AMOD_INVALID_TOKEN;
+        }
+        inline AmodToken                                            BeforeDraw(AmodModelId model,
+            AmodModelDrawHandler handler,
+            void* user = nullptr)
+        {
+            return (g_mmd != nullptr && g_mmd->AddPreDrawHandler != nullptr)
+                ? g_mmd->AddPreDrawHandler(g_mmdSelf, model, handler, user)
                 : AMOD_INVALID_TOKEN;
         }
 

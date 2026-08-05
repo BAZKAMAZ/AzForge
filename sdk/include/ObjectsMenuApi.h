@@ -22,12 +22,16 @@ typedef struct AmodMenuLoaded
     const char* menuId;     /* $menu_id, e.g. "IDM_MAIN_MENU" */
 } AmodMenuLoaded;
 
+AMOD_LAST_FIELD(AmodMenuLoaded, menuId, 0x00);
+
 typedef struct AmodMenuClicked
 {
     const char* menuId;
     const char* itemId;     /* $id of the button */
     int handled;            /* set non-zero to stop the game */
 } AmodMenuClicked;
+
+AMOD_LAST_FIELD(AmodMenuClicked, handled, 0x08);
 
 typedef void (__cdecl* AmodMenuCallback)(AmodMenuEvent event, void* data, void* user);
 
@@ -59,6 +63,8 @@ typedef struct AmodObjectsMenuApi
     /* Build objects from menu_*.txt fragment; returns first, or null. Use in AMOD_MENU_LOADED. */
     AmodMenuItem (__cdecl* AddObject)(AmodMod mod, const char* menuId, const char* fragment);
 } AmodObjectsMenuApi;
+
+AMOD_LAST_FIELD(AmodObjectsMenuApi, AddObject, 0x34);
 
 #ifdef __cplusplus
 }
