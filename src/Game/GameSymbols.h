@@ -75,6 +75,8 @@ namespace Forge
         ModelDrawNode,
         ModelRenderAnimated,
         SceneDrawModels,
+        SceneSortObjects,
+        SceneAddLight,
         LoadOrFindAnim,
         LoadOrFindTexture,
 

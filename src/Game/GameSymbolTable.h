@@ -497,6 +497,20 @@ namespace Forge
             "8B 0D ?? ?? ?? ?? 8B 01 8B 50 3C"
         },
         {
+            "Scene_SortObjects", GameAddress::kSceneSortObjects,
+            // The seven node and sprite counters cleared in a row out of one zeroed register:
+            // nothing else in the executable opens by emptying that much.
+            "83 EC 3C 53 8B D9 55 56 57 33 FF 89 BB 38 E5 00 00 89 BB 3C E5 00 00 "
+            "89 BB 40 E5 00 00 89 BB 44 E5 00 00 89 BB 48 E5 00 00"
+        },
+        {
+            "Scene_AddLight", GameAddress::kSceneAddLight,
+            // The aligned 0x64 frame, then the fifteen-light gate on the count at +0x13a0 and the
+            // shift by five that turns it into an offset in the 0x20 records.
+            "55 8B EC 83 E4 F8 83 EC 64 53 56 57 8B F9 8B 87 A0 13 00 00 83 F8 0F "
+            "0F 8D ?? ?? ?? ?? 8B 4D 08 D9 EE 8B 11 C1 E0 05"
+        },
+        {
             "LoadOrFindAnim", GameAddress::kLoadOrFindAnim,
             // Banner, then MOV ECX with the animation manager: it loads its own this, which is
             // both the calling convention note and what identifies it.
