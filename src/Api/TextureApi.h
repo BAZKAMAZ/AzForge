@@ -16,6 +16,9 @@ namespace Forge
 
         static const AmodTextureApi*                                Table();
 
+        static AmodTextureId                                        IdFor(const void* texture);
+        static void*                                                TextureFor(AmodTextureId id);
+
         static void                                                 ForgetMod(ModContext* owner);
     };
 }

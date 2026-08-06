@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 
 #include "src/Api/TextureApi.h"
 #include "src/Api/ApiRead.h"
@@ -23,8 +23,7 @@ namespace Forge
         using namespace ApiRead;
         AmodTextureApi g_table = {};
 
-        // LoadOrFindTexture is __thiscall with three stack arguments, which is the same shape as
-        // __fastcall with a spare register argument. Both clean 0xC on return.
+        // LoadOrFindTexture: __thiscall → __fastcall (spare EDX); RET 0xC.
         typedef uint8_t*(__fastcall* LoadOrFindRoutine)(void* manager, void* unused, const char* name, int mipmapped, int hasAlpha);
         typedef void(__fastcall* ReleaseRoutine)(void* manager, void* unused, uint8_t* texture);
         typedef char(__stdcall* BuildRoutine)(uint8_t* texture);
@@ -137,10 +136,14 @@ namespace Forge
             uint8_t* texture;
         };
 
+        // Repaint restore: file-backed rebuilds from disk; pixel-only keeps original pixels.
         struct Repainted
         {
             ModContext* owner;
             uint8_t* texture;
+            uint8_t* pixels;    // null when the texture has a file to come back from
+            int width;
+            int height;
         };
 
         std::vector<Made> g_made;
@@ -148,7 +151,17 @@ namespace Forge
         std::vector<Substitute> g_substitutes;
         std::vector<Repainted> g_repainted;
 
-        //standing in for a file
+        bool AlreadyRepainted(const uint8_t* texture)
+        {
+            for (const Repainted& entry : g_repainted)
+            {
+                if (entry.texture == texture)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
 
         uint8_t* SubstituteFor(const char* path)
         {
@@ -173,7 +186,7 @@ namespace Forge
             uint8_t* const standing = SubstituteFor(name);
             if (standing != nullptr)
             {
-                // What the game's own door does when it finds one already loaded.
+                // Bump refcount as the game does on a cache hit.
                 WriteInt(standing, GameAddress::kTextureReferencesOffset, Read<int>(standing, GameAddress::kTextureReferencesOffset) + 1);
                 return standing;
             }
@@ -183,8 +196,7 @@ namespace Forge
                        : nullptr;
         }
 
-        //making one out of pixels
-        // Texture_Build throws a C++ exception when D3D refuses. Catching it as SEH keeps a failed
+        // Texture_Build may throw; SEH so a failed create does not tear down the process.
         bool BuildGuarded(BuildRoutine build, uint8_t* texture)
         {
             __try
@@ -199,14 +211,13 @@ namespace Forge
 
         void ReleaseSurface(uint8_t* texture)
         {
-            void* const surface =
-                reinterpret_cast<void*>(Read<uintptr_t>(texture, GameAddress::kTextureSurfaceOffset));
+            void* const surface = reinterpret_cast<void*>(Read<uintptr_t>(texture, GameAddress::kTextureSurfaceOffset));
             if (surface == nullptr)
             {
                 return;
             }
 
-            // IUnknown::Release, third in every COM vtable.
+            // IUnknown::Release (vtable[2]).
             void** const vtable = *static_cast<void***>(surface);
             const auto release = reinterpret_cast<uint32_t(__stdcall*)(void*)>(vtable[2]);
             release(surface);
@@ -217,8 +228,7 @@ namespace Forge
         uint8_t* CopyPixels(int width, int height, const void* pixels)
         {
             const int bytes = width * height * 4;
-            uint8_t* const buffer =
-                static_cast<uint8_t*>(GameFunctions::Allocate(bytes, ".\\TexManager.cpp", 0x188));
+            uint8_t* const buffer = static_cast<uint8_t*>(GameFunctions::Allocate(bytes, ".\\TexManager.cpp", 0x188));
 
             if (buffer != nullptr)
             {
@@ -235,8 +245,7 @@ namespace Forge
 
         void LinkIntoList(uint8_t* texture)
         {
-            uint8_t** const head =
-                static_cast<uint8_t**>(GameModule::Resolve(GameAddress::kTextureListHead));
+            uint8_t** const head = static_cast<uint8_t**>(GameModule::Resolve(GameAddress::kTextureListHead));
             if (head == nullptr)
             {
                 return;
@@ -249,8 +258,6 @@ namespace Forge
             WritePointer(texture, GameAddress::kTextureNextOffset, *head);
             *head = texture;
         }
-
-        //the table
 
         int __cdecl ApiGetCount(AmodMod mod)
         {
@@ -340,8 +347,7 @@ namespace Forge
         AmodTextureId __cdecl ApiLoad(AmodMod mod, const char* path, int mipmapped, int hasAlpha)
         {
             ModContext* const context = Caller(mod);
-            const LoadOrFindRoutine load =
-                Routine<LoadOrFindRoutine>(GameAddress::kLoadOrFindTexture);
+            const LoadOrFindRoutine load = Routine<LoadOrFindRoutine>(GameAddress::kLoadOrFindTexture);
 
             if (context == nullptr || load == nullptr || path == nullptr || path[0] == '\0' || Manager() == nullptr)
             {
@@ -457,19 +463,29 @@ namespace Forge
                 return 0;
             }
 
-            if (!MadeFromPixels(texture))
+            uint8_t* const previous = reinterpret_cast<uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
+            bool taken = false;     // whether g_repainted owns previous
+
+            if (!AlreadyRepainted(texture))
             {
+                const bool fromPixels = MadeFromPixels(texture);
+
                 Repainted entry;
                 entry.owner = context;
                 entry.texture = texture;
+                entry.pixels = fromPixels ? previous : nullptr;
+                entry.width = Read<int>(texture, GameAddress::kTextureWidthOffset);
+                entry.height = Read<int>(texture, GameAddress::kTextureHeightOffset);
                 g_repainted.push_back(entry);
+                taken = entry.pixels != nullptr;
 
-                texture[GameAddress::kTextureFromPixelsOffset] = 1;
+                if (!fromPixels)
+                {
+                    texture[GameAddress::kTextureFromPixelsOffset] = 1;
+                }
             }
 
-            uint8_t* const previous = reinterpret_cast<uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
-
-            // Building makes a new surface without letting the old one go.
+            // Build creates a new surface without releasing the old one.
             ReleaseSurface(texture);
 
             WritePointer(texture, GameAddress::kTexturePixelsOffset, buffer);
@@ -483,8 +499,43 @@ namespace Forge
                 return 0;
             }
 
-            GameFunctions::Free(previous);
+            if (!taken)
+            {
+                GameFunctions::Free(previous);
+            }
             return 1;
+        }
+
+        int __cdecl ApiReadPixels(AmodMod mod, AmodTextureId id, void* buffer, int capacity)
+        {
+            const uint8_t* const texture = Caller(mod) != nullptr ? Resolve(id) : nullptr;
+            if (texture == nullptr)
+            {
+                return 0;
+            }
+
+            const uint8_t* const pixels = reinterpret_cast<const uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
+            const int width = Read<int>(texture, GameAddress::kTextureWidthOffset);
+            const int height = Read<int>(texture, GameAddress::kTextureHeightOffset);
+
+            if (pixels == nullptr || width <= 0 || height <= 0 || width > 4096 || height > 4096)
+            {
+                return 0;
+            }
+
+            const int bytes = width * height * 4;
+            if (buffer == nullptr)
+            {
+                return bytes;
+            }
+            if (capacity <= 0)
+            {
+                return 0;
+            }
+
+            const int copied = capacity < bytes ? capacity : bytes;
+            memcpy(buffer, pixels, static_cast<size_t>(copied));
+            return copied;
         }
 
         int __cdecl ApiOverride(AmodMod mod, const char* path, AmodTextureId id)
@@ -550,6 +601,7 @@ namespace Forge
         g_table.Release = &ApiRelease;
         g_table.Create = &ApiCreate;
         g_table.Replace = &ApiReplace;
+        g_table.ReadPixels = &ApiReadPixels;
 
         void* const load = GameSymbols::Address(GameSymbol::LoadOrFindTexture);
         std::string error;
@@ -586,6 +638,17 @@ namespace Forge
         return g_table.structSize != 0 ? &g_table : nullptr;
     }
 
+    AmodTextureId TextureApi::IdFor(const void* texture)
+    {
+        const uint8_t* const walk = static_cast<const uint8_t*>(texture);
+        return (walk != nullptr && IsTexture(walk) && Listed(walk)) ? IdOf(walk) : AMOD_INVALID_TEXTURE;
+    }
+
+    void* TextureApi::TextureFor(AmodTextureId id)
+    {
+        return Resolve(id);
+    }
+
     void TextureApi::ForgetMod(ModContext* owner)
     {
         for (auto it = g_substitutes.begin(); it != g_substitutes.end();)
@@ -603,7 +666,31 @@ namespace Forge
             }
 
             uint8_t* const texture = it->texture;
-            if (build != nullptr && IsTexture(texture) && Listed(texture))
+            const bool standing = build != nullptr && IsTexture(texture) && Listed(texture);
+
+            if (standing && it->pixels != nullptr)
+            {
+                // Pixel-only texture: restore kept pixels.
+                uint8_t* const painted = reinterpret_cast<uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
+
+                ReleaseSurface(texture);
+                WritePointer(texture, GameAddress::kTexturePixelsOffset, it->pixels);
+                WriteInt(texture, GameAddress::kTextureWidthOffset, it->width);
+                WriteInt(texture, GameAddress::kTextureHeightOffset, it->height);
+
+                if (BuildGuarded(build, texture))
+                {
+                    GameFunctions::Free(painted);
+                }
+                else
+                {
+                    // Old pixels failed to build; keep mod's.
+                    WritePointer(texture, GameAddress::kTexturePixelsOffset, painted);
+                    GameFunctions::Free(it->pixels);
+                    BuildGuarded(build, texture);
+                }
+            }
+            else if (standing)
             {
                 uint8_t* const pixels = reinterpret_cast<uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
 
@@ -617,16 +704,20 @@ namespace Forge
                 }
                 else
                 {
-                    // The file would not come back; leave it painted rather than blank.
+                    // File rebuild failed; leave painted rather than blank.
                     texture[GameAddress::kTextureFromPixelsOffset] = 1;
                     WritePointer(texture, GameAddress::kTexturePixelsOffset, pixels);
                     BuildGuarded(build, texture);
                 }
             }
+            else
+            {
+                GameFunctions::Free(it->pixels);
+            }
             it = g_repainted.erase(it);
         }
 
-        // at again while the list is being walked.
+        // Collect ids first: release may free while the list is walked.
         std::vector<uint8_t*> giveBack;
         for (auto it = g_held.begin(); it != g_held.end();)
         {
@@ -650,7 +741,7 @@ namespace Forge
             it = g_made.erase(it);
         }
 
-        // nobody else holds it, and lives until the last of them otherwise.
+        // Refcount 0 destroy now; else live until last holder releases.
         for (uint8_t* const texture : giveBack)
         {
             GiveBack(texture);
