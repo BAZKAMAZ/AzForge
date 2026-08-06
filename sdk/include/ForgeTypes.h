@@ -4,10 +4,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Interface version. mod.json api_version > this → mod refused. */
-#define AMOD_API_VERSION                                            41
+#define AMOD_API_VERSION                                            50
 
-// A mod calls through the offsets it was BUILT with
+// Offsets are fixed at build time
 #ifdef __cplusplus
 #define AMOD_LAST_FIELD(table, field, at)                           \
     static_assert(offsetof(table, field) == (at),                   \
@@ -22,14 +21,14 @@
 #define AMOD_ERROR                                                  (-1)
 #define AMOD_ERROR_API_VERSION                                      (-2)
 
-// Why the call before this one said no is only worth reading after something returned false
+// Read after a call returned false
 #define AMOD_FAIL_NONE                                              0
-#define AMOD_FAIL_NO_SUCH                                           1   /* no such name, index or id */
-#define AMOD_FAIL_BAD_ARGUMENT                                      2   /* the call itself was malformed */
-#define AMOD_FAIL_NOT_HERE                                          3   /* nothing wrong, but the game has no level, room or player right now */
-#define AMOD_FAIL_NOT_DECLARED                                      4   /* it loaded, and the script simply never wrote that part */
-#define AMOD_FAIL_REFUSED                                           5   /* the game was asked and said no */
-#define AMOD_FAIL_NOT_OFFERED                                       6   /* this loader does not carry the call */
+#define AMOD_FAIL_NO_SUCH                                           1 /* no such name, index or id */
+#define AMOD_FAIL_BAD_ARGUMENT                                      2 /* the call itself was malformed */
+#define AMOD_FAIL_NOT_HERE                                          3 /* no level/room/player right now */
+#define AMOD_FAIL_NOT_DECLARED                                      4 /* script never wrote that part */
+#define AMOD_FAIL_REFUSED                                           5 /* the game was asked and said no */
+#define AMOD_FAIL_NOT_OFFERED                                       6 /* this loader does not carry the call */
 
 #define AMOD_GAME_BUILD_UNKNOWN                                     0
 #define AMOD_GAME_BUILD_AZANGARA_10                                 1
@@ -55,17 +54,17 @@ extern "C" {
         AMOD_VALUE_NONE = 0,
         AMOD_VALUE_BOOL = 1,
         AMOD_VALUE_INT = 2,
-        AMOD_VALUE_FLOAT = 3,   /* 1..4 floats, see count */
+        AMOD_VALUE_FLOAT = 3, /* 1..4 floats, see count */
         AMOD_VALUE_STRING = 4
     } AmodValueKind;
 
     typedef struct AmodValue
     {
         AmodValueKind kind;
-        uint32_t count;         /* floats in use */
-        int integer;            /* BOOL / INT */
-        float numbers[4];       /* FLOAT */
-        const char* text;       /* STRING; points into owner when read */
+        uint32_t count; /* floats in use */
+        int integer; /* BOOL / INT */
+        float numbers[4]; /* FLOAT */
+        const char* text; /* STRING; points into owner when read */
     } AmodValue;
 
     AMOD_LAST_FIELD(AmodValue, text, 0x1C);
@@ -78,7 +77,7 @@ extern "C" {
         float min[3];
         float max[3];
 
-        /* New fields are appended, never inserted. */
+
     } AmodBox;
 
     AMOD_LAST_FIELD(AmodBox, max, 0x10);
@@ -86,9 +85,9 @@ extern "C" {
     typedef struct AmodFrame
     {
         uint32_t structSize;
-        float delta;            /* seconds since previous frame */
-        double elapsed;         /* seconds since first frame */
-        uint64_t frameIndex;    /* starts at 0 */
+        float delta; /* seconds since previous frame */
+        double elapsed; /* seconds since first frame */
+        uint64_t frameIndex; /* starts at 0 */
     } AmodFrame;
 
     AMOD_LAST_FIELD(AmodFrame, frameIndex, 0x10);
@@ -162,7 +161,6 @@ extern "C++" {
             return Values(numbers, 4);
         }
 
-        // The Amod prefix earns its keep in C and not in here, so the same types answer to shorter names
         using Bounds = AmodBox;
         using Frame = AmodFrame;
     }
