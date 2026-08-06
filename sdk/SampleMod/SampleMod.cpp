@@ -1,983 +1,1064 @@
-#include <d3d8.h>
 #include <ForgeApi.h>
 #include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-//   mon   mtypes   mkill <n|all>   mplace <name> <col> <row> [col2 row2]
-//   mmove <n|all> <movement>   mspeed <factor>
-//   mbox <n>   mfat <n> <factor>   manim <n> <script>, all by the index mon prints
-//   mabox <script> [factor], by the animation script itself
-//   morbit <n> [radius] [phase]   mpace <n> [wait_low wait_high] [hard]
-//   mtrack [n], which holds a monster by id rather than by number
-//   mstep <n> [accel] [gravity], the body that does the walking
-//   mplaced [room]   mfind <name_col_row> [level], a monster by what the level file calls it
-//   mrule [name_col_row] [speed|-], as many as sixteen, kept across every rebuild of the room
-//   mwho <n>   mcolour <n> [aarrggbb]   mskull [script] [factor]
-//   mpaint <n|name_col_row> [aarrggbb|-], a key survives leaving the room, a number does not
-//   mskin <n> blend|solid|normals|second <model> <texture>
+//   light                             every light of the room the player is in
+//   light <n> <r> <g> <b> [range]     colour, and the range if it is given
+//   light <n> move <x> <y>            where it stands
+//   light add <x> <y> [r g b] [range] one the room did not have, kept by the room
 
-static const char* const kWasp = "wasp";
-static const char* const kGhost = "ghost";
+//   dlight                             what is burning, and what there is to ride
+//   dlight off [n]                     put them all out, or just that one
+//   dlight <x> <y> [r g b] [range]     one standing there
+//   dlight follow <n> [r g b] [range]  one riding entity n, so it travels
 
-static void Refused(const char* doing)
+//   elight                             who carries one in this room
+//   elight <n> [r g b] [range]         hand entity n a light of its own
+//   elight <n> off                     take it away
+//   elight me [r g b] [range]          the player, which is what the torch does
+
+//   lmap                        what the room was baked with
+//   lmap <scale>                all of it brighter or darker: 0.5 half, 2 twice
+//   lmap tint <r> <g> <b>       each channel by its own amount
+//   lmap spot <u> <v> <r> <w>   a round patch painted into the bake, 0..1 across the map
+
+//   wall                        the three models the room is drawn from
+//   wall bulge <amount>         every wall vertex pushed out along its own normal
+//   wall colour <aarrggbb>      the walls painted
+//   wall reset                  the geometry put back as it was read
+//   ... floor | ... back        any of them against one of the other two
+
+//   deco                              what the room is decorated with
+//   deco <n> hide | show
+//   deco <n> move <x> <y> <z>         where it stands
+//   deco <n> scale <s>                how big, keeping where
+//   deco <n> model <path>             a different model on the same spot
+//   deco add <path> <x> <y> <z> [s]   one of the mod's own
+
+//   lseed [seconds]             drop a light of its own colour where the player stands, over and
+//   lseed off                   over, so a room comes to carry far more than the scene can hold
+
+//   cell                        the grid the room is walked on, row by row
+//   cell <col> <row> <char>     one cell; 'W' walls it, ' ' opens it
+//   cell wall                   a wall across the row the player is standing on
+//   cell clear                  every wall of the room taken away
+
+//   box                                    what stops a body in this room
+//   box <n> kind <k>                       0 and 3 push, 1 only reports, 2 pushes when asked
+//   box add <minx> <miny> <maxx> <maxy>    one of the mod's own
+//   box here                               a ledge under the player - the other half of 'cell wall'
+
+//   ltri                        the surfaces a dynamic light is allowed to fall on
+//   ltri here                   a patch of floor under the player added to them
+//   ltri off                    every one of them flattened to nothing
+
+struct Burning
 {
-    Amod::Console::Printf("%s: %s\n", doing, Amod::LastError());
-}
-
-static float g_ghostPhase = 0.0f;
-
-static int g_seen = 0;
-
-struct Paint
-{
-    char key[64];
-    AmodMonsterId id;
-    uint32_t colour;
+    int room;               // the room it belongs to; a light of this kind is tied to none by itself
+    int rides;              // the entity it follows, or below zero for a fixed spot
+    float at[2];
+    float colour[3];
+    float range;
 };
 
-static Paint g_paints[16];
-static int g_paintCount = 0;
+static Burning g_lights[8];
+static int g_lightCount = 0;
 
-// IdOfDraw distinguishes entities that share a model.
-static AmodModelId g_watched = AMOD_INVALID_MODEL;
-static int g_watchLeft = 0;
-
-// Track by id — index shifts when others die.
-static Amod::Monsters::Tracked g_kept;
-
-// Watch each model once.
-static AmodModelId g_watchedModels[16];
-static int g_watchedCount = 0;
-
-struct Rule
+static void __cdecl LightCommand(int argc, const char** argv, void*)
 {
-    char key[64];
-    float speed;
-};
+    const int count = Amod::World::LightCount();
+    const int index = argc > 1 ? atoi(argv[1]) : -1;
 
-static Rule g_rules[16];
-static int g_ruleCount = 0;
-
-static int RuleAt(const char* key)
-{
-    for (int at = 0; at < g_ruleCount; ++at)
-    {
-        if (strcmp(g_rules[at].key, key) == 0)
-        {
-            return at;
-        }
-    }
-    return -1;
-}
-
-static int PaintOf(AmodMonsterId id)
-{
-    for (int at = 0; at < g_paintCount; ++at)
-    {
-        if (g_paints[at].id == id && id != AMOD_MONSTER_NONE)
-        {
-            return at;
-        }
-    }
-    return -1;
-}
-
-static int PaintOfKey(const char* key)
-{
-    for (int at = 0; at < g_paintCount; ++at)
-    {
-        if (key != nullptr && strcmp(g_paints[at].key, key) == 0)
-        {
-            return at;
-        }
-    }
-    return -1;
-}
-
-static const char* StateName(int state)
-{
-    return state == AMOD_MONSTER_STATE_SIT ? "sit" : "move";
-}
-
-static AmodMonsterKillResult __cdecl OnMonsterKilled(const AmodMonsterKillInfo* info, void*)
-{
-    g_seen += info->isDecor != 0 ? 0 : 1;
-    return AMOD_MONSTER_KILL_DEFAULT;
-}
-
-// Ghost passes through the player.
-static AmodMonsterTouchResult __cdecl OnMonsterTouch(const AmodMonsterTouchInfo* info, void*)
-{
-    return (info->isPlayer != 0 && strcmp(info->name, kGhost) == 0)
-        ? AMOD_MONSTER_TOUCH_REFUSE
-        : AMOD_MONSTER_TOUCH_DEFAULT;
-}
-
-static void __cdecl MonstersCommand(int, const char**, void*)
-{
-    const int count = Amod::Monsters::Count();
-    Amod::Console::Printf("%d monster(s) here, %d killed this level, %d seen off by this mod\n",
-        count, Amod::Monsters::KilledCount(), g_seen);
-
-    for (int index = 0; index < count; ++index)
-    {
-        AmodMonster monster;
-        if (!Amod::Monsters::Get(index, monster))
-        {
-            continue;
-        }
-
-        char state[24] = "-";
-        if (monster.hasState)
-        {
-            sprintf_s(state, sizeof(state), "%s %.2fs", StateName(monster.state), monster.timeLeft);
-        }
-
-        Amod::Console::Printf("%2d  %-10s moves %-9s %-12s speed %.2f  facing %+d%s%s  %s\n", index,
-            monster.name, monster.moves, state, monster.speed, monster.facing,
-            monster.isHard ? "  hard" : "", monster.isDecor ? "  decor" : "",
-            monster.tag);
-    }
-}
-
-// Custom think: drift facing + bob.
-static void __cdecl GhostThink(const AmodMonsterThinkInfo* info, void*)
-{
-    g_ghostPhase += info->delta;
-
-    const Amod::Monsters::MonsterRef ghost = Amod::Monsters::At(info->index);
-
-    // Game step (walls stop it); bob is written straight.
-    if (Amod::Monsters::Move(info->index, info->facing) == 1)
-    {
-        ghost["facing"].Set(-info->facing);
-    }
-    ghost["y"].Set(info->position[1] + sinf(g_ghostPhase * 4.0f) * 0.004f);
-}
-
-static void __cdecl TypesCommand(int, const char**, void*)
-{
-    const int count = Amod::Monsters::TypeCount();
-    Amod::Console::Printf("%d kind(s) of monster\n", count);
-
-    for (int index = 0; index < count; ++index)
-    {
-        AmodMonsterType type;
-        if (Amod::Monsters::GetType(index, type))
-        {
-            Amod::Console::Printf("%2d  %-12s speed %.2f  up %.2f  vert %.2f\n", index, type.name,
-                type.speed, type.speedUp, type.vertSpeed);
-        }
-    }
-}
-
-static void __cdecl KillCommand(int argc, const char** argv, void*)
-{
     if (argc < 2)
     {
-        Amod::Console::Printf("mkill <index|all>\n");
-        return;
-    }
-
-    if (strcmp(argv[1], "all") == 0)
-    {
-        int killed = 0;
-        // Backwards: kill removes from the numbered list.
-        for (int index = Amod::Monsters::Count() - 1; index >= 0; --index)
+        //A room with no lights of its own is lit by what was baked into it, so the counts beside
+        //them say whether that is the case or whether the reading is at fault.
+        AmodWorldRoom room;
+        if (Amod::World::GetRoom(Amod::World::CurrentRoom(), room))
         {
-            killed += Amod::Monsters::Kill(index) ? 1 : 0;
+            Amod::Console::Printf("room %d (%s): %d box(es), %d light triangle(s)\n", room.id, room.file, room.collisionBoxCount, room.lightTriangleCount);
         }
-        Amod::Console::Printf("killed %d\n", killed);
-        return;
-    }
 
-    // Read before kill so the report is accurate.
-    const int index = atoi(argv[1]);
-    AmodMonster monster;
+        Amod::Console::Printf("%d light(s) here%s\n", count,
+                              count > 16 ? "; the scene holds 16 at a time, refilled every frame "
+                                           "with the ones that reach you" : "");
 
-    if (!Amod::Monsters::Get(index, monster))
-    {
-        Amod::Console::Printf("there is no monster %d\n", index);
-        return;
-    }
-
-    const char* const name = monster.name;
-    const char* const moves = monster.moves;
-
-    Amod::Console::Printf(Amod::Monsters::Kill(index) ? "killed %d: %s, moves %s\n"
-        : "could not kill %d: %s, moves %s\n",
-        index, name, moves);
-}
-
-static void __cdecl PlaceCommand(int argc, const char** argv, void*)
-{
-    if (argc < 4)
-    {
-        Amod::Console::Printf("mplace <name> <col> <row> [col2 row2]\n");
-        return;
-    }
-
-    Amod::Monsters::PlacementBuilder where(argv[1], atoi(argv[2]), atoi(argv[3]));
-    if (argc >= 6)
-    {
-        where.Span(atoi(argv[4]), atoi(argv[5]));
-    }
-
-    Amod::Console::Printf(where.Put() ? "put a '%s' on cell %s,%s\n"
-        : "could not put a '%s' on cell %s,%s\n",
-        argv[1], argv[2], argv[3]);
-}
-
-static void __cdecl MovementCommand(int argc, const char** argv, void*)
-{
-    if (argc < 3)
-    {
-        Amod::Console::Printf("mmove <n|all> %s\n", "skull|snake|snake2|spider|scorpion|j_skull|bat|mummy|mummy2");
-        return;
-    }
-
-    if (strcmp(argv[1], "all") == 0)
-    {
-        int moved = 0;
-        for (int index = Amod::Monsters::Count() - 1; index >= 0; --index)
+        for (int at = 0; at < count; ++at)
         {
-            moved += Amod::Monsters::SetMovement(index, argv[2]) ? 1 : 0;
+            AmodWorldLight light;
+            if (Amod::World::GetLight(-1, at, light))
+            {
+                Amod::Console::Printf("%2d  rgb %.2f %.2f %.2f  range %.3f  at %+.3f %+.3f\n", at, light.colour[0], light.colour[1], light.colour[2],
+                                      light.range, light.position[0], light.position[1]);
+            }
         }
-        Amod::Console::Printf("%d monster(s) now move like a %s\n", moved, argv[2]);
         return;
     }
 
-    const int index = atoi(argv[1]);
-    Amod::Console::Printf(Amod::Monsters::SetMovement(index, argv[2])
-        ? "%d now moves like a %s\n"
-        : "could not make %d move like a %s\n",
-        index, argv[2]);
-}
-
-static void __cdecl SpeedCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
+    if (strcmp(argv[1], "add") == 0)
     {
-        Amod::Console::Printf("mspeed <factor>\n");
-        return;
-    }
-
-    const float factor = static_cast<float>(atof(argv[1]));
-    const int count = Amod::Monsters::Count();
-
-    for (int index = 0; index < count; ++index)
-    {
-        AmodMonster monster;
-        if (Amod::Monsters::Get(index, monster))
+        if (argc < 4)
         {
-            Amod::Monsters::At(index)["speed"].Set(monster.speed * factor);
-        }
-    }
-    Amod::Console::Printf("%d monster(s) now move %.2f times as fast\n", count, factor);
-}
-
-static const char* BoxName(int which)
-{
-    switch (which)
-    {
-    case AMOD_MONSTER_BOX_MAIN:   return "main";
-    case AMOD_MONSTER_BOX_SECOND: return "second";
-    case AMOD_MONSTER_BOX_OBJECT: return "object";
-    }
-    return "?";
-}
-
-// Index from mon; kind comes from the monster.
-static const char* KindAt(int argc, const char** argv, int at, AmodMonster& monster)
-{
-    return (argc > at && Amod::Monsters::Get(atoi(argv[at]), monster)) ? monster.name : nullptr;
-}
-
-static void __cdecl BoxCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    const char* const kind = KindAt(argc, argv, 1, monster);
-    if (kind == nullptr)
-    {
-        Amod::Console::Printf("mbox <n>, the index mon prints\n");
-        return;
-    }
-
-    for (int which = 0; which <= AMOD_MONSTER_BOX_OBJECT; ++which)
-    {
-        AmodBox box;
-        if (Amod::Monsters::GetTypeBox(kind, which, box))
-        {
-            Amod::Console::Printf("%-8s %-6s min %+.3f %+.3f %+.3f  max %+.3f %+.3f %+.3f\n", kind, 
-                BoxName(which), box.min[0], box.min[1], box.min[2], box.max[0], box.max[1], box.max[2]);
-        }
-    }
-
-    AmodBox live;
-    if (Amod::Monsters::GetBox(atoi(argv[1]), live))
-    {
-        Amod::Console::Printf("  live %-3d       min %+.3f %+.3f %+.3f  max %+.3f %+.3f %+.3f\n", atoi(argv[1]), 
-            live.min[0], live.min[1], live.min[2], live.max[0], live.max[1], live.max[2]);
-    }
-}
-
-// Grow X/Z both ways, Y upward only — feet stay on the floor.
-static void Inflate(AmodBox& box, float factor)
-{
-    for (int axis = 0; axis < 3; axis += 2)
-    {
-        const float middle = (box.min[axis] + box.max[axis]) * 0.5f;
-        const float half = (box.max[axis] - box.min[axis]) * 0.5f * factor;
-        box.min[axis] = middle - half;
-        box.max[axis] = middle + half;
-    }
-    box.max[1] = box.min[1] + (box.max[1] - box.min[1]) * factor;
-}
-
-static void __cdecl FatCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    const char* const kind = KindAt(argc, argv, 1, monster);
-    const float factor = argc > 2 ? static_cast<float>(atof(argv[2])) : 0.0f;
-
-    if (kind == nullptr || factor <= 0.0f)
-    {
-        Amod::Console::Printf("mfat <n> <factor>, e.g. mfat 0 3\n");
-        return;
-    }
-
-    char wanted[64];
-    strncpy_s(wanted, sizeof(wanted), kind, _TRUNCATE);
-
-    int done = 0;
-    for (int which = 0; which <= AMOD_MONSTER_BOX_OBJECT; ++which)
-    {
-        AmodBox box;
-        if (!Amod::Monsters::GetTypeBox(wanted, which, box))
-        {
-            continue;
-        }
-        Inflate(box, factor);
-        done += Amod::Monsters::SetTypeBox(wanted, which, box) ? 1 : 0;
-    }
-
-    int live = 0;
-    const int here = Amod::Monsters::Count();
-    for (int at = 0; at < here; ++at)
-    {
-        AmodMonster each;
-        AmodBox box;
-        if (!Amod::Monsters::Get(at, each) || strcmp(each.name, wanted) != 0 || !Amod::Monsters::GetBox(at, box))
-        {
-            continue;
-        }
-        Inflate(box, factor);
-        live += Amod::Monsters::SetBox(at, box) ? 1 : 0;
-    }
-
-    Amod::Console::Printf("%s: %d box(es) and %d live one(s) grown %.2f times\n", wanted, done, live, factor);
-}
-
-// Animation paths are scripts (e.g. scripts/anim_spider.txt).
-static void __cdecl AnimateCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    const char* const kind = KindAt(argc, argv, 1, monster);
-    if (kind == nullptr || argc < 3)
-    {
-        Amod::Console::Printf("manim <n> <script>, e.g. manim 0 scripts/anim_bat.txt\n");
-        return;
-    }
-
-    char wanted[64];
-    strncpy_s(wanted, sizeof(wanted), kind, _TRUNCATE);
-
-    if (Amod::Monsters::Type(wanted)["animation"].Set(argv[2]))
-    {
-        Amod::Console::Printf("%s animates from '%s' now\n", wanted, argv[2]);
-        return;
-    }
-    Refused("manim");
-}
-
-// Box belongs to the animation script, not a monster index.
-static void __cdecl AnimBoxCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        Amod::Console::Printf("mabox <script> [factor], e.g. mabox scripts/anim_spider.txt 2\n");
-        return;
-    }
-
-    // Load the script if it is not in memory yet.
-    AmodAnimation about;
-    AmodAnimationId animation = Amod::Mmd::FindAnimation(argv[1]);
-    if (!Amod::Mmd::GetAnimation(animation, about))
-    {
-        animation = Amod::Mmd::LoadAnimation(argv[1]);
-    }
-
-    if (!Amod::Mmd::GetAnimation(animation, about))
-    {
-        Refused("mabox");
-        return;
-    }
-
-    // Use SELF box if present, else ENTITY.
-    Amod::Bounds box;
-    const int which = Amod::Mmd::GetAnimBox(animation, AMOD_ANIM_BOX_SELF, -1, box) ? AMOD_ANIM_BOX_SELF : AMOD_ANIM_BOX_ENTITY;
-    if (which == AMOD_ANIM_BOX_ENTITY && !Amod::Mmd::GetAnimBox(animation, which, -1, box))
-    {
-        Refused("mabox");
-        return;
-    }
-
-    if (argc < 3)
-    {
-        Amod::Console::Printf("%s: min %+.3f %+.3f %+.3f  max %+.3f %+.3f %+.3f, %d frame(s)\n", argv[1], box.min[0], box.min[1], box.min[2], box.max[0], 
-            box.max[1], box.max[2], Amod::Mmd::AnimBoxFrames(animation, which));
-        return;
-    }
-
-    const float factor = static_cast<float>(atof(argv[2]));
-    if (factor <= 0.0f)
-    {
-        Amod::Console::Printf("a factor above zero, please\n");
-        return;
-    }
-
-    // Same as monster box: X/Z both ways, Y upward only.
-    for (int axis = 0; axis < 3; axis += 2)
-    {
-        const float middle = (box.min[axis] + box.max[axis]) * 0.5f;
-        const float half = (box.max[axis] - box.min[axis]) * 0.5f * factor;
-        box.min[axis] = middle - half;
-        box.max[axis] = middle + half;
-    }
-    box.max[1] = box.min[1] + (box.max[1] - box.min[1]) * factor;
-
-    if (Amod::Mmd::SetAnimBox(animation, which, -1, box))
-    {
-        Amod::Console::Printf("%s grown %.2f times\n", argv[1], factor);
-        return;
-    }
-    Refused("mabox");
-}
-
-static void __cdecl TrackCommand(int argc, const char** argv, void*)
-{
-    if (argc >= 2)
-    {
-        AmodMonster monster;
-        if (!Amod::Monsters::Get(atoi(argv[1]), monster))
-        {
-            Refused("mtrack");
+            Amod::Console::Printf("light add <x> <y> [r g b] [range]\n");
             return;
         }
 
-        g_kept = Amod::Monsters::ById(monster.id);
-        Amod::Console::Printf("holding %s, id %u, standing at %d right now\n", monster.name, monster.id, atoi(argv[1]));
-        return;
-    }
+        AmodWorldLight fresh = {};
+        fresh.structSize = sizeof(fresh);
+        fresh.alpha = 1.0f;
+        fresh.colour[0] = argc > 6 ? static_cast<float>(atof(argv[4])) : 1.0f;
+        fresh.colour[1] = argc > 6 ? static_cast<float>(atof(argv[5])) : 1.0f;
+        fresh.colour[2] = argc > 6 ? static_cast<float>(atof(argv[6])) : 1.0f;
+        fresh.range = argc > 7 ? static_cast<float>(atof(argv[7])) : 2.0f;
+        fresh.position[0] = static_cast<float>(atof(argv[2]));
+        fresh.position[1] = static_cast<float>(atof(argv[3]));
 
-    if (g_kept.Id() == AMOD_MONSTER_NONE)
-    {
-        Amod::Console::Printf("mtrack <n> first, then mtrack alone to see where it went\n");
-        return;
-    }
-
-    AmodMonster monster;
-    if (!g_kept.Get(monster))
-    {
-        Amod::Console::Printf("id %u: %s\n", g_kept.Id(), Amod::LastError());
-        return;
-    }
-
-    Amod::Console::Printf("id %u is the %s at %d now, %.3f %.3f %.3f\n", g_kept.Id(), monster.name, g_kept.Index(), monster.position[0], monster.position[1], monster.position[2]);
-}
-
-// Circle: radius, phase; bare prints, numbers set.
-static void __cdecl OrbitCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    if (argc < 2 || !Amod::Monsters::Get(atoi(argv[1]), monster))
-    {
-        Amod::Console::Printf("morbit <n> [radius] [phase], the index mon prints\n");
-        return;
-    }
-
-    const int index = atoi(argv[1]);
-    const Amod::Monsters::MonsterRef which = Amod::Monsters::At(index);
-
-    if (argc > 2)
-    {
-        which["radius"].Set(static_cast<float>(atof(argv[2])));
-    }
-    if (argc > 3)
-    {
-        which["phase"].Set(static_cast<float>(atof(argv[3])));
-    }
-
-    Amod::Console::Printf("%d %-10s radius %.4f  phase %.4f  axis %.3f %.3f %.3f\n", index,
-        monster.name, which["radius"].Number(), which["phase"].Number(),
-        which["axis"].Number(0), which["axis"].Number(1), which["axis"].Number(2));
-}
-
-// $*_time is a range: pair in, pair out.
-static void __cdecl PaceCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    if (argc < 2 || !Amod::Monsters::Get(atoi(argv[1]), monster))
-    {
-        Amod::Console::Printf("mpace <n> [walk_wait_low walk_wait_high] [hard]\n");
-        return;
-    }
-
-    const int index = atoi(argv[1]);
-    const Amod::Monsters::MonsterRef which = Amod::Monsters::At(index);
-
-    if (argc > 3)
-    {
-        which["walk_wait"].Set(Amod::Value(static_cast<float>(atof(argv[2])), static_cast<float>(atof(argv[3]))));
-    }
-    if (argc > 4)
-    {
-        which["hard"].Set(Amod::Value(static_cast<float>(atof(argv[4]))));
-    }
-
-    Amod::Console::Printf("%d %-10s walk %.2f..%.2f  wait between %.2f..%.2f  sit %.2f..%.2f  hard x%.2f\n",
-        index, monster.name, which["walk_time"].Number(0), which["walk_time"].Number(1),
-        which["walk_wait"].Number(0), which["walk_wait"].Number(1),
-        which["sit_time"].Number(0), which["sit_time"].Number(1), which["hard"].Number());
-
-    Amod::Console::Printf("   %s for %.2fs more, and inside that %s for %.2fs more\n",
-        StateName(which["state"].Integer()), which["time_left"].Number(),
-        which["walk_state"].Integer() == AMOD_MONSTER_WALK_STAY ? "stands still" : "walks",
-        which["walk_left"].Number());
-}
-
-// Step body: accel / gravity.
-static void __cdecl StepCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    if (argc < 2 || !Amod::Monsters::Get(atoi(argv[1]), monster))
-    {
-        Refused("mstep");
-        return;
-    }
-
-    const Amod::Monsters::MonsterRef which = Amod::Monsters::At(atoi(argv[1]));
-
-    if (argc > 2)
-    {
-        which["accel"].Set(static_cast<float>(atof(argv[2])));
-    }
-    if (argc > 3)
-    {
-        which["gravity"].Set(static_cast<float>(atof(argv[3])));
-    }
-
-    Amod::Console::Printf("%d %-10s speed %.4f  accel %.4f  now %.4f  state %d\n", atoi(argv[1]),
-        monster.name, monster.speed, which["accel"].Number(),
-        which["velocity"].Number(), which["move_state"].Integer());
-    Amod::Console::Printf("   %.4f above the floor, falling %.4f, gravity %.2f x %.4f\n",
-        which["height"].Number(), which["vert_velocity"].Number(),
-        which["gravity"].Number(), which["fall_speed"].Number());
-}
-
-// Placements in the room, each with its key.
-static void __cdecl PlacedCommand(int argc, const char** argv, void*)
-{
-    const int room = argc > 1 ? atoi(argv[1]) : -1;
-    const int count = Amod::Monsters::PlacedCount(room);
-
-    Amod::Console::Printf("%d monster(s) written into room %d\n", count, room);
-
-    for (int index = 0; index < count; ++index)
-    {
-        AmodMonster placed;
-        if (!Amod::Monsters::GetPlaced(room, index, placed))
+        const int put = Amod::World::AddRoomLight(fresh);
+        if (put < 0)
         {
-            continue;
+            Amod::Console::Printf("light: %s\n", Amod::LastError());
+            return;
+        }
+        Amod::Console::Printf("light %d is the room's own now, and will be here on the next visit\n", put);
+        return;
+    }
+
+    AmodWorldLight light;
+    if (!Amod::World::GetLight(-1, index, light))
+    {
+        Amod::Console::Printf("light: %s\n", Amod::LastError());
+        return;
+    }
+
+    if (argc > 4 && strcmp(argv[2], "move") == 0)
+    {
+        light.position[0] = static_cast<float>(atof(argv[3]));
+        light.position[1] = static_cast<float>(atof(argv[4]));
+    }
+    else if (argc > 4)
+    {
+        light.colour[0] = static_cast<float>(atof(argv[2]));
+        light.colour[1] = static_cast<float>(atof(argv[3]));
+        light.colour[2] = static_cast<float>(atof(argv[4]));
+
+        //The range is the reach and the brightness at once - there is no separate strength.
+        if (argc > 5)
+        {
+            light.range = static_cast<float>(atof(argv[5]));
+        }
+    }
+
+    if (argc > 4 && !Amod::World::SetLight(-1, index, light))
+    {
+        Amod::Console::Printf("light: %s\n", Amod::LastError());
+        return;
+    }
+
+    Amod::Console::Printf("%2d  rgb %.2f %.2f %.2f  range %.3f  at %+.3f %+.3f\n", index, light.colour[0], light.colour[1], light.colour[2], light.range,
+                          light.position[0], light.position[1]);
+}
+
+static void __cdecl DynamicLightCommand(int argc, const char** argv, void*)
+{
+    if (argc > 1 && strcmp(argv[1], "off") == 0)
+    {
+        const int which = argc > 2 ? atoi(argv[2]) : -1;
+
+        if (which < 0)
+        {
+            g_lightCount = 0;
+            Amod::Console::Printf("all out\n");
+            return;
+        }
+        if (which >= g_lightCount)
+        {
+            Amod::Console::Printf("there is no light %d burning\n", which);
+            return;
+        }
+        g_lights[which] = g_lights[--g_lightCount];
+        Amod::Console::Printf("light %d is out, %d left\n", which, g_lightCount);
+        return;
+    }
+
+    if (argc < 3)
+    {
+        Amod::Console::Printf("dlight [off [n] | <x> <y> | follow <n>] [r g b] [range]\n");
+        Amod::Console::Printf("%d burning:\n", g_lightCount);
+
+        for (int at = 0; at < g_lightCount; ++at)
+        {
+            const Burning& light = g_lights[at];
+            Amod::Console::Printf("%2d  room %-3d %-14s rgb %.2f %.2f %.2f  range %.2f\n", at,
+                                  light.room, light.rides >= 0 ? "on an entity" : "where it was put",
+                                  light.colour[0], light.colour[1], light.colour[2], light.range);
         }
 
-        const int column = static_cast<int>((placed.position[0] - AMOD_ROOM_ORIGIN_X) / AMOD_ROOM_CELL_SIZE);
-        const int row = static_cast<int>((AMOD_ROOM_ORIGIN_Y - placed.position[1]) / AMOD_ROOM_CELL_SIZE);
-
-        Amod::Console::Printf("%2d  %s_%d_%d%s%s  level %d\n", index, placed.name, column, row, placed.tag[0] != '\0' ? "  tag " : "", placed.tag, placed.level);
-    }
-}
-
-// Find by placement key (name_col_row).
-static void __cdecl FindCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        Amod::Console::Printf("mfind <name_col_row> [level], the key mplaced prints\n");
+        for (int at = 0; at < Amod::World::CurrentEntityCount(); ++at)
+        {
+            const Amod::World::Entity what = Amod::World::CurrentEntity(at);
+            if (what.IsValid())
+            {
+                Amod::Console::Printf("%2d  %-16s at %+.3f %+.3f\n", at, what.Name()[0] != '\0' ? what.Name() : "(nameless)", what.GetX(), what.GetY());
+            }
+        }
         return;
     }
 
-    const Amod::Monsters::Tracked found = Amod::Monsters::Find(argv[1]);
-    const int placed = Amod::Monsters::FindPlaced(argv[1]);
-
-    if (found.Id() == AMOD_MONSTER_NONE && placed < 0)
+    if (g_lightCount == static_cast<int>(sizeof(g_lights) / sizeof(g_lights[0])))
     {
-        Refused("mfind");
+        Amod::Console::Printf("this mod keeps room for %d and holds that many\n", g_lightCount);
         return;
     }
 
-    if (argc > 2 && placed >= 0)
-    {
-        Amod::Monsters::Placed(-1, placed).Set("level", atoi(argv[2]));
-    }
+    Burning& light = g_lights[g_lightCount];
+    const bool rides = strcmp(argv[1], "follow") == 0;
+    int next = 2;
 
-    AmodMonster monster;
-    if (found.Get(monster))
+    light.room = Amod::World::CurrentRoom();
+    light.rides = -1;
+    light.colour[0] = 1.0f;
+    light.colour[1] = 0.6f;
+    light.colour[2] = 0.2f;
+    light.range = 2.0f;
+
+    if (rides)
     {
-        Amod::Console::Printf("%s is monster %d here, id %u, speed %.4f\n", argv[1], found.Index(),
-            found.Id(), monster.speed);
+        light.rides = atoi(argv[2]);
+        next = 3;
     }
     else
     {
-        Amod::Console::Printf("%s is not standing in this room right now\n", argv[1]);
+        light.at[0] = static_cast<float>(atof(argv[1]));
+        light.at[1] = static_cast<float>(atof(argv[2]));
     }
 
-    AmodMonster written;
-    if (placed >= 0 && Amod::Monsters::GetPlaced(-1, placed, written))
+    if (argc > next + 2)
     {
-        Amod::Console::Printf("   placement %d, level %d - leave the room and come back to see it applied\n",
-            placed, written.level);
+        light.colour[0] = static_cast<float>(atof(argv[next]));
+        light.colour[1] = static_cast<float>(atof(argv[next + 1]));
+        light.colour[2] = static_cast<float>(atof(argv[next + 2]));
+        next += 3;
     }
+    if (argc > next)
+    {
+        light.range = static_cast<float>(atof(argv[next]));
+    }
+
+    ++g_lightCount;
+    Amod::Console::Printf("light %d burning in room %d, rgb %.2f %.2f %.2f, range %.2f\n", g_lightCount - 1, light.room, light.colour[0], light.colour[1],
+        light.colour[2], light.range);
 }
 
-static void __cdecl OnMonsterSpawned(const AmodMonsterSpawnInfo* info, void*)
-{
-    // Rebind paint key to the new id after rebuild.
-    for (int at = 0; at < g_paintCount; ++at)
-    {
-        if (g_paints[at].key[0] != '\0' && Amod::Monsters::Find(g_paints[at].key).Id() == info->id)
-        {
-            g_paints[at].id = info->id;
-        }
-    }
-
-    for (int at = 0; at < g_ruleCount; ++at)
-    {
-        if (Amod::Monsters::Find(g_rules[at].key).Id() == info->id)
-        {
-            Amod::Monsters::At(info->index)["speed"].Set(g_rules[at].speed);
-            return;
-        }
-    }
-}
-
-// Speed only — not $level (hard texture / death colour).
-static void __cdecl RuleCommand(int argc, const char** argv, void*)
+static void __cdecl EntityLightCommand(int argc, const char** argv, void*)
 {
     if (argc < 2)
     {
-        Amod::Console::Printf("%d rule(s), mrule <name_col_row> <speed>, '-' for the speed drops "
-            "one and 'mrule -' drops them all\n", g_ruleCount);
-        for (int at = 0; at < g_ruleCount; ++at)
+        const int player = Amod::World::PlayerEntity();
+        Amod::Console::Printf("elight <n|me> [off | r g b] [range]; the player is entity %d\n", player);
+
+        for (int at = 0; at < Amod::World::CurrentEntityCount(); ++at)
         {
-            Amod::Console::Printf("   %-24s %.4f\n", g_rules[at].key, g_rules[at].speed);
+            const Amod::World::Entity what = Amod::World::CurrentEntity(at);
+            AmodEntityLight light;
+
+            if (!what.IsValid() || !Amod::World::GetEntityLight(-1, at, light) || light.isLit == 0)
+            {
+                continue;
+            }
+            Amod::Console::Printf("%2d  %-16s rgb %.2f %.2f %.2f  range %.3f%s\n", at, what.Name()[0] != '\0' ? what.Name() : "(nameless)",
+                                  light.colour[0], light.colour[1], light.colour[2], light.range, at == player ? "   <- the torch" : "");
         }
         return;
     }
 
-    if (argv[1][0] == '-')
+    const int which = strcmp(argv[1], "me") == 0 ? Amod::World::PlayerEntity() : atoi(argv[1]);
+
+    if (which < 0)
     {
-        g_ruleCount = 0;
-        Amod::Console::Printf("no rules now\n");
+        Amod::Console::Printf("elight: there is no player here\n");
         return;
     }
 
-    const int found = RuleAt(argv[1]);
-
-    if (argc > 2 && argv[2][0] == '-')
+    if (argc > 2 && strcmp(argv[2], "off") == 0)
     {
-        if (found >= 0)
+        if (Amod::World::UnlightEntity(which))
         {
-            g_rules[found] = g_rules[--g_ruleCount];
+            Amod::Console::Printf("entity %d is dark again\n", which);
+            return;
         }
-        Amod::Console::Printf(found >= 0 ? "%s walks as it was told to again\n" : "%s had no rule\n",
-            argv[1]);
+        Amod::Console::Printf("elight: %s\n", Amod::LastError());
         return;
     }
 
-    if (argc < 3)
+    //Read first, so what is not given keeps whatever it already had.
+    AmodEntityLight light;
+    if (!Amod::World::GetEntityLight(-1, which, light))
     {
-        Amod::Console::Printf("mrule <name_col_row> <speed>\n");
+        Amod::Console::Printf("elight: %s\n", Amod::LastError());
         return;
     }
 
-    if (found < 0 && g_ruleCount == static_cast<int>(sizeof(g_rules) / sizeof(g_rules[0])))
+    if (argc > 4)
     {
-        Amod::Console::Printf("this mod keeps room for %d rules and holds that many already\n",
-            g_ruleCount);
+        light.colour[0] = static_cast<float>(atof(argv[2]));
+        light.colour[1] = static_cast<float>(atof(argv[3]));
+        light.colour[2] = static_cast<float>(atof(argv[4]));
+    }
+    if (argc > 5)
+    {
+        light.range = static_cast<float>(atof(argv[5]));
+    }
+    if (light.range <= 0.0f)
+    {
+        light.range = 2.0f;
+    }
+
+    light.isLit = 1;
+    if (!Amod::World::SetEntityLight(-1, which, light))
+    {
+        Amod::Console::Printf("elight: %s\n", Amod::LastError());
         return;
     }
 
-    const int at = found >= 0 ? found : g_ruleCount++;
-    strncpy_s(g_rules[at].key, sizeof(g_rules[at].key), argv[1], _TRUNCATE);
-    g_rules[at].speed = static_cast<float>(atof(argv[2]));
-
-    const Amod::Monsters::Tracked now = Amod::Monsters::Find(g_rules[at].key);
-    if (now.Id() != AMOD_MONSTER_NONE)
-    {
-        Amod::Monsters::At(now.Index())["speed"].Set(g_rules[at].speed);
-    }
-
-    Amod::Console::Printf("%s walks at %.4f, now and every time the room is built again (%d rule(s))\n",
-        g_rules[at].key, g_rules[at].speed, g_ruleCount);
+    //Nothing is asked for again: the game carries this one by itself, every frame, wherever the
+    //entity goes.
+    Amod::Console::Printf("entity %d carries rgb %.2f %.2f %.2f, range %.2f\n", which,  light.colour[0], light.colour[1], light.colour[2], light.range);
 }
 
-static void __cdecl OnModelDrawn(const AmodModelDrawInfo* info, void*)
+//The baked light is 256x256 and the mod works on a copy of it, so there is one to hold.
+static unsigned char g_bake[256 * 256 * 4];
+
+static unsigned char Clamped(float value)
 {
-    if (g_watchLeft <= 0)
-    {
-        return;
-    }
-    --g_watchLeft;
-
-    const AmodMonsterId id = Amod::Monsters::IdOfDraw(info->item);
-    AmodMonster monster;
-
-    if (id != AMOD_MONSTER_NONE && Amod::Monsters::ById(id).Get(monster))
-    {
-        Amod::Console::Printf("  draw %08X is monster %d, %s, id %u, at %.3f %.3f\n", info->item,
-            Amod::Monsters::IndexOf(id), monster.name, id, info->position[0],
-            info->position[1]);
-        return;
-    }
-    Amod::Console::Printf("  draw %08X: %s\n", info->item, Amod::LastError());
+    if (value < 0.0f) { return 0; }
+    return value > 255.0f ? 255 : static_cast<unsigned char>(value);
 }
 
-// Watch that monster's model draws for one frame.
-static void __cdecl WhoCommand(int argc, const char** argv, void*)
+static void __cdecl LightmapCommand(int argc, const char** argv, void*)
 {
-    AmodMonster monster;
-    if (argc < 2 || !Amod::Monsters::Get(atoi(argv[1]), monster))
+    const AmodTextureId lightmap = Amod::World::Lightmap();
+    AmodTexture about;
+
+    if (lightmap == AMOD_INVALID_TEXTURE || !Amod::Textures::Get(lightmap, about))
     {
-        Refused("mwho");
+        Amod::Console::Printf("lmap: %s\n", Amod::LastError());
         return;
     }
 
-    AmodMonsterType kind;
-    const AmodModelId model = Amod::Monsters::FindType(monster.name, kind) ? Amod::Mmd::Find(kind.model)
-        : AMOD_INVALID_MODEL;
-    if (model == AMOD_INVALID_MODEL)
+    const int bytes = Amod::Textures::ReadPixels(lightmap);
+    if (bytes <= 0 || bytes > static_cast<int>(sizeof(g_bake)) ||
+        Amod::Textures::ReadPixels(lightmap, g_bake, bytes) != bytes)
     {
-        Amod::Console::Printf("the model of '%s' is not loaded\n", monster.name);
+        Amod::Console::Printf("lmap: the lightmap keeps no pixels to work on\n");
         return;
     }
-
-    if (model != g_watched)
-    {
-        Amod::Mmd::OnDraw(model, &OnModelDrawn);
-        g_watched = model;
-    }
-
-    g_watchLeft = 16;
-    Amod::Console::Printf("watching what '%s' is drawn from, the next %d draw(s):\n", monster.name,
-        g_watchLeft);
-}
-
-// Per-draw colour via BeforeDraw; one handler for the kind.
-static void __cdecl BeforeMonsterDrawn(const AmodModelDrawInfo* info, void*)
-{
-    const int at = PaintOf(Amod::Monsters::IdOfDraw(info->item));
-
-    if (at >= 0)
-    {
-        Amod::Mmd::SetColour(info->model, g_paints[at].colour);
-        return;
-    }
-    Amod::Mmd::ClearColours(info->model);
-}
-
-static bool WatchModel(AmodModelId model)
-{
-    for (int at = 0; at < g_watchedCount; ++at)
-    {
-        if (g_watchedModels[at] == model)
-        {
-            return true;
-        }
-    }
-
-    if (g_watchedCount == static_cast<int>(sizeof(g_watchedModels) / sizeof(g_watchedModels[0])) ||
-        Amod::Mmd::BeforeDraw(model, &BeforeMonsterDrawn) == AMOD_INVALID_TOKEN)
-    {
-        return false;
-    }
-
-    g_watchedModels[g_watchedCount++] = model;
-    return true;
-}
-
-static void __cdecl PaintCommand(int argc, const char** argv, void*)
-{
-    AmodMonster monster;
-    AmodMonsterType kind;
 
     if (argc < 2)
     {
-        Amod::Console::Printf("mpaint <n|name_col_row> [aarrggbb|-], FFFF0000 is red. %d painted:\n",
-            g_paintCount);
-        for (int at = 0; at < g_paintCount; ++at)
+        //An average is enough to say whether the room is baked bright or dark at all.
+        long long sum = 0;
+        for (int at = 0; at < bytes; at += 4)
         {
-            Amod::Console::Printf("   %-24s id %-6u %08X\n",
-                g_paints[at].key[0] != '\0' ? g_paints[at].key : "(by number)",
-                g_paints[at].id, g_paints[at].colour);
+            sum += g_bake[at] + g_bake[at + 1] + g_bake[at + 2];
         }
+        Amod::Console::Printf("lmap [scale | tint r g b | spot u v r w]\n");
+        Amod::Console::Printf("%dx%d, %d bytes, average %.1f of 255\n", about.width, about.height, bytes, static_cast<double>(sum) / (bytes / 4 * 3));
         return;
     }
 
-    // Number = this visit; key = survives room rebuild.
-    const bool byKey = strchr(argv[1], '_') != nullptr;
-    const Amod::Monsters::Tracked found = byKey ? Amod::Monsters::Find(argv[1])
-        : Amod::Monsters::Track(atoi(argv[1]));
+    const int texels = bytes / 4;
+    const int width = about.width;
 
-    if (!found.Get(monster) || !Amod::Monsters::FindType(monster.name, kind))
+    if (strcmp(argv[1], "spot") == 0 && argc > 5)
     {
-        Refused("mpaint");
-        return;
-    }
+        //Painted into the bake itself, so it is there for good and costs nothing to draw - the
+        //other half of what a light for one frame does.
+        const float u = static_cast<float>(atof(argv[2])) * width;
+        const float v = static_cast<float>(atof(argv[3])) * about.height;
+        const float radius = static_cast<float>(atof(argv[4])) * width;
+        const float weight = static_cast<float>(atof(argv[5]));
 
-    const AmodModelId model = Amod::Mmd::Find(kind.model);
-    if (model == AMOD_INVALID_MODEL)
-    {
-        Amod::Console::Printf("the model of '%s' is not loaded\n", monster.name);
-        return;
-    }
-
-    const int already = byKey ? PaintOfKey(argv[1]) : PaintOf(monster.id);
-
-    if (argc > 2 && argv[2][0] == '-')
-    {
-        if (already >= 0)
+        for (int at = 0; at < texels; ++at)
         {
-            g_paints[already] = g_paints[--g_paintCount];
+            const float dx = static_cast<float>(at % width) - u;
+            const float dy = static_cast<float>(at / width) - v;
+            const float away = dx * dx + dy * dy;
+
+            if (radius <= 0.0f || away > radius * radius)
+            {
+                continue;
+            }
+
+            //One at the middle, nothing at the edge, the same falloff the game lights a point by.
+            const float much = weight * (1.0f - (away / (radius * radius)));
+            for (int channel = 0; channel < 3; ++channel)
+            {
+                g_bake[at * 4 + channel] = Clamped(g_bake[at * 4 + channel] + much * 255.0f);
+            }
         }
-        Amod::Mmd::ClearColours(model);
-        Amod::Console::Printf(already >= 0 ? "%s is its own colour again\n" : "%s was not painted\n",
-            monster.name);
+    }
+    else
+    {
+        float scale[3] = { 1.0f, 1.0f, 1.0f };
+
+        if (strcmp(argv[1], "tint") == 0 && argc > 4)
+        {
+            scale[0] = static_cast<float>(atof(argv[2]));
+            scale[1] = static_cast<float>(atof(argv[3]));
+            scale[2] = static_cast<float>(atof(argv[4]));
+        }
+        else
+        {
+            scale[0] = scale[1] = scale[2] = static_cast<float>(atof(argv[1]));
+        }
+
+        for (int at = 0; at < texels; ++at)
+        {
+            for (int channel = 0; channel < 3; ++channel)
+            {
+                g_bake[at * 4 + channel] = Clamped(g_bake[at * 4 + channel] * scale[channel]);
+            }
+        }
+    }
+
+    if (!Amod::Textures::Replace(lightmap, about.width, about.height, g_bake))
+    {
+        Amod::Console::Printf("lmap: the lightmap would not take the new pixels\n");
         return;
     }
-
-    if (already < 0 && g_paintCount == static_cast<int>(sizeof(g_paints) / sizeof(g_paints[0])))
-    {
-        Amod::Console::Printf("this mod keeps room for %d painted monsters and holds that many\n",
-            g_paintCount);
-        return;
-    }
-
-    if (!WatchModel(model))
-    {
-        Refused("mpaint could not watch the model being drawn");
-        return;
-    }
-
-    Paint& paint = g_paints[already >= 0 ? already : g_paintCount++];
-    paint.id = monster.id;
-    paint.colour = argc > 2 ? static_cast<uint32_t>(strtoul(argv[2], nullptr, 16)) : 0xFFFF0000u;
-    paint.key[0] = '\0';
-    if (byKey)
-    {
-        strncpy_s(paint.key, sizeof(paint.key), argv[1], _TRUNCATE);
-    }
-
-    Amod::Console::Printf("%s, id %u, is painted %08X - %d painted in all%s\n", monster.name,
-        paint.id, paint.colour, g_paintCount,
-        byKey ? ", and this one across every visit" : ", this one until you leave the room");
+    Amod::Console::Printf("the room is baked anew; it stays until the level is left\n");
 }
 
-static void __cdecl SkinCommand(int argc, const char** argv, void*)
+static AmodVertex g_verts[8192];
+
+static AmodModelId RoomPart(int argc, const char** argv, const char** named)
 {
-    AmodMonster monster;
-    AmodMonsterType kind;
-    const int index = argc > 1 ? atoi(argv[1]) : -1;
-
-    if (argc < 2 || !Amod::Monsters::Get(index, monster) ||
-        !Amod::Monsters::FindType(monster.name, kind))
+    for (int at = 1; at < argc; ++at)
     {
-        Amod::Console::Printf("mskin <n> blend|solid|normals|second <model> <texture>\n");
-        return;
-    }
-
-    const Amod::Monsters::MonsterRef which = Amod::Monsters::At(index);
-    const char* const what = argc > 2 ? argv[2] : "";
-
-    if (strcmp(what, "blend") == 0 || strcmp(what, "solid") == 0)
-    {
-        const bool on = strcmp(what, "blend") == 0;
-        which["blend"].Set(Amod::Value(on));
-        Amod::Console::Printf("%s is drawn %s - a colour's alpha counts %s\n", monster.name,
-            on ? "in the blending pass" : "solid", on ? "now" : "for nothing");
-        return;
-    }
-
-    if (strcmp(what, "normals") == 0)
-    {
-        if (Amod::Mmd::RebuildNormals(Amod::Mmd::Find(kind.model)))
+        if (strcmp(argv[at], "floor") == 0)
         {
-            Amod::Console::Printf("%s has its normals worked out again\n", kind.model);
-            return;
+            *named = "floor";
+            return Amod::Mmd::RoomModel(-1, AMOD_ROOM_MODEL_LIGHTMAP);
         }
-        Refused("mskin");
-        return;
-    }
-
-    if (strcmp(what, "second") == 0 && argc > 4)
-    {
-        const bool put = which["model2"].Set(argv[3]) && which["texture2"].Set(argv[4]);
-        if (!put)
+        if (strcmp(argv[at], "back") == 0)
         {
-            Refused("mskin");
-            return;
+            *named = "back wall";
+            return Amod::Mmd::RoomModel(-1, AMOD_ROOM_MODEL_BACKWALL);
         }
-        Amod::Console::Printf("%s carries a second model, '%s' in '%s', drawn in the same place\n",
-            monster.name, argv[3], argv[4]);
-        return;
     }
-
-    Amod::Console::Printf("mskin <n> blend|solid|normals|second <model> <texture>\n");
+    *named = "walls";
+    return Amod::Mmd::RoomModel(-1, AMOD_ROOM_MODEL_GEOMETRY);
 }
 
-// Colour the whole kind at once (no per-draw handler).
-static void __cdecl ColourCommand(int argc, const char** argv, void*)
+static void __cdecl WallCommand(int argc, const char** argv, void*)
 {
-    AmodMonster monster;
-    AmodMonsterType kind;
+    static const char* const kSlots[] = { "walls", "floor", "back wall" };
+    static const int kWhich[] = { AMOD_ROOM_MODEL_GEOMETRY, AMOD_ROOM_MODEL_LIGHTMAP, AMOD_ROOM_MODEL_BACKWALL };
 
-    if (argc < 2 || !Amod::Monsters::Get(atoi(argv[1]), monster) ||
-        !Amod::Monsters::FindType(monster.name, kind))
+    if (argc < 2)
     {
-        Amod::Console::Printf("mcolour <n> [aarrggbb], the whole kind at once\n");
+        Amod::Console::Printf("wall [bulge <amount> | colour <aarrggbb> | reset] [floor|back]\n");
+
+        for (int at = 0; at < 3; ++at)
+        {
+            const AmodModelId model = Amod::Mmd::RoomModel(-1, kWhich[at]);
+            AmodModel about;
+
+            if (model == AMOD_INVALID_MODEL || !Amod::Mmd::Get(model, about))
+            {
+                Amod::Console::Printf("  %-10s none\n", kSlots[at]);
+                continue;
+            }
+            //'edited' is whether the loader is keeping what this was, which is the whole of
+            //whether 'wall reset' has anything to give back.
+            Amod::Console::Printf("  %-10s model %u, kind %d, %d vert(s), %d frame(s)%s\n", kSlots[at],  model, about.kind, about.vertexCount, about.frameCount,
+                                  about.edited ? ", edited" : "");
+        }
         return;
     }
 
-    const AmodModelId model = Amod::Mmd::Find(kind.model);
+    const char* named = "";
+    const AmodModelId model = RoomPart(argc, argv, &named);
     AmodModel about;
 
     if (model == AMOD_INVALID_MODEL || !Amod::Mmd::Get(model, about))
     {
-        Amod::Console::Printf("'%s' is drawn from '%s', which is not loaded\n", monster.name, kind.model);
+        Amod::Console::Printf("wall: this room is drawn from nothing the loader can reach\n");
         return;
     }
 
-    const uint32_t colour = argc > 2 ? static_cast<uint32_t>(strtoul(argv[2], nullptr, 16)) : 0xFFFF0000u;
-    const bool done = Amod::Mmd::SetColour(model, colour);
-
-    Amod::Console::Printf("%s: kind %d, %d vert(s), %d frame(s) - SetColour %s\n", about.name,
-        about.kind, about.vertexCount, about.frameCount, done ? "took" : "refused");
-    if (!done)
+    if (strcmp(argv[1], "reset") == 0)
     {
-        Refused("mcolour");
+        if (Amod::Mmd::Restore(model))
+        {
+            Amod::Console::Printf("the %s are as they were read\n", named);
+            return;
+        }
+        Amod::Console::Printf("wall: the %s would not go back - %s\n", named,
+                              about.edited ? "the snapshot would not build"
+                                           : "nothing was written to them to undo");
+        return;
     }
+
+    if (strcmp(argv[1], "colour") == 0 && argc > 2)
+    {
+        const uint32_t colour = static_cast<uint32_t>(strtoul(argv[2], nullptr, 16));
+        Amod::Console::Printf(Amod::Mmd::SetColour(model, colour) ? "the %s are painted\n"
+                                                                  : "wall: the %s refused paint\n", named);
+        return;
+    }
+
+    if (strcmp(argv[1], "bulge") != 0 || argc < 3)
+    {
+        Amod::Console::Printf("wall [bulge <amount> | colour <aarrggbb> | reset] [floor|back]\n");
+        return;
+    }
+
+    //Writing takes the whole frame or nothing, so a mesh bigger than there is room for here is
+    //said so plainly rather than half written.
+    const int room = static_cast<int>(sizeof(g_verts) / sizeof(g_verts[0]));
+    if (about.vertexCount > room)
+    {
+        Amod::Console::Printf("wall: the %s have %d vertices and this mod holds %d\n", named, about.vertexCount, room);
+        return;
+    }
+
+    const int count = Amod::Mmd::ReadVertices(model, 0, g_verts, room);
+    if (count <= 0)
+    {
+        Amod::Console::Printf("wall: the %s gave up no vertices\n", named);
+        return;
+    }
+
+    int normalled = 0;
+    for (int at = 0; at < count; ++at)
+    {
+        const AmodVertex& vertex = g_verts[at];
+        if (vertex.normal[0] != 0.0f || vertex.normal[1] != 0.0f || vertex.normal[2] != 0.0f)
+        {
+            ++normalled;
+        }
+    }
+
+    const float much = static_cast<float>(atof(argv[2]));
+    const bool byNormal = normalled > count / 2;
+
+    for (int at = 0; at < count; ++at)
+    {
+        float way[3];
+        float length = 0.0f;
+
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            way[axis] = byNormal ? g_verts[at].normal[axis]
+                                 : g_verts[at].position[axis] - about.centre[axis];
+            length += way[axis] * way[axis];
+        }
+
+        if (length <= 0.0f)
+        {
+            continue;
+        }
+
+        length = sqrtf(length);
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            g_verts[at].position[axis] += way[axis] / length * much;
+        }
+    }
+
+    if (!Amod::Mmd::WriteVertices(model, 0, g_verts, count))
+    {
+        Amod::Console::Printf("wall: the %s would not take the new vertices\n", named);
+        return;
+    }
+    Amod::Console::Printf("%d vertices of the %s moved %.3f %s; %d of them carry a normal\n",
+                          count, named, much, byNormal ? "along their normals" : "out from the middle",
+                          normalled);
+}
+
+//The translation of a 4x4 in the order the card is handed it.
+static const int kX = 12;
+static const int kY = 13;
+static const int kZ = 14;
+
+static void __cdecl DecoCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        const int count = Amod::World::StaticCount();
+        Amod::Console::Printf("deco [<n> hide|show|move|scale|model | add <path> <x> <y> <z>]\n");
+        Amod::Console::Printf("%d static(s) here:\n", count);
+
+        for (int at = 0; at < count; ++at)
+        {
+            AmodRoomStatic piece;
+            AmodModel about;
+
+            if (!Amod::World::GetStatic(at, piece))
+            {
+                continue;
+            }
+
+            const bool named = Amod::Mmd::Get(piece.model, about);
+            Amod::Console::Printf("%2d  %-28s at %+.3f %+.3f %+.3f%s%s\n", at, named && about.name[0] != '\0' ? about.name : "(from the room)",
+                                  piece.matrix[kX], piece.matrix[kY], piece.matrix[kZ], piece.isShown ? "" 
+                                    : "  hidden", piece.isTranslucent ? "  translucent" : "");
+        }
+        return;
+    }
+
+    if (strcmp(argv[1], "add") == 0)
+    {
+        if (argc < 6)
+        {
+            Amod::Console::Printf("deco add <model path> <x> <y> <z> [scale]\n");
+            return;
+        }
+
+        const AmodModelId model = Amod::Mmd::Load(argv[2]);
+        if (model == AMOD_INVALID_MODEL)
+        {
+            Amod::Console::Printf("deco: '%s' would not load\n", argv[2]);
+            return;
+        }
+
+        const float size = argc > 6 ? static_cast<float>(atof(argv[6])) : 1.0f;
+
+        AmodRoomStatic piece = {};
+        piece.structSize = sizeof(piece);
+        piece.isShown = 1;
+        piece.isLit = 1;
+        piece.model = model;
+        piece.matrix[0] = piece.matrix[5] = piece.matrix[10] = size;
+        piece.matrix[15] = 1.0f;
+        piece.matrix[kX] = static_cast<float>(atof(argv[3]));
+        piece.matrix[kY] = static_cast<float>(atof(argv[4]));
+        piece.matrix[kZ] = static_cast<float>(atof(argv[5]));
+
+        const int put = Amod::World::AddStatic(piece);
+        if (put < 0)
+        {
+            Amod::Console::Printf("deco: %s\n", Amod::LastError());
+            return;
+        }
+        Amod::Console::Printf("'%s' stands in the room as static %d\n", argv[2], put);
+        return;
+    }
+
+    const int which = atoi(argv[1]);
+    AmodRoomStatic piece;
+
+    if (!Amod::World::GetStatic(which, piece))
+    {
+        Amod::Console::Printf("deco: %s\n", Amod::LastError());
+        return;
+    }
+
+    if (argc > 2 && (strcmp(argv[2], "hide") == 0 || strcmp(argv[2], "show") == 0))
+    {
+        piece.isShown = strcmp(argv[2], "show") == 0 ? 1 : 0;
+    }
+    else if (argc > 5 && strcmp(argv[2], "move") == 0)
+    {
+        piece.matrix[kX] = static_cast<float>(atof(argv[3]));
+        piece.matrix[kY] = static_cast<float>(atof(argv[4]));
+        piece.matrix[kZ] = static_cast<float>(atof(argv[5]));
+    }
+    else if (argc > 3 && strcmp(argv[2], "scale") == 0)
+    {
+        //Only the three that carry the size, so whatever turn it was given is kept.
+        const float size = static_cast<float>(atof(argv[3]));
+        piece.matrix[0] = piece.matrix[5] = piece.matrix[10] = size;
+    }
+    else if (argc > 3 && strcmp(argv[2], "model") == 0)
+    {
+        const AmodModelId model = Amod::Mmd::Load(argv[3]);
+        if (model == AMOD_INVALID_MODEL)
+        {
+            Amod::Console::Printf("deco: '%s' would not load\n", argv[3]);
+            return;
+        }
+        piece.model = model;
+    }
+    else
+    {
+        Amod::Console::Printf("deco <n> hide|show|move <x> <y> <z>|scale <s>|model <path>\n");
+        return;
+    }
+
+    if (!Amod::World::SetStatic(which, piece))
+    {
+        Amod::Console::Printf("deco: %s\n", Amod::LastError());
+        return;
+    }
+    Amod::Console::Printf("static %d taken; it changes on the spot, no need to leave the room\n", which);
+}
+
+static bool g_seeding = false;
+static float g_every = 5.0f;
+static float g_since = 0.0f;
+static int g_seeded = 0;
+
+static void __cdecl SeedCommand(int argc, const char** argv, void*)
+{
+    if (argc > 1 && strcmp(argv[1], "off") == 0)
+    {
+        g_seeding = false;
+        Amod::Console::Printf("done; %d light(s) were left in the room\n", g_seeded);
+        return;
+    }
+
+    if (argc > 1)
+    {
+        const float every = static_cast<float>(atof(argv[1]));
+        g_every = every > 0.1f ? every : 5.0f;
+    }
+
+    g_seeding = true;
+    g_since = g_every;
+    g_seeded = 0;
+    Amod::Console::Printf("a light where you stand every %.1f second(s); 'lseed off' stops\n", g_every);
+}
+
+//A colour of its own, settled once and never touched again
+static void SeedOne(void)
+{
+    const int which = Amod::World::PlayerEntity();
+    const Amod::World::Entity player = which >= 0 ? Amod::World::CurrentEntity(which)
+                                                  : Amod::World::Entity();
+    if (!player.IsValid())
+    {
+        return;
+    }
+
+    float colour[3];
+    float brightest = 0.0f;
+
+    for (int at = 0; at < 3; ++at)
+    {
+        colour[at] = 0.15f + static_cast<float>(rand() % 1000) / 1000.0f;
+        brightest = colour[at] > brightest ? colour[at] : brightest;
+    }
+
+    AmodWorldLight light = {};
+    light.structSize = sizeof(light);
+    light.alpha = 1.0f;
+    light.range = 1.5f;
+    light.position[0] = player.GetX();
+    light.position[1] = player.GetY();
+
+    //Scaled so the brightest channel is full: a saturated colour rather than a washed-out one.
+    for (int at = 0; at < 3; ++at)
+    {
+        light.colour[at] = colour[at] / brightest;
+    }
+
+    const int put = Amod::World::AddRoomLight(light);
+    if (put < 0)
+    {
+        Amod::Console::Printf("lseed: %s\n", Amod::LastError());
+        g_seeding = false;
+        return;
+    }
+
+    ++g_seeded;
+    Amod::Console::Printf("light %d at %+.3f %+.3f, rgb %.2f %.2f %.2f (%d of mine here)\n", put, light.position[0], light.position[1], light.colour[0], 
+                            light.colour[1], light.colour[2], g_seeded);
+}
+
+static char g_cells[AMOD_ROOM_COLUMNS * AMOD_ROOM_ROWS];
+
+static void __cdecl CellCommand(int argc, const char** argv, void*)
+{
+    const int cells = static_cast<int>(sizeof(g_cells));
+
+    if (argc < 2)
+    {
+        if (Amod::World::Cells(Amod::World::CurrentRoom(), g_cells, cells) != cells)
+        {
+            Amod::Console::Printf("cell: the room gave up no grid\n");
+            return;
+        }
+
+        Amod::Console::Printf("cell <col> <row> <char> | wall | clear\n");
+        for (int row = 0; row < AMOD_ROOM_ROWS; ++row)
+        {
+            char line[AMOD_ROOM_COLUMNS + 1];
+            for (int column = 0; column < AMOD_ROOM_COLUMNS; ++column)
+            {
+                line[column] = g_cells[row * AMOD_ROOM_COLUMNS + column];
+            }
+            line[AMOD_ROOM_COLUMNS] = '\0';
+            Amod::Console::Printf("%2d %s\n", row, line);
+        }
+        return;
+    }
+
+    if (strcmp(argv[1], "clear") == 0 || strcmp(argv[1], "wall") == 0)
+    {
+        const bool clearing = strcmp(argv[1], "clear") == 0;
+
+        if (Amod::World::Cells(Amod::World::CurrentRoom(), g_cells, cells) != cells)
+        {
+            Amod::Console::Printf("cell: the room gave up no grid\n");
+            return;
+        }
+
+        if (clearing)
+        {
+            //Every wall taken away at once, which is what the whole-grid write is for.
+            for (int at = 0; at < cells; ++at)
+            {
+                g_cells[at] = g_cells[at] == 'W' ? ' ' : '\0';
+            }
+        }
+        else
+        {
+            //A wall across the row the player stands on, and nothing else touched.
+            const int which = Amod::World::PlayerEntity();
+            const Amod::World::Entity player = which >= 0 ? Amod::World::CurrentEntity(which)
+                                                          : Amod::World::Entity();
+            if (!player.IsValid())
+            {
+                Amod::Console::Printf("cell: there is no player to stand anywhere\n");
+                return;
+            }
+
+            //Under the feet, not through them: rows run downwards, so the one below is where a
+            //floor belongs. Walling the player's own row builds a wall inside the player.
+            const int row = player.GetRow() + 1;
+            int laid = 0;
+            int left = 0;
+
+            if (row < 0 || row >= AMOD_ROOM_ROWS)
+            {
+                Amod::Console::Printf("cell: there is no row under the player to build on\n");
+                return;
+            }
+
+            char was[AMOD_ROOM_COLUMNS];
+            memcpy(was, g_cells + row * AMOD_ROOM_COLUMNS, sizeof(was));
+            memset(g_cells, 0, sizeof(g_cells));    // '\0' leaves a cell alone, so only this row is written
+
+            for (int column = 0; column < AMOD_ROOM_COLUMNS; ++column)
+            {
+                //Only what is empty. A chain, a ladder, anything the room already put there is
+                //left alone - writing 'W' over an 'I' is how the chain stopped being a chain.
+                if (was[column] == ' ')
+                {
+                    g_cells[row * AMOD_ROOM_COLUMNS + column] = 'W';
+                    ++laid;
+                }
+                else
+                {
+                    ++left;
+                }
+            }
+            Amod::Console::Printf("row %d: %d cell(s) floored, %d left as the room had them\n",
+                                  row, laid, left);
+        }
+
+        if (!Amod::World::SetCells(g_cells, cells))
+        {
+            Amod::Console::Printf("cell: %s\n", Amod::LastError());
+        }
+        return;
+    }
+
+    if (argc < 4)
+    {
+        Amod::Console::Printf("cell <col> <row> <char>\n");
+        return;
+    }
+
+    if (!Amod::World::SetCell(atoi(argv[1]), atoi(argv[2]), argv[3][0]))
+    {
+        Amod::Console::Printf("cell: %s\n", Amod::LastError());
+        return;
+    }
+    Amod::Console::Printf("cell %s,%s is '%c' now, and the room is walked on it at once\n", argv[1], argv[2], argv[3][0]);
+}
+
+static void __cdecl BoxCommand(int argc, const char** argv, void*)
+{
+    AmodWorldRoom room;
+    if (!Amod::World::GetRoom(Amod::World::CurrentRoom(), room))
+    {
+        Amod::Console::Printf("box: there is no room here\n");
+        return;
+    }
+
+    static const char* const kKinds[] = { "pushes", "reports only", "pushes when asked", "pushes" };
+
+    if (argc < 2)
+    {
+        Amod::Console::Printf("box [<n> kind <k> | add <minx> <miny> <maxx> <maxy> | here]\n");
+        Amod::Console::Printf("%d box(es) here; these are what a body meets, not the grid\n", room.collisionBoxCount);
+
+        for (int at = 0; at < room.collisionBoxCount; ++at)
+        {
+            AmodRoomBox box;
+            if (Amod::World::GetBox(at, box))
+            {
+                Amod::Console::Printf("%2d  %-18s x %+.3f..%+.3f  y %+.3f..%+.3f\n", at, box.kind >= 0 && box.kind < 4 ? kKinds[box.kind] : "?",
+                                      box.min[0], box.max[0], box.min[1], box.max[1]);
+            }
+        }
+        return;
+    }
+
+    //A new box takes its z from one the room was built with, so it stands in the same plane everything else does rather than in one guessed at.
+    AmodRoomBox pattern;
+    const bool haveZ = room.collisionBoxCount > 0 && Amod::World::GetBox(0, pattern);
+
+    if (strcmp(argv[1], "add") == 0 || strcmp(argv[1], "here") == 0)
+    {
+        AmodRoomBox box = {};
+        box.structSize = sizeof(box);
+        box.kind = AMOD_BOX_PUSHES;
+        box.min[2] = haveZ ? pattern.min[2] : -1.0f;
+        box.max[2] = haveZ ? pattern.max[2] : 1.0f;
+
+        if (strcmp(argv[1], "here") == 0)
+        {
+            const int which = Amod::World::PlayerEntity();
+            const Amod::World::Entity player = which >= 0 ? Amod::World::CurrentEntity(which)
+                                                          : Amod::World::Entity();
+            if (!player.IsValid())
+            {
+                Amod::Console::Printf("box: there is no player to stand anywhere\n");
+                return;
+            }
+
+            box.min[0] = player.GetX() - AMOD_ROOM_CELL_SIZE * 2.0f;
+            box.max[0] = player.GetX() + AMOD_ROOM_CELL_SIZE * 2.0f;
+            box.max[1] = player.GetY() - AMOD_ROOM_CELL_SIZE * 2.0f;
+            box.min[1] = box.max[1] - AMOD_ROOM_CELL_SIZE;
+        }
+        else
+        {
+            if (argc < 6)
+            {
+                Amod::Console::Printf("box add <minx> <miny> <maxx> <maxy> [kind]\n");
+                return;
+            }
+            box.min[0] = static_cast<float>(atof(argv[2]));
+            box.min[1] = static_cast<float>(atof(argv[3]));
+            box.max[0] = static_cast<float>(atof(argv[4]));
+            box.max[1] = static_cast<float>(atof(argv[5]));
+            box.kind = argc > 6 ? atoi(argv[6]) : AMOD_BOX_PUSHES;
+        }
+
+        const int put = Amod::World::AddBox(box);
+        if (put < 0)
+        {
+            Amod::Console::Printf("box: %s\n", Amod::LastError());
+            return;
+        }
+
+        Amod::Console::Printf("box %d stands at x %+.3f..%+.3f y %+.3f..%+.3f and stops a body now\n", put, box.min[0], box.max[0], box.min[1], box.max[1]);
+        return;
+    }
+
+    if (argc < 4 || strcmp(argv[2], "kind") != 0)
+    {
+        Amod::Console::Printf("box <n> kind <0..3>\n");
+        return;
+    }
+
+    const int which = atoi(argv[1]);
+    AmodRoomBox box;
+
+    if (!Amod::World::GetBox(which, box))
+    {
+        Amod::Console::Printf("box: %s\n", Amod::LastError());
+        return;
+    }
+
+    box.kind = atoi(argv[3]);
+    if (!Amod::World::SetBox(which, box))
+    {
+        Amod::Console::Printf("box: %s\n", Amod::LastError());
+        return;
+    }
+    Amod::Console::Printf("box %d %s now\n", which, box.kind >= 0 && box.kind < 4 ? kKinds[box.kind] : "does something unknown");
+}
+
+static void __cdecl LightTriangleCommand(int argc, const char** argv, void*)
+{
+    const int count = Amod::World::LightTriangleCount();
+
+    if (argc < 2)
+    {
+        Amod::Console::Printf("ltri [here | off]; %d surface(s) take a dynamic light here\n", count);
+
+        for (int at = 0; at < count && at < 8; ++at)
+        {
+            AmodRoomTriangle triangle;
+            if (Amod::World::GetLightTriangle(at, triangle))
+            {
+                Amod::Console::Printf("%2d  %+.2f %+.2f %+.2f | %+.2f %+.2f %+.2f | %+.2f %+.2f %+.2f\n", at, triangle.points[0], triangle.points[1], triangle.points[2],
+                                      triangle.points[3], triangle.points[4], triangle.points[5], triangle.points[6], triangle.points[7], triangle.points[8]);
+            }
+        }
+        if (count > 8)
+        {
+            Amod::Console::Printf("   ... and %d more\n", count - 8);
+        }
+        Amod::Console::Printf("put a 'dlight' on them to see which ones a light lands on\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "off") == 0)
+    {
+        AmodRoomTriangle flat = {};
+        flat.structSize = sizeof(flat);
+
+        int done = 0;
+        for (int at = 0; at < count; ++at)
+        {
+            done += Amod::World::SetLightTriangle(at, flat) ? 1 : 0;
+        }
+        Amod::Console::Printf("%d surface(s) flattened; a dlight will light things and not the room\n", done);
+        return;
+    }
+
+    const int which = Amod::World::PlayerEntity();
+    const Amod::World::Entity player = which >= 0 ? Amod::World::CurrentEntity(which) : Amod::World::Entity();
+    if (!player.IsValid())
+    {
+        Amod::Console::Printf("ltri: there is no player to stand anywhere\n");
+        return;
+    }
+
+    //Two triangles make the patch, laid flat at the player's feet.
+    const float x = player.GetX();
+    const float y = player.GetY() - AMOD_ROOM_CELL_SIZE * 2.0f;
+    const float z = player.GetZ();
+    const float half = AMOD_ROOM_CELL_SIZE * 3.0f;
+
+    const float corners[2][9] =
+    {
+        { x - half, y, z,  x + half, y, z,  x + half, y + half * 2.0f, z },
+        { x - half, y, z,  x + half, y + half * 2.0f, z,  x - half, y + half * 2.0f, z },
+    };
+
+    for (int at = 0; at < 2; ++at)
+    {
+        AmodRoomTriangle triangle = {};
+        triangle.structSize = sizeof(triangle);
+        memcpy(triangle.points, corners[at], sizeof(triangle.points));
+
+        const int put = Amod::World::AddLightTriangle(triangle);
+        if (put < 0)
+        {
+            Amod::Console::Printf("ltri: %s\n", Amod::LastError());
+            return;
+        }
+    }
+    Amod::Console::Printf("a patch at your feet takes light now; 'dlight %.2f %.2f 1 0.6 0.2 2' to see it\n", x, player.GetY());
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -987,55 +1068,58 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Amod::Console::AddCommand("mon", &MonstersCommand);
-    Amod::Console::AddCommand("mtypes", &TypesCommand);
-    Amod::Console::AddCommand("mkill", &KillCommand);
-    Amod::Console::AddCommand("mplace", &PlaceCommand);
-    Amod::Console::AddCommand("mmove", &MovementCommand);
-    Amod::Console::AddCommand("mspeed", &SpeedCommand);
-    Amod::Console::AddCommand("mbox", &BoxCommand);
-    Amod::Console::AddCommand("mfat", &FatCommand);
-    Amod::Console::AddCommand("manim", &AnimateCommand);
-    Amod::Console::AddCommand("mabox", &AnimBoxCommand);
-    Amod::Console::AddCommand("morbit", &OrbitCommand);
-    Amod::Console::AddCommand("mpace", &PaceCommand);
-    Amod::Console::AddCommand("mtrack", &TrackCommand);
-    Amod::Console::AddCommand("mstep", &StepCommand);
-    Amod::Console::AddCommand("mplaced", &PlacedCommand);
-    Amod::Console::AddCommand("mfind", &FindCommand);
-    Amod::Console::AddCommand("mrule", &RuleCommand);
-    Amod::Console::AddCommand("mwho", &WhoCommand);
-    Amod::Console::AddCommand("mpaint", &PaintCommand);
-    Amod::Console::AddCommand("mcolour", &ColourCommand);
-    Amod::Console::AddCommand("mskin", &SkinCommand);
-    Amod::Monsters::OnSpawn(&OnMonsterSpawned);
-    Amod::Monsters::OnKill(&OnMonsterKilled);
-    Amod::Monsters::OnTouch(&OnMonsterTouch);
-
-    // Teach the spawner the name and which of the ten it moves like.
-    AmodMonsterType known;
-
-    if (!Amod::Monsters::FindType(kWasp, known))
-    {
-        Amod::Monsters::NewType(kWasp, AMOD_MONSTER_MOVES_BAT)
-            .Speed(0.9f)
-            .Define();
-    }
-    Amod::Monsters::DefineKind(kWasp, AMOD_MONSTER_MOVES_BAT);
-
-    // Ghost: bat shape, custom think.
-    if (!Amod::Monsters::FindType(kGhost, known))
-    {
-        Amod::Monsters::NewType(kGhost, AMOD_MONSTER_MOVES_BAT).Define();
-    }
-    Amod::Monsters::DefineKind(kGhost, AMOD_MONSTER_MOVES_BAT);
-    Amod::Monsters::DefineBehaviour(kGhost, &GhostThink);
-
+    Amod::Console::AddCommand("light", &LightCommand);
+    Amod::Console::AddCommand("dlight", &DynamicLightCommand);
+    Amod::Console::AddCommand("elight", &EntityLightCommand);
+    Amod::Console::AddCommand("lmap", &LightmapCommand);
+    Amod::Console::AddCommand("wall", &WallCommand);
+    Amod::Console::AddCommand("deco", &DecoCommand);
+    Amod::Console::AddCommand("lseed", &SeedCommand);
+    Amod::Console::AddCommand("cell", &CellCommand);
+    Amod::Console::AddCommand("box", &BoxCommand);
+    Amod::Console::AddCommand("ltri", &LightTriangleCommand);
     return AMOD_OK;
 }
 
-AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
+AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
 {
+    if (g_seeding && frame != nullptr)
+    {
+        g_since += frame->delta;
+        if (g_since >= g_every)
+        {
+            g_since = 0.0f;
+            SeedOne();
+        }
+    }
+
+    const int here = Amod::World::CurrentRoom();
+
+    for (int at = 0; at < g_lightCount; ++at)
+    {
+        const Burning& light = g_lights[at];
+
+        if (light.room != here)
+        {
+            continue;
+        }
+
+        float x = light.at[0];
+        float y = light.at[1];
+
+        if (light.rides >= 0)
+        {
+            const Amod::World::Entity what = Amod::World::CurrentEntity(light.rides);
+            if (!what.IsValid())
+            {
+                continue;
+            }
+            x = what.GetX();
+            y = what.GetY();
+        }
+
+        Amod::World::AddLight(x, y, light.colour[0], light.colour[1], light.colour[2], light.range);
+    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

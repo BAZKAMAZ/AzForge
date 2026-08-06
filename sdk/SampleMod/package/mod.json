@@ -1,11 +1,11 @@
 {
-  "id": "azforge.monstersnew",
-  "name": "AzForge change monsters",
+  "id": "azforge.room",
+  "name": "AzForge room test",
   "version": "1.0.0",
   "author": "AzForge",
   "description": "",
-  "api_version": 41,
-  "requires": ["world", "console"],
+  "api_version": 50,
+  "requires": ["world", "console", "textures", "mmd"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll",
   "icon": "icon.bmp"
