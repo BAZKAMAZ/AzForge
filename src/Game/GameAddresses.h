@@ -392,7 +392,20 @@ namespace Forge
         constexpr uintptr_t kRoomLoopSoundCountOffset = 0x2668;
         constexpr uintptr_t kRoomLoopSoundIdOffset = 0x00;
         constexpr uintptr_t kRoomLoopSoundPositionOffset = 0x04; // three floats
+        constexpr size_t kRoomLoopSoundStride = 0x10;
         constexpr size_t kRoomSize = 0x2684;
+
+        // Grows the loop-sound array by one 0x10 record. __stdcall (&array, &count); RET 8.
+        constexpr uintptr_t kRoomSoundsAppend = 0x00412E90;
+
+        // Sound facade @ kSound; Load = vtable+0x18 (0x00402C20)
+        // NOT +0x1C (0x00402C40): that RELEASES — passing a name destructs the caller's string.
+        constexpr uintptr_t kSound = 0x0067A5F0;
+        constexpr uintptr_t kSoundRelease = 0x00402C40;     // __cdecl (id)
+        constexpr uintptr_t kSoundPlay = 0x00402C60;        // __cdecl (id, flag)
+        constexpr uintptr_t kSoundPlayAt = 0x00402C80;      // __cdecl (id, position, loop, volume) -> voice
+        constexpr uintptr_t kSoundStop = 0x00402CE0;        // __cdecl (voice)
+        constexpr uintptr_t kSoundMove = 0x00402D00;        // __cdecl (voice, position)
 
         // Grows room light array by one 0x20 record; returns the new one.
         constexpr uintptr_t kRoomLightsAppend = 0x004378D0;

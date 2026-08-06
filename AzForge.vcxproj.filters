@@ -234,6 +234,12 @@
     <ClInclude Include="src\Api\TextureApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="src\Api\SoundApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\SoundApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -373,6 +379,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\TextureApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\SoundApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

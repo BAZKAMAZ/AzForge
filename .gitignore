@@ -17,9 +17,10 @@ az_orginal/
 [Ww]in32/
 ipch/
 
-# Written by the SampleMod post-build step, which copies the freshly linked
-# DLL into the package before sealing it into a .amod
+# Written by a post-build step, which copies the freshly linked DLL into the
+# package before sealing it into a .amod
 sdk/SampleMod/package/bin/
+CoreMod/package/bin/
 
 # Produced by a running game, never by a build
 forge.log

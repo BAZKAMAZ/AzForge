@@ -131,8 +131,7 @@ namespace Forge
         return g_executable;
     }
 
-    bool GameModule::VerifyBytes(const void* address, const uint8_t* expected, size_t length,
-                                 std::string& mismatch)
+    bool GameModule::VerifyBytes(const void* address, const uint8_t* expected, size_t length, std::string& mismatch)
     {
         mismatch.clear();
 

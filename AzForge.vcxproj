@@ -92,6 +92,7 @@
     <ClInclude Include="sdk\include\CtrlsApi.h" />
     <ClInclude Include="sdk\include\MonstersApi.h" />
     <ClInclude Include="sdk\include\MmdApi.h" />
+    <ClInclude Include="sdk\include\SoundApi.h" />
     <ClInclude Include="sdk\include\TextureApi.h" />
     <ClInclude Include="sdk\include\ConsoleApi.h" />
     <ClInclude Include="sdk\include\ForgeApi.h" />
@@ -116,6 +117,7 @@
     <ClInclude Include="src\Api\HudApi.h" />
     <ClInclude Include="src\Api\MonstersApi.h" />
     <ClInclude Include="src\Api\MmdApi.h" />
+    <ClInclude Include="src\Api\SoundApi.h" />
     <ClInclude Include="src\Api\TextureApi.h" />
     <ClInclude Include="src\Api\InventoryApi.h" />
     <ClInclude Include="src\Api\WorldApi.h" />
@@ -186,6 +188,7 @@
     <ClCompile Include="src\Api\HudApi.cpp" />
     <ClCompile Include="src\Api\MonstersApi.cpp" />
     <ClCompile Include="src\Api\MmdApi.cpp" />
+    <ClCompile Include="src\Api\SoundApi.cpp" />
     <ClCompile Include="src\Api\TextureApi.cpp" />
     <ClCompile Include="src\Api\InventoryApi.cpp" />
     <ClCompile Include="src\Api\WorldApi.cpp" />
