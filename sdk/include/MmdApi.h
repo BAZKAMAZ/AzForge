@@ -8,9 +8,9 @@ extern "C" {
 #endif
 
     /* How a model came to be. */
-#define AMOD_MODEL_KIND_MESH                                        0   /* built out of a mesh */
-#define AMOD_MODEL_KIND_STATIC                                      1   /* one frame, from a file */
-#define AMOD_MODEL_KIND_ANIMATED                                    2   /* several frames */
+#define AMOD_MODEL_KIND_MESH                                        0 /* built out of a mesh */
+#define AMOD_MODEL_KIND_STATIC                                      1 /* one frame, from a file */
+#define AMOD_MODEL_KIND_ANIMATED                                    2 /* several frames */
 
 /* Which of the three models a room is drawn from. */
 #define AMOD_ROOM_MODEL_GEOMETRY                                    0
@@ -18,356 +18,335 @@ extern "C" {
 #define AMOD_ROOM_MODEL_BACKWALL                                    2
 
 /* A model as long as it is loaded */
-    typedef uint32_t AmodModelId;
+typedef uint32_t AmodModelId;
 #define AMOD_INVALID_MODEL                                          0
 
-    typedef struct AmodModel
-    {
-        uint32_t structSize;
+typedef struct AmodModel
+{
+    uint32_t structSize;
 
-        const char* name;           /* the path it was loaded by, or what a mod named it */
-        int kind;                   /* AMOD_MODEL_KIND_* */
+    const char* name; /* the path it was loaded by, or what a mod named it */
+    int kind; /* AMOD_MODEL_KIND_* */
 
-        int frameCount;
-        int vertexCount;            /* per frame */
-        int indexCount;             /* per frame */
-        int primitiveCount;
+    int frameCount;
+    int vertexCount; /* per frame */
+    int indexCount; /* per frame */
+    int primitiveCount;
 
-        float centre[3];            /* the average vertex */
-        float extents[3];           /* largest absolute coordinate on each axis */
+    float centre[3]; /* the average vertex */
+    float extents[3]; /* largest absolute coordinate on each axis */
 
-        /* Models are shared: this is how many owners there are besides the first. */
-        int references;
+    /* Models are shared: this is how many owners there are besides the first. */
+    int references;
 
-        int mine;                   /* the mod asking built it */
-        int edited;                 /* a mod has written to it, and what it was is being kept */
+    int mine; /* the mod asking built it */
+    int edited; /* a mod has written to it, and what it was is being kept */
 
-        
-    } AmodModel;
+} AmodModel;
 
-    AMOD_LAST_FIELD(AmodModel, edited, 0x3C);
+AMOD_LAST_FIELD(AmodModel, edited, 0x3C);
 
-    /* One vertex, exactly as a .mmd holds it. */
-    typedef struct AmodVertex
-    {
-        float position[3];
-        float normal[3];
-        float uv[2];
-    } AmodVertex;
+/* One vertex, exactly as a .mmd holds it. */
+typedef struct AmodVertex
+{
+    float position[3];
+    float normal[3];
+    float uv[2];
+} AmodVertex;
 
-    AMOD_LAST_FIELD(AmodVertex, uv, 0x18);
+AMOD_LAST_FIELD(AmodVertex, uv, 0x18);
 
-    /* Geometry handed to the loader. Frames follow one another; every frame has the same counts. */
-    typedef struct AmodMeshData
-    {
-        uint32_t structSize;
+/* Geometry handed to the loader */
+typedef struct AmodMeshData
+{
+    uint32_t structSize;
 
-        int frameCount;             /* one for a still model */
-        int vertexCount;            /* per frame */
-        int indexCount;             /* per frame */
-        int primitiveCount;         /* zero takes indexCount / 3 */
+    int frameCount; /* one for a still model */
+    int vertexCount; /* per frame */
+    int indexCount; /* per frame */
+    int primitiveCount; /* zero takes indexCount / 3 */
 
-        const AmodVertex* vertices; /* frameCount * vertexCount */
-        const uint16_t* indices;    /* frameCount * indexCount */
+    const AmodVertex* vertices; /* frameCount * vertexCount */
+    const uint16_t* indices; /* frameCount * indexCount */
 
-        
-    } AmodMeshData;
 
-    AMOD_LAST_FIELD(AmodMeshData, indices, 0x18);
+} AmodMeshData;
 
-    /* Turn about `axis` by `angle` instead of the three eulers. */
+AMOD_LAST_FIELD(AmodMeshData, indices, 0x18);
+
+/* Turn about `axis` by `angle` instead of the three eulers. */
 #define AMOD_DRAW_TURNS_ABOUT_AXIS                                  0x01
 
 /* Place it by `matrix` rather than by `position`. Only a matrix can scale. */
 #define AMOD_DRAW_HAS_MATRIX                                        0x02
 
 /* One model put in front of the camera for one frame */
-    typedef struct AmodModelDraw
-    {
-        uint32_t structSize;
+typedef struct AmodModelDraw
+{
+    uint32_t structSize;
 
-        AmodModelId model;
-        uint32_t texture;           /* from ResolveTexture; 0 keeps whatever is already set */
+    AmodModelId model;
+    uint32_t texture; /* from ResolveTexture; 0 keeps whatever is already set */
 
-        float position[3];          /* used unless AMOD_DRAW_HAS_MATRIX is set */
-        float matrix[16];
-        float rotation[3];          /* radians, turned Z then Y then X after the placement */
+    float position[3]; /* used unless AMOD_DRAW_HAS_MATRIX is set */
+    float matrix[16];
+    float rotation[3]; /* radians, turned Z then Y then X after the placement */
 
-        float axis[3];
-        float angle;
-        uint32_t flags;             /* AMOD_DRAW_* */
+    float axis[3];
+    float angle;
+    uint32_t flags; /* AMOD_DRAW_* */
 
-        float frame;                /* animation position; 0 draws the model still */
+    float frame; /* animation position; 0 draws the model still */
 
-    } AmodModelDraw;
+} AmodModelDraw;
 
-    AMOD_LAST_FIELD(AmodModelDraw, frame, 0x78);
+AMOD_LAST_FIELD(AmodModelDraw, frame, 0x78);
 
-    /* An animation as long as it is loaded, checked the way a model is. */
-    typedef uint32_t AmodAnimationId;
+/* An animation as long as it is loaded, checked the way a model is. */
+typedef uint32_t AmodAnimationId;
 #define AMOD_INVALID_ANIMATION                                      0
 
-    typedef struct AmodAnimation
-    {
-        uint32_t structSize;
+typedef struct AmodAnimation
+{
+    uint32_t structSize;
 
-        const char* name;
-        int framesetCount;
-        int references;
+    const char* name;
+    int framesetCount;
+    int references;
 
-    } AmodAnimation;
+} AmodAnimation;
 
-    AMOD_LAST_FIELD(AmodAnimation, references, 0x0C);
+AMOD_LAST_FIELD(AmodAnimation, references, 0x0C);
 
-    /* One $frameset of a .anm: which frames it runs and how. */
-    typedef struct AmodFrameset
-    {
-        uint32_t structSize;
+/* One $frameset of a .anm: which frames it runs and how. */
+typedef struct AmodFrameset
+{
+    uint32_t structSize;
 
-        const char* name;
-        const char* follow;         /* what plays when this one ends */
+    const char* name;
+    const char* follow; /* what plays when this one ends */
 
-        float fps;
-        int startFrame;
-        int from;                   /* $range */
-        int to;
-        int loop;
-        int stops;                  /* $break: it ends rather than holding the last frame */
-        int backwards;              /* the range runs down */
+    float fps;
+    int startFrame;
+    int from; /* $range */
+    int to;
+    int loop;
+    int stops; /* $break: it ends rather than holding the last frame */
+    int backwards; /* the range runs down */
 
-    } AmodFrameset;
+} AmodFrameset;
 
-    AMOD_LAST_FIELD(AmodFrameset, backwards, 0x24);
+AMOD_LAST_FIELD(AmodFrameset, backwards, 0x24);
 
-// Which of an animation's two box sets is meant
-#define AMOD_ANIM_BOX_SELF                                          0   /* $anim_bbox */
-#define AMOD_ANIM_BOX_ENTITY                                        1   /* $anim_bbox_entity */
+    // Which of an animation's two box sets is meant
+#define AMOD_ANIM_BOX_SELF                                          0 /* $anim_bbox */
+#define AMOD_ANIM_BOX_ENTITY                                        1 /* $anim_bbox_entity */
 
-    /* Which vertices of a model an operation touches. Judged on the frame it is given. */
+/* Which vertices of a model an operation touches. Judged on the frame it is given. */
 #define AMOD_VERTICES_ALL                                           0
 #define AMOD_VERTICES_IN_BOX                                        1
 #define AMOD_VERTICES_IN_SPHERE                                     2
 #define AMOD_VERTICES_LISTED                                        3
 
-    typedef struct AmodVertexFilter
-    {
-        uint32_t structSize;
-        int kind;                   /* AMOD_VERTICES_* */
+typedef struct AmodVertexFilter
+{
+    uint32_t structSize;
+    int kind; /* AMOD_VERTICES_* */
 
-        float min[3];               /* IN_BOX, in the model's own coordinates */
-        float max[3];
+    float min[3]; /* IN_BOX, in the model's own coordinates */
+    float max[3];
 
-        float centre[3];            /* IN_SPHERE */
-        float radius;
+    float centre[3]; /* IN_SPHERE */
+    float radius;
 
-        const uint16_t* indices;    /* LISTED */
-        int indexCount;
-        
-    } AmodVertexFilter;
+    const uint16_t* indices; /* LISTED */
+    int indexCount;
 
-    AMOD_LAST_FIELD(AmodVertexFilter, indexCount, 0x34);
+} AmodVertexFilter;
 
-    /* What an entity is playing */
-    typedef struct AmodAnimState
-    {
-        uint32_t structSize;
+AMOD_LAST_FIELD(AmodVertexFilter, indexCount, 0x34);
 
-        AmodAnimationId animation;
-        const char* frameset;       /* "" when it is on nothing */
+/* What an entity is playing */
+typedef struct AmodAnimState
+{
+    uint32_t structSize;
 
-        int frameA;
-        int frameB;
-        float blend;                /* 0..1 from A to B */
+    AmodAnimationId animation;
+    const char* frameset; /* "" when it is on nothing */
 
-        float speed;                /* what Anim_Play's rate was multiplied by */
-        int backwards;
-        int stopped;
-        int finished;
-        
-    } AmodAnimState;
+    int frameA;
+    int frameB;
+    float blend; /* 0..1 from A to B */
 
-    AMOD_LAST_FIELD(AmodAnimState, finished, 0x24);
+    float speed; /* what Anim_Play's rate was multiplied by */
+    int backwards;
+    int stopped;
+    int finished;
 
-    /* A model the game is drawing, right now, with the device already set up for it. */
-    typedef struct AmodModelDrawInfo
-    {
-        uint32_t structSize;
+} AmodAnimState;
 
-        AmodModelId model;
-        int frameA;                 /* -1 when it is being drawn still */
-        int frameB;
-        float blend;                /* 0..1 from A to B */
+AMOD_LAST_FIELD(AmodAnimState, finished, 0x24);
 
-        /* Filled when the world is drawing it, which is the only place the game knows where the thing is */
-        uint32_t item;              /* one drawn thing; two entities sharing a model differ here */
-        uint32_t texture;           /* what the game is drawing it with */
-        float matrix[16];           /* model -> world, exactly as the game set it */
-        float position[3];          /* the translation out of that matrix, for convenience */
+/* A model the game is drawing, right now, with the device already set up for it. */
+typedef struct AmodModelDrawInfo
+{
+    uint32_t structSize;
 
-    } AmodModelDrawInfo;
+    AmodModelId model;
+    int frameA; /* -1 when it is being drawn still */
+    int frameB;
+    float blend; /* 0..1 from A to B */
 
-    AMOD_LAST_FIELD(AmodModelDrawInfo, position, 0x5C);
+    uint32_t item; /* one drawn thing; two entities sharing a model differ here */
+    uint32_t texture; /* what the game is drawing it with */
+    float matrix[16]; /* model -> world, exactly as the game set it */
+    float position[3]; /* the translation out of that matrix, for convenience */
 
-    typedef void(__cdecl* AmodModelDrawHandler)(const AmodModelDrawInfo* info, void* user);
+} AmodModelDrawInfo;
 
-    typedef struct AmodMmdApi
-    {
-        uint32_t structSize;
+AMOD_LAST_FIELD(AmodModelDrawInfo, position, 0x5C);
 
-        /* what the game has in memory */
+typedef void(__cdecl* AmodModelDrawHandler)(const AmodModelDrawInfo* info, void* user);
 
-        int(__cdecl* GetCount)(AmodMod mod);
-        AmodModelId(__cdecl* GetAt)(AmodMod mod, int index);
-        AmodModelId(__cdecl* Find)(AmodMod mod, const char* name);
-        int(__cdecl* Get)(AmodMod mod, AmodModelId model, AmodModel* out);
-        int(__cdecl* IsValid)(AmodMod mod, AmodModelId model);
+typedef struct AmodMmdApi
+{
+    uint32_t structSize;
 
-        /* getting hold of one */
+    /* what the game has in memory */
 
-        /* Through the game's own door: a model already loaded is shared rather than read again. */
-        AmodModelId(__cdecl* Load)(AmodMod mod, const char* path);
+    int(__cdecl* GetCount)(AmodMod mod);
+    AmodModelId(__cdecl* GetAt)(AmodMod mod, int index);
+    AmodModelId(__cdecl* Find)(AmodMod mod, const char* name);
+    int(__cdecl* Get)(AmodMod mod, AmodModelId model, AmodModel* out);
+    int(__cdecl* IsValid)(AmodMod mod, AmodModelId model);
 
-        /* Gives back what Load took */
-        int(__cdecl* Release)(AmodMod mod, AmodModelId model);
+    /* getting hold of one */
 
-        /* the triangles */
+    /* Through the game's own door: a model already loaded is shared rather than read again. */
+    AmodModelId(__cdecl* Load)(AmodMod mod, const char* path);
 
-        /* Fills up to max and returns how many there are, whether they fitted or not */
-        int(__cdecl* ReadVertices)(AmodMod mod, AmodModelId model, int frame, AmodVertex* out, int max);
-        int(__cdecl* ReadIndices)(AmodMod mod, AmodModelId model, int frame, uint16_t* out, int max);
+    /* Gives back what Load took */
+    int(__cdecl* Release)(AmodMod mod, AmodModelId model);
 
-        /* Writes them back and rebuilds what is drawn */
-        int(__cdecl* WriteVertices)(AmodMod mod, AmodModelId model, int frame,
-            const AmodVertex* vertices, int count);
-        int(__cdecl* WriteIndices)(AmodMod mod, AmodModelId model, int frame,
-            const uint16_t* indices, int count);
+    /* the triangles */
 
-        /* models of the mod's own */
+    /* Fills up to max and returns how many there are, whether they fitted or not */
+    int(__cdecl* ReadVertices)(AmodMod mod, AmodModelId model, int frame, AmodVertex* out, int max);
+    int(__cdecl* ReadIndices)(AmodMod mod, AmodModelId model, int frame, uint16_t* out, int max);
 
-        /* Builds one out of vertices */
-        AmodModelId(__cdecl* Create)(AmodMod mod, const char* name, const AmodMeshData* mesh);
+    /* Writes them back and rebuilds what is drawn */
+    int(__cdecl* WriteVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertex* vertices, int count);
+    int(__cdecl* WriteIndices)(AmodMod mod, AmodModelId model, int frame, const uint16_t* indices, int count);
 
-        /* Swaps the geometry of a model whole, counts and all. Snapshotted like a write. */
-        int(__cdecl* Replace)(AmodMod mod, AmodModelId model, const AmodMeshData* mesh);
+    /* Builds one out of vertices */
+    AmodModelId(__cdecl* Create)(AmodMod mod, const char* name, const AmodMeshData* mesh);
 
-        /* Puts back what the model was before this mod first wrote to it. */
-        int(__cdecl* Restore)(AmodMod mod, AmodModelId model);
+    /* Swaps the geometry of a model whole, counts and all. Snapshotted like a write. */
+    int(__cdecl* Replace)(AmodMod mod, AmodModelId model, const AmodMeshData* mesh);
 
-        /* Writes the model out as a .mmd the game itself can load */
-        int(__cdecl* Save)(AmodMod mod, AmodModelId model, const char* path);
+    /* Puts back what the model was before this mod first wrote to it. */
+    int(__cdecl* Restore)(AmodMod mod, AmodModelId model);
 
-        /* standing in for a file */
+    /* Writes the model out as a .mmd the game itself can load */
+    int(__cdecl* Save)(AmodMod mod, AmodModelId model, const char* path);
 
-        /* Every request for `path` - a monster's $model, a bonus, a room, anything - is answered with this model instead */
-        int(__cdecl* Override)(AmodMod mod, const char* path, AmodModelId model);
-        int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
+    /* standing in for a file */
 
-        /* putting one in the world */
+    int(__cdecl* Override)(AmodMod mod, const char* path, AmodModelId model);
+    int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
 
-        /* The three models a room is drawn from, AMOD_ROOM_MODEL_* */
-        AmodModelId(__cdecl* GetRoomModel)(AmodMod mod, int roomIndex, int slot);
-        int(__cdecl* SetRoomModel)(AmodMod mod, int roomIndex, int slot, AmodModelId model);
+    /* putting one in the world */
 
-        /* drawing */
+    /* The three models a room is drawn from, AMOD_ROOM_MODEL_* */
+    AmodModelId(__cdecl* GetRoomModel)(AmodMod mod, int roomIndex, int slot);
+    int(__cdecl* SetRoomModel)(AmodMod mod, int roomIndex, int slot, AmodModelId model);
 
-        /* With whatever transform and texture the device is already set to, so only from inside a render callback */
-        int(__cdecl* Draw)(AmodMod mod, AmodModelId model);
-        int(__cdecl* DrawFrames)(AmodMod mod, AmodModelId model, int from, int to, float blend);
+    /* drawing */
 
-        /* being asked */
+    int(__cdecl* Draw)(AmodMod mod, AmodModelId model);
+    int(__cdecl* DrawFrames)(AmodMod mod, AmodModelId model, int from, int to, float blend);
 
-        int(__cdecl* GetProperty)(AmodMod mod, AmodModelId model, const char* key, AmodValue* value);
-        int(__cdecl* SetProperty)(AmodMod mod, AmodModelId model, const char* key, const AmodValue* value);
-        int(__cdecl* HasProperty)(AmodMod mod, const char* key);
-        int(__cdecl* PropertyCount)(AmodMod mod);
-        const char* (__cdecl* PropertyNameAt)(AmodMod mod, int index);
+    /* being asked */
 
-        /* the frame's own draw list */
+    int(__cdecl* GetProperty)(AmodMod mod, AmodModelId model, const char* key, AmodValue* value);
+    int(__cdecl* SetProperty)(AmodMod mod, AmodModelId model, const char* key, const AmodValue* value);
+    int(__cdecl* HasProperty)(AmodMod mod, const char* key);
+    int(__cdecl* PropertyCount)(AmodMod mod);
+    const char* (__cdecl* PropertyNameAt)(AmodMod mod, int index);
 
-        /* Puts a model in front of the camera for this frame and this frame only - call it again next frame */
-        int(__cdecl* Enqueue)(AmodMod mod, const AmodModelDraw* draw);
-        int(__cdecl* QueueRoom)(AmodMod mod);
+    /* the frame's own draw list */
 
-        /* A texture by name, resolved once and remembered. 0 when the game has nothing under it. */
-        uint32_t(__cdecl* ResolveTexture)(AmodMod mod, const char* name);
+    int(__cdecl* Enqueue)(AmodMod mod, const AmodModelDraw* draw);
+    int(__cdecl* QueueRoom)(AmodMod mod);
 
-        /* The camera the world is being drawn with, sixteen floats each */
-        int(__cdecl* GetViewMatrix)(AmodMod mod, float* out);
-        int(__cdecl* GetProjectionMatrix)(AmodMod mod, float* out);
+    /* A texture by name, resolved once and remembered */
+    uint32_t(__cdecl* ResolveTexture)(AmodMod mod, const char* name);
 
-        /* animations */
+    /* The camera the world is being drawn with, sixteen floats each */
+    int(__cdecl* GetViewMatrix)(AmodMod mod, float* out);
+    int(__cdecl* GetProjectionMatrix)(AmodMod mod, float* out);
 
-        int(__cdecl* GetAnimationCount)(AmodMod mod);
-        AmodAnimationId(__cdecl* GetAnimationAt)(AmodMod mod, int index);
-        AmodAnimationId(__cdecl* FindAnimation)(AmodMod mod, const char* name);
-        int(__cdecl* GetAnimation)(AmodMod mod, AmodAnimationId animation, AmodAnimation* out);
-        int(__cdecl* GetFrameset)(AmodMod mod, AmodAnimationId animation, int index, AmodFrameset* out);
+    /* animations */
 
-        AmodAnimationId(__cdecl* LoadAnimation)(AmodMod mod, const char* path);
-        int(__cdecl* ReleaseAnimation)(AmodMod mod, AmodAnimationId animation);
+    int(__cdecl* GetAnimationCount)(AmodMod mod);
+    AmodAnimationId(__cdecl* GetAnimationAt)(AmodMod mod, int index);
+    AmodAnimationId(__cdecl* FindAnimation)(AmodMod mod, const char* name);
+    int(__cdecl* GetAnimation)(AmodMod mod, AmodAnimationId animation, AmodAnimation* out);
+    int(__cdecl* GetFrameset)(AmodMod mod, AmodAnimationId animation, int index, AmodFrameset* out);
 
-        /* Every request for that .anm is answered with this animation instead. */
-        int(__cdecl* OverrideAnimation)(AmodMod mod, const char* path, AmodAnimationId animation);
-        int(__cdecl* ClearAnimationOverride)(AmodMod mod, const char* path);
+    AmodAnimationId(__cdecl* LoadAnimation)(AmodMod mod, const char* path);
+    int(__cdecl* ReleaseAnimation)(AmodMod mod, AmodAnimationId animation);
 
-        /* moving what a model is made of */
+    /* Every request for that .anm is answered with this animation instead. */
+    int(__cdecl* OverrideAnimation)(AmodMod mod, const char* path, AmodAnimationId animation);
+    int(__cdecl* ClearAnimationOverride)(AmodMod mod, const char* path);
 
-        /* One vertex, without a buffer for the whole model */
-        int(__cdecl* GetVertex)(AmodMod mod, AmodModelId model, int frame, int index, AmodVertex* out);
+    /* moving what a model is made of */
 
-        /* Which vertices the filter picks. Fills up to max and returns how many there are. */
-        int(__cdecl* SelectVertices)(AmodMod mod, AmodModelId model, int frame,
-            const AmodVertexFilter* filter, uint16_t* out, int max);
+    /* One vertex, without a buffer for the whole model */
+    int(__cdecl* GetVertex)(AmodMod mod, AmodModelId model, int frame, int index, AmodVertex* out);
 
-        /* Puts the picked vertices through a 4x4 - positions through all of it, normals through the 3x3 corner */
-        int(__cdecl* TransformVertices)(AmodMod mod, AmodModelId model, int frame,
-            const AmodVertexFilter* filter, const float* matrix);
+    /* Which vertices the filter picks. Fills up to max and returns how many there are. */
+    int(__cdecl* SelectVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertexFilter* filter, uint16_t* out, int max);
+    int(__cdecl* TransformVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertexFilter* filter, const float* matrix);
 
-        /* colour without a texture */
+    /* colour without a texture */
 
-        /* One colour per vertex, 0xAARRGGBB, as many as the model has */
-        int(__cdecl* SetColours)(AmodMod mod, AmodModelId model, const uint32_t* colours, int count);
-        int(__cdecl* ClearColours)(AmodMod mod, AmodModelId model);
+    /* One colour per vertex, 0xAARRGGBB, as many as the model has */
+    int(__cdecl* SetColours)(AmodMod mod, AmodModelId model, const uint32_t* colours, int count);
+    int(__cdecl* ClearColours)(AmodMod mod, AmodModelId model);
 
-        /* what an entity is playing */
+    /* what an entity is playing */
 
-        int(__cdecl* GetEntityAnim)(AmodMod mod, int roomIndex, int index, AmodAnimState* out);
+    int(__cdecl* GetEntityAnim)(AmodMod mod, int roomIndex, int index, AmodAnimState* out);
 
-        /* Starts a frameset of whatever animation that entity already has. */
-        int(__cdecl* PlayEntityAnim)(AmodMod mod, int roomIndex, int index, const char* frameset);
-        int(__cdecl* StopEntityAnim)(AmodMod mod, int roomIndex, int index);
+    /* Starts a frameset of whatever animation that entity already has. */
+    int(__cdecl* PlayEntityAnim)(AmodMod mod, int roomIndex, int index, const char* frameset);
+    int(__cdecl* StopEntityAnim)(AmodMod mod, int roomIndex, int index);
 
-        /* hanging one model off another */
+    /* hanging one model off another */
 
-        /* Called every time that model is drawn, wherever the game draws it, with the world matrix already set for it */
-        AmodToken(__cdecl* AddDrawHandler)(AmodMod mod, AmodModelId model,
-            AmodModelDrawHandler handler, void* user);
-        void(__cdecl* RemoveDrawHandler)(AmodMod mod, AmodToken token);
+    AmodToken(__cdecl* AddDrawHandler)(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user);
+    void(__cdecl* RemoveDrawHandler)(AmodMod mod, AmodToken token);
 
-        /* Only meaningful inside such a handler */
-        int(__cdecl* DrawWith)(AmodMod mod, AmodModelId model, uint32_t texture, const float* matrix);
+    /* Only meaningful inside such a handler */
+    int(__cdecl* DrawWith)(AmodMod mod, AmodModelId model, uint32_t texture, const float* matrix);
 
-        // What an animation is hit on: $anim_bbox for the whole of it, $frame_bbox for one frame, and a fra...
-        int(__cdecl* GetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, AmodBox* out);
-        int(__cdecl* SetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, const AmodBox* box);
+    int(__cdecl* GetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, AmodBox* out);
+    int(__cdecl* SetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, const AmodBox* box);
 
-        // Room for how many frames, which is the highest $frame it was given plus one.
-        int(__cdecl* GetAnimBoxFrames)(AmodMod mod, AmodAnimationId animation, int which);
+    // Room for how many frames, which is the highest $frame it was given plus one.
+    int(__cdecl* GetAnimBoxFrames)(AmodMod mod, AmodAnimationId animation, int which);
 
-        // Gives an animation a box set it never declared, and room for `frames` only ever made longer SetAn...
-        int(__cdecl* EnsureAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frames);
+    int(__cdecl* EnsureAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frames);
 
-        // As AddDrawHandler, but told BEFORE the game draws that one - the moment a mod can still change wh...
-        AmodToken(__cdecl* AddPreDrawHandler)(AmodMod mod, AmodModelId model,
-            AmodModelDrawHandler handler, void* user);
+    AmodToken(__cdecl* AddPreDrawHandler)(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user);
 
-        // Works the normals out again from the triangles, which a model needs after its vertices moved
-        int(__cdecl* RebuildNormals)(AmodMod mod, AmodModelId model, int frame);
+    int(__cdecl* RebuildNormals)(AmodMod mod, AmodModelId model, int frame);
 
-        /* Fields added in later API versions go here, and nowhere else. */
-    } AmodMmdApi;
+} AmodMmdApi;
 
-    AMOD_LAST_FIELD(AmodMmdApi, RebuildNormals, 0xE4);
+AMOD_LAST_FIELD(AmodMmdApi, RebuildNormals, 0xE4);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -432,27 +411,23 @@ namespace Amod
             return g_mmd != nullptr && g_mmd->IsValid(g_mmdSelf, model) != 0;
         }
 
-        inline int                                                  ReadVertices(AmodModelId model, int frame,
-            AmodVertex* out, int max)
+        inline int                                                  ReadVertices(AmodModelId model, int frame, AmodVertex* out, int max)
         {
             return g_mmd != nullptr ? g_mmd->ReadVertices(g_mmdSelf, model, frame, out, max) : 0;
         }
 
-        inline int                                                  ReadIndices(AmodModelId model, int frame,
-            uint16_t* out, int max)
+        inline int                                                  ReadIndices(AmodModelId model, int frame, uint16_t* out, int max)
         {
             return g_mmd != nullptr ? g_mmd->ReadIndices(g_mmdSelf, model, frame, out, max) : 0;
         }
 
-        inline bool                                                 WriteVertices(AmodModelId model, int frame,
-            const AmodVertex* vertices, int count)
+        inline bool                                                 WriteVertices(AmodModelId model, int frame, const AmodVertex* vertices, int count)
         {
             return g_mmd != nullptr &&
                 g_mmd->WriteVertices(g_mmdSelf, model, frame, vertices, count) != 0;
         }
 
-        inline bool                                                 WriteIndices(AmodModelId model, int frame,
-            const uint16_t* indices, int count)
+        inline bool                                                 WriteIndices(AmodModelId model, int frame, const uint16_t* indices, int count)
         {
             return g_mmd != nullptr &&
                 g_mmd->WriteIndices(g_mmdSelf, model, frame, indices, count) != 0;
@@ -473,15 +448,13 @@ namespace Amod
             return g_mmd != nullptr && g_mmd->ClearOverride(g_mmdSelf, path) != 0;
         }
 
-        inline AmodModelId                                          RoomModel(int roomIndex = -1,
-            int slot = AMOD_ROOM_MODEL_GEOMETRY)
+        inline AmodModelId                                          RoomModel(int roomIndex = -1, int slot = AMOD_ROOM_MODEL_GEOMETRY)
         {
             return g_mmd != nullptr ? g_mmd->GetRoomModel(g_mmdSelf, roomIndex, slot)
                 : AMOD_INVALID_MODEL;
         }
 
-        inline bool                                                 SetRoomModel(int roomIndex, int slot,
-            AmodModelId model)
+        inline bool                                                 SetRoomModel(int roomIndex, int slot, AmodModelId model)
         {
             return g_mmd != nullptr && g_mmd->SetRoomModel(g_mmdSelf, roomIndex, slot, model) != 0;
         }
@@ -491,16 +464,13 @@ namespace Amod
             return g_mmd != nullptr && g_mmd->Draw(g_mmdSelf, model) != 0;
         }
 
-        inline bool                                                 DrawFrames(AmodModelId model, int from, int to,
-            float blend)
+        inline bool                                                 DrawFrames(AmodModelId model, int from, int to, float blend)
         {
             return g_mmd != nullptr && g_mmd->DrawFrames(g_mmdSelf, model, from, to, blend) != 0;
         }
 
         /* The mesh a mod holds in arrays of its own. Frames follow one another in both. */
-        inline AmodMeshData                                         Mesh(const AmodVertex* vertices, int vertexCount,
-            const uint16_t* indices, int indexCount,
-            int frameCount = 1)
+        inline AmodMeshData                                         Mesh(const AmodVertex* vertices, int vertexCount, const uint16_t* indices, int indexCount, int frameCount = 1)
         {
             AmodMeshData mesh = {};
             mesh.structSize = sizeof(mesh);
@@ -836,8 +806,7 @@ namespace Amod
                 g_mmd->GetEntityAnim(g_mmdSelf, roomIndex, index, &out) != 0;
         }
 
-        inline bool                                                 PlayEntityAnim(int index, const char* frameset,
-            int roomIndex = -1)
+        inline bool                                                 PlayEntityAnim(int index, const char* frameset, int roomIndex = -1)
         {
             return g_mmd != nullptr && g_mmd->PlayEntityAnim != nullptr &&
                 g_mmd->PlayEntityAnim(g_mmdSelf, roomIndex, index, frameset) != 0;
@@ -849,17 +818,13 @@ namespace Amod
                 g_mmd->StopEntityAnim(g_mmdSelf, roomIndex, index) != 0;
         }
 
-        inline AmodToken                                            OnDraw(AmodModelId model,
-            AmodModelDrawHandler handler,
-            void* user = nullptr)
+        inline AmodToken                                            OnDraw(AmodModelId model, AmodModelDrawHandler handler, void* user = nullptr)
         {
             return (g_mmd != nullptr && g_mmd->AddDrawHandler != nullptr)
                 ? g_mmd->AddDrawHandler(g_mmdSelf, model, handler, user)
                 : AMOD_INVALID_TOKEN;
         }
-        inline AmodToken                                            BeforeDraw(AmodModelId model,
-            AmodModelDrawHandler handler,
-            void* user = nullptr)
+        inline AmodToken                                            BeforeDraw(AmodModelId model, AmodModelDrawHandler handler, void* user = nullptr)
         {
             return (g_mmd != nullptr && g_mmd->AddPreDrawHandler != nullptr)
                 ? g_mmd->AddPreDrawHandler(g_mmdSelf, model, handler, user)

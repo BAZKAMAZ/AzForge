@@ -16,6 +16,9 @@ namespace Forge
 
         static const AmodMmdApi*                                    Table();
 
+        static AmodModelId                                          IdFor(void* model);
+        static void*                                                ModelFor(AmodModelId id);
+
         static void                                                 ForgetMod(ModContext* owner);
     };
 }
