@@ -215,7 +215,8 @@ typedef enum AmodWorldEvent
 {
     AMOD_WORLD_EVENT_LEVEL_LOADED = 0, /* level parsed; no room current yet */
     AMOD_WORLD_EVENT_LEVEL_UNLOADED = 1, /* still readable during the call */
-    AMOD_WORLD_EVENT_ROOM_CHANGED = 2 /* also fires for the first room */
+    AMOD_WORLD_EVENT_ROOM_CHANGED = 2, /* also fires for the first room */
+    AMOD_WORLD_EVENT_TIME_UP = 3 /* the bonus level's countdown reached nothing */
 } AmodWorldEvent;
 
 typedef struct AmodWorldEventInfo
@@ -299,7 +300,7 @@ typedef struct AmodWorldApi
     int(__cdecl* GetEntityLight)(AmodMod mod, int roomIndex, int index, AmodEntityLight* out);
     int(__cdecl* SetEntityLight)(AmodMod mod, int roomIndex, int index, const AmodEntityLight* light);
 
-    /* Which of the room's entities is the player, or -1. */
+    /* Player entity index in the room, or -1. (PlayerApi owns the player object.) */
     int(__cdecl* GetPlayerEntity)(AmodMod mod);
 
     AmodTextureId(__cdecl* GetRoomLightmap)(AmodMod mod, int roomIndex);
@@ -332,9 +333,20 @@ typedef struct AmodWorldApi
     /* One of the mod's own */
     int(__cdecl* AddLightTriangle)(AmodMod mod, int roomIndex, const AmodRoomTriangle* triangle);
 
+    /* Bonus-level countdown; only when GetLevel().isBonus. */
+    float(__cdecl* GetTimeLeft)(AmodMod mod);
+    int(__cdecl* SetTimeLeft)(AmodMod mod, float seconds);
+
+    /* Stopwatch (HUD + results "Your Time"); counts up on every level. */
+    float(__cdecl* GetElapsed)(AmodMod mod);
+    int(__cdecl* SetElapsed)(AmodMod mod, float seconds);
+
+    /* Enter room on that side (Player::Step result); places player at far edge. */
+    int(__cdecl* CrossRoom)(AmodMod mod, int side);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, AddLightTriangle, 0xA8);
+AMOD_LAST_FIELD(AmodWorldApi, CrossRoom, 0xBC);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -592,6 +604,34 @@ namespace Amod
             return g_world != nullptr && g_world->AddRoomBox != nullptr
                 ? g_world->AddRoomBox(g_self, roomIndex, &box)
                 : -1;
+        }
+
+        /* Seconds left of the bonus level's countdown; nothing on any other kind. */
+        inline float                                                TimeLeft()
+        {
+            return g_world != nullptr && g_world->GetTimeLeft != nullptr ? g_world->GetTimeLeft(g_self) : 0.0f;
+        }
+
+        inline bool                                                 SetTimeLeft(float seconds)
+        {
+            return g_world != nullptr && g_world->SetTimeLeft != nullptr && g_world->SetTimeLeft(g_self, seconds) != 0;
+        }
+
+        /* Seconds since the level began, on every kind of level. */
+        inline float                                                Elapsed()
+        {
+            return g_world != nullptr && g_world->GetElapsed != nullptr ? g_world->GetElapsed(g_self) : 0.0f;
+        }
+
+        inline bool                                                 SetElapsed(float seconds)
+        {
+            return g_world != nullptr && g_world->SetElapsed != nullptr && g_world->SetElapsed(g_self, seconds) != 0;
+        }
+
+        /* Side is what Player::Step answered when he left the room. */
+        inline bool                                                 CrossRoom(int side)
+        {
+            return g_world != nullptr && g_world->CrossRoom != nullptr && g_world->CrossRoom(g_self, side) != 0;
         }
 
         /* The surfaces a dynamic light may fall on. */

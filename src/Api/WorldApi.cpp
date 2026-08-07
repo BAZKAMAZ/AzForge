@@ -1352,6 +1352,108 @@ namespace Forge
             return index;
         }
 
+        float* TimeLeftAt()
+        {
+            return static_cast<float*>(GameModule::Resolve(GameAddress::kBonusLevelTimeLeft));
+        }
+
+        bool OnBonusLevel()
+        {
+            const uint8_t* const flag = static_cast<const uint8_t*>(GameModule::Resolve(GameAddress::kBonusLevelFlag));
+            return flag != nullptr && *flag != 0;
+        }
+
+        // Watched, not hooked: TIME_UP is the countdown arriving at zero.
+        bool g_wasRunning = false;
+
+        void __cdecl WatchClock()
+        {
+            const float* const left = TimeLeftAt();
+            const bool running = OnBonusLevel() && left != nullptr && *left > 0.0f;
+
+            if (g_wasRunning && !running && OnBonusLevel())
+            {
+                Dispatch(AMOD_WORLD_EVENT_TIME_UP, -1, 0, -1, -1, -1);
+            }
+            g_wasRunning = running;
+        }
+
+        // Stopwatch; state update adds frame delta on every level.
+        float* ElapsedAt()
+        {
+            return static_cast<float*>(GameModule::Resolve(GameAddress::kLevelElapsed));
+        }
+
+        float __cdecl ApiGetElapsed(AmodMod mod)
+        {
+            const float* const at = ApiRead::Caller(mod) != nullptr ? ElapsedAt() : nullptr;
+            return at != nullptr ? *at : 0.0f;
+        }
+
+        typedef float* (__cdecl* CarryPositionRoutine)(float* out, void* body, int side);
+        typedef void(__thiscall* CrossRoomRoutine)(void* session, const float* position, int dirX, int dirY);
+
+        int __cdecl ApiCrossRoom(AmodMod mod, int side)
+        {
+            uint8_t* const player = ApiRead::Caller(mod) != nullptr
+                ? const_cast<uint8_t*>(WorldApi::Player()) : nullptr;
+            uint8_t* const session = WorldApi::Session();
+            const CarryPositionRoutine carry =
+                reinterpret_cast<CarryPositionRoutine>(GameModule::Resolve(GameAddress::kRoomCarryPosition));
+            const CrossRoomRoutine cross =
+                reinterpret_cast<CrossRoomRoutine>(GameModule::Resolve(GameAddress::kSessionCrossRoom));
+
+            if (player == nullptr || session == nullptr || carry == nullptr || cross == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player in a room to carry over");
+            }
+            if (side < 1 || side > 4)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "%d is not a side Step answers with", side);
+            }
+
+            // Same order as Player_Update: landing position, then room change.
+            const int dirX = side == 1 ? 1 : (side == 2 ? -1 : 0);
+            const int dirY = side == 4 ? 1 : (side == 3 ? -1 : 0);
+
+            float landing[3] = {};
+            carry(landing, player + GameAddress::kPlayerBodyOffset, side);
+            cross(session, landing, dirX, dirY);
+            return 1;
+        }
+
+        int __cdecl ApiSetElapsed(AmodMod mod, float seconds)
+        {
+            float* const at = ApiRead::Caller(mod) != nullptr ? ElapsedAt() : nullptr;
+
+            if (at == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "there is no level running to time");
+            }
+
+            *at = seconds < 0.0f ? 0.0f : seconds;
+            return 1;
+        }
+
+        float __cdecl ApiGetTimeLeft(AmodMod mod)
+        {
+            const float* const left = ApiRead::Caller(mod) != nullptr ? TimeLeftAt() : nullptr;
+            return (left != nullptr && OnBonusLevel()) ? *left : 0.0f;
+        }
+
+        int __cdecl ApiSetTimeLeft(AmodMod mod, float seconds)
+        {
+            float* const left = ApiRead::Caller(mod) != nullptr ? TimeLeftAt() : nullptr;
+
+            if (left == nullptr || !OnBonusLevel())
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "only a bonus level runs a clock");
+            }
+
+            *left = seconds < 0.0f ? 0.0f : seconds;
+            return 1;
+        }
+
         int __cdecl ApiGetSpawnCount(AmodMod mod, int roomIndex)
         {
             const uint8_t* const room = Room(roomIndex);
@@ -1994,6 +2096,12 @@ namespace Forge
         g_table.GetRoomBox = &ApiGetRoomBox;
         g_table.SetRoomBox = &ApiSetRoomBox;
         g_table.AddRoomBox = &ApiAddRoomBox;
+        FrameApi::AddInternalTick(&WatchClock);
+        g_table.GetTimeLeft = &ApiGetTimeLeft;
+        g_table.SetTimeLeft = &ApiSetTimeLeft;
+        g_table.GetElapsed = &ApiGetElapsed;
+        g_table.SetElapsed = &ApiSetElapsed;
+        g_table.CrossRoom = &ApiCrossRoom;
         g_table.GetLightTriangleCount = &ApiGetLightTriangleCount;
         g_table.GetLightTriangle = &ApiGetLightTriangle;
         g_table.SetLightTriangle = &ApiSetLightTriangle;

@@ -14,6 +14,7 @@
 #include "InventoryApi.h"
 #include "MonstersApi.h"
 #include "MmdApi.h"
+#include "PlayerApi.h"
 #include "SoundApi.h"
 #include "TextureApi.h"
 #include "InteropApi.h"
@@ -87,10 +88,13 @@ typedef struct AmodApi
     /* Every sound the game has, and the loops a room keeps. */
     const AmodSoundApi* sound;
 
+    /* The player himself: where he is, what he is doing, and whether he is alive. */
+    const AmodPlayerApi* player;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, sound, 0x70);
+AMOD_LAST_FIELD(AmodApi, player, 0x74);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -139,6 +143,7 @@ namespace Amod
         Mmd::Attach(api->mmd, api->self);
         Textures::Attach(api->textures, api->self);
         Sound::Attach(api->sound, api->self);
+        Player::Attach(api->player, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

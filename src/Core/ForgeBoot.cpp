@@ -6,6 +6,7 @@
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
 #include "src/Api/MmdApi.h"
+#include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
@@ -153,6 +154,7 @@ namespace Forge
         Subsystems::Record("mmd", MmdApi::Install());
         Subsystems::Record("textures", TextureApi::Install());
         Subsystems::Record("sound", SoundApi::Install());
+        Subsystems::Record("player", PlayerApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
         Subsystems::Record("input", InputApi::Install());
 
@@ -192,6 +194,7 @@ namespace Forge
         MmdApi::Uninstall();
         TextureApi::Uninstall();
         SoundApi::Uninstall();
+        PlayerApi::Uninstall();
         RenderApi::Uninstall();
         WorldApi::Uninstall();
         InteropApi::Uninstall();

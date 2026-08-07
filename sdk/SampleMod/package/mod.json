@@ -1,11 +1,11 @@
 {
-  "id": "azforge.soundtest",
-  "name": "AzForge Sound test",
+  "id": "azforge.player",
+  "name": "AzForge player test",
   "version": "1.0.0",
   "author": "AzForge",
   "description": "",
-  "api_version": 53,
-  "requires": ["world", "console", "sound"],
+  "api_version": 63,
+  "requires": ["console", "player", "world", "input", "mmd"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll",
   "icon": "icon.bmp"

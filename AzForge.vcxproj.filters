@@ -25,6 +25,9 @@
     <Filter Include="Zip">
       <UniqueIdentifier>{6222644e-66e1-4ef2-9751-e4b69b8da2c5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Game\Addresses">
+      <UniqueIdentifier>{35c49d1f-7da3-4a12-92df-82876c988f14}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sdk\include\BlockExpressionApi.h">
@@ -240,6 +243,39 @@
     <ClInclude Include="sdk\include\SoundApi.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Core.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Entity.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Bonuses.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Level.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Menu.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Monsters.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Render.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Prologues.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Player.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\PlayerApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\PlayerApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -382,6 +418,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\SoundApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\PlayerApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

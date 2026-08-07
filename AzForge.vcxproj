@@ -92,6 +92,7 @@
     <ClInclude Include="sdk\include\CtrlsApi.h" />
     <ClInclude Include="sdk\include\MonstersApi.h" />
     <ClInclude Include="sdk\include\MmdApi.h" />
+    <ClInclude Include="sdk\include\PlayerApi.h" />
     <ClInclude Include="sdk\include\SoundApi.h" />
     <ClInclude Include="sdk\include\TextureApi.h" />
     <ClInclude Include="sdk\include\ConsoleApi.h" />
@@ -117,6 +118,7 @@
     <ClInclude Include="src\Api\HudApi.h" />
     <ClInclude Include="src\Api\MonstersApi.h" />
     <ClInclude Include="src\Api\MmdApi.h" />
+    <ClInclude Include="src\Api\PlayerApi.h" />
     <ClInclude Include="src\Api\SoundApi.h" />
     <ClInclude Include="src\Api\TextureApi.h" />
     <ClInclude Include="src\Api\InventoryApi.h" />
@@ -139,6 +141,15 @@
     <ClInclude Include="src\Core\ForgeText.h" />
     <ClInclude Include="src\Core\ForgeVersion.h" />
     <ClInclude Include="src\Game\GameAddresses.h" />
+    <ClInclude Include="src\Game\Addresses\Bonuses.h" />
+    <ClInclude Include="src\Game\Addresses\Core.h" />
+    <ClInclude Include="src\Game\Addresses\Entity.h" />
+    <ClInclude Include="src\Game\Addresses\Level.h" />
+    <ClInclude Include="src\Game\Addresses\Menu.h" />
+    <ClInclude Include="src\Game\Addresses\Monsters.h" />
+    <ClInclude Include="src\Game\Addresses\Player.h" />
+    <ClInclude Include="src\Game\Addresses\Prologues.h" />
+    <ClInclude Include="src\Game\Addresses\Render.h" />
     <ClInclude Include="src\Game\GameFunctions.h" />
     <ClInclude Include="src\Game\GameModule.h" />
     <ClInclude Include="src\Game\GameSymbols.h" />
@@ -188,6 +199,7 @@
     <ClCompile Include="src\Api\HudApi.cpp" />
     <ClCompile Include="src\Api\MonstersApi.cpp" />
     <ClCompile Include="src\Api\MmdApi.cpp" />
+    <ClCompile Include="src\Api\PlayerApi.cpp" />
     <ClCompile Include="src\Api\SoundApi.cpp" />
     <ClCompile Include="src\Api\TextureApi.cpp" />
     <ClCompile Include="src\Api\InventoryApi.cpp" />

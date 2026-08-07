@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define AMOD_API_VERSION                                            53
+#define AMOD_API_VERSION                                            63
 
 // Offsets are fixed at build time
 #ifdef __cplusplus
