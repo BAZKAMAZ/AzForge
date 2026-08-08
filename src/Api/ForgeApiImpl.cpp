@@ -11,6 +11,7 @@
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
 #include "src/Api/MmdApi.h"
+#include "src/Api/CameraApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
@@ -157,6 +158,7 @@ namespace Forge
         context.table.sound = SoundApi::Table();
         context.table.player = PlayerApi::Table();
         context.table.ctrls = CtrlsApi::Table();
+        context.table.camera = CameraApi::Table();
         context.table.input = InputApi::Table();
 
         context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;

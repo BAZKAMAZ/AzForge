@@ -89,6 +89,7 @@
     <ClInclude Include="sdk\include\BlockExpressionApi.h" />
     <ClInclude Include="sdk\include\BonusesApi.h" />
     <ClInclude Include="sdk\include\BoxMenuApi.h" />
+    <ClInclude Include="sdk\include\CameraApi.h" />
     <ClInclude Include="sdk\include\CtrlsApi.h" />
     <ClInclude Include="sdk\include\MonstersApi.h" />
     <ClInclude Include="sdk\include\MmdApi.h" />
@@ -118,6 +119,7 @@
     <ClInclude Include="src\Api\HudApi.h" />
     <ClInclude Include="src\Api\MonstersApi.h" />
     <ClInclude Include="src\Api\MmdApi.h" />
+    <ClInclude Include="src\Api\CameraApi.h" />
     <ClInclude Include="src\Api\CtrlsApi.h" />
     <ClInclude Include="src\Api\PlayerApi.h" />
     <ClInclude Include="src\Api\SoundApi.h" />
@@ -143,6 +145,7 @@
     <ClInclude Include="src\Core\ForgeVersion.h" />
     <ClInclude Include="src\Game\GameAddresses.h" />
     <ClInclude Include="src\Game\Addresses\Bonuses.h" />
+    <ClInclude Include="src\Game\Addresses\Camera.h" />
     <ClInclude Include="src\Game\Addresses\Ctrls.h" />
     <ClInclude Include="src\Game\Addresses\Core.h" />
     <ClInclude Include="src\Game\Addresses\Entity.h" />
@@ -201,6 +204,7 @@
     <ClCompile Include="src\Api\HudApi.cpp" />
     <ClCompile Include="src\Api\MonstersApi.cpp" />
     <ClCompile Include="src\Api\MmdApi.cpp" />
+    <ClCompile Include="src\Api\CameraApi.cpp" />
     <ClCompile Include="src\Api\CtrlsApi.cpp" />
     <ClCompile Include="src\Api\PlayerApi.cpp" />
     <ClCompile Include="src\Api\SoundApi.cpp" />

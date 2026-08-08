@@ -1,12 +1,11 @@
 {
-  "id": "azforge.ctrls",
-  "name": "AzForge ctrls",
+  "id": "azforge.camera",
+  "name": "AzForge camera world",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "Change and add ctrls",
-  "api_version": 81,
-  "requires": ["console", "ctrls"],
+  "description": "Move the camera and change what the world is drawn from",
+  "api_version": 83,
+  "requires": ["console", "camera"],
   "game_version": "1.0",
-  "entry": "bin/SampleMod.dll",
-  "icon": "icon.bmp"
+  "entry": "bin/SampleMod.dll"
 }

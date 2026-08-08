@@ -1,172 +1,138 @@
-# SampleMod
+## Moving it by hand
 
-The bench the ctrls API is tried on. It adds three things the game never had — a lever, a purple
-door and a purple key — and a `ctrl` console command that reaches every call in the interface.
+| command | what it does |
+| --- | --- |
+| `cam eye <x> <y> <z>` | put the eye there this instant |
+| `cam at <x> <y> <z>` | point it there |
+| `cam up <x> <y> <z>` | which way is up; `0 1 0` is normal |
+| `cam roll <radians>` | turn it about the view axis, as `$fx_rotate` does |
+| `cam follow <x> <y> <z>` | give it a point to catch up to, at `$follow_speed` |
+| `cam place <x> <y> <z>` | the same point, but arrive at once |
+| `cam here` | put it where the player is |
 
-Everything here is a worked example: if a call is in `CtrlsApi.h`, something below uses it.
+Anything written this way lasts until the next frame, when the game's update drags it back. To make
+it stick, stop the camera following:
+
+```
+cam lock eye 0           the eye stands still; the target still tracks him
+cam lock at 0            neither end moves
+cam lock eye 1           back to normal
+```
+
+These are the game's own two switches, not something the mod invented, so nothing is fighting.
 
 ---
 
-## What it adds
+## Effects
 
-### The lever
+Three effects, one at a time, plus a shake that runs alongside any of them. The game fires one of
+the three at random when a bonus is taken.
 
-The game reads tags all over itself — every note asks after one — but nothing lets the player
-**turn one on**. A tag's state is written only by the thing that wears it, so half of what tags
-could say goes unsaid. The lever is that missing half: a thing the player throws, which turns its
-tag on and off.
+| command | what it does |
+| --- | --- |
+| `cam fx zoom` | pushes in over `$time_in` and drifts back out over `$time_out` |
+| `cam fx rock` | swings about the view axis, `$angle` degrees, `$count` times |
+| `cam fx rotate` | turns the world over, holds for `$time_pause`, turns back |
+| `cam fx off` | whichever is running, stopped |
+| `cam shake on` / `cam shake off` | `$event_rock`: the eye jitters about where it would be |
 
-It is a kind of the mod's own (`RegisterKind`), so the game knows nothing about it.
-
-Written in a room's `_ctrl.txt`:
-
-```
-$lever
-{
-  $cell_pos 34 14          where it stands
-  $tag "door_lever"        the tag it turns on and off
-  $active 0                its state to begin with
-  $needs "key_c"           optional: an item without which it will not move
-  $once 1                  optional: once thrown it stays thrown
-  $sound "sounds/res_plat_up.wav"
-  $texture "textures/ctrls/restore_plat.tga"
-}
-```
-
-The handle slides between its two positions and fades from red to green as it goes. The colour is
-eight models rather than one recoloured: a colour belongs to a model, and models are shared, so
-repainting one would repaint every lever in the level at once.
-
-Its state lives in its block, not on the thing, so a lever left thrown is still thrown after the
-room has been walked out of and back into.
-
-### The purple door
-
-A door of the mod's own, three cells or taller. It is **not** one of the game's five: those have
-their key wired into them in three separate places — the table that names them, the touch that
-asks for the key, and the routine that decides whether their box pushes at all — so a different
-key cannot be given to one from outside. Made rather than borrowed, all three are ours.
-
-It is placed **by the room's grid**, the way the game's doors are, on a vertical run of `Q`:
-
-```
-W WWWWWW
- Q
- Q          three cells or more, in one column
- Q
-WWWWWWWW
-```
-
-`Q` was picked because the letters that matter are taken: `F` is fire's, and `A`..`E` are the
-game's five doors. The mod reads `Q` itself; the game does not know the letter and leaves it alone.
-
-**No block is needed.** The doors are made when the level loads, from the grids of every room.
-
-### The purple key
-
-`key_e` — an ordinary bonus, added to `data/scripts/bonus_res.txt` with its own purple texture.
-Being a bonus, the game carries it, counts it, draws it in the belt and takes it away when it is
-spent, exactly like its own four keys.
-
-A mod cannot define a bonus type at runtime: `BonusesApi` reads them and places them, but making a
-new one is a line in `bonus_res.txt`.
+The shake has to be stopped on its own. Stopping the effect does not stop it.
 
 ---
 
-## What the tags do
+## Driving it
 
-Two tags drive the door, and both are read with `FindByTag` — the same walk a note does when it
-asks after one.
+`cam drive <who>` decides who moves the camera each frame.
 
-| tag | worn by | what it does |
-| --- | --- | --- |
-| `door_lever` | a lever | thrown → the door opens; not thrown → it closes again |
-| `e_bridge` | a lever | thrown → the door **shrinks** open; not thrown → it **rides up** |
+| command | what it does |
+| --- | --- |
+| `cam drive orbit` | the mod's own camera: it circles the player |
+| `cam drive chase` | the mod's own camera: it hangs behind and catches up by hand |
+| `cam drive both` | the game moves it, then the mod moves it again |
+| `cam drive nobody` | neither; it stays where it stands and the world slides past |
+| `cam drive game` | given back |
 
-`e_bridge` is asked only while the door is shut, so the way it opens cannot change halfway
-through. The key opens the door for good whatever the levers say afterwards.
+`orbit` and `chase` are the same handler with two minds. Both ask the API where the player's focus
+is rather than reading the entity, because the focus is not his position — it is his position
+raised half his box, which is what the game itself looks at.
 
-Shrinking is eight copies of the door model at eight heights, standing on the same foot, swapped
-by `SetLook`. The entity's own scale (`SetScale`) is what the game's doors use, but on any other
-kind of thing it comes out skewed — it belongs to the door's own drawing, not to a thing in
-general.
+`chase` is the interesting one: it does its own catching-up, so the lag is the mod's arithmetic and
+`$lag_dist` no longer means anything. That is what taking a domain over looks like.
 
-Nothing writes into another thing's block: the door and the levers talk only through tags, which
-is what the game has them for.
+`nobody` is worth trying while walking around. Nothing crashes, nothing snaps back — the camera is
+simply not updated, which is the shape a cutscene wants.
 
 ---
 
-## The `ctrl` command
+## Drawing from somewhere else
 
-`ctrl` alone lists what stands in the room: index, id, name, cell, tag and its state.
-
-### One thing
+`cam view` changes what the renderer is given, after everything above has had its say.
 
 | command | what it does |
 | --- | --- |
-| `ctrl <n>` | where it is and every key of its block |
-| `ctrl <n> <key> <value...>` | write one of those keys |
-| `ctrl <n> box <min3> <max3>` | what it takes up |
-| `ctrl <n> hide` / `show` | whether the room draws it |
-| `ctrl <n> remove` | take it away for good, this room and the level |
+| `cam view flip` | up is negated: the world is drawn upside down |
+| `cam view shoulder` | the eye is pushed aside, without the camera knowing |
+| `cam view off` | the view is the game's again |
 
-### Taking it over
+The handler returns a verdict. Zero means it only looked, and whatever it wrote is thrown away —
+so a handler that gathers information cannot change the picture by accident.
 
-| command | what it does |
-| --- | --- |
-| `ctrl <n> drive` | the mod moves it, and the game's own update does not run |
-| `ctrl <n> freeze` | nobody moves it |
-| `ctrl <n> game` | hand it back |
-| `ctrl <n> touch` | say what meets it, and let its own rule run |
-| `ctrl <n> eat` | say what meets it, and put its own rule aside |
-| `ctrl <n> deaf` | stop listening, keep driving |
-| `ctrl <n> needs <item>` | it stands still until that item is carried |
-| `ctrl <n> unlock` | undo that |
+`shoulder` shows the point of the seam: `cam` still reports the eye where the game put it, while
+`drawn from` reports it a metre and a half to the side. The camera and the view are not the same
+thing, and a mod can hold either one.
 
-`freeze` on a lift is the clearest of these: it stops mid-travel while the room goes on living.
+---
 
-### Tags
+## The lens
+
+The view says where the camera is. The lens says how much of the world fits in it, and it is not
+part of the camera at all — the game builds it inline while rendering, from a field of its video
+settings and three constants. `cam` prints the four numbers it was last built from.
 
 | command | what it does |
 | --- | --- |
-| `ctrl tag <name>` | who wears it and whether it is on |
-| `ctrl <n> tagas <name>` | give it that tag, in its block as well as on the thing |
-| `ctrl <n> tagon 0\|1` | turn its tag on or off |
+| `cam lens fov <degrees>` | how wide it sees; the game's is what the options screen holds |
+| `cam lens near <n>` | anything nearer is cut away |
+| `cam lens far <n>` | anything further is cut away; the game's is **10** |
+| `cam lens off` | all four back to the game's |
 
-### Making things
+The far plane is the one to notice. Ten is close — the player is a third of a unit tall, so ten
+units is about thirty of him. Fly the camera back with `cam drive orbit` and a bigger radius and
+the room disappears into nothing; `cam lens far 60` brings it back.
 
-| command | what it does |
-| --- | --- |
-| `ctrl new <col> <row>` | a `$restore_plat`, built from the same text a level would write |
-| `ctrl new <col> <row> ladder` | a ladder — placed by cells, not by a position |
-| `ctrl lever <col> <row> [tag]` | a lever of the mod's own kind |
-| `ctrl borrow <col> <row>` | a plate of the **game's** kind, driven by the game, heard by the mod |
-| `ctrl strip <col> <row>` | a ladder taken apart: its models out of the room, then its cells |
+The calls compose: each number above zero is taken and the rest are left alone, so `fov` then
+`far` keeps both. Only the world is affected — a model a mod puts in front of the camera is drawn
+through its own lens and is not disturbed.
 
-`borrow` is the one to read if a mod wants a mechanic that already works and only needs something
-added to it.
+---
 
-### Rooms and ids
+## The snap
 
-| command | what it does |
-| --- | --- |
-| `ctrl room <r>` | what room `r` was told to hold, whether or not the player has been there |
-| `ctrl room <r> <at> <key> <value>` | change one of those blocks — a lift's speed before he arrives |
-| `ctrl id <#>` | what an id means, and which room it is in |
+Every level and every room start puts the camera where the player is, at once. That happens
+outside the update, so a mod driving the camera gets jerked without being told.
 
-An index is only where a thing stands this frame. An id is the thing itself, and it is the same
-number in every run of the same level, so a mod may be written around one.
+```
+cam snap watch           print it when it happens, and let it happen
+cam snap refuse          print it and refuse; the camera stays where it stands
+```
+
+Refusing is what a cutscene wants and what a normal game does not: refuse it before the first
+room of a level and the camera begins wherever it happened to be. Told and allowed is the safe
+setting, and the reason the handler returns a verdict rather than the mod simply being informed.
 
 ---
 
 ## Trying it
 
-The editor's bench, `az_orginal/levels/rooms_temp`, is set up for this: a run of `Q`, two levers
-and a purple key.
+Any level will do — the camera is not a room's business. Start a game, open the console and:
 
 ```
-door_lever off, e_bridge off     the door rides up when opened
-door_lever off, e_bridge on      the door shrinks instead
-door_lever on                    it opens; off again and it closes the same way
-key_e                            opens it for good, and is spent doing it
+cam                      what is going on
+cam drive orbit          circle him
+cam lens far 60          and now the room is still there behind him
+cam view flip            circle him, upside down
+cam snap refuse          walk into the next room and it does not jump
+cam view off
+cam lens off
+cam drive game           everything back
 ```

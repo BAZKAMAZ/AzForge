@@ -15,6 +15,7 @@
 #include "MonstersApi.h"
 #include "MmdApi.h"
 #include "CtrlsApi.h"
+#include "CameraApi.h"
 #include "PlayerApi.h"
 #include "SoundApi.h"
 #include "TextureApi.h"
@@ -95,10 +96,13 @@ typedef struct AmodApi
     /* The room's active items: lifts, plates, doors, fire. */
     const AmodCtrlsApi* ctrls;
 
+    /* Where the world is looked at from, and who moves it. */
+    const AmodCameraApi* camera;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, ctrls, 0x78);
+AMOD_LAST_FIELD(AmodApi, camera, 0x7C);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -149,6 +153,7 @@ namespace Amod
         Sound::Attach(api->sound, api->self);
         Player::Attach(api->player, api->self);
         Ctrls::Attach(api->ctrls, api->self);
+        Camera::Attach(api->camera, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

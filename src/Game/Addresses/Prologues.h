@@ -159,6 +159,15 @@ namespace Forge
     constexpr uint8_t kMonstersFreeResourcesPrologue[] =
     { 0x83, 0x3D, 0x58, 0x14, 0x69, 0x00, 0x00 };
 
+    // Camera_Update: FLDZ / SUB ESP,0x1C → 5
+    constexpr uint8_t kCameraUpdatePrologue[] = { 0xD9, 0xEE, 0x83, 0xEC, 0x1C };
+
+    // Camera_Place: MOV EAX,[ESP+4] / FLD [ECX+0x68] → 7
+    constexpr uint8_t kCameraPlacePrologue[] = { 0x8B, 0x44, 0x24, 0x04, 0xD9, 0x41, 0x68 };
+
+    // Matrix_Perspective: PUSH ECX / FLD [ESP+8] → 5 (the args stay ESP-relative)
+    constexpr uint8_t kMatrixPerspectivePrologue[] = { 0x51, 0xD9, 0x44, 0x24, 0x08 };
+
     // Six touch handlers, __cdecl (monster, other, side).
     struct MonsterTouchSite
     {

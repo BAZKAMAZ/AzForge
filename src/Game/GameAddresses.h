@@ -11,4 +11,5 @@
 #include "src/Game/Addresses/Bonuses.h"
 #include "src/Game/Addresses/Ctrls.h"
 #include "src/Game/Addresses/Render.h"
+#include "src/Game/Addresses/Camera.h"
 #include "src/Game/Addresses/Prologues.h"
