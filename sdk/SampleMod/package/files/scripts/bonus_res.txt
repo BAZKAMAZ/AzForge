@@ -1,0 +1,614 @@
+$bonus_fx //описание эффекта отображения бонуса
+{
+	//glow эффект
+	$texture "textures/bonus/bonus_glow.tga" 	//текстура свечения бонуса
+	$texture2 "textures/bonus/bonus_glow.tga"	//затеняющая текстура
+	$size 0.34	//размер спрайта свечения
+	$rot_speed 1 //скорость вращения спрайта свечения 
+
+	//покачивание
+	$amp 0.5	//амплитуда покачивания
+	$speed 4.0	//скорость покачивания
+	$axis 1.0 1.0 0.0	//ось(вектор) покачивания
+}
+
+$bonus_chain	//цепочка бонусов
+{
+	$take_time 0.5	//время обратного счетчика
+	$percent 10	//процент прибавляемый за каждый алмаз от предыдущей суммы
+	
+	$text_speed 1		//скорость вылетания текста
+	$text_gravity 2		//ускорение падения текста
+	$text_time 3		//время жизни текста
+	$text_scale 0.005 0.005 //масштаб текста
+
+	//список звуков цепочки
+	$sound
+	{
+		$sample "sounds/bonus_take1.wav"	//файл звука
+		$speed 1			//множитель скорости проигрывания
+	}
+	$sound
+	{
+		$sample "sounds/bonus_take2.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take3.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take4.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take5.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take6.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take7.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take8.wav"
+		$speed 1
+	}	
+	$sound
+	{
+		$sample "sounds/bonus_take9.wav"
+		$speed 1
+	}	
+
+	//список сообщений цепочки (в порядке возрастания $num)
+	$message
+	{
+		$num 5
+		$sound "sounds/bonus_good.wav"
+		$text "5 combo"
+	}
+	$message
+	{
+		$num 6
+		$sound "sounds/bonus_good.wav"
+		$text "6 combo"
+	}
+	$message
+	{
+		$num 7
+		$sound "sounds/bonus_good.wav"
+		$text "7 combo"
+	}
+	$message
+	{
+		$num 8
+		$sound "sounds/bonus_good.wav"
+		$text "8 combo"
+	}
+	$message
+	{
+		$num 9
+		$sound "sounds/bonus_good.wav"
+		$text "9 combo"
+	}
+	$message
+	{
+		$num 10
+		$sound "sounds/bonus_good.wav"
+		$text "10 combo"
+	}
+	$message
+	{
+		$num 11
+		$sound "sounds/bonus_good.wav"
+		$text "11 combo"
+	}
+	$message
+	{
+		$num 12
+		$sound "sounds/bonus_good.wav"
+		$text "12 combo"
+	}
+	$message
+	{
+		$num 13
+		$sound "sounds/bonus_good.wav"
+		$text "13 combo"
+	}
+	$message
+	{
+		$num 14
+		$sound "sounds/bonus_good.wav"
+		$text "14 combo"
+	}
+	$message
+	{
+		$num 15
+		$sound "sounds/bonus_good.wav"
+		$text "15 combo"
+	}
+	$message
+	{
+		$num 16
+		$sound "sounds/bonus_good.wav"
+		$text "16 combo"
+	}
+	$message
+	{
+		$num 17
+		$sound "sounds/bonus_good.wav"
+		$text "17 combo"
+	}
+	$message
+	{
+		$num 18
+		$sound "sounds/bonus_good.wav"
+		$text "18 combo"
+	}
+	$message
+	{
+		$num 19
+		$sound "sounds/bonus_good.wav"
+		$text "19 combo"
+	}
+	$message
+	{
+		$num 20
+		$sound "sounds/bonus_good.wav"
+		$text "20 combo"
+	}
+	$message
+	{
+		$num 21
+		$sound "sounds/bonus_good.wav"
+		$text "Excellent!"
+	}
+}
+
+
+$bonuses //описание ресурсов бонусов 
+{
+	$bonus
+	{
+		$name "sys"				//идентификатор бонуса 
+		$texture ""				//текстура модели
+		$model ""				//модель бонуса
+//		$icon "textures/bonus/key_white_icon.tga"	//текстура иконки
+		$glow_color 1.0 1.0 1.0 1.0		//цвет glow эффекта
+		$pts_take 0				//количество очков при взятии бонуса
+		$pts_out 0				//количество очков добавляемых при растрате бонуса 
+		//$sound_take "sounds/bonus_take.wav"
+		//$sound_use "sounds/key_use.wav"
+		$make_train 0			//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.05 -0.1
+			$max 0.05 0.05 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "key_a"				//идентификатор бонуса 
+		$texture "textures/bonus/key_white.jpg"	//текстура модели
+		$model "models/bonus/key.mmd"		//модель бонуса
+		$icon "textures/bonus/key_white_icon.png"	//текстура иконки
+		$glow_color 1.0 1.0 1.0 1.0		//цвет glow эффекта
+		$pts_take 50				//количество очков при взятии бонуса
+		$pts_out 300				//количество очков добавляемых при растрате бонуса 
+		$sound_take "sounds/key_take.wav"
+//		$sound_use "sounds/key_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "key_b"				
+		$texture "textures/bonus/key_blue.jpg"	
+		$model "models/bonus/key.mmd"		
+		$icon "textures/bonus/key_blue_icon.png"	
+		$glow_color 0.8 1.0 1.0 1.0
+		$glow_color2 0 0 1 1		
+		$pts_take 50				
+		$pts_out 300
+		$sound_take "sounds/key_take.wav"
+//		$sound_use "sounds/key_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}
+	
+	$bonus
+	{
+		$name "key_c"				
+		$texture "textures/bonus/key_red.jpg"	
+		$model "models/bonus/key.mmd"		
+		$icon "textures/bonus/key_red_icon.png"	
+		$glow_color 0.8 1.0 1.0 1.0
+		$glow_color2 1 0 0 1
+		$pts_take 50				
+		$pts_out 300
+		$sound_take "sounds/key_take.wav"
+//		$sound_use "sounds/key_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}	
+	
+	$bonus
+	{
+		$name "key_d"				
+		$texture "textures/bonus/key_green.jpg"	
+		$model "models/bonus/key.mmd"		
+		$icon "textures/bonus/key_green_icon.png"	
+		$glow_color 0.8 1.0 1.0 1.0
+		$glow_color2 0 1 0 1	
+		$pts_take 50				
+		$pts_out 300
+		$sound_take "sounds/key_take.wav"
+//		$sound_use "sounds/key_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}	
+	
+	$bonus
+	{
+		$name "uni_key"				
+		$texture "textures/bonus/megakey.jpg"	
+		$model "models/bonus/megakey.mmd"		
+		$icon "textures/bonus/megakey_icon.png"	
+		$glow_color 1.0 1.0 0.8 1.0	
+		$glow_color2 1 1 1 1		
+		$pts_take 50				
+		$pts_out 300
+		$sound_take "sounds/key_take.wav"
+//		$sound_use "sounds/key_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "fomka"	
+		$texture "textures/bonus/fomka.tga"
+		$model "models/bonus/fomka.mmd"
+		$icon "textures/bonus/fomka_icon.png"
+		$glow_color 1 0 0 1
+		$glow_color2 1 1 0 1		
+		$pts_take 50				
+		$pts_out 300
+		$sound_take "sounds/fomka_take.wav"
+//		$sound_use "sounds/fomka_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.12 -0.1
+			$max 0.05 0.12 0.1
+		}
+	}	
+	$bonus
+	{
+		$name "bonus"
+		$texture "textures/bonus/d_2.jpg"
+		$model "models/bonus/d_2.mmd"
+		$glow_color 1.0 0.8 0.4 1.0		
+//		$glow_color2 1.0 0.0 0.0 1
+		$pts_take 0
+		$sound_take "sounds/bonus_take.wav"
+
+		$make_train 1
+		$train_idx 5
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.09 -0.1
+			$max 0.05 0.09 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "bonus"				
+		$res_id "bonus_t"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_1.jpg"
+		$model "models/bonus/d_1.mmd"
+		$glow_color 0.4 0.7 1.0 1.0		
+//		$glow_color2 0.5 1.0 0.0 1
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.07 -0.09 -0.1
+			$max 0.07 0.08 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "bonus"
+		$res_id "bonus_0"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_4.jpg"
+		$model "models/bonus/d_4.mmd"
+		$glow_color 1.0 0.8 0.4 1.0		
+//		$glow_color2 1.0 0.0 0.0 1
+		$pts_take 10
+		$sound_take "sounds/bonus_take.wav"
+
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.07 -0.07 -0.1
+			$max 0.07 0.07 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "bonus"		//идентификатор бонуса, т.е. в качестве чего он будет использоваться в игре
+		$res_id "bonus_1"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_3.jpg"
+		$model "models/bonus/d_3.mmd"
+		$glow_color 1.0 1.0 1.0 1.0		
+		$glow_color2 0.3 0.8 1.0 1
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.07 -0.07 -0.1
+			$max 0.07 0.07 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "bonus"				
+		$res_id "bonus_2"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_7.jpg"
+		$model "models/bonus/d_7.mmd"
+		$glow_color 1.0 1.0 1.0 1.0		
+		$glow_color2 0.5 1.0 0.0 1
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.07 -0.07 -0.1
+			$max 0.07 0.07 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "bonus"				
+		$res_id "bonus_3"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_6.jpg"
+		$model "models/bonus/d_6.mmd"
+		$glow_color 1.0 1.0 1.0 1.0		
+		$glow_color2 0.0 1.0 0.5 1.0
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.09 -0.1
+			$max 0.06 0.09 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "bonus"				
+		$res_id "bonus_4"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_5.jpg"
+		$model "models/bonus/d_5.mmd"
+		$glow_color 0.4 0.7 1.0 1.0		
+//		$glow_color2 0.5 1.0 0.0 1
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.14 -0.1
+			$max 0.05 0.10 0.1
+		}
+	}	
+
+	$bonus
+	{
+		$name "bonus"				
+		$res_id "bonus_5"	//идентификатор ресурса (задается в описании бонусов для комнаты)
+		$texture "textures/bonus/d_8.jpg"
+		$model "models/bonus/d_8.mmd"
+		$glow_color 1.0 1.0 1.0 1.0		
+//		$glow_color2 0.5 1.0 0.0 1
+		$pts_take 10
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.06 -0.15 -0.1
+			$max 0.06 0.11 0.1
+		}
+	}		
+
+	$bonus
+	{
+		$name "knife"
+		$texture "textures/bonus/knife.jpg"
+		$model "models/bonus/knife.mmd"
+		$icon "textures/bonus/knife_icon.png"
+		$glow_color2 1.0 1.0 1.0 1.0
+		$glow_color 0.3 0.5 0.7 1
+		$pts_take 50
+		$pts_out 2000
+		$sound_take "sounds/knife_take.wav"
+//		$sound_use "sounds/knife_use.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.09 -0.1
+			$max 0.05 0.09 0.1
+		}
+	}	
+	
+	$bonus
+	{
+		$name "totem"
+		$texture "textures/bonus/totem.tga"
+		$model "models/bonus/totem.mmd"
+		$icon "textures/bonus/totem_icon.png"
+		$glow_color 1.0 1.0 1.0 1.0
+		$pts_take 100
+		$sound_take "sounds/totem_take.wav"
+		$sound_use "sounds/totem_timeend.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$time 10 //для действия тотема
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.08 -0.1
+			$max 0.05 0.06 0.1
+		}
+	}	
+	
+	$bonus
+	{
+		$name "torch"
+		$texture "textures/bonus/torch.tga"
+		$model "models/bonus/torch.mmd"
+		$icon "textures/bonus/torch_icon.png"
+		$glow_color 1.0 0.8 0.5 1.0
+		$glow_color2 1.0 0.8 0.5 1.0
+		$pts_take 2000
+
+		$sound_take "sounds/torch_take.wav"
+		$sound_use "sounds/torch_timeend.wav"
+		$make_train 1	//1 - генерировать шлейф полета бонуса при взятии, 0 - нет
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.05 -0.09 -0.1
+			$max 0.05 0.09 0.1
+		}
+		
+		//только для бонуса "torch"
+		$time 20		//время действия
+		//$light_color 1 0.45 0	//цвет светового пятна
+		$light_color 0.6 0.6 0.6	//цвет светового пятна
+		$light_radius 0.9	//радиус светового пятна у ирока
+		$bonus_light_radius 0.4 //радиус светового пятна для бонуса
+		$burn_time 0.5		//время разгорания до радиуса игрока
+	}
+
+	$bonus
+	{
+		$name "mega_bonus"
+		$texture "textures/bonus/cor_quest.jpg"
+		$model "models/bonus/corona.mmd"
+		$glow_color 1 1 1 1
+		$glow_color2 1 0 0 1
+		$pts_take 5000
+		$sound_take "sounds/mega_take.wav"
+//		$sound_use "sounds/mega_use.wav"
+
+		$make_train 1
+		$train_idx 6
+
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.1 -0.1 -0.1
+			$max 0.1 0.1 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "quest"
+		$texture "textures/bonus/cor_quest.jpg"
+		$model "models/bonus/quest.mmd"
+		$glow_color 1.0 1.0 1.0 1.0
+		$glow_color2 0 1 0 1
+		
+		$pts_take 10
+		$sound_take "sounds/quest_take.wav"
+//		$sound_use "sounds/quest_use.wav"
+		
+		$bbox //ограничивающий прямоугольник для столкновений
+		{
+			$min -0.07 -0.11 -0.1
+			$max 0.07 0.1 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "life"
+		$texture "textures/bonus/Heart.jpg"
+		$model "models/bonus/life.mmd"
+		$glow_color 1.0 0.6 0.3 1.0
+		$glow_color2 1 0 0 1
+		
+		//$sound_take "sounds/player_life.wav"
+
+		$make_train 1
+		$train_idx 5
+
+		$bbox
+		{
+			$min -0.09 -0.08 -0.1
+			$max 0.09 0.08 0.1
+		}
+	}
+
+	$bonus
+	{
+		$name "key_e"
+		$texture "textures/bonus/key_purple.tga"
+		$model "models/bonus/key.mmd"
+		$icon "textures/bonus/key_purple_icon.tga"
+		$glow_color 0.8 1.0 1.0 1.0
+		$glow_color2 0.6 0.2 0.9 1
+		$pts_take 50
+		$pts_out 300
+		$sound_take "sounds/key_take.wav"
+		$make_train 1
+
+		$bbox
+		{
+			$min -0.06 -0.10 -0.1
+			$max 0.06 0.10 0.1
+		}
+	}
+}

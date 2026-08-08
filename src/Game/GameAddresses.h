@@ -9,5 +9,6 @@
 #include "src/Game/Addresses/Player.h"
 #include "src/Game/Addresses/Monsters.h"
 #include "src/Game/Addresses/Bonuses.h"
+#include "src/Game/Addresses/Ctrls.h"
 #include "src/Game/Addresses/Render.h"
 #include "src/Game/Addresses/Prologues.h"

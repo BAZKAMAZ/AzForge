@@ -100,9 +100,17 @@ namespace Forge
             return rooms + static_cast<size_t>(index) * GameAddress::kRoomEntryStride;
         }
 
-        // Room is embedded in the entry, not pointed at.
+        // During placement parse: "current room" = the file being read.
+        uint8_t* g_parsingRoom = nullptr;
+
+        // Room is embedded in the entry, not a pointer.
         uint8_t* Room(int index)
         {
+            if (index < 0 && g_parsingRoom != nullptr)
+            {
+                return g_parsingRoom;
+            }
+
             uint8_t* const entry = RoomEntry(index);
             return entry != nullptr ? entry + GameAddress::kRoomEntryRoomOffset : nullptr;
         }
@@ -401,9 +409,14 @@ namespace Forge
             }
         }
 
+        // Bumped on load/free; stale pointers fail one generation compare.
+        uint32_t g_levelGeneration = 1;
+
         char __fastcall LoadDetour(void* level, void* unused, const char* script)
         {
             const char result = g_originalLoad(level, unused, script);
+            ++g_levelGeneration;
+
             if (IsLevelLoaded())
             {
                 Dispatch(AMOD_WORLD_EVENT_LEVEL_LOADED, -1, 0, -1, -1, -1);
@@ -417,6 +430,7 @@ namespace Forge
             {
                 Dispatch(AMOD_WORLD_EVENT_LEVEL_UNLOADED, -1, 0, -1, -1, -1);
             }
+            ++g_levelGeneration;
             g_originalFree(level, unused);
         }
 
@@ -671,6 +685,10 @@ namespace Forge
 
         int RoomOrCurrent(int roomIndex)
         {
+            if (roomIndex < 0 && g_parsingRoom != nullptr)
+            {
+                return -1; // stays below zero, so Room hands back the one being read
+            }
             return roomIndex < 0 ? CurrentRoomIndex() : roomIndex;
         }
 
@@ -1026,6 +1044,8 @@ namespace Forge
         typedef void(__fastcall* RoomAddStaticRoutine)(void* room, void* unused, const void* record,
             char translucent, char lit);
 
+        typedef void(__cdecl* RoomFreeStaticsRoutine)(void* head);
+
         constexpr int kStaticWalkLimit = 4096;
 
         uint8_t* FirstStatic(int roomIndex)
@@ -1075,6 +1095,52 @@ namespace Forge
                 }
             }
             return nullptr;
+        }
+
+        // Unlink from Room_FreeStatics list, then free; model/texture released by the game.
+        bool UnlinkAndFreeStatic(int roomIndex, int index)
+        {
+            uint8_t* const room = Room(RoomOrCurrent(roomIndex));
+            const RoomFreeStaticsRoutine release =
+                reinterpret_cast<RoomFreeStaticsRoutine>(GameModule::Resolve(GameAddress::kRoomFreeStatics));
+
+            if (room == nullptr || release == nullptr || index < 0)
+            {
+                return false;
+            }
+
+            uint8_t* previous = nullptr;
+            uint8_t* piece = FirstStatic(roomIndex);
+
+            for (int at = 0; at < index; ++at)
+            {
+                if (!StaticReadable(piece))
+                {
+                    return false;
+                }
+                previous = piece;
+                piece = NextStatic(piece);
+            }
+
+            if (!StaticReadable(piece))
+            {
+                return false;
+            }
+
+            uint8_t* const next = NextStatic(piece);
+            if (previous != nullptr)
+            {
+                memcpy(previous + GameAddress::kRoomStaticNextOffset, &next, sizeof(next));
+            }
+            else
+            {
+                memcpy(room + GameAddress::kRoomStaticsOffset, &next, sizeof(next));
+            }
+
+            const uintptr_t alone = 0;
+            memcpy(piece + GameAddress::kRoomStaticNextOffset, &alone, sizeof(alone));
+            release(piece);
+            return true;
         }
 
         struct StaticSnapshot
@@ -1241,6 +1307,43 @@ namespace Forge
             memcpy(mine.bytes, put, sizeof(mine.bytes));
             g_statics.push_back(mine);
             return 0;
+        }
+
+        int __cdecl ApiRemoveStatic(AmodMod mod, int roomIndex, int index)
+        {
+            ModContext* const caller = ApiRead::Caller(mod);
+            const int where = RoomOrCurrent(roomIndex);
+
+            if (caller == nullptr)
+            {
+                return 0;
+            }
+            if (StaticAt(where, index) == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "room %d has no static %d", roomIndex, index);
+            }
+            if (!UnlinkAndFreeStatic(where, index))
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_REFUSED, "static %d would not come out", index);
+            }
+
+            // Nothing kept about it can be put back now, and everything after it moved up one.
+            for (auto it = g_statics.begin(); it != g_statics.end();)
+            {
+                if (it->roomIndex != where || it->index < index)
+                {
+                    ++it;
+                    continue;
+                }
+                if (it->index == index)
+                {
+                    it = g_statics.erase(it);
+                    continue;
+                }
+                --it->index;
+                ++it;
+            }
+            return 1;
         }
 
         int __cdecl ApiGetEntityLight(AmodMod mod, int roomIndex, int index, AmodEntityLight* out)
@@ -2090,6 +2193,7 @@ namespace Forge
         g_table.GetStatic = &ApiGetStatic;
         g_table.SetStatic = &ApiSetStatic;
         g_table.AddStatic = &ApiAddStatic;
+        g_table.RemoveStatic = &ApiRemoveStatic;
         g_table.AddRoomLight = &ApiAddRoomLight;
         g_table.SetRoomCell = &ApiSetRoomCell;
         g_table.SetRoomCells = &ApiSetRoomCells;
@@ -2136,6 +2240,21 @@ namespace Forge
     bool WorldApi::IsLevelLoaded()
     {
         return RoomCount() > 0;
+    }
+
+    uint32_t WorldApi::LevelGeneration()
+    {
+        return g_levelGeneration;
+    }
+
+    void WorldApi::SetParsingRoom(uint8_t* room)
+    {
+        g_parsingRoom = room;
+    }
+
+    uint8_t* WorldApi::ParsingRoom()
+    {
+        return g_parsingRoom;
     }
 
     uint8_t* WorldApi::CurrentRoom()
@@ -2264,7 +2383,7 @@ namespace Forge
             it = g_grids.erase(it);
         }
 
-        // Restore statics; added ones are hidden (cannot unlink).
+        // Restore statics; the mod's own are taken out of the room altogether.
         for (auto it = g_statics.begin(); it != g_statics.end();)
         {
             if (it->owner != owner)
@@ -2273,14 +2392,21 @@ namespace Forge
                 continue;
             }
 
-            uint8_t* const piece = StaticAt(it->roomIndex, it->index);
-            if (piece != nullptr && it->added)
+            const int where = it->roomIndex;
+            const int which = it->index;
+            uint8_t* const piece = StaticAt(where, which);
+
+            if (piece != nullptr && it->added && UnlinkAndFreeStatic(where, which))
             {
-                uint32_t flags = Read<uint32_t>(piece, GameAddress::kRoomStaticFlagsOffset);
-                flags |= GameAddress::kRoomStaticHiddenFlag;
-                memcpy(piece + GameAddress::kRoomStaticFlagsOffset, &flags, sizeof(flags));
+                for (StaticSnapshot& kept : g_statics)
+                {
+                    if (kept.roomIndex == where && kept.index > which)
+                    {
+                        --kept.index;
+                    }
+                }
             }
-            else if (piece != nullptr)
+            else if (piece != nullptr && !it->added)
             {
                 // Restore static bytes except the list link.
                 memcpy(piece, it->bytes, GameAddress::kRoomStaticNextOffset);

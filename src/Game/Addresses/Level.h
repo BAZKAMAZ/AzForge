@@ -67,20 +67,32 @@ namespace Forge
         constexpr size_t kRoomShadowTriangleStride = 0x24;
         constexpr uintptr_t kRoomStaticsOffset = 0x2660;
         constexpr uintptr_t kRoomAddStatic = 0x00412CD0; // __thiscall (room, record, translucent, lit)
+
+        // Room_FreeStatics: __cdecl (head). Releases texture (vtable+0x24), model, then node.
+        constexpr uintptr_t kRoomFreeStatics = 0x00412A00;
         constexpr size_t kRoomStaticSize = 0x60;
         constexpr uintptr_t kRoomStaticFlagsOffset = 0x00;
         constexpr uintptr_t kRoomStaticModelOffset = 0x04;
         constexpr uintptr_t kRoomStaticTextureOffset = 0x08;
-        constexpr uintptr_t kRoomStaticMatrixOffset = 0x10; // 4x4 floats, straight into the node
-        constexpr uintptr_t kRoomStaticBlendOffset = 0x58; // 2 multiplies, else adds
+        constexpr uintptr_t kRoomStaticMatrixOffset = 0x10; // 4x4 floats
+        constexpr uintptr_t kRoomStaticBlendOffset = 0x58;  // 2 = multiply, else add
         constexpr uintptr_t kRoomStaticNextOffset = 0x5C;
         constexpr uint32_t kRoomStaticLitFlag = 0x01;
         constexpr uint32_t kRoomStaticTranslucentFlag = 0x02;
-        constexpr uint32_t kRoomStaticHiddenFlag = 0x04; // set: Scene_SortObjects skips it
+        constexpr uint32_t kRoomStaticHiddenFlag = 0x04; // Scene_SortObjects skips
 
-        // Room ambient sound; Room_Activate starts one per record.
+        // Ambient loops; Room_Activate starts one per record.
         constexpr uintptr_t kRoomLoopSoundsOffset = 0x2664; // stride 0x10
         constexpr uintptr_t kRoomLoopSoundCountOffset = 0x2668;
+
+        // Placement records (ctrls/bonuses/monsters). Room_Activate walks them into Ctrl_Spawn.
+        constexpr uintptr_t kRoomRecordsOffset = 0x2678;
+        constexpr uintptr_t kRoomRecordCountOffset = 0x267C;
+        constexpr uintptr_t kRoomActivate = 0x00412D30;
+
+        // kRoomSpawnsAppend refuses a room without this magic. Room_Free frees via runtime slot.
+        constexpr uint32_t kRoomMagic = 0x9999;
+        constexpr uintptr_t kRecordFreeSlot = 0x00517718; // __cdecl (record)
         constexpr uintptr_t kRoomLoopSoundIdOffset = 0x00;
         constexpr uintptr_t kRoomLoopSoundPositionOffset = 0x04; // three floats
         constexpr size_t kRoomLoopSoundStride = 0x10;
@@ -120,8 +132,10 @@ namespace Forge
         constexpr uintptr_t kRoomCellFlagAOffset = 0x01;
         constexpr uintptr_t kRoomCellFlagBOffset = 0x02;
 
-        // Across the 179 rooms: 'F' and '1' floor, 'I' chain and '|' pipe one column wide,
-        // '-' '=' ladder always two with 'C' its top, and 'A' 'B' 'D' 'E' 'i' 'w' still unnamed.
+        // As the room FILES spell it: 'F' fire, 'I' chain and '|' pipe one column wide, '-' '='
+        // ladder always two with 'C' its top, '1' floor, and 'A' 'B' 'D' 'E' 'w' still unnamed.
+        // The ctrl parsers rewrite the grid as they build it, so at runtime '=' has become '-',
+        // 'i' has become 'I', 't' has become '|', and the chain has written 'P' around its cross.
         constexpr char kRoomCellWall = 'W';
         constexpr char kRoomCellEmpty = ' ';
         constexpr char kRoomCellChain = 'I';

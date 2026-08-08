@@ -166,7 +166,7 @@ typedef enum AmodPlayerPlaceAsk
     AMOD_PLAYER_ASK_RIGHT = 1,   /* ladder right; non-zero -> dx=+1 */
     AMOD_PLAYER_ASK_CLIMB = 2,   /* climbable 'CC' on row or two above */
     AMOD_PLAYER_ASK_FOOTING = 3, /* footing two rows down */
-    AMOD_PLAYER_ASK_PIPE = 4     /* 'PP'; no shipped room has one */
+    AMOD_PLAYER_ASK_PIPE = 4     /* 'PP', which the chain writes around its cross at load */
 } AmodPlayerPlaceAsk;
 
 typedef struct AmodPlayerApi

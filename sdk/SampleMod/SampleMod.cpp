@@ -1,600 +1,915 @@
 #include <ForgeApi.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static const char* StateName(int state)
+using namespace Amod;
+
+struct LeverRecord
 {
-    switch (state)
+    int kind;
+    float column;
+    float row;
+    int once;
+    int on;
+    int isPlate;
+    float slide;            // 0 up and red, 1 down and green; the frames between are the throw
+    char tag[32];
+    char needs[32];
+    char texture[96];
+    char sound[96];
+};
+
+struct DoorRecord
+{
+    int kind;
+    float column;
+    float row;
+    float height;
+    int open;               // 0 shut, 1 opening, 2 open, 3 closing
+    float went;             // how far it has ridden, kept here so a room re-entered finds it so
+    int unlocked;           // the key was spent on it, and it stays open whatever the lever says
+    int shrinks;            // which of the two ways it opens, as the style lever had it
+    char needs[32];
+    char watches[32];       // the lever that opens and shuts it, without any key at all
+    char style[32];         // and the lever that says whether it rides up or shrinks
+};
+
+static int g_leverKind = 0;
+static int g_doorKind = 0;
+
+// A colour belongs to a model, so a fade is a row of models the throw picks its way along
+static const int kHandleSteps = 8;
+
+static AmodModelId g_plate = 0;
+static AmodModelId g_handle[kHandleSteps] = {};
+static const int kDoorSteps = 8;
+static AmodModelId g_door = 0;
+static AmodModelId g_doorStep[kDoorSteps] = {};   // the same door at eight heights, foot in place
+
+static const float kLeverUp = 0.035f;
+static const float kLeverDown = -0.035f;
+static const float kLeverSpeed = 4.0f;
+static const float kDoorSpeed = 0.5f;
+
+static AmodCtrlId g_against = AMOD_CTRL_NONE;
+static int g_againstThisFrame = 0;
+
+static void Face(AmodVertex* into, float halfWidth, float halfHeight, float z, float facing)
+{
+    const float xs[4] = { -halfWidth, halfWidth, halfWidth, -halfWidth };
+    const float ys[4] = { -halfHeight, -halfHeight, halfHeight, halfHeight };
+    const float us[4] = { 0.0f, 1.0f, 1.0f, 0.0f };
+    const float vs[4] = { 1.0f, 1.0f, 0.0f, 0.0f };
+
+    for (int at = 0; at < 4; ++at)
     {
-    case AMOD_PLAYER_STATE_ONFOOT: return "on foot";
-    case AMOD_PLAYER_STATE_LADDER: return "ladder";
-    case AMOD_PLAYER_STATE_CHAIN: return "chain";
-    case AMOD_PLAYER_STATE_PIPE: return "pipe";
+        into[at].position[0] = xs[at];
+        into[at].position[1] = ys[at];
+        into[at].position[2] = z;
+        into[at].normal[0] = 0.0f;
+        into[at].normal[1] = 0.0f;
+        into[at].normal[2] = facing;
+        into[at].uv[0] = us[at];
+        into[at].uv[1] = vs[at];
     }
-    return "?";
 }
 
-static const char* SubName(int sub)
+static AmodModelId BuildBox(const char* name, float halfWidth, float halfHeight, float halfDepth, uint32_t colour)
 {
-    switch (sub)
+    AmodVertex vertices[8] = {};
+    Face(vertices, halfWidth, halfHeight, -halfDepth, -1.0f);
+    Face(vertices + 4, halfWidth, halfHeight, halfDepth, 1.0f);
+
+    static const uint16_t kIndices[] = {
+        0, 1, 2,  0, 2, 3,   2, 1, 0,  3, 2, 0,
+        5, 4, 7,  5, 7, 6,   7, 4, 5,  6, 7, 5,
+        4, 5, 1,  4, 1, 0,   1, 5, 4,  0, 1, 4,
+        3, 2, 6,  3, 6, 7,   6, 2, 3,  7, 6, 3,
+        4, 0, 3,  4, 3, 7,   3, 0, 4,  7, 3, 4,
+        1, 5, 6,  1, 6, 2,   6, 5, 1,  2, 6, 1
+    };
+
+    const AmodModelId made = Mmd::Create(name, Mmd::Mesh(vertices, 8, kIndices, sizeof(kIndices) / sizeof(kIndices[0])));
+
+    if (made != 0)
     {
-    case AMOD_PLAYER_SUB_STILL: return "still";
-    case AMOD_PLAYER_SUB_FALLING: return "falling";
-    case AMOD_PLAYER_SUB_WALK_LEFT: return "walk left";
-    case AMOD_PLAYER_SUB_WALK_RIGHT: return "walk right";
-    case AMOD_PLAYER_SUB_CLIMB_UP: return "climb up";
-    case AMOD_PLAYER_SUB_CLIMB_DOWN: return "climb down";
-    case AMOD_PLAYER_SUB_DROPPED: return "dropped";
+        Mmd::RebuildNormals(made);
+        Mmd::SetColour(made, colour);
     }
-    return "?";
+    return made;
 }
 
-// pl | pl move <x> <y> <z> | pl face <a> | pl kill [crash] | pl live
-static void __cdecl PlayerCommand(int argc, const char** argv, void*)
+static AmodModelId BuildPlate(const char* name, float halfWidth, float halfHeight, uint32_t colour)
 {
-    AmodPlayer player;
-    if (!Amod::Player::Get(player))
+    AmodVertex plate[4] = {};
+    Face(plate, halfWidth, halfHeight, 0.0f, -1.0f);
+
+    static const uint16_t kBothWays[] = { 0, 1, 2,  0, 2, 3,  2, 1, 0,  3, 2, 0 };
+    const AmodModelId made = Mmd::Create(name, Mmd::Mesh(plate, 4, kBothWays, 12));
+
+    if (made != 0)
     {
-        Amod::Console::Printf("pl: %s\n", Amod::LastError());
-        return;
+        Mmd::SetColour(made, colour);
+    }
+    return made;
+}
+
+static AmodModelId CopyModel(const char* name, const char* path, uint32_t colour)
+{
+    const AmodModelId source = Mmd::Load(path);
+    AmodModel about = {};
+
+    if (source == 0 || !Mmd::Get(source, about))
+    {
+        return 0;
     }
 
-    if (argc < 2)
+    AmodVertex vertices[2048];
+    uint16_t indices[4096];
+
+    const int vertexCount = Mmd::ReadVertices(source, 0, vertices, 2048);
+    const int indexCount = Mmd::ReadIndices(source, 0, indices, 4096);
+
+    if (vertexCount <= 0 || indexCount <= 0)
     {
-        Amod::Console::Printf("entity %d  %+.3f %+.3f %+.3f  face %.2f  fall %.3f\n",
-            player.entity, player.position[0], player.position[1], player.position[2],
-            player.facing, player.fallSpeed);
-        Amod::Console::Printf("%s / %s%s%s%s%s\n",
-            StateName(player.state), SubName(player.subState),
-            player.isDead ? " dead" : "",
-            player.isCrashed ? " crashed" : "",
-            player.isFading ? " fading" : "",
-            player.isBurning ? " burning" : "");
-        return;
+        return 0;
     }
 
-    if (strcmp(argv[1], "move") == 0 && argc > 4)
+    const AmodModelId made = Mmd::Create(name,
+        Mmd::Mesh(vertices, vertexCount, indices, indexCount));
+
+    if (made != 0)
     {
-        const float x = static_cast<float>(atof(argv[2]));
-        const float y = static_cast<float>(atof(argv[3]));
-        const float z = static_cast<float>(atof(argv[4]));
-        if (!Amod::Player::SetPosition(x, y, z))
+        Mmd::SetColour(made, colour);
+    }
+    return made;
+}
+
+static void BuildShapes()
+{
+    g_plate = BuildPlate("lever_plate", 0.05f, 0.10f, 0xFF404448);
+
+    for (int at = 0; at < kHandleSteps; ++at)
+    {
+        const float part = static_cast<float>(at) / (kHandleSteps - 1);
+        const uint32_t red = static_cast<uint32_t>(0xD0 + (0x30 - 0xD0) * part);
+        const uint32_t green = static_cast<uint32_t>(0x30 + (0xC0 - 0x30) * part);
+
+        char name[32];
+        snprintf(name, sizeof(name), "lever_%d", at);
+        g_handle[at] = BuildBox(name, 0.035f, 0.022f, 0.05f, 0xFF000000 | (red << 16) | (green << 8) | 0x28);
+    }
+
+    g_door = CopyModel("door_purple", "models/ctrls/door.mmd", 0xFF9040C8);
+
+    AmodVertex source[2048];
+    uint16_t indices[4096];
+
+    const int vertexCount = Mmd::ReadVertices(g_door, 0, source, 2048);
+    const int indexCount = Mmd::ReadIndices(g_door, 0, indices, 4096);
+
+    float foot = 0.0f;
+    for (int at = 0; at < vertexCount; ++at)
+    {
+        foot = at == 0 || source[at].position[1] < foot ? source[at].position[1] : foot;
+    }
+
+    for (int step = 0; step < kDoorSteps; ++step)
+    {
+        const float left = 1.0f - static_cast<float>(step) / (kDoorSteps - 1);
+        AmodVertex shrunk[2048];
+
+        for (int at = 0; at < vertexCount; ++at)
         {
-            Amod::Console::Printf("pl: %s\n", Amod::LastError());
-            return;
+            shrunk[at] = source[at];
+            shrunk[at].position[1] = foot + (source[at].position[1] - foot) * left;
         }
-        Amod::Console::Printf("moved to %+.3f %+.3f %+.3f\n", x, y, z);
-        return;
-    }
 
-    if (strcmp(argv[1], "face") == 0 && argc > 2)
-    {
-        const float facing = static_cast<float>(atof(argv[2]));
-        Amod::Console::Printf(Amod::Player::SetFacing(facing) ? "facing %.2f\n" : "pl: refused\n", facing);
-        return;
-    }
+        char name[32];
+        snprintf(name, sizeof(name), "door_step_%d", step);
+        g_doorStep[step] = Mmd::Create(name,
+            Mmd::Mesh(shrunk, vertexCount, indices, indexCount));
 
-    if (strcmp(argv[1], "kill") == 0)
-    {
-        const bool crashed = argc > 2 && strcmp(argv[2], "crash") == 0;
-        if (!Amod::Player::Kill(crashed))
+        if (g_doorStep[step] != 0)
         {
-            Amod::Console::Printf("pl: %s\n", Amod::LastError());
-            return;
+            Mmd::SetColour(g_doorStep[step], 0xFF9040C8);
         }
-        Amod::Console::Printf("dead%s\n", crashed ? " (crashed)" : "");
-        return;
     }
+}
 
-    if (strcmp(argv[1], "live") == 0)
+static AmodModelId DoorAt(float part)
+{
+    const int step = static_cast<int>(part * (kDoorSteps - 1) + 0.5f);
+    return g_doorStep[step < 0 ? 0 : (step >= kDoorSteps ? kDoorSteps - 1 : step)];
+}
+
+static AmodModelId HandleAt(float slide)
+{
+    const int step = static_cast<int>(slide * (kHandleSteps - 1) + 0.5f);
+    return g_handle[step < 0 ? 0 : (step >= kHandleSteps ? kHandleSteps - 1 : step)];
+}
+
+static void CopyKey(char* into, size_t room, const Data::Block& block, const char* key, const char* fallback)
+{
+    const char* const text = block.IsValid() ? block[key].Text(fallback) : fallback;
+    size_t at = 0;
+    for (; text[at] != '\0' && at + 1 < room; ++at)
     {
-        if (!Amod::Player::Revive())
+        into[at] = text[at];
+    }
+    into[at] = '\0';
+}
+
+static int __cdecl Lever(const AmodCtrlEventInfo* info, void*)
+{
+    LeverRecord* const lever =
+        const_cast<LeverRecord*>(static_cast<const LeverRecord*>(info->record));
+
+    if (info->event == AMOD_CTRL_EVENT_PARSE)
+    {
+        const Data::Block block = Data::Parse(info->text);
+        LeverRecord made = {};
+
+        made.column = block.IsValid() ? block["cell_pos"].Number(0, 20.0f) : 20.0f;
+        made.row = block.IsValid() ? block["cell_pos"].Number(1, 10.0f) : 10.0f;
+        made.once = block.IsValid() ? block["once"].Int(0) : 0;
+        made.on = block.IsValid() ? block["active"].Int(0) : 0;
+        made.slide = made.on != 0 ? 1.0f : 0.0f;
+
+        CopyKey(made.tag, sizeof(made.tag), block, "tag", "");
+        CopyKey(made.needs, sizeof(made.needs), block, "needs", "");
+        CopyKey(made.texture, sizeof(made.texture), block, "texture", "textures/ctrls/restore_plat.tga");
+        CopyKey(made.sound, sizeof(made.sound), block, "sound", "sounds/res_plat_up.wav");
+
+        LeverRecord board = made;
+        board.isPlate = 1;
+        Ctrls::Make(-1, g_leverKind, &board, sizeof(board));
+        Ctrls::Make(-1, g_leverKind, &made, sizeof(made));
+
+        if (block.IsValid())
         {
-            Amod::Console::Printf("pl: %s\n", Amod::LastError());
-            return;
+            block.Free();
         }
-        Amod::Console::Printf("alive\n");
-        return;
+        return 1;
     }
 
-    Amod::Console::Printf("pl [move <x> <y> <z> | face <a> | kill [crash] | live]\n");
-}
-
-static bool g_watching = false;
-static int g_wasState = -1;
-static int g_wasSub = -1;
-static int g_wasDead = -1;
-
-// plwatch -- toggle state/death watch
-static void __cdecl WatchCommand(int, const char**, void*)
-{
-    g_watching = !g_watching;
-    g_wasState = -1;
-    g_wasSub = -1;
-    g_wasDead = -1;
-    Amod::Console::Printf(g_watching ? "watching\n" : "not watching\n");
-}
-
-// life [n]
-static void __cdecl LifeCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
+    if (info->event == AMOD_CTRL_EVENT_BUILD)
     {
-        Amod::Console::Printf("%d live(s)\n", Amod::Player::Lives());
-        return;
-    }
-    const int lives = atoi(argv[1]);
-    Amod::Console::Printf(Amod::Player::SetLives(lives) ? "%d live(s)\n" : "life: %s\n", lives);
-}
+        AmodCtrlBody* const body = info->body;
+        const float lift = lever->isPlate != 0
+            ? 0.0f : kLeverUp + (kLeverDown - kLeverUp) * lever->slide;
 
-// score [add <n> | set <n>]  -- add uses Score_Add; set is raw write
-static void __cdecl ScoreCommand(int argc, const char** argv, void*)
-{
-    if (argc < 3)
-    {
-        Amod::Console::Printf("%d\n", Amod::Player::Score());
-        return;
+        body->name = lever->isPlate != 0 ? "lever_plate" : "lever";
+        body->position[0] = World::ColumnLeft(static_cast<int>(lever->column)) + 0.05f;
+        body->position[1] = World::RowTop(static_cast<int>(lever->row)) - 0.05f + lift;
+        body->position[2] = lever->isPlate != 0 ? 0.045f : 0.055f;   // nearer the camera is greater z
+
+        body->box.structSize = sizeof(body->box);
+        body->box.min[0] = -0.05f; body->box.min[1] = -0.03f; body->box.min[2] = -0.06f;
+        body->box.max[0] = 0.05f;  body->box.max[1] = 0.03f;  body->box.max[2] = 0.06f;
+        body->isSolid = 0;
+
+        body->texture = Textures::Load(lever->texture);
+        body->model = lever->isPlate != 0 ? g_plate : HandleAt(lever->slide);
+        body->tag = lever->isPlate != 0 ? "" : lever->tag;
+        return 1;
     }
 
-    const int points = atoi(argv[2]);
-    if (strcmp(argv[1], "add") == 0)
+    if (info->event == AMOD_CTRL_EVENT_UPDATE)
     {
-        if (!Amod::Player::AddScore(points))
+        if (lever->isPlate != 0)
         {
-            Amod::Console::Printf("score: %s\n", Amod::LastError());
-            return;
+            return 0;
         }
-        Amod::Console::Printf("%+d\n", points);
-        return;
-    }
 
-    if (strcmp(argv[1], "set") == 0)
-    {
-        if (!Amod::Player::SetScore(points))
+        Ctrls::SetTagOn(info->frame->index, lever->on != 0);
+
+        const float wanted = lever->on != 0 ? 1.0f : 0.0f;
+        if (lever->slide != wanted)
         {
-            Amod::Console::Printf("score: %s\n", Amod::LastError());
-            return;
+            const float step = kLeverSpeed * info->frame->delta;
+            lever->slide += lever->slide < wanted ? step : -step;
+            lever->slide = lever->slide < 0.0f ? 0.0f : (lever->slide > 1.0f ? 1.0f : lever->slide);
+
+            Ctrls::SetLook(info->frame->index, HandleAt(lever->slide), 0);
+
+            Ctrls::SetPosition(info->frame->index, info->frame->position[0], World::RowTop(static_cast<int>(lever->row)) - 0.05f +
+                                     kLeverUp + (kLeverDown - kLeverUp) * lever->slide, info->frame->position[2]);
         }
-        Amod::Console::Printf("%d\n", points);
-        return;
+        return 0;
     }
-    Amod::Console::Printf("score [add <n> | set <n>]\n");
+
+    if (info->event != AMOD_CTRL_EVENT_TOUCH || !info->touch->isPlayer || lever->isPlate != 0)
+    {
+        return AMOD_CTRL_TOUCH_HANDLED;
+    }
+    if (lever->once != 0 && lever->on != 0)
+    {
+        return AMOD_CTRL_TOUCH_HANDLED;
+    }
+    if (lever->needs[0] != '\0' && !Inventory::IsCarrying(lever->needs))
+    {
+        return AMOD_CTRL_TOUCH_HANDLED;
+    }
+
+    // Only on the way in, or it would throw itself on every frame he stands against it
+    g_againstThisFrame = 1;
+    if (g_against == info->id)
+    {
+        return AMOD_CTRL_TOUCH_HANDLED;
+    }
+    g_against = info->id;
+
+    // Only the state is set here; the update walks it there, which is what makes it a throw
+    lever->on = lever->on != 0 ? 0 : 1;
+    Ctrls::SetTagOn(info->touch->index, lever->on != 0);
+
+    if (lever->sound[0] != '\0')
+    {
+        Sound::Play(Sound::Load(lever->sound));
+    }
+    return AMOD_CTRL_TOUCH_HANDLED;
 }
 
-// time [seconds]  -- stopwatch
-static void __cdecl TimeCommand(int argc, const char** argv, void*)
+static void MakeDoorsIn(int roomIndex)
 {
-    if (argc < 2)
-    {
-        Amod::Console::Printf("%.2f\n", Amod::World::Elapsed());
-        return;
-    }
-    const float seconds = static_cast<float>(atof(argv[1]));
-    Amod::Console::Printf(Amod::World::SetElapsed(seconds) ? "%.2f\n" : "time: refused\n", seconds);
-}
+    char cells[AMOD_ROOM_COLUMNS * AMOD_ROOM_ROWS] = {};
+    World::Cells(roomIndex, cells, sizeof(cells));
 
-// btime [seconds]  -- bonus countdown
-static void __cdecl BonusTimeCommand(int argc, const char** argv, void*)
-{
-    AmodWorldLevel level;
-    if (!Amod::World::GetLevel(level) || level.isBonus == 0)
+    for (int col = 0; col < AMOD_ROOM_COLUMNS; ++col)
     {
-        Amod::Console::Printf("not a bonus level\n");
-        return;
-    }
-    if (argc < 2)
-    {
-        Amod::Console::Printf("%.2f left\n", Amod::World::TimeLeft());
-        return;
-    }
-    const float seconds = static_cast<float>(atof(argv[1]));
-    Amod::Console::Printf(Amod::World::SetTimeLeft(seconds) ? "%.2f left\n" : "btime: %s\n", seconds);
-}
-
-static void __cdecl OnWorldEvent(const AmodWorldEventInfo* info, void*)
-{
-    if (info->event == AMOD_WORLD_EVENT_TIME_UP)
-    {
-        Amod::Console::Printf("* time up\n");
-    }
-}
-
-static void __cdecl OnPlayerEvent(const AmodPlayerEventInfo* info, void*)
-{
-    switch (info->event)
-    {
-    case AMOD_PLAYER_EVENT_DIED:
-        Amod::Console::Printf("* died%s, %d live(s)\n", info->crashed ? " (fall)" : "", info->lives);
-        break;
-    case AMOD_PLAYER_EVENT_REVIVED:
-        Amod::Console::Printf("* revived\n");
-        break;
-    case AMOD_PLAYER_EVENT_LIVES_CHANGED:
-        Amod::Console::Printf("* lives %d -> %d\n", info->wasLives, info->lives);
-        break;
-    case AMOD_PLAYER_EVENT_SCORE_CHANGED:
-        Amod::Console::Printf("* score %d -> %d\n", info->wasScore, info->score);
-        break;
-    }
-}
-
-static const char* DriverName(AmodPlayerDriver driver)
-{
-    switch (driver)
-    {
-    case AMOD_PLAYER_DRIVER_GAME: return "game";
-    case AMOD_PLAYER_DRIVER_MOD: return "mod";
-    case AMOD_PLAYER_DRIVER_BOTH: return "both";
-    case AMOD_PLAYER_DRIVER_NOBODY: return "nobody";
-    }
-    return "?";
-}
-
-static int g_wasSide = 0;
-static const char* g_playing = "";
-
-// Frameset for current state; null on idle climb (sub-state keeps last dir).
-static const char* FramesetFor(const AmodPlayerFrame* frame, int dirY, bool rising)
-{
-    if (frame->state == AMOD_PLAYER_STATE_LADDER)
-    {
-        return dirY == 0 ? nullptr : (dirY > 0 ? "ladder_up" : "ladder_down");
-    }
-    if (frame->state == AMOD_PLAYER_STATE_CHAIN)
-    {
-        return dirY == 0 ? nullptr : (dirY > 0 ? "chain_up" : "chain_down");
-    }
-    if (frame->state == AMOD_PLAYER_STATE_PIPE)
-    {
-        return "pipe_move";
-    }
-    switch (frame->subState)
-    {
-        // rising -> silent "jump"; "fall" has the land sound
-    case AMOD_PLAYER_SUB_FALLING:
-    case AMOD_PLAYER_SUB_DROPPED: return rising ? "jump" : "fall";
-    case AMOD_PLAYER_SUB_WALK_LEFT:
-    case AMOD_PLAYER_SUB_WALK_RIGHT: return "move";
-    }
-    return "stay";
-}
-
-// Anim_Play restarts every call; only fire on change.
-static void PlayAnim(const AmodPlayerFrame* frame, int dirY)
-{
-    static float wasY = 0.0f;
-    AmodPlayer player;
-    if (!Amod::Player::Get(player) || player.entity < 0)
-    {
-        return;
-    }
-
-    // frame->previousPosition equals position here; keep own wasY for rise/fall.
-    const bool rising = player.position[1] > wasY;
-    wasY = player.position[1];
-
-    const char* const frameset = FramesetFor(frame, dirY, rising);
-    if (frameset == nullptr)
-    {
-        if (g_playing[0] != '\0')
+        for (int row = 0; row < AMOD_ROOM_ROWS; ++row)
         {
-            Amod::Mmd::StopEntityAnim(player.entity);
-            g_playing = "";
-        }
-        return;
-    }
-
-    if (strcmp(frameset, g_playing) != 0 && Amod::Mmd::PlayEntityAnim(player.entity, frameset))
-    {
-        g_playing = frameset;
-    }
-}
-
-static int g_wantDirX = 1;
-
-// Face movement dir; on climbable face camera (0).
-static void TurnTowards(const AmodPlayerFrame* frame, int dirX, float delta)
-{
-    if (dirX != 0)
-    {
-        g_wantDirX = dirX;
-    }
-    const bool climbing = frame->state == AMOD_PLAYER_STATE_LADDER || frame->state == AMOD_PLAYER_STATE_CHAIN;
-    const float want = climbing ? 0.0f : (g_wantDirX > 0 ? AMOD_PLAYER_FACING_RIGHT : AMOD_PLAYER_FACING_LEFT);
-    float gap = want - frame->facing;
-
-    while (gap > 3.14159265f) { gap -= 6.28318531f; }
-    while (gap < -3.14159265f) { gap += 6.28318531f; }
-
-    if (gap > -0.01f && gap < 0.01f)
-    {
-        Amod::Player::SetFacing(want);
-        return;
-    }
-
-    const float step = 12.0f * delta;
-    const float room = gap > 0.0f ? gap : -gap;
-    Amod::Player::SetFacing(frame->facing + (gap > 0.0f ? 1.0f : -1.0f) * (step < room ? step : room));
-}
-
-static void __cdecl DriveHandler(const AmodPlayerFrame* frame, void*)
-{
-    int dirX = 0;
-    if (Amod::Input::IsDown(AMOD_KEY_RIGHT))
-    {
-        dirX = 1;
-    }
-    else if (Amod::Input::IsDown(AMOD_KEY_LEFT))
-    {
-        dirX = -1;
-    }
-
-    int dirY = 0;
-    if (Amod::Input::IsDown(AMOD_KEY_UP))
-    {
-        dirY = 1;
-    }
-    else if (Amod::Input::IsDown(AMOD_KEY_DOWN))
-    {
-        dirY = -1;
-    }
-
-    const int side = Amod::Player::Step(dirX, dirY, Amod::Input::IsDown(AMOD_KEY_SPACE), frame->delta);
-    PlayAnim(frame, dirY);
-    TurnTowards(frame, dirX, frame->delta);
-    if (side != 0)
-    {
-        Amod::World::CrossRoom(side);
-    }
-    if (side != g_wasSide)
-    {
-        g_wasSide = side;
-    }
-}
-
-// drive [mod | both | nobody | game]
-static void __cdecl DriveCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        Amod::Console::Printf("driver: %s\n", DriverName(Amod::Player::Driver()));
-        return;
-    }
-
-    g_wasSide = 0;
-    bool took = false;
-    if (strcmp(argv[1], "mod") == 0)
-    {
-        took = Amod::Player::Drive(&DriveHandler);
-    }
-    else if (strcmp(argv[1], "both") == 0)
-    {
-        took = Amod::Player::DriveAlongside(&DriveHandler);
-    }
-    else if (strcmp(argv[1], "nobody") == 0)
-    {
-        took = Amod::Player::Freeze();
-    }
-    else if (strcmp(argv[1], "game") == 0)
-    {
-        took = Amod::Player::Release();
-    }
-    else
-    {
-        Amod::Console::Printf("drive [mod | both | nobody | game]\n");
-        return;
-    }
-
-    if (!took)
-    {
-        Amod::Console::Printf("drive: %s\n", Amod::LastError());
-        return;
-    }
-
-    Amod::Console::Printf("driver: %s\n", DriverName(Amod::Player::Driver()));
-}
-
-static char Printable(char cell)
-{
-    if (cell == ' ')
-    {
-        return ' ';
-    }
-    return (cell > 32 && cell < 127) ? cell : '?';
-}
-
-static void WidePlace(const AmodPlayerPlace& place, int room)
-{
-    for (int row = 0; row < place.rows; ++row)
-    {
-        char line[64] = {};
-        int at = 0;
-        for (int column = -6; column < place.columns + 6; ++column)
-        {
-            if (column == 0 || column == place.columns)
+            if (cells[row * AMOD_ROOM_COLUMNS + col] != 'Q')
             {
-                line[at++] = '|';
+                continue;
             }
-            const bool him = column == place.atColumn && row == place.atRow;
-            line[at++] = him ? '[' : ' ';
-            line[at++] = Printable(Amod::World::Cell(room, place.column + column, place.row + row));
-            line[at++] = him ? ']' : ' ';
+
+            int run = 0;
+            while (row + run < AMOD_ROOM_ROWS &&
+                   cells[(row + run) * AMOD_ROOM_COLUMNS + col] == 'Q')
+            {
+                ++run;
+            }
+
+            // Struck out of our copy, or the run is found again from its second cell
+            for (int at = 0; at < run; ++at)
+            {
+                cells[(row + at) * AMOD_ROOM_COLUMNS + col] = ' ';
+            }
+
+            DoorRecord made = {};
+            made.column = static_cast<float>(col);
+            made.row = static_cast<float>(row);
+            made.height = static_cast<float>(run);
+
+            const Data::Block nothing;
+            CopyKey(made.needs, sizeof(made.needs), nothing, "", "key_e");
+            CopyKey(made.watches, sizeof(made.watches), nothing, "", "door_lever");
+            CopyKey(made.style, sizeof(made.style), nothing, "", "e_bridge");
+            Ctrls::Make(roomIndex, g_doorKind, &made, sizeof(made));
         }
-        Amod::Console::Printf("%2d %s\n", place.row + row, line);
     }
 }
 
-// place | place cell | place wide
-static void __cdecl PlaceCommand(int argc, const char** argv, void*)
+static int __cdecl PurpleDoor(const AmodCtrlEventInfo* info, void*)
 {
-    AmodPlayerPlace place;
-    if (!Amod::Player::GetPlace(place))
+    DoorRecord* const door = const_cast<DoorRecord*>(static_cast<const DoorRecord*>(info->record));
+
+    if (info->event == AMOD_CTRL_EVENT_BUILD)
     {
-        Amod::Console::Printf("place: %s\n", Amod::LastError());
-        return;
+        AmodCtrlBody* const body = info->body;
+        const float tall = door->height * 0.1f;
+
+        body->name = "purple_door";
+        body->position[0] = World::ColumnLeft(static_cast<int>(door->column)) + 0.05f;
+        body->position[1] = World::RowTop(static_cast<int>(door->row + door->height - 1.0f)) - 0.05f + door->went;
+        body->position[2] = 0.05f;
+
+        // Box_ForDoor's own shape: the bottom cell is the origin and it grows up from there
+        body->box.structSize = sizeof(body->box);
+        body->box.min[0] = -0.05f; body->box.min[1] = -0.05f; body->box.min[2] = -0.05f;
+        body->box.max[0] = 0.05f;  body->box.max[1] = tall - 0.05f; body->box.max[2] = 0.25f;
+
+        body->isSolid = door->open == 0 ? 1 : 0;
+        body->model = g_door;
+        body->texture = Textures::Load("textures/ctrls/door_white.tga");
+        return 1;
     }
 
-    const bool byCell = argc > 1 && strcmp(argv[1], "cell") == 0;
-    if (argc > 1 && strcmp(argv[1], "wide") == 0)
+    if (info->event == AMOD_CTRL_EVENT_UPDATE)
     {
-        WidePlace(place, Amod::World::CurrentRoom());
-        return;
-    }
+        const float tall = door->height * 0.1f;
+        AmodCtrl thrown;
 
-    const int room = Amod::World::CurrentRoom();
-    Amod::Console::Printf("col %d row %d  at %d,%d\n", place.column, place.row, place.atColumn, place.atRow);
+        const int watch = Ctrls::FindByTag(door->watches);
+        const bool wanted = door->unlocked != 0 ||
+            (watch >= 0 && Ctrls::Get(watch, thrown) && thrown.tagOn != 0);
 
-    for (int row = 0; row < place.rows; ++row)
-    {
-        char line[32] = {};
-        int at = 0;
-        for (int column = 0; column < place.columns; ++column)
+        // Which way it goes is asked while it is shut, so it does not change halfway through
+        if (door->open == 0)
         {
-            const char mine = byCell
-                ? Amod::World::Cell(room, place.column + column, place.row + row)
-                : place.cells[row * place.columns + column];
-            const bool him = column == place.atColumn && row == place.atRow;
-            line[at++] = him ? '[' : ' ';
-            line[at++] = Printable(mine);
-            line[at++] = him ? ']' : ' ';
+            const int style = Ctrls::FindByTag(door->style);
+            door->shrinks = style >= 0 && Ctrls::Get(style, thrown) && thrown.tagOn != 0 ? 1 : 0;
         }
-        Amod::Console::Printf("%2d %s\n", place.row + row, line);
+
+        if (wanted && door->open != 2)
+        {
+            door->open = 1;
+            Ctrls::SetTouchable(info->frame->index, false);
+        }
+        else if (!wanted && door->open != 0)
+        {
+            door->open = 3;
+        }
+
+        if (door->open == 1 || door->open == 3)
+        {
+            const float step = kDoorSpeed * info->frame->delta;
+            door->went += door->open == 1 ? step : -step;
+
+            if (door->went >= tall) { door->went = tall; door->open = 2; }
+            if (door->went <= 0.0f)
+            {
+                door->went = 0.0f;
+                door->open = 0;
+                Ctrls::SetTouchable(info->frame->index, true);
+            }
+        }
+
+        const float part = tall > 0.0f ? door->went / tall : 0.0f;
+        const float foot = World::RowTop(static_cast<int>(door->row + door->height - 1.0f)) - 0.05f;
+
+        if (door->shrinks != 0)
+        {
+            AmodBox box = {};
+            box.structSize = sizeof(box);
+            box.min[0] = -0.05f; box.min[1] = -0.05f; box.min[2] = -0.05f;
+            box.max[0] = 0.05f;  box.max[1] = tall * (1.0f - part) - 0.05f; box.max[2] = 0.25f;
+
+            Ctrls::SetLook(info->frame->index, DoorAt(part), 0);
+            Ctrls::SetBox(info->frame->index, box);
+            Ctrls::SetPosition(info->frame->index, info->frame->position[0], foot, info->frame->position[2]);
+        }
+        else
+        {
+            Ctrls::SetLook(info->frame->index, g_door, 0);
+            Ctrls::SetPosition(info->frame->index, info->frame->position[0], foot + door->went, info->frame->position[2]);
+        }
+        return 0;
     }
 
-    if (byCell)
+    if (info->event != AMOD_CTRL_EVENT_TOUCH || !info->touch->isPlayer || door->open != 0)
     {
-        return;
+        return AMOD_CTRL_TOUCH_HANDLED;
+    }
+    if (!Inventory::IsCarrying(door->needs))
+    {
+        return AMOD_CTRL_TOUCH_HANDLED;
     }
 
-    Amod::Console::Printf("L %d  R %d  climb %d  foot %d  pipe %d\n",
-        Amod::Player::Ask(AMOD_PLAYER_ASK_LEFT),
-        Amod::Player::Ask(AMOD_PLAYER_ASK_RIGHT),
-        Amod::Player::Ask(AMOD_PLAYER_ASK_CLIMB),
-        Amod::Player::Ask(AMOD_PLAYER_ASK_FOOTING),
-        Amod::Player::Ask(AMOD_PLAYER_ASK_PIPE));
+    const int slot = Inventory::SlotOf(door->needs);
+    if (slot >= 0)
+    {
+        Inventory::Clear(slot);
+    }
+
+    door->unlocked = 1;
+    door->open = 1;
+    Ctrls::SetTouchable(info->touch->index, false);
+    Sound::Play(Sound::Load("sounds/res_plat_down.wav"));
+    return AMOD_CTRL_TOUCH_HANDLED;
 }
 
-static int __cdecl LadderHandler(const AmodPlayerFrame* frame, void*)
+static void __cdecl OnWorld(const AmodWorldEventInfo* info, void*)
 {
-    const int dirY = Amod::Input::IsDown(AMOD_KEY_UP) ? 1 : (Amod::Input::IsDown(AMOD_KEY_DOWN) ? -1 : 0);
-    if (dirY != 0)
+    if (info->event == AMOD_WORLD_EVENT_LEVEL_LOADED)
     {
-        Amod::Player::SetPosition(frame->position[0],
-            frame->position[1] + dirY * 0.6f * frame->delta,
-            frame->position[2]);
+        for (int room = 0; room < World::RoomCount(); ++room)
+        {
+            MakeDoorsIn(room);
+        }
     }
-    PlayAnim(frame, dirY);
-    TurnTowards(frame, 0, frame->delta);
-    return 1;
 }
 
-static int g_refused = 0;
+static float g_swing = 0.0f;
 
-static int __cdecl DeathHandler(const AmodPlayerDeathInfo* info, void*)
+static void __cdecl DriveHandler(const AmodCtrlFrame* frame, void*)
 {
-    ++g_refused;
-    Amod::Console::Printf("* refuse death %d (%d)\n", info->kind, g_refused);
-    return 1;
+    g_swing += frame->delta;
+
+    const float wave = g_swing - static_cast<int>(g_swing);
+    const float step = (wave < 0.5f ? wave : 1.0f - wave) * 0.4f - 0.1f;
+
+    Ctrls::SetPosition(frame->index, frame->position[0] + step * frame->delta, frame->position[1], frame->position[2]);
 }
 
-static bool g_standing = false;
+static int g_eatTouch = 0;
+static int g_touchedThisFrame = 0;
+static int g_wasToucher = -1;
+static int g_wasSide = 0;
 
-// nodie -- toggle death refuse
-static void __cdecl NoDieCommand(int, const char**, void*)
+// Every overlapping frame is a call, so only a changed meeting is worth a line
+static AmodCtrlTouchResult __cdecl TouchHandler(const AmodCtrlTouchInfo* info, void* user)
 {
-    if (g_standing)
+    g_touchedThisFrame = 1;
+
+    if (info->toucher != g_wasToucher || info->side != g_wasSide)
     {
-        Amod::Player::ClearDeathHandler();
-        g_standing = false;
-        Amod::Console::Printf("deaths on; refused %d\n", g_refused);
-        return;
+        static const char* const kSides[] = { "?", "above", "below", "left", "right" };
+        Console::Printf("%s met %s from %s\n", info->name,
+            info->isPlayer ? "the player" : info->toucherName,
+            kSides[info->side >= 0 && info->side <= 4 ? info->side : 0]);
+
+        g_wasToucher = info->toucher;
+        g_wasSide = info->side;
     }
-    if (!Amod::Player::SetDeathHandler(&DeathHandler))
-    {
-        Amod::Console::Printf("nodie: %s\n", Amod::LastError());
-        return;
-    }
-    g_standing = true;
-    g_refused = 0;
-    Amod::Console::Printf("deaths refused\n");
+
+    const int* const eat = static_cast<const int*>(user);
+    return eat != nullptr && *eat != 0 ? AMOD_CTRL_TOUCH_HANDLED : AMOD_CTRL_TOUCH_DEFAULT;
 }
 
-static int g_stateTaken = -1;
+static void Say(bool done, const char* said)
+{
+    Console::Printf(done ? "%s\n" : "ctrl: %s\n", done ? said : LastError());
+}
 
-// state [ladder | game]
-static void __cdecl StateCommand(int argc, const char** argv, void*)
+static void __cdecl CtrlCommand(int argc, const char** argv, void*)
 {
     if (argc < 2)
     {
-        Amod::Console::Printf("%s\n",
-            g_stateTaken < 0 ? "all game" : "ladder = mod");
+        const int total = Ctrls::Count();
+        Console::Printf("%d ctrl(s)\n", total);
+
+        for (int at = 0; at < total; ++at)
+        {
+            AmodCtrl ctrl;
+            if (Ctrls::Get(at, ctrl))
+            {
+                Console::Printf("  %2d #%-4u %-14s cell %2d %2d  %-12s %s %s\n",
+                    at, ctrl.id, ctrl.name, ctrl.column, ctrl.row, ctrl.tag,
+                    ctrl.tag[0] == '\0' ? " " : (ctrl.tagOn ? "on " : "off"),
+                    ctrl.isHidden ? "hidden" : "");
+            }
+        }
         return;
     }
-    if (strcmp(argv[1], "ladder") == 0)
+
+    if (strcmp(argv[1], "room") == 0 && argc > 2)
     {
-        if (!Amod::Player::SetStateHandler(AMOD_PLAYER_STATE_LADDER, &LadderHandler))
+        const int where = atoi(argv[2]);
+
+        if (argc > 5)
         {
-            Amod::Console::Printf("state: %s\n", Amod::LastError());
+            Say(Ctrls::SetPlacementFloat(atoi(argv[3]), argv[4],
+                                               static_cast<float>(atof(argv[5])), where), argv[4]);
             return;
         }
-        g_stateTaken = AMOD_PLAYER_STATE_LADDER;
-        Amod::Console::Printf("ladder = mod\n");
+
+        const int held = Ctrls::PlacementCount(where);
+        Console::Printf("room %d holds %d placement(s)\n", where, held);
+
+        for (int at = 0; at < held; ++at)
+        {
+            AmodCtrlPlacement what;
+            if (Ctrls::GetPlacement(at, what, where))
+            {
+                Console::Printf("  %2d #%-4u %-14s %s\n", at, what.id, what.kindName, what.tag);
+            }
+        }
         return;
     }
-    if (strcmp(argv[1], "game") == 0)
+
+    if (strcmp(argv[1], "id") == 0 && argc > 2)
     {
-        Amod::Player::ClearStateHandler(AMOD_PLAYER_STATE_LADDER);
-        g_stateTaken = -1;
-        Amod::Console::Printf("ladder = game\n");
+        const AmodCtrlId id = static_cast<AmodCtrlId>(atoi(argv[2]));
+        const int room = Ctrls::RoomOf(id);
+        const int index = Ctrls::IndexOf(id);
+        AmodCtrl ctrl;
+
+        if (room < 0)
+        {
+            Console::Printf("#%u means nothing\n", id);
+        }
+        else if (index < 0)
+        {
+            Console::Printf("#%u is in room %d, not standing\n", id, room);
+        }
+        else if (Ctrls::Get(index, ctrl))
+        {
+            Console::Printf("#%u is %s, ctrl %d of room %d\n", id, ctrl.name, index, room);
+        }
         return;
     }
-    Amod::Console::Printf("state [ladder | game]\n");
+
+    if (strcmp(argv[1], "tag") == 0 && argc > 2)
+    {
+        const int found = Ctrls::FindByTag(argv[2]);
+        AmodCtrl wearer;
+
+        if (found >= 0 && Ctrls::Get(found, wearer))
+        {
+            Console::Printf("%s is %s, worn by %s (ctrl %d)\n",
+                                  argv[2], wearer.tagOn ? "on" : "off", wearer.name, found);
+        }
+        else
+        {
+            Console::Printf("nothing here wears %s\n", argv[2]);
+        }
+        return;
+    }
+
+    // A thing of the game's, taken whole: its mechanic stays, and the mod hears it alongside
+    if (strcmp(argv[1], "borrow") == 0 && argc > 3)
+    {
+        char block[512];
+        snprintf(block, sizeof(block),
+            "$restore_plat\n{\n  $origin { $cell_pos %s %s }\n"
+            "  $model \"models/ctrls/restore_plat.mmd\"\n"
+            "  $texture \"textures/ctrls/restore_plat.tga\"\n}\n", argv[2], argv[3]);
+
+        const AmodCtrlId id = Ctrls::Borrow(-1, block,
+            [](const AmodCtrlEventInfo* info, void*) -> int
+            {
+                if (info->event == AMOD_CTRL_EVENT_TOUCH && info->touch->isPlayer)
+                {
+                    Console::Printf("#%u was stood on\n", info->id);
+                }
+                return AMOD_CTRL_TOUCH_DEFAULT;
+            });
+
+        Console::Printf(id != AMOD_CTRL_NONE ? "borrowed #%u\n" : "ctrl: %s\n", id != AMOD_CTRL_NONE ? id : 0);
+        return;
+    }
+
+    if (strcmp(argv[1], "lever") == 0 && argc > 3)
+    {
+        LeverRecord lever = {};
+        lever.column = static_cast<float>(atoi(argv[2]));
+        lever.row = static_cast<float>(atoi(argv[3]));
+
+        const Data::Block nothing;
+        CopyKey(lever.tag, sizeof(lever.tag), nothing, "", argc > 4 ? argv[4] : "e_bridge");
+        CopyKey(lever.texture, sizeof(lever.texture), nothing, "", "textures/ctrls/restore_plat.tga");
+        CopyKey(lever.sound, sizeof(lever.sound), nothing, "", "sounds/res_plat_up.wav");
+
+        LeverRecord board = lever;
+        board.isPlate = 1;
+        Ctrls::Make(-1, g_leverKind, &board, sizeof(board));
+
+        const AmodCtrlId id = Ctrls::Make(-1, g_leverKind, &lever, sizeof(lever));
+        Console::Printf(id != AMOD_CTRL_NONE ? "lever #%u for '%s'\n" : "ctrl: %s\n",
+                              id != AMOD_CTRL_NONE ? id : 0, lever.tag);
+        return;
+    }
+
+    // Its models out of the room, then its cells, which is what it was ever climbed by
+    if (strcmp(argv[1], "strip") == 0 && argc > 3)
+    {
+        const int col = atoi(argv[2]);
+        const int row = atoi(argv[3]);
+        int taken = 0;
+
+        // Backwards, because taking one out moves the numbers of everything after it up
+        for (int at = World::StaticCount() - 1; at >= 0; --at)
+        {
+            AmodRoomStatic piece;
+            if (!World::GetStatic(at, piece))
+            {
+                continue;
+            }
+
+            const int pieceCol = World::ColumnAt(piece.matrix[12]);
+            const int pieceRow = World::RowAt(piece.matrix[13]);
+
+            if (pieceCol >= col && pieceCol <= col + 1 && pieceRow >= row && pieceRow < row + 8)
+            {
+                taken += World::RemoveStatic(at) ? 1 : 0;
+            }
+        }
+
+        for (int at = row; at < row + 8 && at < AMOD_ROOM_ROWS; ++at)
+        {
+            World::SetCell(col, at, ' ');
+            World::SetCell(col + 1, at, ' ');
+        }
+
+        Console::Printf("%d model(s) gone\n", taken);
+        return;
+    }
+
+    if (strcmp(argv[1], "new") == 0 && argc > 3)
+    {
+        char block[512];
+
+        if (argc > 4 && strcmp(argv[4], "ladder") == 0)
+        {
+            const int col = atoi(argv[2]);
+            const int row = atoi(argv[3]);
+            char grid[AMOD_ROOM_COLUMNS * AMOD_ROOM_ROWS] = {};
+
+            if (col < 0 || col + 1 >= AMOD_ROOM_COLUMNS)
+            {
+                Console::Printf("a ladder wants two columns\n");
+                return;
+            }
+
+            for (int at = row; at < row + 8 && at < AMOD_ROOM_ROWS; ++at)
+            {
+                const char piece = at == row + 7 ? '=' : '-';   // the marked one leaves an entity
+                grid[at * AMOD_ROOM_COLUMNS + col] = piece;
+                grid[at * AMOD_ROOM_COLUMNS + col + 1] = piece;
+            }
+
+            snprintf(block, sizeof(block),
+                "$ladder\n{\n  $model \"models/ctrls/ladder.mmd\"\n"
+                "  $texture \"textures/ctrls/ladder.tga\"\n}\n");
+
+            Say(Ctrls::CreateOn(block, grid, sizeof(grid)) != 0, "a ladder stands");
+            return;
+        }
+
+        snprintf(block, sizeof(block),
+            "$restore_plat\n{\n  $alight 0\n  $origin { $cell_pos %s %s }\n"
+            "  $model \"models/ctrls/restore_plat.mmd\"\n"
+            "  $texture \"textures/ctrls/restore_plat.tga\"\n"
+            "  $fall_speed 0.3\n  $elevate_speed 0.5\n  $fall_dist 12\n}\n", argv[2], argv[3]);
+
+        Say(Ctrls::Create(block) > 0, "made");
+        return;
+    }
+
+    const int index = atoi(argv[1]);
+    AmodCtrl ctrl;
+    if (!Ctrls::Get(index, ctrl))
+    {
+        Console::Printf("ctrl: %s\n", LastError());
+        return;
+    }
+
+    if (argc == 2)
+    {
+        Console::Printf("%s at %+.3f %+.3f, cell %d %d\n",
+            ctrl.name, ctrl.position[0], ctrl.position[1], ctrl.column, ctrl.row);
+
+        for (int at = 0; at < Ctrls::PropertyCount(index); ++at)
+        {
+            const char* const key = Ctrls::PropertyNameAt(index, at);
+            AmodValue value = {};
+
+            if (Ctrls::GetProperty(index, key, value))
+            {
+                Console::Printf("  %-14s %.3f\n", key,
+                    value.kind == AMOD_VALUE_FLOAT ? value.numbers[0]
+                                                   : static_cast<float>(value.integer));
+            }
+        }
+        return;
+    }
+
+    if (strcmp(argv[2], "drive") == 0)  { Say(Ctrls::Drive(index, &DriveHandler), "driven"); return; }
+    if (strcmp(argv[2], "freeze") == 0) { Say(Ctrls::Freeze(index), "frozen"); return; }
+    if (strcmp(argv[2], "game") == 0)   { Say(Ctrls::Release(index), "given back"); return; }
+    if (strcmp(argv[2], "remove") == 0) { Say(Ctrls::Remove(index), "taken away"); return; }
+    if (strcmp(argv[2], "hide") == 0)   { Say(Ctrls::SetHidden(index, true), "hidden"); return; }
+    if (strcmp(argv[2], "show") == 0)   { Say(Ctrls::SetHidden(index, false), "shown"); return; }
+
+    // "eat" answers HANDLED, so the thing's own handler never runs and it stops doing its job
+    if (strcmp(argv[2], "touch") == 0 || strcmp(argv[2], "eat") == 0 || strcmp(argv[2], "deaf") == 0)
+    {
+        g_eatTouch = strcmp(argv[2], "eat") == 0 ? 1 : 0;
+
+        Say(strcmp(argv[2], "deaf") == 0 ? Ctrls::OnTouch(index, nullptr)
+                                         : Ctrls::OnTouch(index, &TouchHandler, &g_eatTouch),
+            argv[2]);
+        return;
+    }
+
+    // Hung on the id, not the entity: the entity is freed the moment the room is left
+    if (strcmp(argv[2], "needs") == 0 && argc > 3)
+    {
+        const Data::Block lock = Data::On(reinterpret_cast<void*>(ctrl.id));
+        if (lock.IsValid())
+        {
+            lock["needs"].Set(argv[3]);
+        }
+        Say(lock.IsValid(), argv[3]);
+        return;
+    }
+
+    if (strcmp(argv[2], "unlock") == 0)
+    {
+        Data::Detach(reinterpret_cast<void*>(ctrl.id));
+        Say(Ctrls::Release(index), "free again");
+        return;
+    }
+
+    if (strcmp(argv[2], "tagas") == 0 && argc > 3)
+    {
+        Say(Ctrls::SetTag(index, argv[3]), argv[3]);
+        return;
+    }
+
+    if (strcmp(argv[2], "tagon") == 0 && argc > 3)
+    {
+        Say(Ctrls::SetTagOn(index, atoi(argv[3]) != 0), argv[3]);
+        return;
+    }
+
+    if (argc < 4)
+    {
+        Console::Printf("ctrl <n> <key> <value>\n");
+        return;
+    }
+
+    if (strcmp(argv[2], "box") == 0 && argc > 9)
+    {
+        AmodBox box = {};
+        box.structSize = sizeof(box);
+
+        for (int axis = 0; axis < 3; ++axis)
+        {
+            box.min[axis] = static_cast<float>(atof(argv[3 + axis]));
+            box.max[axis] = static_cast<float>(atof(argv[6 + axis]));
+        }
+
+        Say(Ctrls::SetBox(index, box), "box set");
+        return;
+    }
+
+    // color wants four numbers, so as many as were typed are sent
+    AmodValue value = {};
+    value.kind = AMOD_VALUE_FLOAT;
+    value.count = 0;
+
+    for (int at = 3; at < argc && value.count < 4; ++at, ++value.count)
+    {
+        value.numbers[value.count] = static_cast<float>(atof(argv[at]));
+    }
+
+    Say(Ctrls::SetProperty(index, argv[2], value), argv[2]);
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
 {
-    if (!Amod::Attach(api))
+    if (!Attach(api))
     {
         return AMOD_ERROR_API_VERSION;
     }
 
-    Amod::Console::AddCommand("pl", &PlayerCommand);
-    Amod::Console::AddCommand("plwatch", &WatchCommand);
-    Amod::Console::AddCommand("life", &LifeCommand);
-    Amod::Console::AddCommand("score", &ScoreCommand);
-    Amod::Console::AddCommand("time", &TimeCommand);
-    Amod::Console::AddCommand("btime", &BonusTimeCommand);
-    Amod::Console::AddCommand("drive", &DriveCommand);
-    Amod::Console::AddCommand("place", &PlaceCommand);
-    Amod::Console::AddCommand("state", &StateCommand);
-    Amod::Console::AddCommand("nodie", &NoDieCommand);
+    Console::AddCommand("ctrl", &CtrlCommand);
+    BuildShapes();
 
-    Amod::World::OnEvent(AMOD_WORLD_EVENT_TIME_UP, &OnWorldEvent);
-    Amod::Player::On(AMOD_PLAYER_EVENT_DIED, &OnPlayerEvent);
-    Amod::Player::On(AMOD_PLAYER_EVENT_REVIVED, &OnPlayerEvent);
-    Amod::Player::On(AMOD_PLAYER_EVENT_LIVES_CHANGED, &OnPlayerEvent);
-    Amod::Player::On(AMOD_PLAYER_EVENT_SCORE_CHANGED, &OnPlayerEvent);
+    g_leverKind = Ctrls::RegisterKind("lever", &Lever);
+    g_doorKind = Ctrls::RegisterKind("purple_door", &PurpleDoor);
+    World::OnEvent(AMOD_WORLD_EVENT_LEVEL_LOADED, &OnWorld);
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
-    AmodPlayer player;
-    if (!g_watching || !Amod::Player::Get(player))
+    if (g_touchedThisFrame == 0)
     {
-        return;
+        g_wasToucher = -1;
+        g_wasSide = 0;
     }
-    if (player.state == g_wasState && player.subState == g_wasSub && player.isDead == g_wasDead)
+    g_touchedThisFrame = 0;
+
+    if (g_againstThisFrame == 0)
     {
-        return;
+        g_against = AMOD_CTRL_NONE;
     }
-    Amod::Console::Printf("%s / %s%s  %+.3f %+.3f  face %+.2f\n",
-        StateName(player.state), SubName(player.subState),
-        player.isDead ? " DEAD" : "",
-        player.position[0], player.position[1], player.facing);
-    g_wasState = player.state;
-    g_wasSub = player.subState;
-    g_wasDead = player.isDead;
+    g_againstThisFrame = 0;
+
+    // Anything the mod has locked stands still until its item is carried
+    const int total = Ctrls::Count();
+    for (int at = 0; at < total; ++at)
+    {
+        AmodCtrl ctrl;
+        if (!Ctrls::Get(at, ctrl))
+        {
+            continue;
+        }
+
+        const Data::Block lock = Data::Find(reinterpret_cast<void*>(ctrl.id));
+        if (!lock.IsValid() || !lock.Has("needs"))
+        {
+            continue;
+        }
+
+        const bool carried = Inventory::IsCarrying(lock["needs"].Text());
+        const bool held = Ctrls::Driver(at) == AMOD_CTRL_DRIVER_NOBODY;
+
+        if (carried && held)
+        {
+            Ctrls::Release(at);
+        }
+        else if (!carried && !held)
+        {
+            Ctrls::Freeze(at);
+        }
+    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

@@ -111,6 +111,10 @@ namespace Forge
     constexpr uint8_t kMonsterKillPrologue[] =
     { 0x83, 0xEC, 0x0C, 0x56, 0x8B, 0x74, 0x24, 0x14 };
 
+    // Entities_ParseFile: SUB ESP,0x44 / MOV EAX,[0x4fd650] → 8. __cdecl (room, cells, text).
+    constexpr uint8_t kEntitiesParseFilePrologue[] =
+    { 0x83, 0xEC, 0x44, 0xA1, 0x50, 0xD6, 0x4F, 0x00 };
+
     // Monster_ParseSpawn: SUB ESP,0x15c → 6, one instruction. __cdecl.
     constexpr uint8_t kMonsterParseSpawnPrologue[] =
     { 0x81, 0xEC, 0x5C, 0x01, 0x00, 0x00 };

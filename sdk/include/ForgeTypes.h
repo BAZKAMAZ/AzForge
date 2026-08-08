@@ -4,13 +4,12 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define AMOD_API_VERSION                                            63
+#define AMOD_API_VERSION                                            81
 
 // Offsets are fixed at build time
 #ifdef __cplusplus
 #define AMOD_LAST_FIELD(table, field, at)                           \
-    static_assert(offsetof(table, field) == (at),                   \
-                  #table ": fields are appended, never inserted - " #field " has moved")
+    static_assert(offsetof(table, field) == (at), #table ": fields are appended, never inserted - " #field " has moved")
 #else
 #define AMOD_LAST_FIELD(table, field, at)
 #endif

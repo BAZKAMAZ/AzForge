@@ -344,9 +344,12 @@ typedef struct AmodWorldApi
     /* Enter room on that side (Player::Step result); places player at far edge. */
     int(__cdecl* CrossRoom)(AmodMod mod, int side);
 
+    /* Remove a static decoration (ladder/fire models); indices after it shift. Final for the level. */
+    int(__cdecl* RemoveStatic)(AmodMod mod, int roomIndex, int index);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, CrossRoom, 0xBC);
+AMOD_LAST_FIELD(AmodWorldApi, RemoveStatic, 0xC0);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -524,6 +527,13 @@ namespace Amod
             return g_world != nullptr && g_world->AddStatic != nullptr
                 ? g_world->AddStatic(g_self, roomIndex, &what)
                 : -1;
+        }
+
+        /* Out of the room for good, models and all. Everything after it moves up one number. */
+        inline bool                                                 RemoveStatic(int index, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->RemoveStatic != nullptr &&
+                g_world->RemoveStatic(g_self, roomIndex, index) != 0;
         }
 
         /* Whether the room draws it at all - the cheapest thing to do to a static. */

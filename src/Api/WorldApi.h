@@ -19,6 +19,16 @@ namespace Forge
         static void                                                 ForgetMod(ModContext* owner);
  
         static bool                                                 IsLevelLoaded();
+
+        // Changes on every load and every free, so what was gathered about one level can be told
+        // apart from what belongs to the next.
+        static uint32_t                                             LevelGeneration();
+
+        // Set while a room's placement file is being read: there is no current room then, and no
+        // table to look one up in, so a mod asking for "here" is answered with this.
+        static void                                                 SetParsingRoom(uint8_t* room);
+        static uint8_t*                                             ParsingRoom();
+
         static uint8_t*                                             CurrentRoom();
 
         // Every room of the level, whether the player is in it or not

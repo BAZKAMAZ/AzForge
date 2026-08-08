@@ -102,13 +102,28 @@ namespace Forge
 
         // void __cdecl (*)(entity) from Entities_Update; null means the entity does not update
         constexpr uintptr_t kEntityThinkOffset = 0x5B8;
-        constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
         constexpr uintptr_t kEntitiesUpdate = 0x004194B0;
+
+        // Entities_FreeAll: __fastcall (container). Room change frees all; addresses are recycled.
+        constexpr uintptr_t kEntitiesFreeAll = 0x00419DA0;
+
+        // Entities_Alloc: __cdecl (). Pops free list, clears 0x5D4, links live. Null if pool empty.
+        constexpr uintptr_t kEntitiesAlloc = 0x00419320;
+
+        // Touch: void __cdecl (self, other, side). Both sides called; side 1 up, 2 down, 3 left, 4 right.
+        constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
+        constexpr uintptr_t kEntitiesResolveTouches = 0x00413CD0;
+
+        // 0 = not in meetings. Ctrl spawn writes 1.
+        constexpr uintptr_t kEntityTouchableOffset = 0x5B4;
 
         constexpr uintptr_t kEntityRockingAxisOffset = 0x4FC;
         constexpr uintptr_t kEntityRockingOffset = 0x508;
 
-        // writing the type changes the ones spawned after.
+        // Door open scale: update writes 0..1 into +0x254 each frame.
+        constexpr uintptr_t kEntityScaleXOffset = 0x250;
+        constexpr uintptr_t kEntityScaleYOffset = 0x254;
+
         constexpr uintptr_t kEntityModelOffset = 0x274;
         constexpr uintptr_t kEntityTextureOffset = 0x278;
         constexpr uintptr_t kBonusSpawnOwnModelOffset = 0x58; // nonzero: the two below are used

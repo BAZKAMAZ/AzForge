@@ -1,11 +1,11 @@
 {
-  "id": "azforge.player",
-  "name": "AzForge player test",
+  "id": "azforge.ctrls",
+  "name": "AzForge ctrls",
   "version": "1.0.0",
   "author": "AzForge",
-  "description": "",
-  "api_version": 63,
-  "requires": ["console", "player", "world", "input", "mmd"],
+  "description": "Change and add ctrls",
+  "api_version": 81,
+  "requires": ["console", "ctrls"],
   "game_version": "1.0",
   "entry": "bin/SampleMod.dll",
   "icon": "icon.bmp"
