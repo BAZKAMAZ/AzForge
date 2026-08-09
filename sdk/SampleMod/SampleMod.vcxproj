@@ -20,6 +20,13 @@
     <ProjectGuid>{6a3f8b21-49dc-4e07-8f56-b21d3c7e94af}</ProjectGuid>
     <RootNamespace>SampleMod</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <AzForgeModId>azforge.camera</AzForgeModId>
+    <AzForgeModName>AzForge camera world</AzForgeModName>
+    <AzForgeModVersion>1.0.0</AzForgeModVersion>
+    <AzForgeModAuthor>AzForge</AzForgeModAuthor>
+    <AzForgeModDescription>Move the camera and change what the world is drawn from</AzForgeModDescription>
+    <AzForgeModRequires></AzForgeModRequires>
+    <AzForgeGameDir>$(SolutionDir)az_orginal</AzForgeGameDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -35,6 +42,7 @@
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <Import Project="$(SolutionDir)plugins\vs2026\AzForge.Mod.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
   <ImportGroup Label="Shared">
@@ -110,9 +118,6 @@
     <ClInclude Include="$(SolutionDir)sdk\include\WorldApi.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="package\mod.json" />
-  </ItemGroup>
-  <ItemGroup>
     <!-- Build order only: the post-build step runs amodpack, it is not linked against. -->
     <ProjectReference Include="..\..\AmodPack\AmodPack.vcxproj">
       <Project>{2d9e4f31-58a7-4c62-b0d3-6e91f4a27c85}</Project>
@@ -124,11 +129,4 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
-  <!-- This is what makes a mod buildable from plain Visual Studio: the freshly linked DLL is
-       placed into the package folder and the whole folder is sealed into a .amod. -->
-  <Target Name="PackageMod" AfterTargets="Build">
-    <MakeDir Directories="$(ProjectDir)package\bin" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(ProjectDir)package\bin" />
-    <Exec Command="&quot;$(SolutionDir)$(Configuration)\AmodPack.exe&quot; pack &quot;$(ProjectDir)package&quot; -o &quot;$(OutDir)$(ProjectName).amod&quot;" />
-  </Target>
 </Project>

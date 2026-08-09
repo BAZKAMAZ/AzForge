@@ -22,8 +22,17 @@ ipch/
 sdk/SampleMod/package/bin/
 CoreMod/package/bin/
 
-# Produced by a running game, never by a build
-forge.log
+# The plugins: everything a build of them makes
+plugins/**/bin/
+plugins/**/obj/
+plugins/vscode/node_modules/
+plugins/vscode/out/
+plugins/vscode/package-lock.json
+plugins/vscode/*.vsix
 
-# Handoff notes for the next session, not part of the project
-*_context.txt
+# The mod template has one copy, in plugins/templates. Both sides copy it in at build time,
+# and those copies are output.
+plugins/vscode/templates/
+plugins/vs2026/Extension/Template/Mod.cpp
+plugins/vs2026/Extension/Template/Mod.vcxproj
+plugins/vs2026/Extension/Template/resmod/

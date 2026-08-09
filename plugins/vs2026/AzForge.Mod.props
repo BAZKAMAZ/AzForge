@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Everything a mod project needs from Visual Studio, in one include:
+
+       <Import Project="path\to\AzForge.Mod.props" />
+
+     It puts the SDK on the include path, writes mod.json from the settings below, seals the
+     package into a .amod, installs it into the game and points the debugger at game.exe - so F5
+     builds, deploys, launches and stops on breakpoints in the mod.
+
+     Nothing here needs an extension installed. The settings show up under Project Properties ->
+     Mod Settings and are kept in the .vcxproj, which is what makes mod.json a build output
+     rather than a second place to keep the same facts. -->
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup Label="Globals">
+    <AzForgeModId Condition="'$(AzForgeModId)' == ''">azforge.$(ProjectName)</AzForgeModId>
+    <AzForgeModName Condition="'$(AzForgeModName)' == ''">$(ProjectName)</AzForgeModName>
+    <AzForgeModVersion Condition="'$(AzForgeModVersion)' == ''">1.0.0</AzForgeModVersion>
+    <AzForgeModAuthor Condition="'$(AzForgeModAuthor)' == ''">unknown</AzForgeModAuthor>
+    <AzForgeModDescription Condition="'$(AzForgeModDescription)' == ''"></AzForgeModDescription>
+
+    <!-- Semicolons. The loader refuses to load the mod when one of these is missing.
+
+         Left empty - which is how a new mod starts - the build works it out from what the sources
+         actually use, and keeps working it out as they change. Filling it in takes that over: the
+         list is then used as written, which is what a mod wants when it uses something only if it
+         happens to be there. Either way a name the loader does not offer fails the build instead
+         of being found out as a silent refusal to load. -->
+    <AzForgeModRequires Condition="'$(AzForgeModRequires)' == ''"></AzForgeModRequires>
+
+    <!-- Where the game is installed; the mod is put in <this>\mods and F5 runs <this>\game.exe -->
+    <AzForgeGameDir Condition="'$(AzForgeGameDir)' != ''">$(AzForgeGameDir.TrimEnd('\'))</AzForgeGameDir>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AzForgeSdkDir Condition="'$(AzForgeSdkDir)' == ''">$(MSBuildThisFileDirectory)..\..\sdk\</AzForgeSdkDir>
+    <AmodPackPath Condition="'$(AmodPackPath)' == ''">$(MSBuildThisFileDirectory)..\..\Release\AmodPack.exe</AmodPackPath>
+    <AzForgeScriptsDir>$(MSBuildThisFileDirectory)</AzForgeScriptsDir>
+
+    <!-- Everything the mod replaces, laid out the way the game asks for it: scripts\, textures\,
+         models\, sounds\, levels\. Only what the author wrote lives here. -->
+    <AzForgeResourceDir Condition="'$(AzForgeResourceDir)' == ''">$(ProjectDir)resmod\</AzForgeResourceDir>
+
+  </PropertyGroup>
+
+  <!-- The page under Project Properties -->
+  <ItemGroup>
+    <PropertyPageSchema Include="$(MSBuildThisFileDirectory)AzForgeMod.xml" />
+  </ItemGroup>
+
+  <!-- A mod is loaded into game.exe, so Win32 and a static runtime are not options -->
+  <ItemDefinitionGroup>
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(AzForgeSdkDir)include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <RuntimeLibrary Condition="'$(Configuration)' == 'Debug'">MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary Condition="'$(Configuration)' != 'Debug'">MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+  </ItemDefinitionGroup>
+
+  <!-- F5 runs the game, and the breakpoints bind as soon as it loads the mod -->
+  <PropertyGroup Condition="'$(AzForgeGameDir)' != ''">
+    <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
+    <LocalDebuggerCommand>$(AzForgeGameDir)\game.exe</LocalDebuggerCommand>
+    <LocalDebuggerWorkingDirectory>$(AzForgeGameDir)</LocalDebuggerWorkingDirectory>
+  </PropertyGroup>
+
+  <Target Name="AzForgeCheckSetup" BeforeTargets="AzForgeWriteManifest">
+    <Error Condition="!Exists('$(AzForgeSdkDir)include\ForgeApi.h')"
+           Text="The AzForge SDK is not at '$(AzForgeSdkDir)'. Set AzForgeSdkDir to the folder holding include\ForgeApi.h." />
+    <Error Condition="!Exists('$(AmodPackPath)')"
+           Text="amodpack is not at '$(AmodPackPath)'. Build it, or set AmodPackPath." />
+  </Target>
+
+  <!-- The container is assembled from scratch every time, so a resource deleted from resmod stops
+       being shipped instead of lingering in a folder nobody looks at. -->
+  <Target Name="AzForgeStage" AfterTargets="Build">
+    <!-- Worked out here rather than above: the intermediate folder is not known until the C++
+         targets have been read, and asking too early puts the staging beside the sources. -->
+    <PropertyGroup>
+      <AzForgeStageDir Condition="'$(AzForgeStageDir)' == ''">$(ProjectDir)$(IntDir)amod\</AzForgeStageDir>
+    </PropertyGroup>
+
+    <RemoveDir Directories="$(AzForgeStageDir)" />
+    <MakeDir Directories="$(AzForgeStageDir)bin" />
+    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(AzForgeStageDir)bin" />
+
+    <ItemGroup>
+      <AzForgeResource Include="$(AzForgeResourceDir)**\*" />
+    </ItemGroup>
+
+    <!-- resmod\scripts\camera.txt is asked for as scripts/camera.txt, so it is shipped as
+         files/scripts/camera.txt - the author never writes the files\ part. -->
+    <Copy Condition="'@(AzForgeResource)' != ''"
+          SourceFiles="@(AzForgeResource)"
+          DestinationFiles="@(AzForgeResource->'$(AzForgeStageDir)files\%(RecursiveDir)%(Filename)%(Extension)')" />
+
+    <Copy Condition="'$(AzForgeModIcon)' != '' And Exists('$(AzForgeModIcon)')"
+          SourceFiles="$(AzForgeModIcon)"
+          DestinationFolder="$(AzForgeStageDir)" />
+  </Target>
+
+  <!-- mod.json is written from the settings, so api_version can never drift from the SDK -->
+  <Target Name="AzForgeWriteManifest" AfterTargets="AzForgeStage">
+    <!-- A path ending in a backslash would escape the quote after it and swallow the next argument -->
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(AzForgeScriptsDir)Write-ModManifest.ps1&quot; -Package &quot;$(AzForgeStageDir.TrimEnd('\'))&quot; -Sdk &quot;$(AzForgeSdkDir.TrimEnd('\'))&quot; -Id &quot;$(AzForgeModId)&quot; -Name &quot;$(AzForgeModName)&quot; -Version &quot;$(AzForgeModVersion)&quot; -Author &quot;$(AzForgeModAuthor)&quot; -Description &quot;$(AzForgeModDescription)&quot; -Requires &quot;$(AzForgeModRequires)&quot; -Entry &quot;bin/$(TargetFileName)&quot; -Icon &quot;$(AzForgeModIcon)&quot; -Sources &quot;$(ProjectDir.TrimEnd('\'))&quot;" />
+  </Target>
+
+  <Target Name="AzForgePack" AfterTargets="AzForgeWriteManifest">
+    <Exec Command="&quot;$(AmodPackPath)&quot; pack &quot;$(AzForgeStageDir.TrimEnd('\'))&quot; -o &quot;$(OutDir)$(ProjectName).amod&quot;" />
+  </Target>
+
+  <Target Name="AzForgeDeploy" AfterTargets="AzForgePack" Condition="'$(AzForgeGameDir)' != ''">
+    <Exec Command="&quot;$(AmodPackPath)&quot; install &quot;$(OutDir)$(ProjectName).amod&quot; --game &quot;$(AzForgeGameDir)&quot;"
+          ContinueOnError="true">
+      <Output TaskParameter="ExitCode" PropertyName="AzForgeDeployExit" />
+    </Exec>
+    <Error Condition="'$(AzForgeDeployExit)' != '0'"
+           Text="Could not put the mod into $(AzForgeGameDir)\mods. The game holds the file while it runs - close it and build again." />
+  </Target>
+
+</Project>

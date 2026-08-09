@@ -1,0 +1,57 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net472</TargetFramework>
+    <EnableDefaultItems>false</EnableDefaultItems>
+
+    <VSSDKBuildToolsAutoSetup>true</VSSDKBuildToolsAutoSetup>
+
+    <CreateVsixContainer>false</CreateVsixContainer>
+    <DeployExtension>false</DeployExtension>
+    <DeployVSTemplates>false</DeployVSTemplates>
+    <GeneratePkgDefFile>false</GeneratePkgDefFile>
+    <IncludeAssemblyInVSIXContainer>false</IncludeAssemblyInVSIXContainer>
+    <IncludeDebugSymbolsInVSIXContainer>false</IncludeDebugSymbolsInVSIXContainer>
+    <CopyBuildOutputToOutputDirectory>false</CopyBuildOutputToOutputDirectory>
+    <CopyOutputSymbolsToOutputDirectory>false</CopyOutputSymbolsToOutputDirectory>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.VSSDK.BuildTools" Version="18.5.40034" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="Placeholder.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <VSTemplate Include="AzForgeMod.vstemplate">
+      <OutputSubPath>AzForge</OutputSubPath>
+    </VSTemplate>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <AzForgeTemplateSource>$(MSBuildThisFileDirectory)..\..\..\templates\</AzForgeTemplateSource>
+  </PropertyGroup>
+
+  <Target Name="AzForgeCopyTemplate" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(AzForgeTemplateSource)Mod.vcxproj')"
+           Text="The shared mod template is not at '$(AzForgeTemplateSource)'." />
+
+    <Copy SourceFiles="$(AzForgeTemplateSource)Mod.cpp;$(AzForgeTemplateSource)Mod.vcxproj"
+          DestinationFolder="$(MSBuildThisFileDirectory)"
+          SkipUnchangedFiles="true" />
+
+    <!-- The .vstemplate's <Folder Name="resmod"> is looked for as a folder of the same name -->
+    <Copy SourceFiles="$(AzForgeTemplateSource)resmod_readme.txt"
+          DestinationFolder="$(MSBuildThisFileDirectory)resmod"
+          SkipUnchangedFiles="true" />
+  </Target>
+
+  <ItemGroup>
+    <None Include="Mod.cpp" />
+    <None Include="Mod.vcxproj" />
+    <None Include="resmod\resmod_readme.txt" />
+  </ItemGroup>
+
+</Project>

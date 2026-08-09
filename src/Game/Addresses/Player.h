@@ -153,6 +153,11 @@ namespace Forge
 
         // Per-state handlers from Player_Update switch on +0x178.
         constexpr uintptr_t kPlayerOnFootUpdate = 0x004428F0;
+
+        // __cdecl (player, float* dirX, int* dirY), caller cleans 0xC. Player_Update reads the
+        // input into two locals, hands them here to be squared with the window he is standing in,
+        // and steps with what comes back. Everything the player does passes through it once.
+        constexpr uintptr_t kPlayerAdjustMove = 0x00441ED0;
         constexpr uintptr_t kPlayerLadderUpdate = 0x00441AA0;
         constexpr uintptr_t kPlayerChainUpdate = 0x00442BD0;
         constexpr uintptr_t kPlayerPipeUpdate = 0x00442EB0;

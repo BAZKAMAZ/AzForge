@@ -35,6 +35,9 @@ namespace Forge
         typedef void(__cdecl* LadderUpdateRoutine)(void* entity);
         typedef void(__cdecl* DieRoutine)(void* entity, int kind);
 
+        // Player_AdjustMove: __cdecl, caller cleans 0xC
+        typedef void(__cdecl* AdjustMoveRoutine)(void* player, int* dirX, int* dirY);
+
         struct Driving
         {
             ModContext* owner;
@@ -44,6 +47,18 @@ namespace Forge
             EntityThinkRoutine gameThink;
             uint32_t token;
         };
+
+        struct Moving
+        {
+            ModContext* owner;
+            AmodPlayerMoveHandler handler;
+            void* user;
+        };
+
+        Moving g_moving = {};
+        InlineHook g_moveHook;
+        AdjustMoveRoutine g_gameAdjustMove = nullptr;
+        bool g_moveHookTried = false;
 
         Driving g_driving = {};
 
@@ -995,6 +1010,102 @@ namespace Forge
             g_wasLives = lives;
             g_wasScore = score;
         }
+
+        void __cdecl AdjustMoveDetour(void* player, int* dirX, int* dirY)
+        {
+            const Moving claim = g_moving;
+
+            if (claim.owner != nullptr && claim.handler != nullptr && dirX != nullptr && dirY != nullptr)
+            {
+                AmodPlayerMove move = {};
+                move.structSize = sizeof(move);
+                move.dirX = *dirX;
+                move.dirY = *dirY;
+
+                claim.handler(&move, claim.user);
+
+                *dirX = move.dirX;
+                *dirY = move.dirY;
+            }
+
+            // The game still squares it with the window he is standing in
+            if (g_gameAdjustMove != nullptr)
+            {
+                g_gameAdjustMove(player, dirX, dirY);
+            }
+        }
+
+        bool HoldMoveHook()
+        {
+            if (g_moveHookTried)
+            {
+                return g_moveHook.IsInstalled();
+            }
+            g_moveHookTried = true;
+
+            void* const target = GameModule::Resolve(GameAddress::kPlayerAdjustMove);
+            std::string mismatch;
+
+            if (target == nullptr ||
+                !GameModule::VerifyBytes(target, kPlayerAdjustMovePrologue, sizeof(kPlayerAdjustMovePrologue), mismatch))
+            {
+                FORGE_LOG_ERROR("Player_AdjustMove does not open as expected (%s)", mismatch.c_str());
+                return false;
+            }
+
+            std::string error;
+            if (!g_moveHook.Install(target, reinterpret_cast<void*>(&AdjustMoveDetour),
+                                    kPlayerAdjustMovePrologue, sizeof(kPlayerAdjustMovePrologue), error))
+            {
+                FORGE_LOG_ERROR("Cannot hook Player_AdjustMove: %s", error.c_str());
+                return false;
+            }
+
+            g_gameAdjustMove = reinterpret_cast<AdjustMoveRoutine>(g_moveHook.Trampoline());
+            return true;
+        }
+
+        int __cdecl ApiSetMoveHandler(AmodMod mod, AmodPlayerMoveHandler handler, void* user)
+        {
+            ModContext* const caller = Caller(mod);
+
+            if (caller == nullptr)
+            {
+                return 0;
+            }
+            if (handler == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetMoveHandler was given no handler");
+            }
+            if (g_moving.owner != nullptr && g_moving.owner != caller)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "another mod already has what he is told to do");
+            }
+            if (!HoldMoveHook())
+            {
+                return Fail(mod, AMOD_FAIL_NOT_OFFERED, "his moving cannot be taken in this build");
+            }
+
+            g_moving.owner = caller;
+            g_moving.handler = handler;
+            g_moving.user = user;
+            return 1;
+        }
+
+        int __cdecl ApiClearMoveHandler(AmodMod mod)
+        {
+            ModContext* const caller = Caller(mod);
+
+            if (caller == nullptr)
+            {
+                return 0;
+            }
+            if (g_moving.owner == caller)
+            {
+                g_moving = Moving{};
+            }
+            return 1;
+        }
     }
 
     bool PlayerApi::Install()
@@ -1026,6 +1137,8 @@ namespace Forge
         g_table.ClearStateHandler = &ApiClearStateHandler;
         g_table.SetDeathHandler = &ApiSetDeathHandler;
         g_table.ClearDeathHandler = &ApiClearDeathHandler;
+        g_table.SetMoveHandler = &ApiSetMoveHandler;
+        g_table.ClearMoveHandler = &ApiClearMoveHandler;
 
         FORGE_LOG_INFO("Player interface installed");
         return true;
@@ -1043,6 +1156,11 @@ namespace Forge
             g_originalStates[state] = nullptr;
         }
         g_stateHooksTried = false;
+
+        g_moving = Moving{};
+        g_moveHook.Uninstall();
+        g_gameAdjustMove = nullptr;
+        g_moveHookTried = false;
 
         g_subscriptions.clear();
         g_table = AmodPlayerApi{};
@@ -1062,6 +1180,10 @@ namespace Forge
         if (g_dying.owner == owner)
         {
             ReleaseDying(nullptr);
+        }
+        if (g_moving.owner == owner)
+        {
+            g_moving = Moving{};
         }
 
         for (int state = 0; state < 4; ++state)

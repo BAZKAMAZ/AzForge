@@ -227,6 +227,12 @@
     <ClCompile Include="src\Zip\Inflate.cpp" />
     <ClCompile Include="src\Zip\ZipArchive.cpp" />
   </ItemGroup>
+  <!-- The subsystem names a mod may require, taken from the loader and shipped with the SDK, so
+       a mod's build can check them without any of these sources being present. -->
+  <Target Name="AzForgeWriteSubsystems" AfterTargets="Build">
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)plugins\vs2026\Write-Subsystems.ps1&quot; -Boot &quot;$(ProjectDir)src\Core\ForgeBoot.cpp&quot; -Out &quot;$(ProjectDir)sdk\subsystems.txt&quot;" />
+  </Target>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

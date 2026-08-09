@@ -1,7 +1,6 @@
 #include <windows.h>
 
 #include "src/Api/ObjectsMenuApi.h"
-
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
@@ -20,9 +19,7 @@ namespace Forge
 {
     namespace
     {
-        typedef int(__fastcall* RegisterRoutine)(void* manager, void* unused, void* menu,
-                                                 const char* scriptFile, const char* menuId,
-                                                 int force);
+        typedef int(__fastcall* RegisterRoutine)(void* manager, void* unused, void* menu, const char* scriptFile, const char* menuId, int force);
         typedef int(__stdcall* LoadFromScriptRoutine)(const char* menuId, const char* scriptFile);
         typedef int(__fastcall* ParseScriptRoutine)(void* menu, void* unused, const char* scriptFile);
         typedef void*(__fastcall* FindItemRoutine)(void* menu, void* unused, const char* itemId);
@@ -479,7 +476,8 @@ namespace Forge
             // HotkeyButton_Parse @0x0045e410.
             { "help_key",           0xAB8, Store::String, 0, 0x100, kHotkeyBtn,                    true,    nullptr,    nullptr },
 
-            // MenuSlider_Parse @0x0045b4b0.
+            // MenuSlider_Parse @0x0045b4b0
+            { "position",           0x764, Store::Float,  1, 0,     kSlider,                       true,    nullptr,    nullptr },
             { "margin",             0x75C, Store::Float,  2, 0,     kSlider,                       true,    nullptr,    nullptr },
             { "range",              0x76C, Store::Float,  2, 0,     kSlider,                       true,    nullptr,    nullptr },
 

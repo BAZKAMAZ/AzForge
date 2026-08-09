@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+  <Metadata>
+    <Identity Id="AzForge.Templates.8d5a2c93-7e14-4b6f-a3d2-51c9e0847f26"
+              Version="1.5"
+              Language="en-US"
+              Publisher="AzForge" />
+    <DisplayName>AzForge mod templates</DisplayName>
+    <Description xml:space="preserve">A New Project category for Azangara mods. The template asks what the mod is called and where the game is, then builds, packs, installs and runs it on F5.</Description>
+    <Tags>azangara;azforge;modding;c++</Tags>
+  </Metadata>
+
+  <Installation>
+    <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[17.0,19.0)">
+      <ProductArchitecture>amd64</ProductArchitecture>
+    </InstallationTarget>
+  </Installation>
+
+  <Dependencies>
+    <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+  </Dependencies>
+
+  <Prerequisites>
+    <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[17.0,19.0)" DisplayName="Visual Studio core editor" />
+    <Prerequisite Id="Microsoft.VisualStudio.Workload.NativeDesktop" Version="[17.0,19.0)" DisplayName="Desktop development with C++" />
+  </Prerequisites>
+
+  <Assets>
+    <!-- The wizard the template names in its WizardExtension. Path is the FILE in the container,
+         AssemblyName is the identity the template asks for; the token that yields the name must
+         not be used for both, or Visual Studio looks for a file called "AzForge.Templates,
+         Version=1.0.0.0, ..." and reports that the template cannot load its wizard. -->
+    <Asset Type="Microsoft.VisualStudio.Assembly"
+           d:Source="Project"
+           d:ProjectName="%CurrentProject%"
+           Path="|%CurrentProject%|"
+           AssemblyName="|%CurrentProject%;AssemblyName|" />
+
+    <!-- Path is the FOLDER inside the container that Visual Studio scans for templates; where the
+         build takes them from is d:TargetPath. Naming the output group in Path instead collapses
+         it to a bare file name and the zip is looked for in the root, where it is not. -->
+    <Asset Type="Microsoft.VisualStudio.ProjectTemplate"
+           d:Source="Project"
+           d:ProjectName="AzForgeModTemplate"
+           d:TargetPath="|AzForgeModTemplate;TemplateProjectOutputGroup|"
+           Path="ProjectTemplates"
+           d:VsixSubPath="ProjectTemplates" />
+  </Assets>
+</PackageManifest>

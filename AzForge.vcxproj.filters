@@ -282,6 +282,15 @@
     <ClInclude Include="src\Api\CtrlsApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\CameraApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\CameraApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Camera.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -430,6 +439,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\CtrlsApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\CameraApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1309,6 +1309,31 @@ namespace Forge
             return 0;
         }
 
+        int __cdecl ApiSetEntityHidden(AmodMod mod, int roomIndex, int index, int hidden)
+        {
+            uint8_t* const entity = ApiRead::Caller(mod) != nullptr ? EntityAt(RoomOrCurrent(roomIndex), index) : nullptr;
+
+            if (entity == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "there is no entity %d to hide", index);
+            }
+
+            uint32_t flags = ApiRead::Read<uint32_t>(entity, GameAddress::kEntityFlagsOffset);
+            flags = hidden != 0 ? (flags | GameAddress::kEntityHiddenFlag)
+                : (flags & ~GameAddress::kEntityHiddenFlag);
+            memcpy(entity + GameAddress::kEntityFlagsOffset, &flags, sizeof(flags));
+            return 1;
+        }
+
+        int __cdecl ApiIsEntityHidden(AmodMod mod, int roomIndex, int index)
+        {
+            const uint8_t* const entity = ApiRead::Caller(mod) != nullptr ? EntityAt(RoomOrCurrent(roomIndex), index) : nullptr;
+
+            return (entity != nullptr &&
+                (ApiRead::Read<uint32_t>(entity, GameAddress::kEntityFlagsOffset) &
+                    GameAddress::kEntityHiddenFlag) != 0) ? 1 : 0;
+        }
+
         int __cdecl ApiRemoveStatic(AmodMod mod, int roomIndex, int index)
         {
             ModContext* const caller = ApiRead::Caller(mod);
@@ -2194,6 +2219,8 @@ namespace Forge
         g_table.SetStatic = &ApiSetStatic;
         g_table.AddStatic = &ApiAddStatic;
         g_table.RemoveStatic = &ApiRemoveStatic;
+        g_table.SetEntityHidden = &ApiSetEntityHidden;
+        g_table.IsEntityHidden = &ApiIsEntityHidden;
         g_table.AddRoomLight = &ApiAddRoomLight;
         g_table.SetRoomCell = &ApiSetRoomCell;
         g_table.SetRoomCells = &ApiSetRoomCells;

@@ -347,9 +347,13 @@ typedef struct AmodWorldApi
     /* Remove a static decoration (ladder/fire models); indices after it shift. Final for the level. */
     int(__cdecl* RemoveStatic)(AmodMod mod, int roomIndex, int index);
 
+    /* Hide from the scene only; entity still moves, collides, touches. */
+    int(__cdecl* SetEntityHidden)(AmodMod mod, int roomIndex, int index, int hidden);
+    int(__cdecl* IsEntityHidden)(AmodMod mod, int roomIndex, int index);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, RemoveStatic, 0xC0);
+AMOD_LAST_FIELD(AmodWorldApi, IsEntityHidden, 0xC8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -546,6 +550,19 @@ namespace Amod
             }
             what.isShown = shown ? 1 : 0;
             return SetStatic(index, what);
+        }
+
+        /* Out of sight without being out of the room: it still walks, collides and touches. */
+        inline bool                                                 SetEntityHidden(int index, bool hidden, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->SetEntityHidden != nullptr &&
+                g_world->SetEntityHidden(g_self, roomIndex, index, hidden ? 1 : 0) != 0;
+        }
+
+        inline bool                                                 IsEntityHidden(int index, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->IsEntityHidden != nullptr &&
+                g_world->IsEntityHidden(g_self, roomIndex, index) != 0;
         }
 
         /* Which of the room's entities is the player, or -1. */

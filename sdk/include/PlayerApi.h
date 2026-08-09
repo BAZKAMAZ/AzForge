@@ -138,6 +138,21 @@ AMOD_LAST_FIELD(AmodPlayerDeathInfo, position, 0x0C);
 /* non-zero refuses the death */
 typedef int(__cdecl* AmodPlayerDeathHandler)(const AmodPlayerDeathInfo* info, void* user);
 
+// Intent for this frame, before the step
+typedef struct AmodPlayerMove
+{
+    uint32_t structSize;
+
+    int dirX; /* -1, 0, +1: left / stand / right */
+    int dirY; /* same for up/down; ladders and chain read this */
+
+} AmodPlayerMove;
+
+AMOD_LAST_FIELD(AmodPlayerMove, dirY, 0x08);
+
+/* Edit in place before the game applies the window. Write 0 to strip input. */
+typedef void(__cdecl* AmodPlayerMoveHandler)(AmodPlayerMove* move, void* user);
+
 /* grid around him; same chars as World::Cell */
 typedef struct AmodPlayerPlace
 {
@@ -226,9 +241,13 @@ typedef struct AmodPlayerApi
     int(__cdecl* SetDeathHandler)(AmodMod mod, AmodPlayerDeathHandler handler, void* user);
     int(__cdecl* ClearDeathHandler)(AmodMod mod);
 
+    /* One mod. Everything he does passes through this once a frame. */
+    int(__cdecl* SetMoveHandler)(AmodMod mod, AmodPlayerMoveHandler handler, void* user);
+    int(__cdecl* ClearMoveHandler)(AmodMod mod);
+
 } AmodPlayerApi;
 
-AMOD_LAST_FIELD(AmodPlayerApi, ClearDeathHandler, 0x5C);
+AMOD_LAST_FIELD(AmodPlayerApi, ClearMoveHandler, 0x64);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -385,6 +404,18 @@ namespace Amod
         {
             return g_player != nullptr && g_player->SetStateHandler != nullptr &&
                 g_player->SetStateHandler(g_playerSelf, state, handler, user) != 0;
+        }
+
+        inline bool                                                 SetMoveHandler(AmodPlayerMoveHandler handler, void* user = nullptr)
+        {
+            return g_player != nullptr && g_player->SetMoveHandler != nullptr &&
+                g_player->SetMoveHandler(g_playerSelf, handler, user) != 0;
+        }
+
+        inline bool                                                 ClearMoveHandler()
+        {
+            return g_player != nullptr && g_player->ClearMoveHandler != nullptr &&
+                g_player->ClearMoveHandler(g_playerSelf) != 0;
         }
 
         inline bool                                                 ClearStateHandler(int state)

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<VSTemplate Version="3.0.0" Type="Project" xmlns="http://schemas.microsoft.com/developer/vstemplate/2005">
+  <TemplateData>
+    <Name>AzForge Mod</Name>
+    <Description>An empty mod for Azangara: AmodInit and AmodShutdown, a resmod folder for what it replaces, and F5 that builds, packs, installs and runs the game.</Description>
+    <ProjectType>VC</ProjectType>
+    <ProjectSubType></ProjectSubType>
+    <SortOrder>1000</SortOrder>
+    <CreateNewFolder>true</CreateNewFolder>
+    <DefaultName>MyMod</DefaultName>
+    <ProvideDefaultName>true</ProvideDefaultName>
+    <LocationField>Enabled</LocationField>
+    <EnableLocationBrowseButton>true</EnableLocationBrowseButton>
+
+    <!-- What puts it in its own group in the New Project dialog -->
+    <LanguageTag>C++</LanguageTag>
+    <PlatformTag>Windows</PlatformTag>
+    <ProjectTypeTag>AzForge</ProjectTypeTag>
+  </TemplateData>
+
+  <TemplateContent>
+    <Project TargetFileName="$safeprojectname$.vcxproj" File="Mod.vcxproj" ReplaceParameters="true">
+      <ProjectItem ReplaceParameters="true" TargetFileName="Mod.cpp">Mod.cpp</ProjectItem>
+
+      <!-- Everything the mod replaces goes under here, laid out the way the game asks for it -->
+      <Folder Name="resmod" TargetFolderName="resmod">
+        <ProjectItem ReplaceParameters="false" TargetFileName="readme.txt">resmod_readme.txt</ProjectItem>
+      </Folder>
+    </Project>
+  </TemplateContent>
+
+  <WizardExtension>
+    <Assembly>AzForge.Templates, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null</Assembly>
+    <FullClassName>AzForge.Templates.ModWizard</FullClassName>
+  </WizardExtension>
+</VSTemplate>

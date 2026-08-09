@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Project Properties -> Mod Settings. The values are kept in the .vcxproj and mod.json is
+     written from them at build time.
+
+     Shaped after the shipped directories.xml: PageTemplate "generic", an Order, and one plain
+     DataSource on the rule.
+
+     Visual Studio caches these, and a rule it once read while broken stays broken however the
+     file is afterwards corrected - the corrections are never read, and restarting changes
+     nothing. This one was AzForgeModSettings in AzForgeModSettings.xml while it was being got
+     wrong, and both the rule and the file had to be renamed. If the page ever stops appearing,
+     rename both and clear .vs before touching anything in here. -->
+<Rule Name="AzForgeMod"
+      DisplayName="Mod Settings"
+      Order="200"
+      PageTemplate="generic"
+      Description="What this mod calls itself, what it needs, and where the game is"
+      xmlns="http://schemas.microsoft.com/build/2009/properties">
+
+  <Rule.Categories>
+    <Category Name="Mod" DisplayName="Mod" Description="What the mod calls itself" />
+    <Category Name="Game" DisplayName="Game" Description="Where it is installed and run" />
+    <Category Name="Tools" DisplayName="Tools" Description="The SDK and the packer" />
+  </Rule.Categories>
+
+  <!-- Exactly what the shipped directories.xml carries. The settings are written per
+       configuration as a result, which costs nothing: the build reads $(AzForgeModId) and does
+       not care which group in the .vcxproj it came from. -->
+  <Rule.DataSource>
+    <DataSource Persistence="ProjectFile" />
+  </Rule.DataSource>
+
+  <StringProperty Name="AzForgeModId"
+                  DisplayName="Id"
+                  Category="Mod"
+                  Description="What names this mod everywhere, and what the load order holds. Two mods with the same id are the same mod." />
+
+  <StringProperty Name="AzForgeModName"
+                  DisplayName="Name"
+                  Category="Mod"
+                  Description="Shown on the MODS screen." />
+
+  <StringProperty Name="AzForgeModVersion"
+                  DisplayName="Version"
+                  Category="Mod"
+                  Description="The mod's own version, not the API's." />
+
+  <StringProperty Name="AzForgeModAuthor"
+                  DisplayName="Author"
+                  Category="Mod" />
+
+  <StringProperty Name="AzForgeModDescription"
+                  DisplayName="Description"
+                  Category="Mod"
+                  Description="One line, shown beside the name." />
+
+  <StringProperty Name="AzForgeModRequires"
+                  DisplayName="Requires"
+                  Category="Mod"
+                  Description="Subsystems the mod cannot work without, separated by semicolons - console;camera;world. The loader refuses to load the mod rather than hand it a table that is not there." />
+
+  <StringProperty Name="AzForgeModIcon"
+                  DisplayName="Icon"
+                  Category="Mod"
+                  Subtype="file"
+                  Description="A .bmp shown on the MODS screen. It is put in the container's root, not among the resources." />
+
+  <StringProperty Name="AzForgeGameDir"
+                  DisplayName="Game folder"
+                  Category="Game"
+                  Subtype="folder"
+                  Description="Where game.exe lives. The mod is installed into its mods folder, and F5 runs it." />
+
+  <StringProperty Name="AzForgeResourceDir"
+                  DisplayName="Resource folder"
+                  Category="Game"
+                  Subtype="folder"
+                  Description="Everything in here is shipped in the mod, laid out the way the game asks for it: scripts\, textures\, models\. Defaults to resmod beside the project." />
+
+  <StringProperty Name="AzForgeSdkDir"
+                  DisplayName="SDK folder"
+                  Category="Tools"
+                  Subtype="folder"
+                  Description="The folder holding include\ForgeApi.h. api_version is read from it." />
+
+  <StringProperty Name="AmodPackPath"
+                  DisplayName="amodpack"
+                  Category="Tools"
+                  Subtype="file"
+                  Description="The tool that seals the package into a .amod and installs it." />
+
+</Rule>

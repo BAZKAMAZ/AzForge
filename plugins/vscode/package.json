@@ -1,0 +1,174 @@
+{
+  "name": "azforge-mod-tools",
+  "displayName": "AzForge Mod Tools",
+  "description": "Write, build, pack, install and debug AzForge mods from VS Code.",
+  "version": "1.0.0",
+  "publisher": "azforge",
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Debuggers",
+    "Other"
+  ],
+  "keywords": [
+    "azforge",
+    "azangara",
+    "modding"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [
+    "workspaceContains:**/*.vcxproj"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "azforge.newMod",
+        "title": "New Mod...",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.build",
+        "title": "Build",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.rebuild",
+        "title": "Rebuild",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.pack",
+        "title": "Pack Release",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.run",
+        "title": "Run the Game",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.modSettings",
+        "title": "Mod Settings",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.refreshIntelliSense",
+        "title": "Refresh IntelliSense Paths",
+        "category": "AzForge"
+      },
+      {
+        "command": "azforge.openLog",
+        "title": "Open forge.log",
+        "category": "AzForge"
+      }
+    ],
+    "taskDefinitions": [
+      {
+        "type": "azforge",
+        "required": [
+          "target"
+        ],
+        "properties": {
+          "target": {
+            "type": "string",
+            "enum": [
+              "Build",
+              "Rebuild"
+            ],
+            "description": "The MSBuild target to run on the mod project."
+          },
+          "configuration": {
+            "type": "string",
+            "enum": [
+              "Debug",
+              "Release"
+            ],
+            "description": "Which configuration to build. Defaults to azforge.configuration."
+          },
+          "project": {
+            "type": "string",
+            "description": "The .vcxproj to build. Defaults to the mod project in the workspace."
+          }
+        }
+      }
+    ],
+    "configuration": {
+      "title": "AzForge",
+      "properties": {
+        "azforge.azforgeRoot": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "The AzForge folder - the one holding `sdk\\` and `plugins\\`. Offered as the default when a new mod is created.",
+          "scope": "machine-overridable"
+        },
+        "azforge.gameDir": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "Where `game.exe` lives. Offered as the default when a new mod is created; each mod keeps its own in the .vcxproj.",
+          "scope": "machine-overridable"
+        },
+        "azforge.msbuildPath": {
+          "type": "string",
+          "default": "",
+          "markdownDescription": "MSBuild.exe to build with. Left empty it is found through `vswhere`, then on PATH.",
+          "scope": "machine-overridable"
+        },
+        "azforge.configuration": {
+          "type": "string",
+          "enum": [
+            "Debug",
+            "Release"
+          ],
+          "default": "Debug",
+          "description": "Which configuration Build and Run use."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "azforge.build",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.rebuild",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.pack",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.run",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.modSettings",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.refreshIntelliSense",
+          "when": "azforge.hasMod"
+        },
+        {
+          "command": "azforge.openLog",
+          "when": "azforge.hasMod"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "templates": "node copy-templates.js",
+    "compile": "npm run templates && tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "vscode:prepublish": "npm run compile",
+    "package": "vsce package --allow-missing-repository"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5.7.0"
+  }
+}

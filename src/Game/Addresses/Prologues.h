@@ -19,6 +19,10 @@ namespace Forge
     // Player_UpdatePipe: MOV EAX,[ESP+8] / PUSH EBX → 5
     constexpr uint8_t kPlayerPipeUpdatePrologue[] = { 0x8B, 0x44, 0x24, 0x08, 0x53 };
 
+    // Player_AdjustMove: MOV ECX,[ESP+4] / MOV EAX,[ECX+0x178] → 10
+    constexpr uint8_t kPlayerAdjustMovePrologue[] =
+    { 0x8B, 0x4C, 0x24, 0x04, 0x8B, 0x81, 0x78, 0x01, 0x00, 0x00 };
+
     // Package_OpenFile: PUSH ESI / MOV ESI,[ESP+8] → 5 bytes
     constexpr uint8_t kPackageOpenFilePrologue[] = { 0x56, 0x8B, 0x74, 0x24, 0x08 };
 
