@@ -20,12 +20,14 @@
     <ProjectGuid>{6a3f8b21-49dc-4e07-8f56-b21d3c7e94af}</ProjectGuid>
     <RootNamespace>SampleMod</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <AzForgeModId>azforge.camera</AzForgeModId>
-    <AzForgeModName>AzForge camera world</AzForgeModName>
+    <AzForgeModId>azforge.particles</AzForgeModId>
+    <AzForgeModName>AzForge particles test</AzForgeModName>
     <AzForgeModVersion>1.0.0</AzForgeModVersion>
     <AzForgeModAuthor>AzForge</AzForgeModAuthor>
-    <AzForgeModDescription>Move the camera and change what the world is drawn from</AzForgeModDescription>
-    <AzForgeModRequires></AzForgeModRequires>
+    <AzForgeModDescription>
+    </AzForgeModDescription>
+    <AzForgeModRequires>
+    </AzForgeModRequires>
     <AzForgeGameDir>$(SolutionDir)az_orginal</AzForgeGameDir>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />

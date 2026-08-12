@@ -6,436 +6,623 @@
 
 using namespace Amod;
 
-enum class Drives
+bool g_holding = false;
+bool g_tinting = false;
+bool g_marking = false;
+float g_tint[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
+
+
+const uint32_t kWordMark = 0xF17E;
+
+struct Show
 {
-    None,
-    Orbit,
-    Chase
+    bool running;
+    float time;
+    float nextBurst;
+    float nextDrop;
+    int bursts;
+    bool wordSent;
+    float origin[3];
 };
 
-static Drives g_drives = Drives::None;
-static float g_angle = 0.0f;
+Show g_show = {};
 
-enum class Views
+bool Same(const char* a, const char* b)
 {
-    None,
-    Flip,
-    Shoulder
-};
-
-static Views g_view = Views::None;
-static bool g_holdsPlace = false;
-
-static int __cdecl OnCameraEvent(const AmodCameraEventInfo* info, void*)
-{
-    Console::Printf("the game wants the camera at %+.3f %+.3f %+.3f%s\n",
-        info->point[0], info->point[1], info->point[2], g_holdsPlace ? " - refused" : "");
-
-    return g_holdsPlace ? 1 : 0;
+    return a != nullptr && b != nullptr && strcmp(a, b) == 0;
 }
 
-static void Say(bool done, const char* said)
+bool Off(int argc, const char** argv, int at)
 {
-    Console::Printf(done ? "%s\n" : "cam: %s\n", done ? said : LastError());
+    return argc > at && Same(argv[at], "off");
 }
 
-static void ReadTriple(int argc, const char** argv, int from, float* out)
+const char* KindName(int kind)
 {
-    for (int axis = 0; axis < 3; ++axis)
+    switch (kind)
     {
-        out[axis] = from + axis < argc ? static_cast<float>(atof(argv[from + axis])) : 0.0f;
+    case AMOD_PARTICLE_KIND_POOL_0:
+        return "pool 0";
+    case AMOD_PARTICLE_KIND_POOL_1:
+        return "pool 1";
+    case AMOD_PARTICLE_KIND_POOL_2:
+        return "pool 2 (never drawn)";
+    default:
+        return "uni";
     }
 }
 
-static void __cdecl OnCamera(const AmodCameraFrame* frame, void*)
+int __cdecl Hold(AmodParticle particle, float delta, void*)
 {
-    if (g_drives == Drives::None)
+    AmodParticleDesc desc = {};
+    if (!Particles::Get(particle, desc))
     {
-        return;
+        return 0;
     }
 
-    float focus[3] = { frame->followed[0], frame->followed[1], frame->followed[2] };
-    Camera::GetFocus(focus);
-
-    if (g_drives == Drives::Orbit)
-    {
-        g_angle = g_angle + frame->delta;
-
-        const float radius = 3.0f;
-        const float eye[3] = { focus[0] + sinf(g_angle) * radius, focus[1] + 1.0f, focus[2] + cosf(g_angle) * radius };
-
-        Camera::SetEye(eye);
-        Camera::SetTarget(focus);
-        return;
-    }
-
-    // Chase: hangs back and catches up by hand, so the lag is the mod's, not $lag_dist
-    AmodCamera now;
-    if (!Camera::Get(now))
-    {
-        return;
-    }
-
-    const float wanted[3] = { focus[0], focus[1] + 0.5f, focus[2] + 4.0f };
-    float eye[3];
-
-    for (int axis = 0; axis < 3; ++axis)
-    {
-        eye[axis] = now.eye[axis] + (wanted[axis] - now.eye[axis]) * frame->delta * 2.0f;
-    }
-
-    Camera::SetEye(eye);
-    Camera::SetTarget(focus);
+    desc.position[1] += delta * 0.05f;
+    Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_POSITION);
+    return 1;
 }
 
-// The last word on what is drawn, after whatever moved the camera
-static int __cdecl OnView(AmodCameraView* view, void*)
+int __cdecl DrawNothing(void*)
 {
-    if (g_view == Views::Flip)
-    {
-        view->up[0] = -view->up[0];
-        view->up[1] = -view->up[1];
-        view->up[2] = -view->up[2];
-        return 1;
-    }
+    return 1;
+}
 
-    if (g_view == Views::Shoulder)
-    {
-        view->eye[0] = view->eye[0] + 1.5f;
-        return 1;
-    }
-
+int __cdecl RefuseTrails(AmodParticleDesc*, void*)
+{
     return 0;
 }
 
-static void ShowState()
+const uint32_t kMine = 0xA2F0;
+
+int __cdecl MarkBorn(AmodParticle particle, AmodParticleKind, void*)
 {
-    AmodCamera camera;
-    if (!Camera::Get(camera))
+    Particles::SetTag(particle, kMine);
+    return 1;
+}
+
+int __cdecl RefuseBorn(AmodParticle, AmodParticleKind, void*)
+{
+    return 0;
+}
+
+float Between(float from, float to)
+{
+    return from + (to - from) * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
+}
+
+// Hue as three cosines a third of a turn apart - enough of a rainbow, and no table.
+void Rainbow(float phase, float* out)
+{
+    out[0] = 0.5f + 0.5f * cosf(phase);
+    out[1] = 0.5f + 0.5f * cosf(phase - 2.0944f);
+    out[2] = 0.5f + 0.5f * cosf(phase + 2.0944f);
+    out[3] = 1.0f;
+}
+
+int __cdecl MarkWord(AmodParticle particle, AmodParticleKind, void*)
+{
+    Particles::SetTag(particle, kWordMark);
+    return 1;
+}
+
+void GlyphLook(AmodParticleDesc& desc, char glyph, float size)
+{
+    float scale[2] = { 0.004f, 0.004f };
+    Particles::TextScale(scale);
+
+    desc.structSize = sizeof(desc);
+    desc.kind = AMOD_PARTICLE_KIND_POOL_1;
+    desc.shape = AMOD_PARTICLE_SHAPE_MODEL;
+    desc.model = Particles::TextFont();
+    desc.modelFrame = static_cast<unsigned char>(glyph);
+    desc.glyphScale[0] = scale[0] * size;
+    desc.glyphScale[1] = scale[1] * size;
+}
+
+void Burst(const float* at)
+{
+    AmodParticleDesc desc = {};
+    GlyphLook(desc, '*', 0.8f);
+
+    desc.life = 1.0f;
+    desc.decay = 0.7f;
+    desc.gravity[1] = -0.4f;
+    desc.sizeGrow = 0.0f;
+    desc.spin = Between(-6.0f, 6.0f);
+
+    for (int at_ = 0; at_ < 28; ++at_)
     {
-        Console::Printf("cam: %s\n", LastError());
-        return;
-    }
+        const float angle = Between(0.0f, 6.2832f);
+        const float lift = Between(-0.6f, 1.0f);
 
-    static const char* const kEffects[] = { "none", "zoom", "rocking", "rotate" };
-    static const char* const kDrivers[] = { "game", "mod", "both", "nobody" };
+        desc.position[0] = at[0];
+        desc.position[1] = at[1];
+        desc.position[2] = at[2];
 
-    Console::Printf("eye   %+.3f %+.3f %+.3f\n", camera.eye[0], camera.eye[1], camera.eye[2]);
-    Console::Printf("at    %+.3f %+.3f %+.3f\n", camera.target[0], camera.target[1], camera.target[2]);
-    Console::Printf("up    %+.3f %+.3f %+.3f  roll %+.3f\n", camera.up[0], camera.up[1], camera.up[2], camera.roll);
-    Console::Printf("holds %+.3f %+.3f %+.3f\n", camera.followed[0], camera.followed[1], camera.followed[2]);
-    Console::Printf("fx %s%s, follows %s%s, driven by %s\n",
-        kEffects[camera.effect >= 0 && camera.effect <= 3 ? camera.effect : 0],
-        camera.isShaking ? " + shake" : "",
-        camera.followsEye ? "eye " : "",
-        camera.followsTarget ? "target" : "",
-        kDrivers[Camera::GetDriver()]);
+        desc.direction[0] = cosf(angle);
+        desc.direction[1] = lift;
+        desc.direction[2] = sinf(angle) * 0.35f;
+        desc.speed = Between(0.10f, 0.26f);
 
-    float focus[3];
-    if (Camera::GetFocus(focus))
-    {
-        Console::Printf("focus %+.3f %+.3f %+.3f\n", focus[0], focus[1], focus[2]);
-    }
+        // A colour of its own for every spark, not one for the whole burst
+        desc.colour[0] = Between(0.2f, 1.0f);
+        desc.colour[1] = Between(0.2f, 1.0f);
+        desc.colour[2] = Between(0.2f, 1.0f);
+        desc.colour[3] = 1.0f;
 
-    AmodCameraView view;
-    if (Camera::GetView(view))
-    {
-        Console::Printf("drawn from %+.3f %+.3f %+.3f\n", view.eye[0], view.eye[1], view.eye[2]);
-    }
-
-    AmodCameraLens lens;
-    if (Camera::GetLens(lens))
-    {
-        Console::Printf("lens fov %.1f deg, aspect %.3f, planes %.3f .. %.1f\n",
-            lens.fov * 180.0f / 3.1415927f, lens.aspect, lens.nearPlane, lens.farPlane);
-    }
-
-    const int free = Camera::GetFreeMode();
-    if (free != 0)
-    {
-        Console::Printf("cam_free is %d, so nothing here moves the camera\n", free);
+        Particles::Spawn(desc);
     }
 }
 
-static void ShowProperties()
+void Drop(const float* over)
 {
-    const int total = Camera::PropertyCount();
-    Console::Printf("%d camera setting(s)\n", total);
+    AmodParticleDesc desc = {};
+    GlyphLook(desc, '.', 1.2f);
 
-    for (int at = 0; at < total; ++at)
+    desc.life = 1.0f;
+    desc.decay = 0.45f;
+    desc.gravity[1] = -0.5f;
+    desc.direction[1] = -1.0f;
+    desc.speed = Between(0.05f, 0.12f);
+    desc.colour[0] = 0.6f;
+    desc.colour[1] = 0.8f;
+    desc.colour[2] = 1.0f;
+    desc.colour[3] = 1.0f;
+
+    for (int made = 0; made < 4; ++made)
     {
-        const char* const key = Camera::PropertyNameAt(at);
-        AmodValue value = {};
+        desc.position[0] = over[0] + Between(-0.35f, 0.35f);
+        desc.position[1] = over[1] + Between(0.20f, 0.34f);
+        desc.position[2] = over[2];
+        Particles::Spawn(desc);
+    }
+}
 
-        if (!Camera::GetProperty(key, value))
+int PaintTagged(const float* colour)
+{
+    int painted = 0;
+
+    AmodParticleDesc desc = {};
+    desc.structSize = sizeof(desc);
+    desc.colour[0] = colour[0];
+    desc.colour[1] = colour[1];
+    desc.colour[2] = colour[2];
+    desc.colour[3] = 1.0f;
+
+    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    {
+        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+
+        for (int at = Particles::Count(one) - 1; at >= 0; --at)
+        {
+            const AmodParticle particle = Particles::At(one, at);
+            if (particle == nullptr || Particles::GetTag(particle) != kMine)
+            {
+                continue;
+            }
+
+            if (Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR))
+            {
+                ++painted;
+            }
+        }
+    }
+
+    return painted;
+}
+
+void Report()
+{
+    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    {
+        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+        Console::Printf("  %-20s %4d live of %d\n", KindName(kind), Particles::Count(one), Particles::Capacity(one));
+    }
+}
+
+int PaintAll(const float* colour)
+{
+    int painted = 0;
+
+    AmodParticleDesc desc = {};
+    desc.structSize = sizeof(desc);
+    desc.colour[0] = colour[0];
+    desc.colour[1] = colour[1];
+    desc.colour[2] = colour[2];
+    desc.colour[3] = colour[3];
+
+    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    {
+        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+
+        for (int at = Particles::Count(one) - 1; at >= 0; --at)
+        {
+            const AmodParticle particle = Particles::At(one, at);
+            if (particle != nullptr && Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR))
+            {
+                ++painted;
+            }
+        }
+    }
+
+    return painted;
+}
+
+int HoldAll(bool holding)
+{
+    int touched = 0;
+
+    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    {
+        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+
+        for (int at = Particles::Count(one) - 1; at >= 0; --at)
+        {
+            const AmodParticle particle = Particles::At(one, at);
+            if (particle == nullptr)
+            {
+                continue;
+            }
+
+            if (holding ? Particles::SetThink(particle, &Hold) : Particles::ClearThink(particle))
+            {
+                ++touched;
+            }
+        }
+    }
+
+    return touched;
+}
+
+AmodTextureId TextureFor(const char* path)
+{
+    static AmodTextureId held = AMOD_INVALID_TEXTURE;
+    static const char* heldPath = nullptr;
+
+    if (held != AMOD_INVALID_TEXTURE && heldPath != nullptr && Same(heldPath, path))
+    {
+        return held;
+    }
+
+    held = Textures::Load(path, true, true);
+    heldPath = held != AMOD_INVALID_TEXTURE ? path : nullptr;
+    return held;
+}
+
+bool BorrowLook(AmodParticleDesc& desc)
+{
+    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    {
+        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+        const AmodParticle live = Particles::At(one, 0);
+
+        AmodParticleDesc from = {};
+        if (live == nullptr || !Particles::Get(live, from) || from.textureA == 0)
         {
             continue;
         }
-        if (value.kind == AMOD_VALUE_INT)
+
+        desc.textureA = from.textureA;
+        desc.textureB = from.textureB;
+        desc.shape = from.shape;
+        if (from.size > 0.0f)
         {
-            Console::Printf("  %-14s %d\n", key, value.integer);
+            desc.size = from.size;
         }
-        else
+        return true;
+    }
+
+    return false;
+}
+
+void RunShow(float delta)
+{
+    if (!g_show.running)
+    {
+        return;
+    }
+
+    g_show.time += delta;
+
+    // Six bursts, moving corner to corner around him
+    if (g_show.bursts < 6 && g_show.time >= g_show.nextBurst)
+    {
+        static const float corners[4][2] = { { -0.30f, 0.26f }, { 0.30f, 0.26f }, { -0.30f, 0.06f }, { 0.30f, 0.06f } };
+        const float* const corner = corners[g_show.bursts % 4];
+
+        const float at[3] = { g_show.origin[0] + corner[0], g_show.origin[1] + corner[1], g_show.origin[2] };
+        Burst(at);
+
+        ++g_show.bursts;
+        g_show.nextBurst = g_show.time + 0.35f;
+    }
+
+    // Then the word, marked as it is born so the rainbow finds it and nothing else
+    if (!g_show.wordSent && g_show.bursts >= 6)
+    {
+        const float where[3] = { g_show.origin[0], g_show.origin[1] + 0.12f, g_show.origin[2] };
+
+        Particles::SetBirthHandler(&MarkWord);
+        Particles::SpawnText("FIREWORK", where, 1.6f, 0.02f, 0.28f);
+        Particles::SetBirthHandler(g_marking ? &MarkBorn : nullptr);
+
+        g_show.wordSent = true;
+    }
+
+    // and the rain, while the word is still up
+    if (g_show.wordSent && g_show.time >= g_show.nextDrop && g_show.time < 5.5f)
+    {
+        Drop(g_show.origin);
+        g_show.nextDrop = g_show.time + 0.05f;
+    }
+
+    // The letters are repainted every frame
+    if (g_show.wordSent)
+    {
+        float colour[4] = {};
+        Rainbow(g_show.time * 4.0f, colour);
+
+        AmodParticleDesc desc = {};
+        desc.structSize = sizeof(desc);
+        desc.colour[0] = colour[0];
+        desc.colour[1] = colour[1];
+        desc.colour[2] = colour[2];
+        desc.colour[3] = 1.0f;
+
+        for (int at = Particles::Count(AMOD_PARTICLE_KIND_POOL_1) - 1; at >= 0; --at)
         {
-            Console::Printf("  %-14s %.3f\n", key, value.numbers[0]);
+            const AmodParticle particle = Particles::At(AMOD_PARTICLE_KIND_POOL_1, at);
+            if (particle != nullptr && Particles::GetTag(particle) == kWordMark)
+            {
+                Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR);
+            }
         }
+    }
+
+    if (g_show.time > 6.5f)
+    {
+        g_show.running = false;
     }
 }
 
-static bool TakeDriver(Drives drives)
+void __cdecl ParticlesCommand(int argc, const char** argv, void*)
 {
-    g_drives = drives;
-    g_angle = 0.0f;
-
-    if (drives == Drives::None)
+    if (!Particles::IsHere())
     {
-        Camera::SetUpdateHandler(nullptr);
-        return Camera::SetDriver(AMOD_CAMERA_DRIVER_GAME);
-    }
-
-    return Camera::SetUpdateHandler(&OnCamera) && Camera::SetDriver(AMOD_CAMERA_DRIVER_MOD);
-}
-
-static void __cdecl CamCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        ShowState();
+        Console::Print("particles: not in a level\n");
         return;
     }
 
-    const char* const what = argv[1];
+    const char* const what = argc > 1 ? argv[1] : "count";
 
-    if (strcmp(what, "props") == 0)
+    if (Same(what, "count"))
     {
-        ShowProperties();
+        Report();
+        Console::Printf("  hold %s, tint %s, mark %s\n", g_holding ? "on" : "off", g_tinting ? "on" : "off", g_marking ? "on" : "off");
         return;
     }
 
-    if (strcmp(what, "reload") == 0)
+    if (Same(what, "paint") || Same(what, "tint"))
     {
-        Say(Camera::Reload(), "camera.txt read again");
-        return;
-    }
+        const bool lasting = Same(what, "tint");
 
-    if (strcmp(what, "here") == 0)
-    {
-        float focus[3];
-        Say(Camera::GetFocus(focus) && Camera::Place(focus), "put where the player is");
-        return;
-    }
-
-    if (strcmp(what, "eye") == 0 && argc > 4)
-    {
-        float point[3];
-        ReadTriple(argc, argv, 2, point);
-        Say(Camera::SetEye(point), "eye moved");
-        return;
-    }
-
-    if (strcmp(what, "at") == 0 && argc > 4)
-    {
-        float point[3];
-        ReadTriple(argc, argv, 2, point);
-        Say(Camera::SetTarget(point), "looking there");
-        return;
-    }
-
-    if (strcmp(what, "up") == 0 && argc > 4)
-    {
-        float point[3];
-        ReadTriple(argc, argv, 2, point);
-        Say(Camera::SetUp(point), "up is that way");
-        return;
-    }
-
-    if (strcmp(what, "roll") == 0 && argc > 2)
-    {
-        Say(Camera::SetRoll(static_cast<float>(atof(argv[2]))), "rolled");
-        return;
-    }
-
-    if (strcmp(what, "follow") == 0 && argc > 4)
-    {
-        float point[3];
-        ReadTriple(argc, argv, 2, point);
-        Say(Camera::Follow(point), "catching up to it");
-        return;
-    }
-
-    if (strcmp(what, "place") == 0 && argc > 4)
-    {
-        float point[3];
-        ReadTriple(argc, argv, 2, point);
-        Say(Camera::Place(point), "put there");
-        return;
-    }
-
-    if (strcmp(what, "lock") == 0 && argc > 3)
-    {
-        const bool follows = atoi(argv[3]) != 0;
-
-        if (strcmp(argv[2], "eye") == 0)
+        if (lasting && Off(argc, argv, 2))
         {
-            Say(Camera::SetFollowEye(follows), follows ? "the eye follows" : "the eye stands");
-            return;
-        }
-        if (strcmp(argv[2], "at") == 0)
-        {
-            Say(Camera::SetFollowTarget(follows), follows ? "the target follows" : "the target stands");
+            g_tinting = false;
+            Console::Print("particles: tint off\n");
             return;
         }
 
-        Console::Printf("cam lock eye|at 0|1\n");
+        float colour[4] = { 1.0f, 0.2f, 0.1f, 1.0f };
+        if (argc > 4)
+        {
+            colour[0] = static_cast<float>(atof(argv[2]));
+            colour[1] = static_cast<float>(atof(argv[3]));
+            colour[2] = static_cast<float>(atof(argv[4]));
+        }
+
+        if (lasting)
+        {
+            g_tint[0] = colour[0];
+            g_tint[1] = colour[1];
+            g_tint[2] = colour[2];
+            g_tinting = true;
+            Console::Printf("particles: tint on, %.2f %.2f %.2f - every particle, every frame\n", colour[0], colour[1], colour[2]);
+            return;
+        }
+
+        const int painted = PaintAll(colour);
+        if (painted == 0)
+        {
+            Console::Print("particles: nothing is in the air - set off an effect or take a bonus\n");
+            return;
+        }
+
+        Console::Printf("particles: %d painted %.2f %.2f %.2f\n", painted, colour[0], colour[1], colour[2]);
         return;
     }
 
-    if (strcmp(what, "fx") == 0 && argc > 2)
+    if (Same(what, "spawn"))
     {
-        if (strcmp(argv[2], "off") == 0)
+        const int asked = argc > 2 ? atoi(argv[2]) : 0;
+        const int wanted = asked > 0 ? asked : 16;
+        const int kind = argc > 3 ? atoi(argv[3]) : AMOD_PARTICLE_KIND_POOL_1;
+
+        float focus[3] = {};
+        if (!Camera::GetFocus(focus))
         {
-            Say(Camera::StopEffect(), "effect off");
+            Console::Print("particles: there is nobody to spawn them on\n");
             return;
         }
 
-        const int effect = strcmp(argv[2], "zoom") == 0 ? AMOD_CAMERA_EFFECT_ZOOM :
-            strcmp(argv[2], "rock") == 0 ? AMOD_CAMERA_EFFECT_ROCKING :
-            strcmp(argv[2], "rotate") == 0 ? AMOD_CAMERA_EFFECT_ROTATE : 0;
+        AmodParticleDesc desc = {};
+        desc.structSize = sizeof(desc);
+        desc.kind = static_cast<AmodParticleKind>(kind);
+        desc.size = 0.03f;
+        desc.sizeGrow = -0.005f;
+        desc.life = 1.0f;
+        desc.decay = 0.4f;
+        desc.speed = 0.25f;
+        desc.gravity[1] = -0.6f;
+        desc.spin = 3.0f;
+        desc.colour[0] = 1.0f;
+        desc.colour[1] = 0.4f;
+        desc.colour[2] = 0.1f;
+        desc.colour[3] = 1.0f;
 
-        if (effect == 0)
+        const char* const path = argc > 4 ? argv[4] : "textures/rooms/5_01_wall.jpg";
+        desc.textureA = static_cast<int>(TextureFor(path));
+
+        if (desc.textureA == AMOD_INVALID_TEXTURE)
         {
-            Console::Printf("cam fx zoom|rock|rotate|off\n");
-            return;
+            if (!BorrowLook(desc))
+            {
+                Console::Printf("particles: '%s' would not load, and nothing is in the air to borrow from\n", path);
+                return;
+            }
+            Console::Printf("particles: '%s' would not load, borrowed a look instead\n", path);
         }
 
-        Say(Camera::StartEffect(effect), argv[2]);
+        int made = 0;
+        for (int at = 0; at < wanted; ++at)
+        {
+            const float spread = static_cast<float>(rand()) / RAND_MAX - 0.5f;
+            const float across = static_cast<float>(rand()) / RAND_MAX - 0.5f;
+
+            desc.position[0] = focus[0];
+            desc.position[1] = focus[1];
+            desc.position[2] = focus[2];
+
+            desc.direction[0] = spread;
+            desc.direction[1] = 1.0f;
+            desc.direction[2] = across;
+
+            if (Particles::Spawn(desc) != nullptr)
+            {
+                ++made;
+            }
+        }
+
+        Console::Printf("particles: %d of %d spawned into %s\n", made, wanted, KindName(kind));
         return;
     }
 
-    if (strcmp(what, "shake") == 0 && argc > 2)
+    if (Same(what, "hold"))
     {
-        const bool on = strcmp(argv[2], "on") == 0;
-        Say(on ? Camera::StartShake() : Camera::StopShake(), on ? "shaking" : "still");
+        g_holding = !Off(argc, argv, 2);
+        if (!g_holding)
+        {
+            Console::Printf("particles: hold off, gave back %d\n", HoldAll(false));
+            return;
+        }
+
+        Console::Printf("particles: hold on, standing in for %d so far - take a bonus\n", HoldAll(true));
         return;
     }
 
-    if (strcmp(what, "drive") == 0 && argc > 2)
+    if (Same(what, "clear"))
     {
-        if (strcmp(argv[2], "orbit") == 0)
+        int ended = 0;
+        for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
         {
-            Say(TakeDriver(Drives::Orbit), "orbiting");
-            return;
-        }
-        if (strcmp(argv[2], "chase") == 0)
-        {
-            Say(TakeDriver(Drives::Chase), "chasing");
-            return;
-        }
-        if (strcmp(argv[2], "game") == 0)
-        {
-            Say(TakeDriver(Drives::None), "the game has it back");
-            return;
-        }
-        if (strcmp(argv[2], "both") == 0)
-        {
-            g_drives = Drives::Orbit;
-            Say(Camera::SetUpdateHandler(&OnCamera) && Camera::SetDriver(AMOD_CAMERA_DRIVER_BOTH), "both");
-            return;
-        }
-        if (strcmp(argv[2], "nobody") == 0)
-        {
-            Say(Camera::SetDriver(AMOD_CAMERA_DRIVER_NOBODY), "frozen where it stands");
-            return;
+            const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
+            ended += Particles::Count(one);
+            Particles::Clear(one);
         }
 
-        Console::Printf("cam drive orbit|chase|both|nobody|game\n");
+        Console::Printf("particles: %d ended\n", ended);
         return;
     }
 
-    if (strcmp(what, "lens") == 0 && argc > 2)
+    if (Same(what, "firework"))
     {
-        if (strcmp(argv[2], "off") == 0)
+        if (!Camera::GetFocus(g_show.origin))
         {
-            Say(Camera::ClearLens(), "the lens is the game's");
-            return;
-        }
-        if (argc < 4)
-        {
-            Console::Printf("cam lens fov|near|far <number>, or off\n");
+            Console::Print("particles: there is nobody to set it off over\n");
             return;
         }
 
-        const float number = static_cast<float>(atof(argv[3]));
-        AmodCameraLens lens = {};
-        lens.structSize = sizeof(lens);
+        g_show = Show{ true, 0.0f, 0.0f, 0.0f, 0, false,
+            { g_show.origin[0], g_show.origin[1], g_show.origin[2] } };
 
-        if (strcmp(argv[2], "fov") == 0)
-        {
-            lens.fov = number * 3.1415927f / 180.0f;
-        }
-        else if (strcmp(argv[2], "near") == 0)
-        {
-            lens.nearPlane = number;
-        }
-        else if (strcmp(argv[2], "far") == 0)
-        {
-            lens.farPlane = number;
-        }
-        else
-        {
-            Console::Printf("cam lens fov|near|far <number>, or off\n");
-            return;
-        }
-
-        Say(Camera::SetLens(lens), argv[2]);
+        Console::Print("particles: six bursts, then the word and the rain\n");
         return;
     }
 
-    if (strcmp(what, "snap") == 0 && argc > 2)
+    if (Same(what, "hide"))
     {
-        g_holdsPlace = strcmp(argv[2], "refuse") == 0;
-        Say(Camera::SetEventHandler(&OnCameraEvent),
-            g_holdsPlace ? "the snap will be refused" : "the snap is only reported");
+        Console::Print(Particles::SetDrawHandler(&DrawNothing) ? "particles: the draw is ours\n" : "particles: could not take the draw\n");
         return;
     }
 
-    if (strcmp(what, "view") == 0 && argc > 2)
+    if (Same(what, "show"))
     {
-        if (strcmp(argv[2], "off") == 0)
+        Particles::SetDrawHandler(nullptr);
+        Console::Print("particles: the draw is the game's again\n");
+        return;
+    }
+
+    if (Same(what, "text"))
+    {
+        float focus[3] = {};
+        Camera::GetFocus(focus);
+
+        // The letters are spaced from the font's own metrics, which only the game knows
+        const char* const words = argc > 2 ? argv[2] : "AZFORGE";
+        const float scale = argc > 3 ? static_cast<float>(atof(argv[3])) : 1.0f;
+
+        focus[1] += 0.05f;
+
+        Console::Printf(Particles::SpawnText(words, focus, scale)
+            ? "particles: '%s' floated at scale %.3f\n"
+            : "particles: '%s' refused at scale %.3f - is a game running?\n", words, scale);
+        return;
+    }
+
+    if (Same(what, "mark"))
+    {
+        g_marking = !Off(argc, argv, 2);
+        if (!g_marking)
         {
-            g_view = Views::None;
-            Say(Camera::SetViewHandler(nullptr), "the view is the game's");
+            Particles::SetBirthHandler(nullptr);
+            Console::Print("particles: no longer marking\n");
             return;
         }
 
-        g_view = strcmp(argv[2], "flip") == 0 ? Views::Flip :
-            strcmp(argv[2], "shoulder") == 0 ? Views::Shoulder : Views::None;
-
-        if (g_view == Views::None)
-        {
-            Console::Printf("cam view flip|shoulder|off\n");
-            return;
-        }
-
-        Say(Camera::SetViewHandler(&OnView), argv[2]);
+        Console::Print(Particles::SetBirthHandler(&MarkBorn)
+            ? "particles: marking every new particle; only those get painted now\n"
+            : "particles: could not take the births\n");
         return;
     }
 
-    if (argc < 3)
+    if (Same(what, "none"))
     {
-        Console::Printf("cam [props|reload|here|eye|at|up|roll|follow|place|lock|fx|shake|drive|view|lens|snap]\n");
-        Console::Printf("cam <setting> <number>\n");
+        const bool off = Off(argc, argv, 2);
+        Particles::SetBirthHandler(off ? nullptr : &RefuseBorn);
+        Console::Print(off ? "particles: births allowed again\n" : "particles: every birth refused\n");
         return;
     }
 
-    // An int setting refuses a float value, so the kind it reads back as is the kind it is sent
-    AmodValue was = {};
-    const bool known = Camera::GetProperty(what, was);
-    const AmodValue value = known && was.kind == AMOD_VALUE_INT
-        ? Value(atoi(argv[2]))
-        : Value(static_cast<float>(atof(argv[2])));
+    if (Same(what, "quiet"))
+    {
+        Console::Print(Particles::SetSpawnHandler(&RefuseTrails) ? "particles: bonus trails refused\n" : "particles: could not take the spawn\n");
+        return;
+    }
 
-    Say(known && Camera::SetProperty(what, value), what);
+    if (Same(what, "loud"))
+    {
+        Particles::SetSpawnHandler(nullptr);
+        Console::Print("particles: bonus trails allowed again\n");
+        return;
+    }
+
+    Console::Print("particles: count | paint r g b | tint r g b | tint off | spawn [n] [kind] [texture]\n");
+    Console::Print("           text [word] [scale] | hold [off] | mark [off] | none [off] | clear\n");
+    Console::Print("           firework | hide | show | quiet | loud\n");
+    Console::Print("  uni particles exist only while a bonus is being taken\n");
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -445,12 +632,32 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("cam", &CamCommand);
+    Console::AddCommand("particles", &ParticlesCommand);
+
+    Log(AMOD_LOG_INFO, "%s is up", ModId());
     return AMOD_OK;
 }
 
-AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
+AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
 {
+    RunShow(frame != nullptr ? frame->delta : 0.0f);
+
+    if (g_tinting)
+    {
+        if (g_marking)
+        {
+            PaintTagged(g_tint);
+        }
+        else
+        {
+            PaintAll(g_tint);
+        }
+    }
+
+    if (g_holding)
+    {
+        HoldAll(true);
+    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

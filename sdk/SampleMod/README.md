@@ -1,138 +1,110 @@
-## Moving it by hand
+# The particles workbench
 
-| command | what it does |
+One console command, `particles`, that drives every part of `ParticlesApi`. Load the mod, start a
+level, open the console and type.
+
+## Start here
+
+```
+particles firework
+```
+
+Six bursts around the player, then the word FIREWORK floating up through falling rain, shimmering
+through a rainbow. Everything the API can do, in one go.
+
+## Every command
+
+| Type this | And you get |
 | --- | --- |
-| `cam eye <x> <y> <z>` | put the eye there this instant |
-| `cam at <x> <y> <z>` | point it there |
-| `cam up <x> <y> <z>` | which way is up; `0 1 0` is normal |
-| `cam roll <radians>` | turn it about the view axis, as `$fx_rotate` does |
-| `cam follow <x> <y> <z>` | give it a point to catch up to, at `$follow_speed` |
-| `cam place <x> <y> <z>` | the same point, but arrive at once |
-| `cam here` | put it where the player is |
+| `particles` | the counts, same as `particles count` |
+| `particles count` | how many of each kind are live, and the modes that are on |
+| `particles paint 0 1 0` | everything in the air right now turns green |
+| `particles tint 0 0 1` | keeps turning everything blue, including new particles |
+| `particles tint off` | stops |
+| `particles spawn` | 16 particles fountain up out of the player |
+| `particles spawn 40 1` | 40 of them, into pool 1 |
+| `particles spawn 40 1 textures/rooms/5_01_wall.jpg` | the same, with a texture you name |
+| `particles text` | AZFORGE floats up over the player |
+| `particles text HELLO 0.5` | your word, at half the size a score is drawn |
+| `particles hold` | fire, sparks and trails freeze in the air |
+| `particles hold off` | they carry on and fade as usual |
+| `particles mark` | every new particle is marked; `tint` then paints only those |
+| `particles mark off` | stops marking |
+| `particles none` | the game cannot make a particle at all - everything goes still |
+| `particles none off` | back to normal |
+| `particles clear` | everything in the air ends now |
+| `particles hide` | particles stop being drawn; the rest of the world is untouched |
+| `particles show` | drawn again |
+| `particles quiet` | the trail a bonus makes is refused |
+| `particles loud` | allowed again |
+| `particles firework` | the show |
 
-Anything written this way lasts until the next frame, when the game's update drags it back. To make
-it stick, stop the camera following:
+## Things worth knowing before you decide something is broken
 
-```
-cam lock eye 0           the eye stands still; the target still tracks him
-cam lock at 0            neither end moves
-cam lock eye 1           back to normal
-```
+**`paint` on a fire looks like nothing happened.** It colours what is in the air at that instant,
+and a fire is a stream of particles that live under a second - the ones you painted are gone before
+you look up. Use `tint` for anything still being made, or `paint` after `hold`.
 
-These are the game's own two switches, not something the mod invented, so nothing is fighting.
+**`hold` fills the stores.** A held particle never finishes, so after a while the game runs out and
+stops making new ones. That is it working. `hold off` releases them, `clear` sweeps up.
 
----
+**Uni particles only exist while a bonus is being taken.** `particles count` will show zero of them
+most of the time. Take a bonus and look again.
 
-## Effects
+**Pool 2 is always empty.** The game never draws it. It is in the list because a mod that takes the
+draw could use it.
 
-Three effects, one at a time, plus a shake that runs alongside any of them. The game fires one of
-the three at random when a bonus is taken.
+**`spawn` needs a size you can see.** It fountains upward with gravity so you can watch it arc; if
+you pass a texture path the game cannot open, it borrows the look of something already in the air.
 
-| command | what it does |
-| --- | --- |
-| `cam fx zoom` | pushes in over `$time_in` and drifts back out over `$time_out` |
-| `cam fx rock` | swings about the view axis, `$angle` degrees, `$count` times |
-| `cam fx rotate` | turns the world over, holds for `$time_pause`, turns back |
-| `cam fx off` | whichever is running, stopped |
-| `cam shake on` / `cam shake off` | `$event_rock`: the eye jitters about where it would be |
+**`text` scale is a multiple, not a size.** 1 is exactly the size the game floats a score at. 2 is
+twice that. It is not a distance in the world.
 
-The shake has to be stopped on its own. Stopping the effect does not stop it.
+## What the show demonstrates
 
----
+`particles firework` is the one worth reading the source of. The letters of the word and the
+raindrops are the same kind of particle, made a fraction of a second apart, and the game records no
+owner on either. The word still shimmers and the rain does not, because the mod **marks** the
+letters as they are born and repaints only what it marked.
 
-## Driving it
+That is the pattern for anything selective: set a birth handler for exactly as long as the thing
+you care about is being created, mark what appears, and work on the marks afterwards.
 
-`cam drive <who>` decides who moves the camera each frame.
+## Using it from your own mod
 
-| command | what it does |
-| --- | --- |
-| `cam drive orbit` | the mod's own camera: it circles the player |
-| `cam drive chase` | the mod's own camera: it hangs behind and catches up by hand |
-| `cam drive both` | the game moves it, then the mod moves it again |
-| `cam drive nobody` | neither; it stays where it stands and the world slides past |
-| `cam drive game` | given back |
+```cpp
+AmodParticleDesc desc = {};
+desc.structSize = sizeof(desc);
+desc.kind = AMOD_PARTICLE_KIND_POOL_1;
+desc.textureA = Textures::Load("textures/rooms/5_01_wall.jpg");
+desc.size = 0.03f;
+desc.life = 1.0f;
+desc.decay = 0.5f;
+desc.speed = 0.2f;
+desc.direction[1] = 1.0f;
+desc.gravity[1] = -0.6f;
+desc.colour[0] = 1.0f;
+desc.colour[3] = 1.0f;
 
-`orbit` and `chase` are the same handler with two minds. Both ask the API where the player's focus
-is rather than reading the entity, because the focus is not his position — it is his position
-raised half his box, which is what the game itself looks at.
-
-`chase` is the interesting one: it does its own catching-up, so the lag is the mod's arithmetic and
-`$lag_dist` no longer means anything. That is what taking a domain over looks like.
-
-`nobody` is worth trying while walking around. Nothing crashes, nothing snaps back — the camera is
-simply not updated, which is the shape a cutscene wants.
-
----
-
-## Drawing from somewhere else
-
-`cam view` changes what the renderer is given, after everything above has had its say.
-
-| command | what it does |
-| --- | --- |
-| `cam view flip` | up is negated: the world is drawn upside down |
-| `cam view shoulder` | the eye is pushed aside, without the camera knowing |
-| `cam view off` | the view is the game's again |
-
-The handler returns a verdict. Zero means it only looked, and whatever it wrote is thrown away —
-so a handler that gathers information cannot change the picture by accident.
-
-`shoulder` shows the point of the seam: `cam` still reports the eye where the game put it, while
-`drawn from` reports it a metre and a half to the side. The camera and the view are not the same
-thing, and a mod can hold either one.
-
----
-
-## The lens
-
-The view says where the camera is. The lens says how much of the world fits in it, and it is not
-part of the camera at all — the game builds it inline while rendering, from a field of its video
-settings and three constants. `cam` prints the four numbers it was last built from.
-
-| command | what it does |
-| --- | --- |
-| `cam lens fov <degrees>` | how wide it sees; the game's is what the options screen holds |
-| `cam lens near <n>` | anything nearer is cut away |
-| `cam lens far <n>` | anything further is cut away; the game's is **10** |
-| `cam lens off` | all four back to the game's |
-
-The far plane is the one to notice. Ten is close — the player is a third of a unit tall, so ten
-units is about thirty of him. Fly the camera back with `cam drive orbit` and a bigger radius and
-the room disappears into nothing; `cam lens far 60` brings it back.
-
-The calls compose: each number above zero is taken and the rest are left alone, so `fov` then
-`far` keeps both. Only the world is affected — a model a mod puts in front of the camera is drawn
-through its own lens and is not disturbed.
-
----
-
-## The snap
-
-Every level and every room start puts the camera where the player is, at once. That happens
-outside the update, so a mod driving the camera gets jerked without being told.
-
-```
-cam snap watch           print it when it happens, and let it happen
-cam snap refuse          print it and refuse; the camera stays where it stands
+Particles::Spawn(desc);
 ```
 
-Refusing is what a cutscene wants and what a normal game does not: refuse it before the first
-room of a level and the camera begins wherever it happened to be. Told and allowed is the safe
-setting, and the reason the handler returns a verdict rather than the mod simply being informed.
+Floating text goes through the game's own routine, so the letters are spaced the way the game
+spaces them:
 
----
-
-## Trying it
-
-Any level will do — the camera is not a room's business. Start a game, open the console and:
-
+```cpp
+float where[3] = {};
+Camera::GetFocus(where);
+Particles::SpawnText("HELLO", where);
 ```
-cam                      what is going on
-cam drive orbit          circle him
-cam lens far 60          and now the room is still there behind him
-cam view flip            circle him, upside down
-cam snap refuse          walk into the next room and it does not jump
-cam view off
-cam lens off
-cam drive game           everything back
+
+A particle can also walk a list of textures instead of carrying one:
+
+```cpp
+const int frames[] = { a, b, c };
+desc.animation = Particles::CreateAnimation(frames, 3);
+desc.frameRate = 12.0f;
 ```
+
+Set the alpha through `life`, not through `colour[3]` - the game writes the life into the alpha
+every frame, so an alpha of your own never survives to be drawn.

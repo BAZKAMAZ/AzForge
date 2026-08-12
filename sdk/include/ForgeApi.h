@@ -16,6 +16,7 @@
 #include "MmdApi.h"
 #include "CtrlsApi.h"
 #include "CameraApi.h"
+#include "ParticlesApi.h"
 #include "PlayerApi.h"
 #include "SoundApi.h"
 #include "TextureApi.h"
@@ -99,10 +100,13 @@ typedef struct AmodApi
     /* Where the world is looked at from, and who moves it. */
     const AmodCameraApi* camera;
 
+    /* Sparks, smoke and trails: four stores the game draws inside the world render. */
+    const AmodParticlesApi* particles;
+
     /* New subsystems and functions are appended, never inserted. */
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, camera, 0x7C);
+AMOD_LAST_FIELD(AmodApi, particles, 0x80);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -154,6 +158,7 @@ namespace Amod
         Player::Attach(api->player, api->self);
         Ctrls::Attach(api->ctrls, api->self);
         Camera::Attach(api->camera, api->self);
+        Particles::Attach(api->particles, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

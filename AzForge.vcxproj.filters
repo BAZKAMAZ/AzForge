@@ -288,7 +288,16 @@
     <ClInclude Include="src\Api\CameraApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="src\Api\ParticlesApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\ParticlesApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
     <ClInclude Include="src\Game\Addresses\Camera.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Particles.h">
       <Filter>Game\Addresses</Filter>
     </ClInclude>
   </ItemGroup>
@@ -442,6 +451,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\CameraApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ParticlesApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

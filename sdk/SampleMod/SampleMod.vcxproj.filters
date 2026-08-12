@@ -59,10 +59,6 @@
     <ClInclude Include="$(SolutionDir)sdk\include\WorldApi.h">
       <Filter>Api</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="package\mod.json">
-      <Filter>Package</Filter>
-    </None>
+    <ClInclude Include="$(SolutionDir)sdk\include\InventoryApi.h" />
   </ItemGroup>
 </Project>
