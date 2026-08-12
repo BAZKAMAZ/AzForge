@@ -45,6 +45,11 @@ namespace Forge
         constexpr uintptr_t kInventorySoundUseOffset = 0x48;
         constexpr uintptr_t kInventoryTypeOffset = 0x4C;
         constexpr uintptr_t kInventoryFlagsOffset = 0x50;
+
+        // Inventory_Update counts a slot down only when the first is set and the second is clear,
+        // so the second is the game's own "leave this one alone" - no hook needed to stop a timer.
+        constexpr uint32_t kInventoryFlagTicks = 0x1;
+        constexpr uint32_t kInventoryFlagHeld = 0x8;
         constexpr uintptr_t kInventoryTimeLeftOffset = 0x54;
         constexpr uintptr_t kInventoryTimeTotalOffset = 0x58;
         constexpr uintptr_t kInventoryBurnTimeOffset = 0x5C;
@@ -119,6 +124,21 @@ namespace Forge
 
         constexpr uintptr_t kEntityRockingAxisOffset = 0x4FC;
         constexpr uintptr_t kEntityRockingOffset = 0x508;
+
+        // Live bonus entity kind (placement kind is 9).
+        constexpr int kEntityKindBonus = 3;
+
+        // Glow Scene_SortObjects draws; defaults live in globals, not the type.
+        constexpr uintptr_t kEntityGlowOffset = 0x534;
+        constexpr uintptr_t kEntityGlow2Offset = 0x54C;
+        constexpr uintptr_t kEntityGlowStateOffset = 0x524; // three dwords from globals below
+        constexpr uintptr_t kEntityGlowPhaseOffset = 0x530; // random so bonuses pulse apart
+        constexpr uintptr_t kEntityGlowSpriteOffset = 0x544;
+
+        constexpr uintptr_t kBonusGlowState0 = 0x00691468;
+        constexpr uintptr_t kBonusGlowState1 = 0x00691470;
+        constexpr uintptr_t kBonusGlowState2 = 0x00691474;
+        constexpr uintptr_t kBonusGlowSprite = 0x0069146C;
 
         // Door open scale: update writes 0..1 into +0x254 each frame.
         constexpr uintptr_t kEntityScaleXOffset = 0x250;

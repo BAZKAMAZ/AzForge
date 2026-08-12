@@ -25,26 +25,18 @@ namespace Forge
     {
         using namespace ApiRead;
 
-        // The same resolver the parsers go through, for an icon named by a mod.
         uint32_t ResolveResource(uintptr_t slot, const char* name)
         {
             void** const at = static_cast<void**>(GameModule::Resolve(slot));
             const auto routine = at != nullptr
-                                     ? reinterpret_cast<uint32_t (__cdecl*)(const char*)>(*at)
-                                     : nullptr;
+                ? reinterpret_cast<uint32_t(__cdecl*)(const char*)>(*at)
+                : nullptr;
 
             return (routine != nullptr && name != nullptr) ? routine(name) : 0;
         }
 
-        // --- the player and what it carries ------------------------------------------------
-        //
-        // The player is an entity like any other and its kind is its first field, which is what
-        // Bonus_OnTouch tests before letting anything be picked up. So it is found by walking the
-        // live list rather than through a global of its own.
-
         AmodInventoryApi g_inventoryTable = {};
 
-        // What the game is currently walking. Five until a mod says otherwise.
         int g_slotCount = static_cast<int>(GameAddress::kInventorySlotCount);
 
         const uint8_t* SlotBase();
@@ -66,6 +58,23 @@ namespace Forge
             return (Caller(mod) != nullptr && WorldApi::Player() != nullptr) ? 1 : 0;
         }
 
+        // Slot stores type name; callers want $res_id -- map name to id here.
+        const char* ResourceIdOf(const char* name)
+        {
+            typedef const uint8_t* (__cdecl* FindTypeRoutine)(const char* name);
+
+            if (name == nullptr || name[0] == '\0')
+            {
+                return "";
+            }
+
+            const FindTypeRoutine find =
+                reinterpret_cast<FindTypeRoutine>(GameModule::Resolve(GameAddress::kBonusResFind));
+            const uint8_t* const type = find != nullptr ? find(name) : nullptr;
+
+            return (type != nullptr && Readable(type, GameAddress::kBonusResStride)) ? ReadText(type, GameAddress::kBonusResIdOffset) : "";
+        }
+
         int __cdecl ApiGetInventoryItem(AmodMod mod, int slot, AmodInventoryItem* out)
         {
             const uint8_t* const record = Caller(mod) != nullptr ? InventorySlot(slot) : nullptr;
@@ -79,18 +88,21 @@ namespace Forge
             AmodInventoryItem filled = {};
             filled.structSize = sizeof(AmodInventoryItem);
             filled.name = NameAt(record, GameAddress::kInventoryNameOffset)
-                              ? ReadText(record, GameAddress::kInventoryNameOffset)
-                              : "";
+                ? ReadText(record, GameAddress::kInventoryNameOffset)
+                : "";
+
             filled.timeLeft = Read<float>(record, GameAddress::kInventoryTimeLeftOffset);
             filled.timeTotal = Read<float>(record, GameAddress::kInventoryTimeTotalOffset);
             filled.isTotem = (flags & GameAddress::kBonusFlagTotem) != 0 ? 1 : 0;
             filled.isTorch = (flags & GameAddress::kBonusFlagTorch) != 0 ? 1 : 0;
             filled.pointsOnRunOut = Read<int>(record, GameAddress::kInventoryPointsOutOffset);
             filled.burnTime = Read<float>(record, GameAddress::kInventoryBurnTimeOffset);
+            filled.resourceId = ResourceIdOf(filled.name);
 
             const uint32_t copied = out->structSize < sizeof(filled)
-                                        ? out->structSize
-                                        : static_cast<uint32_t>(sizeof(filled));
+                ? out->structSize
+                : static_cast<uint32_t>(sizeof(filled));
+
             memcpy(out, &filled, copied);
             memcpy(out, &copied, sizeof(copied));
             return 1;
@@ -108,7 +120,7 @@ namespace Forge
             {
                 const uint8_t* const record = InventorySlot(slot);
                 used += (record != nullptr &&
-                         ReadText(record, GameAddress::kInventoryNameOffset)[0] != '\0') ? 1 : 0;
+                    ReadText(record, GameAddress::kInventoryNameOffset)[0] != '\0') ? 1 : 0;
             }
             return used;
         }
@@ -135,8 +147,8 @@ namespace Forge
             filled.window = Global<float>(GameAddress::kChainWindow, 0.0f);
 
             const uint32_t copied = out->structSize < sizeof(filled)
-                                        ? out->structSize
-                                        : static_cast<uint32_t>(sizeof(filled));
+                ? out->structSize
+                : static_cast<uint32_t>(sizeof(filled));
             memcpy(out, &filled, copied);
             memcpy(out, &copied, sizeof(copied));
             return 1;
@@ -157,9 +169,9 @@ namespace Forge
             return Caller(mod) != nullptr ? Global<int>(GameAddress::kOtherBonusesLeft, 0) : 0;
         }
 
-        // --- writing the carried slots ------------------------------------------------------
+        // Writing carried slots.
 
-        typedef void (__cdecl* ClearSlotRoutine)(void* player, void* slot);
+        typedef void(__cdecl* ClearSlotRoutine)(void* player, void* slot);
 
         uint32_t SlotTimerFlags(uint32_t flags, AmodBonusTimer timer)
         {
@@ -213,12 +225,11 @@ namespace Forge
             return -1;
         }
 
-        int __cdecl ApiPutInventoryItem(AmodMod mod, int slot, const char* typeName, float time,
-                                        AmodBonusTimer timer)
+        int __cdecl ApiPutInventoryItem(AmodMod mod, int slot, const char* typeName, float time, AmodBonusTimer timer)
         {
             uint8_t* const record = Caller(mod) != nullptr
-                                        ? const_cast<uint8_t*>(InventorySlot(slot))
-                                        : nullptr;
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
             if (record == nullptr || typeName == nullptr)
             {
                 return 0;
@@ -233,14 +244,14 @@ namespace Forge
             const uint32_t flags =
                 SlotTimerFlags(Read<uint32_t>(type, GameAddress::kBonusResFlagsOffset), timer);
             const float lasts = time > 0.0f ? time
-                                            : Read<float>(type, GameAddress::kBonusResTimeOffset);
+                : Read<float>(type, GameAddress::kBonusResTimeOffset);
 
             const uint32_t icon = Read<uint32_t>(type, GameAddress::kBonusResIconOffset);
             const int pointsOut = Read<int>(type, GameAddress::kBonusResPointsOutOffset);
             const uint32_t soundUse = Read<uint32_t>(type, GameAddress::kBonusResSoundUseOffset);
             const float burn = (flags & GameAddress::kBonusFlagTorch) != 0
-                                   ? Read<float>(type, GameAddress::kBonusResBurnTimeOffset)
-                                   : 0.0f;
+                ? Read<float>(type, GameAddress::kBonusResBurnTimeOffset)
+                : 0.0f;
 
             memcpy(record + GameAddress::kInventoryIconOffset, &icon, sizeof(icon));
             memcpy(record + GameAddress::kInventoryPointsOutOffset, &pointsOut, sizeof(pointsOut));
@@ -251,27 +262,403 @@ namespace Forge
             memcpy(record + GameAddress::kInventoryTimeTotalOffset, &lasts, sizeof(lasts));
             memcpy(record + GameAddress::kInventoryBurnTimeOffset, &burn, sizeof(burn));
 
-            strncpy_s(reinterpret_cast<char*>(record + GameAddress::kInventoryNameOffset),
-                      GameAddress::kSpawnNameLength,
-                      ReadText(type, GameAddress::kBonusResNameOffset), _TRUNCATE);
+            strncpy_s(reinterpret_cast<char*>(record + GameAddress::kInventoryNameOffset), GameAddress::kSpawnNameLength, ReadText(type, 
+                GameAddress::kBonusResNameOffset), _TRUNCATE);
             return 1;
         }
 
-        int __cdecl ApiClearInventoryItem(AmodMod mod, int slot)
+        int __cdecl ApiMoveInventoryItem(AmodMod mod, int from, int to)
         {
-            uint8_t* const record = Caller(mod) != nullptr
-                                        ? const_cast<uint8_t*>(InventorySlot(slot))
-                                        : nullptr;
-            uint8_t* const player = record != nullptr ? const_cast<uint8_t*>(WorldApi::Player()) : nullptr;
+            uint8_t* const source = Caller(mod) != nullptr ? const_cast<uint8_t*>(InventorySlot(from)) : nullptr;
+            uint8_t* const target = source != nullptr ? const_cast<uint8_t*>(InventorySlot(to)) : nullptr;
 
-            const ClearSlotRoutine clear =
-                reinterpret_cast<ClearSlotRoutine>(GameModule::Resolve(GameAddress::kInventoryClearSlot));
+            if (source == nullptr || target == nullptr || source == target)
+            {
+                return 0;
+            }
+            if (ReadText(source, GameAddress::kInventoryNameOffset)[0] == '\0')
+            {
+                return 0;
+            }
+            if (ReadText(target, GameAddress::kInventoryNameOffset)[0] != '\0')
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "slot %d is taken - swap them instead", to);
+            }
+
+            memcpy(target, source, GameAddress::kInventorySlotStride);
+            memset(source, 0, GameAddress::kInventorySlotStride);
+            return 1;
+        }
+
+        int __cdecl ApiSwapInventoryItems(AmodMod mod, int first, int second)
+        {
+            uint8_t* const one = Caller(mod) != nullptr ? const_cast<uint8_t*>(InventorySlot(first)) : nullptr;
+            uint8_t* const other = one != nullptr ? const_cast<uint8_t*>(InventorySlot(second)) : nullptr;
+
+            if (one == nullptr || other == nullptr)
+            {
+                return 0;
+            }
+            if (one == other)
+            {
+                return 1;
+            }
+
+            uint8_t held[GameAddress::kInventorySlotStride];
+            memcpy(held, one, sizeof(held));
+            memcpy(one, other, sizeof(held));
+            memcpy(other, held, sizeof(held));
+            return 1;
+        }
+
+        // Events instead of polling each frame.
+
+        struct SlotHandler
+        {
+            uint32_t id;
+            ModContext* owner;
+            AmodInventoryHandler handler;
+            void* user;
+        };
+
+        struct ChainHandler
+        {
+            uint32_t id;
+            ModContext* owner;
+            AmodChainHandler handler;
+            void* user;
+        };
+
+        std::vector<SlotHandler> g_slotHandlers;
+        std::vector<ChainHandler> g_chainHandlers;
+        uint32_t g_nextHandlerId = 1;
+
+        int SlotIndexOf(const uint8_t* record)
+        {
+            for (int at = 0; at < g_slotCount; ++at)
+            {
+                if (InventorySlot(at) == record)
+                {
+                    return at;
+                }
+            }
+            return -1;
+        }
+
+        typedef void(__cdecl* ClearSlotRoutineRaw)(void* player, void* slot);
+
+        InlineHook g_clearHook;
+        ClearSlotRoutineRaw g_originalClear = nullptr;
+
+        // Inventory_ClearSlot is the only empty path; timeLeft tells expired vs used.
+        void __cdecl ClearSlotDetour(void* player, void* slot)
+        {
+            uint8_t* const record = static_cast<uint8_t*>(slot);
+            const bool filled = record != nullptr && Readable(record, GameAddress::kInventorySlotStride) && ReadText(record, 
+                GameAddress::kInventoryNameOffset)[0] != '\0';
+
+            AmodInventoryEventInfo info = {};
+            std::vector<char> name;
+
+            if (filled && !g_slotHandlers.empty())
+            {
+                const char* const held = ReadText(record, GameAddress::kInventoryNameOffset);
+                name.assign(held, held + strlen(held) + 1);
+
+                const uint32_t flags = Read<uint32_t>(record, GameAddress::kInventoryFlagsOffset);
+                const bool counted = (flags & GameAddress::kInventoryFlagTicks) != 0 && (flags & GameAddress::kInventoryFlagHeld) == 0;
+
+                info.structSize = sizeof(info);
+                info.timeLeft = Read<float>(record, GameAddress::kInventoryTimeLeftOffset);
+
+                // Expired only if ticking and timeLeft<=0; keys have no timer.
+                info.event = (counted && info.timeLeft <= 0.0f)
+                    ? AMOD_INVENTORY_EXPIRED
+                    : AMOD_INVENTORY_USED;
+                info.pointsOnRunOut = Read<int>(record, GameAddress::kInventoryPointsOutOffset);
+                info.slot = SlotIndexOf(record);
+            }
+
+            if (g_originalClear != nullptr)
+            {
+                g_originalClear(player, slot);
+            }
+
+            if (info.structSize == 0)
+            {
+                return;
+            }
+
+            // After clear; name is our copy (slot already wiped).
+            info.name = name.data();
+            info.resourceId = ResourceIdOf(info.name);
+
+            const std::vector<SlotHandler> snapshot = g_slotHandlers;
+            for (const SlotHandler& entry : snapshot)
+            {
+                if (entry.handler != nullptr)
+                {
+                    entry.handler(&info, entry.user);
+                }
+            }
+        }
+
+        int g_chainLength = 0;
+        int g_chainPoints = 0;
+
+        // Chain is three globals; one watch per frame for all mods.
+        void WatchChain()
+        {
+            const int* const length = static_cast<const int*>(GameModule::Resolve(GameAddress::kChainLength));
+            const int* const points = static_cast<const int*>(GameModule::Resolve(GameAddress::kChainPoints));
+
+            if (length == nullptr)
+            {
+                return;
+            }
+
+            const int now = *length;
+            const int scored = points != nullptr ? *points : 0;
+
+            if (now == g_chainLength)
+            {
+                if (now > 0)
+                {
+                    g_chainPoints = scored;
+                }
+                return;
+            }
+
+            const bool broke = now == 0 && g_chainLength > 0;
+            const int had = g_chainPoints;
+
+            g_chainLength = now;
+            g_chainPoints = now > 0 ? scored : 0;
+
+            if (g_chainHandlers.empty())
+            {
+                return;
+            }
+
+            AmodChainEventInfo info = {};
+            info.structSize = sizeof(info);
+            info.length = now;
+            info.points = broke ? had : scored;
+            info.broke = broke ? 1 : 0;
+
+            const std::vector<ChainHandler> snapshot = g_chainHandlers;
+            for (const ChainHandler& entry : snapshot)
+            {
+                if (entry.handler != nullptr)
+                {
+                    entry.handler(&info, entry.user);
+                }
+            }
+        }
+
+        bool InstallClearHook()
+        {
+            if (g_clearHook.IsInstalled())
+            {
+                return true;
+            }
+
+            void* const target = GameModule::Resolve(GameAddress::kInventoryClearSlot);
+            if (target == nullptr)
+            {
+                return false;
+            }
+
+            std::string error;
+            if (!g_clearHook.Install(target, reinterpret_cast<void*>(&ClearSlotDetour),
+                kInventoryClearSlotPrologue, sizeof(kInventoryClearSlotPrologue), error))
+            {
+                FORGE_LOG_ERROR("Cannot hook Inventory_ClearSlot: %s", error.c_str());
+                return false;
+            }
+
+            g_originalClear = reinterpret_cast<ClearSlotRoutineRaw>(g_clearHook.Trampoline());
+            FORGE_LOG_INFO("Inventory_ClearSlot hooked at 0x%08X, slots will report as they empty",
+                static_cast<unsigned>(GameAddress::kInventoryClearSlot));
+
+            return true;
+        }
+
+        void ReleaseSlotHandler(void* payload)
+        {
+            const uint32_t id = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(payload));
+            for (auto it = g_slotHandlers.begin(); it != g_slotHandlers.end(); ++it)
+            {
+                if (it->id == id)
+                {
+                    g_slotHandlers.erase(it);
+                    return;
+                }
+            }
+        }
+
+        void ReleaseChainHandler(void* payload)
+        {
+            const uint32_t id = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(payload));
+            for (auto it = g_chainHandlers.begin(); it != g_chainHandlers.end(); ++it)
+            {
+                if (it->id == id)
+                {
+                    g_chainHandlers.erase(it);
+                    return;
+                }
+            }
+        }
+
+        AmodToken __cdecl ApiAddSlotHandler(AmodMod mod, AmodInventoryHandler handler, void* user)
+        {
+            ModContext* const context = Caller(mod);
+            if (context == nullptr || handler == nullptr || !InstallClearHook())
+            {
+                return AMOD_INVALID_TOKEN;
+            }
+
+            SlotHandler entry;
+            entry.id = g_nextHandlerId++;
+            entry.owner = context;
+            entry.handler = handler;
+            entry.user = user;
+            g_slotHandlers.push_back(entry);
+
+            return context->owned.Add(&ReleaseSlotHandler, reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+        }
+
+        void __cdecl ApiRemoveSlotHandler(AmodMod mod, AmodToken token)
+        {
+            ModContext* const context = Caller(mod);
+            if (context != nullptr)
+            {
+                context->owned.Remove(token);
+            }
+        }
+
+        AmodToken __cdecl ApiAddChainHandler(AmodMod mod, AmodChainHandler handler, void* user)
+        {
+            ModContext* const context = Caller(mod);
+            if (context == nullptr || handler == nullptr)
+            {
+                return AMOD_INVALID_TOKEN;
+            }
+
+            ChainHandler entry;
+            entry.id = g_nextHandlerId++;
+            entry.owner = context;
+            entry.handler = handler;
+            entry.user = user;
+            g_chainHandlers.push_back(entry);
+
+            return context->owned.Add(&ReleaseChainHandler, reinterpret_cast<void*>(static_cast<uintptr_t>(entry.id)));
+        }
+
+        void __cdecl ApiRemoveChainHandler(AmodMod mod, AmodToken token)
+        {
+            ModContext* const context = Caller(mod);
+            if (context != nullptr)
+            {
+                context->owned.Remove(token);
+            }
+        }
+
+        struct Held
+        {
+            ModContext* owner;
+            int slot;
+        };
+
+        std::vector<Held> g_held;
+
+        void HoldSlots()
+        {
+            for (const Held& one : g_held)
+            {
+                uint8_t* const record = const_cast<uint8_t*>(InventorySlot(one.slot));
+                if (record == nullptr || ReadText(record, GameAddress::kInventoryNameOffset)[0] == '\0')
+                {
+                    continue;
+                }
+
+                uint32_t flags = Read<uint32_t>(record, GameAddress::kInventoryFlagsOffset);
+                if ((flags & GameAddress::kInventoryFlagHeld) == 0)
+                {
+                    flags |= GameAddress::kInventoryFlagHeld;
+                    memcpy(record + GameAddress::kInventoryFlagsOffset, &flags, sizeof(flags));
+                }
+            }
+        }
+
+        void ForgetHold(ModContext* owner, int slot)
+        {
+            for (auto it = g_held.begin(); it != g_held.end();)
+            {
+                const bool mine = it->owner == owner && (slot < 0 || it->slot == slot);
+                it = mine ? g_held.erase(it) : it + 1;
+            }
+        }
+
+        int __cdecl ApiSetTicking(AmodMod mod, int slot, int ticking)
+        {
+            ModContext* const caller = Caller(mod);
+            uint8_t* const record = caller != nullptr
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
 
             if (record == nullptr || ReadText(record, GameAddress::kInventoryNameOffset)[0] == '\0')
             {
                 return 0;
             }
 
+            uint32_t flags = Read<uint32_t>(record, GameAddress::kInventoryFlagsOffset);
+
+            if (ticking != 0)
+            {
+                ForgetHold(caller, slot);
+                flags &= ~GameAddress::kInventoryFlagHeld;
+            }
+            else
+            {
+                ForgetHold(caller, slot);
+
+                const Held mine = { caller, slot };
+                g_held.push_back(mine);
+                flags |= GameAddress::kInventoryFlagHeld;
+            }
+
+            memcpy(record + GameAddress::kInventoryFlagsOffset, &flags, sizeof(flags));
+            return 1;
+        }
+
+        int __cdecl ApiIsTicking(AmodMod mod, int slot)
+        {
+            const uint8_t* const record = Caller(mod) != nullptr ? InventorySlot(slot) : nullptr;
+            if (record == nullptr)
+            {
+                return 0;
+            }
+
+            const uint32_t flags = Read<uint32_t>(record, GameAddress::kInventoryFlagsOffset);
+            return ((flags & GameAddress::kInventoryFlagTicks) != 0 && (flags & GameAddress::kInventoryFlagHeld) == 0) ? 1 : 0;
+        }
+
+        int __cdecl ApiClearInventoryItem(AmodMod mod, int slot)
+        {
+            uint8_t* const record = Caller(mod) != nullptr
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
+            uint8_t* const player = record != nullptr ? const_cast<uint8_t*>(WorldApi::Player()) : nullptr;
+
+            const ClearSlotRoutine clear = reinterpret_cast<ClearSlotRoutine>(GameModule::Resolve(GameAddress::kInventoryClearSlot));
+
+            if (record == nullptr || ReadText(record, GameAddress::kInventoryNameOffset)[0] == '\0')
+            {
+                return 0;
+            }
+
+            // Game clear; plays use sound as the game would.
             if (player != nullptr && clear != nullptr)
             {
                 clear(player, record);
@@ -283,12 +670,12 @@ namespace Forge
             return 1;
         }
 
-        // The icon one carried item shows, without touching the type it came from.
+        // Set slot icon without changing the bonus type.
         int __cdecl ApiSetInventoryIcon(AmodMod mod, int slot, const char* file)
         {
             uint8_t* const record = Caller(mod) != nullptr && file != nullptr
-                                        ? const_cast<uint8_t*>(InventorySlot(slot))
-                                        : nullptr;
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
             if (record == nullptr || ReadText(record, GameAddress::kInventoryNameOffset)[0] == '\0')
             {
                 return 0;
@@ -304,22 +691,17 @@ namespace Forge
             return 1;
         }
 
-        // --- how many slots there are ---------------------------------------------------------
-        //
-        // Not a number the game keeps anywhere: six routines each carry their own copy as an
-        // immediate, so changing it means writing six bytes. Every one is checked against the
-        // opcode in front of it first, so a byte is only written where the reverse says it is.
-
         int __cdecl ApiGetSlotCount(AmodMod mod)
         {
             return Caller(mod) != nullptr ? g_slotCount : 0;
         }
 
-        alignas(16) uint8_t g_slots[GameAddress::kInventorySlotsMax *
-                                    GameAddress::kInventorySlotStride] = {};
-
+        // Slot count is six immediates in code; patch each after opcode check.
+        // External slot buffer when count exceeds player-embedded size.
+        alignas(16) uint8_t g_slots[GameAddress::kInventorySlotsMax * GameAddress::kInventorySlotStride] = {};
         bool g_moved = false;
 
+        // Mod that owns the expanded slot count.
         ModContext* g_slotOwner = nullptr;
 
         const uint8_t* SlotBase()
@@ -339,7 +721,7 @@ namespace Forge
         }
 
         uint8_t g_originalBase[sizeof(GameAddress::kSlotBaseSites) /
-                               sizeof(GameAddress::kSlotBaseSites[0])][7] = {};
+            sizeof(GameAddress::kSlotBaseSites[0])][7] = {};
 
         bool WriteCode(void* at, const uint8_t* bytes, size_t length)
         {
@@ -357,6 +739,7 @@ namespace Forge
             return true;
         }
 
+        // Move slots out of the player into g_slots (once).
         bool MoveSlotsOut()
         {
             if (g_moved)
@@ -370,18 +753,17 @@ namespace Forge
                 const uint8_t* const at = static_cast<const uint8_t*>(GameModule::Resolve(site.address));
                 if (at == nullptr || memcmp(at, site.original, site.length) != 0)
                 {
-                    FORGE_LOG_ERROR("The slots cannot be moved: 0x%08X does not hold what it was "
-                                    "reversed as", static_cast<unsigned>(site.address));
+                    FORGE_LOG_ERROR("The slots cannot be moved: 0x%08X does not hold what it was reversed as", static_cast<unsigned>(site.address));
                     return false;
                 }
                 memcpy(g_originalBase[index++], at, site.length);
             }
 
+            // Copy current contents so expand does not drop items.
             const uint8_t* const player = WorldApi::Player();
             if (player != nullptr)
             {
-                memcpy(g_slots, player + GameAddress::kPlayerInventoryOffset,
-                       GameAddress::kInventorySlotCount * GameAddress::kInventorySlotStride);
+                memcpy(g_slots, player + GameAddress::kPlayerInventoryOffset, GameAddress::kInventorySlotCount * GameAddress::kInventorySlotStride);
             }
 
             const uint32_t buffer = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(g_slots));
@@ -391,12 +773,11 @@ namespace Forge
                 const uint32_t target = buffer + site.addend;
 
                 uint8_t patch[7];
-                memset(patch, 0x90, sizeof(patch));                 // NOP the tail
+                memset(patch, 0x90, sizeof(patch)); // NOP the tail
                 memcpy(patch, site.prefix, site.prefixLength);
                 memcpy(patch + site.prefixLength, &target, sizeof(target));
 
-                if (!WriteCode(static_cast<uint8_t*>(GameModule::Resolve(site.address)), patch,
-                               site.length))
+                if (!WriteCode(static_cast<uint8_t*>(GameModule::Resolve(site.address)), patch, site.length))
                 {
                     return false;
                 }
@@ -416,8 +797,7 @@ namespace Forge
             size_t index = 0;
             for (const GameAddress::SlotBaseSite& site : GameAddress::kSlotBaseSites)
             {
-                WriteCode(static_cast<uint8_t*>(GameModule::Resolve(site.address)),
-                          g_originalBase[index++], site.length);
+                WriteCode(static_cast<uint8_t*>(GameModule::Resolve(site.address)), g_originalBase[index++], site.length);
             }
             g_moved = false;
         }
@@ -439,11 +819,9 @@ namespace Forge
 
         int __cdecl ApiSetSlotCount(AmodMod mod, int count)
         {
-            if (Caller(mod) == nullptr || count < 1 ||
-                count > static_cast<int>(GameAddress::kInventorySlotsMax))
+            if (Caller(mod) == nullptr || count < 1 || count > static_cast<int>(GameAddress::kInventorySlotsMax))
             {
-                FORGE_LOG_ERROR("An inventory of %d is refused; 1 to %d is what there is room for",
-                                count, static_cast<int>(GameAddress::kInventorySlotsMax));
+                FORGE_LOG_ERROR("An inventory of %d is refused; 1 to %d is what there is room for", count, static_cast<int>(GameAddress::kInventorySlotsMax));
                 return 0;
             }
 
@@ -454,12 +832,10 @@ namespace Forge
 
             for (const GameAddress::SlotCountSite& site : GameAddress::kSlotCountSites)
             {
-                const uint8_t* const opcode =
-                    static_cast<const uint8_t*>(GameModule::Resolve(site.opcodeAt));
+                const uint8_t* const opcode = static_cast<const uint8_t*>(GameModule::Resolve(site.opcodeAt));
                 if (opcode == nullptr || *opcode != site.opcode)
                 {
-                    FORGE_LOG_ERROR("The inventory size at 0x%08X is not where it was reversed",
-                                    static_cast<unsigned>(site.address));
+                    FORGE_LOG_ERROR("The inventory size at 0x%08X is not where it was reversed", static_cast<unsigned>(site.address));
                     return 0;
                 }
             }
@@ -469,8 +845,7 @@ namespace Forge
                 return 0;
             }
 
-            const int reachable = g_moved ? static_cast<int>(GameAddress::kInventorySlotsMax)
-                                          : static_cast<int>(GameAddress::kInventorySlotCount);
+            const int reachable = g_moved ? static_cast<int>(GameAddress::kInventorySlotsMax) : static_cast<int>(GameAddress::kInventorySlotCount);
 
             for (int slot = count; slot < reachable; ++slot)
             {
@@ -486,7 +861,7 @@ namespace Forge
             return 1;
         }
 
-        // --- the keys one carried item carries -----------------------------------------------
+        // Per-item property keys.
 
         using ApiProperty::Field;
         using ApiProperty::Kind;
@@ -509,8 +884,7 @@ namespace Forge
 
         int __cdecl ApiItemPropertyCount(AmodMod mod)
         {
-            return Caller(mod) != nullptr ? static_cast<int>(sizeof(kItemFields) / sizeof(Field))
-                                          : 0;
+            return Caller(mod) != nullptr ? static_cast<int>(sizeof(kItemFields) / sizeof(Field)) : 0;
         }
 
         const char* __cdecl ApiItemPropertyNameAt(AmodMod mod, int index)
@@ -519,55 +893,49 @@ namespace Forge
             return (index >= 0 && index < total) ? kItemFields[index].key : "";
         }
 
-        // A slot that holds nothing carries no keys: what is at those offsets belongs to whatever
-        // was there last.
+        // Empty slot has no properties; offsets belong to the previous occupant.
         uint8_t* FilledSlot(AmodMod mod, int slot)
         {
             uint8_t* const record = Caller(mod) != nullptr
-                                        ? const_cast<uint8_t*>(InventorySlot(slot))
-                                        : nullptr;
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
 
-            return (record != nullptr &&
-                    ReadText(record, GameAddress::kInventoryNameOffset)[0] != '\0')
-                       ? record
-                       : nullptr;
+            return (record != nullptr && ReadText(record, GameAddress::kInventoryNameOffset)[0] != '\0')
+                ? record
+                : nullptr;
         }
 
         int __cdecl ApiHasItemProperty(AmodMod mod, int slot, const char* key)
         {
-            return (FilledSlot(mod, slot) != nullptr &&
-                    ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key) != nullptr)
-                       ? 1
-                       : 0;
+            return (FilledSlot(mod, slot) != nullptr && ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key) != nullptr)
+                ? 1
+                : 0;
         }
 
         int __cdecl ApiGetItemProperty(AmodMod mod, int slot, const char* key, AmodValue* value)
         {
             const uint8_t* const record = FilledSlot(mod, slot);
-            const Field* const field =
-                ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key);
+            const Field* const field = ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key);
 
-            return (record != nullptr && field != nullptr) ? ApiProperty::Get(record, *field, value)
-                                                           : 0;
+            return (record != nullptr && field != nullptr) ? ApiProperty::Get(record, *field, value) : 0;
         }
 
-        int __cdecl ApiSetItemProperty(AmodMod mod, int slot, const char* key,
-                                       const AmodValue* value)
+        // Slot is the player copy; no owner check unlike bonus types.
+        int __cdecl ApiSetItemProperty(AmodMod mod, int slot, const char* key, const AmodValue* value)
         {
             uint8_t* const record = FilledSlot(mod, slot);
-            const Field* const field =
-                ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key);
+            const Field* const field = ApiProperty::Find(kItemFields, sizeof(kItemFields) / sizeof(Field), key);
 
             return (record != nullptr && field != nullptr && value != nullptr)
-                       ? ApiProperty::Set(record, *field, *value)
-                       : 0;
+                ? ApiProperty::Set(record, *field, *value)
+                : 0;
         }
 
         int __cdecl ApiSetInventoryTimeLeft(AmodMod mod, int slot, float seconds)
         {
             uint8_t* const record = Caller(mod) != nullptr
-                                        ? const_cast<uint8_t*>(InventorySlot(slot))
-                                        : nullptr;
+                ? const_cast<uint8_t*>(InventorySlot(slot))
+                : nullptr;
             if (record == nullptr || ReadText(record, GameAddress::kInventoryNameOffset)[0] == '\0')
             {
                 return 0;
@@ -604,12 +972,26 @@ namespace Forge
         g_inventoryTable.ItemPropertyNameAt = &ApiItemPropertyNameAt;
         g_inventoryTable.GetSlotCount = &ApiGetSlotCount;
         g_inventoryTable.SetSlotCount = &ApiSetSlotCount;
+        g_inventoryTable.MoveItem = &ApiMoveInventoryItem;
+        g_inventoryTable.SwapItems = &ApiSwapInventoryItems;
+        g_inventoryTable.AddSlotHandler = &ApiAddSlotHandler;
+        g_inventoryTable.RemoveSlotHandler = &ApiRemoveSlotHandler;
+        g_inventoryTable.AddChainHandler = &ApiAddChainHandler;
+        g_inventoryTable.RemoveChainHandler = &ApiRemoveChainHandler;
+        g_inventoryTable.SetTicking = &ApiSetTicking;
+        g_inventoryTable.IsTicking = &ApiIsTicking;
+
+        FrameApi::AddInternalTick(&WatchChain);
+        FrameApi::AddInternalTick(&HoldSlots);
 
         return true;
     }
 
     void InventoryApi::ForgetMod(ModContext* owner)
     {
+        // Release held slots on unload.
+        ForgetHold(owner, -1);
+
         if (owner == nullptr || owner != g_slotOwner)
         {
             return;
@@ -635,6 +1017,12 @@ namespace Forge
     {
         PutSlotsBack();
 
+        g_clearHook.Uninstall();
+        g_originalClear = nullptr;
+
+        g_slotHandlers.clear();
+        g_chainHandlers.clear();
+        g_held.clear();
         g_inventoryTable = AmodInventoryApi{};
     }
 

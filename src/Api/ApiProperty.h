@@ -11,11 +11,12 @@ namespace Forge
         enum class Kind
         {
             Int,
+            Byte,
             Float,
-            Floats,     // count of them, one AmodValue
-            Text,       // in the record, fixed width
-            Flag,       // one bit of an int
-            Resource    // a texture, a model or a sound: written by name, and not readable back
+            Floats,
+            Text,
+            Flag,
+            Resource
         };
 
         struct Field
@@ -23,8 +24,8 @@ namespace Forge
             const char* key;
             uintptr_t offset;
             Kind kind;
-            uint32_t count;         // Floats
-            uint32_t flag;          // Flag
+            uint32_t count;         // Floats; Text: the width, and 0 means it cannot be written
+            uint32_t flag;
             uintptr_t resolver;     // Resource: the slot of the game routine that names it
             bool writable;
         };

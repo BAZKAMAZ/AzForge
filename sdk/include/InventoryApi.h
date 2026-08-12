@@ -1,110 +1,167 @@
 #ifndef AZFORGE_INVENTORY_API_H
 #define AZFORGE_INVENTORY_API_H
 
-/* For AmodBonusTimer: who counts a carried item down is the same question whether the item is * being defined or being put into a slot. */
 #include "BonusesApi.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* How many slots the player has to begin with - what the game itself was built for */
+/* Starting slot count the game was built for. */
 #define AMOD_INVENTORY_SLOTS                                        5
 
-/* And the most there can be, once the loader has moved them out of the player. */
+/* Max after the loader moves slots out of the player. */
 #define AMOD_INVENTORY_SLOTS_MAX                                    32
 
-/* One carried item. An empty slot answers with an empty name, which is exactly how the game * itself tells a free slot from a full one. */
+/* One carried item. Empty name = free slot (same as the game). */
 typedef struct AmodInventoryItem
 {
     uint32_t structSize;
 
-    const char* name;           /* the bonus type it came from, "" when the slot is free */
+    const char* name;           /* bonus type name; "" if free */
 
-    /* What is left of its timer and what it started with, in seconds. Both zero for an item that * does not run down. */
+    /* Timer left and total, seconds. Both 0 if it does not run down. */
     float timeLeft;
     float timeTotal;
 
     int isTotem;
     int isTorch;
 
-    int pointsOnRunOut;         /* $pts_out - what is scored if it expires rather than being used */
-    float burnTime;             /* a torch's own */
+    int pointsOnRunOut;         /* $pts_out if it expires rather than used */
+    float burnTime;             /* torch only */
+
+    /* $res_id of the type; distinguishes types that share a name. "" if free or type gone. */
+    const char* resourceId;
 
     /* New fields are appended, never inserted. */
 } AmodInventoryItem;
 
-AMOD_LAST_FIELD(AmodInventoryItem, burnTime, 0x1C);
+AMOD_LAST_FIELD(AmodInventoryItem, resourceId, 0x20);
 
-/* The scoring chain */
+/* Scoring chain */
 typedef struct AmodBonusChain
 {
     uint32_t structSize;
 
-    int length;                 /* how many have been taken in a row */
-    int points;                 /* what the chain has scored so far */
-    float timeLeft;             /* of the window; at zero the next bonus starts a new chain */
-    float window;               /* what the timer is reset to on each take */
+    int length;                 /* takes in a row */
+    int points;                 /* scored so far */
+    float timeLeft;             /* of the window; 0 starts a new chain */
+    float window;               /* reset value on each take */
 
     /* New fields are appended, never inserted. */
 } AmodBonusChain;
 
 AMOD_LAST_FIELD(AmodBonusChain, window, 0x10);
 
+/* Why a slot emptied. */
+typedef enum AmodInventoryEvent
+{
+    AMOD_INVENTORY_EXPIRED = 0, /* timer ran out */
+    AMOD_INVENTORY_USED = 1     /* left with time still on it */
+} AmodInventoryEvent;
+
+typedef struct AmodInventoryEventInfo
+{
+    uint32_t structSize;
+
+    AmodInventoryEvent event;
+    int slot;
+
+    const char* name;
+    const char* resourceId;
+
+    float timeLeft;             /* remaining; separates the two events */
+    int pointsOnRunOut;         /* type $pts_out */
+
+    /* New fields are appended, never inserted. */
+} AmodInventoryEventInfo;
+
+AMOD_LAST_FIELD(AmodInventoryEventInfo, pointsOnRunOut, 0x18);
+
+/* After the slot has emptied; reading it back shows free. */
+typedef void(__cdecl* AmodInventoryHandler)(const AmodInventoryEventInfo* info, void* user);
+
+typedef struct AmodChainEventInfo
+{
+    uint32_t structSize;
+
+    int length;                 /* just reached; 0 when broken */
+    int points;                 /* scored by then */
+    int broke;                  /* 1 window ran out, 0 grew */
+
+    /* New fields are appended, never inserted. */
+} AmodChainEventInfo;
+
+AMOD_LAST_FIELD(AmodChainEventInfo, broke, 0x0C);
+
+/* On chain grow or break; no need to poll each frame. */
+typedef void(__cdecl* AmodChainHandler)(const AmodChainEventInfo* info, void* user);
+
 typedef struct AmodInventoryApi
 {
     uint32_t structSize;
 
-    /* Whether there is a player to ask about at all - there is none in a menu. */
-    int (__cdecl* IsAvailable)(AmodMod mod);
+    /* false in menu / no player */
+    int(__cdecl* IsAvailable)(AmodMod mod);
 
-    /* One of the AMOD_INVENTORY_SLOTS slots, free or not. Non-zero when it could be read. */
-    int (__cdecl* GetItem)(AmodMod mod, int slot, AmodInventoryItem* out);
+    /* One of AMOD_INVENTORY_SLOTS; nonzero if readable. */
+    int(__cdecl* GetItem)(AmodMod mod, int slot, AmodInventoryItem* out);
 
     /* How many slots are in use. */
-    int (__cdecl* GetUsedCount)(AmodMod mod);
+    int(__cdecl* GetUsedCount)(AmodMod mod);
 
-    int (__cdecl* GetChain)(AmodMod mod, AmodBonusChain* out);
+    int(__cdecl* GetChain)(AmodMod mod, AmodBonusChain* out);
 
-    /* How many bonuses the level still has, by the three counts the game keeps: the ordinary * ones, th... */
-    int (__cdecl* GetBonusesLeft)(AmodMod mod);
-    int (__cdecl* GetMegaBonusesLeft)(AmodMod mod);
-    int (__cdecl* GetOtherBonusesLeft)(AmodMod mod);
+    /* Remaining bonuses by the three game counts. */
+    int(__cdecl* GetBonusesLeft)(AmodMod mod);
+    int(__cdecl* GetMegaBonusesLeft)(AmodMod mod);
+    int(__cdecl* GetOtherBonusesLeft)(AmodMod mod);
 
-    /* Which slot holds an item of that name, or -1. The game's own lookup, and the one it uses to * decide where a second totem goes. */
-    int (__cdecl* FindSlot)(AmodMod mod, const char* name);
+    /* Slot holding that name, or -1. */
+    int(__cdecl* FindSlot)(AmodMod mod, const char* name);
 
-    /* The first slot with nothing in it, or -1 when all five are full. */
-    int (__cdecl* FindFreeSlot)(AmodMod mod);
+    /* First empty slot, or -1 if full. */
+    int(__cdecl* FindFreeSlot)(AmodMod mod);
 
-    
-    int (__cdecl* PutItem)(AmodMod mod, int slot, const char* typeName, float time,
-                           AmodBonusTimer timer);
+    int(__cdecl* PutItem)(AmodMod mod, int slot, const char* typeName, float time,
+        AmodBonusTimer timer);
 
-    /* Empties a slot the way the game does when an item runs out, the use sound included. */
-    int (__cdecl* ClearItem)(AmodMod mod, int slot);
+    /* Empty a slot the game way (use sound included). */
+    int(__cdecl* ClearItem)(AmodMod mod, int slot);
 
-    /* Moves a carried item's timer */
-    int (__cdecl* SetTimeLeft)(AmodMod mod, int slot, float seconds);
+    /* Move a carried item's timer. */
+    int(__cdecl* SetTimeLeft)(AmodMod mod, int slot, float seconds);
 
-    /* The icon this one slot shows, without touching the type it came from - two slots holding the * same kind can look different. */
-    int (__cdecl* SetIcon)(AmodMod mod, int slot, const char* file);
+    /* Slot icon only; type unchanged. Same kind may look different per slot. */
+    int(__cdecl* SetIcon)(AmodMod mod, int slot, const char* file);
 
-    
-    int (__cdecl* GetItemProperty)(AmodMod mod, int slot, const char* key, AmodValue* value);
-    int (__cdecl* SetItemProperty)(AmodMod mod, int slot, const char* key, const AmodValue* value);
-    int (__cdecl* HasItemProperty)(AmodMod mod, int slot, const char* key);
-    int (__cdecl* ItemPropertyCount)(AmodMod mod);
+    int(__cdecl* GetItemProperty)(AmodMod mod, int slot, const char* key, AmodValue* value);
+    int(__cdecl* SetItemProperty)(AmodMod mod, int slot, const char* key, const AmodValue* value);
+    int(__cdecl* HasItemProperty)(AmodMod mod, int slot, const char* key);
+    int(__cdecl* ItemPropertyCount)(AmodMod mod);
     const char* (__cdecl* ItemPropertyNameAt)(AmodMod mod, int index);
 
-    
-    int (__cdecl* GetSlotCount)(AmodMod mod);
-    int (__cdecl* SetSlotCount)(AmodMod mod, int count);
+    int(__cdecl* GetSlotCount)(AmodMod mod);
+    int(__cdecl* SetSlotCount)(AmodMod mod, int count);
+
+    /* Move/swap whole slot records (keeps per-slot icon/timer). Move onto full fails; use Swap. */
+    int(__cdecl* MoveItem)(AmodMod mod, int from, int to);
+    int(__cdecl* SwapItems)(AmodMod mod, int first, int second);
+
+    AmodToken(__cdecl* AddSlotHandler)(AmodMod mod, AmodInventoryHandler handler, void* user);
+    void(__cdecl* RemoveSlotHandler)(AmodMod mod, AmodToken token);
+
+    AmodToken(__cdecl* AddChainHandler)(AmodMod mod, AmodChainHandler handler, void* user);
+    void(__cdecl* RemoveChainHandler)(AmodMod mod, AmodToken token);
+
+    /* Whether the game counts this slot down. Off freezes the timer and keeps the ring. */
+    int(__cdecl* SetTicking)(AmodMod mod, int slot, int ticking);
+    int(__cdecl* IsTicking)(AmodMod mod, int slot);
 
     /* Fields added in later API versions go here, and nowhere else. */
 } AmodInventoryApi;
 
-AMOD_LAST_FIELD(AmodInventoryApi, SetSlotCount, 0x50);
+AMOD_LAST_FIELD(AmodInventoryApi, IsTicking, 0x70);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -159,6 +216,9 @@ namespace Amod
 
             int                                                     GetPointsOnRunOut() const { return m_data.pointsOnRunOut; }
             float                                                   GetBurnTime() const { return m_data.burnTime; }
+
+            /* What every call about a bonus type asks for, so a carried item can be handed to one */
+            const char*                                             ResourceId() const { return m_data.resourceId != nullptr ? m_data.resourceId : ""; }
 
             const AmodInventoryItem&                                Raw() const { return m_data; }
 
@@ -256,6 +316,63 @@ namespace Amod
         {
             return g_inventory != nullptr && g_inventory->ClearItem != nullptr &&
                    g_inventory->ClearItem(g_self, slot) != 0;
+        }
+
+        /* Carries the slot over whole, keeping whatever was set on that one slot */
+        inline bool                                                 Move(int from, int to)
+        {
+            return g_inventory != nullptr && g_inventory->MoveItem != nullptr &&
+                   g_inventory->MoveItem(g_self, from, to) != 0;
+        }
+
+        inline bool                                                 Swap(int first, int second)
+        {
+            return g_inventory != nullptr && g_inventory->SwapItems != nullptr &&
+                   g_inventory->SwapItems(g_self, first, second) != 0;
+        }
+
+        /* Told when a slot empties, whichever way it emptied */
+        inline AmodToken                                            OnSlot(AmodInventoryHandler handler, void* user = nullptr)
+        {
+            return (g_inventory != nullptr && g_inventory->AddSlotHandler != nullptr)
+                       ? g_inventory->AddSlotHandler(g_self, handler, user)
+                       : AMOD_INVALID_TOKEN;
+        }
+
+        inline AmodToken                                            OnChain(AmodChainHandler handler, void* user = nullptr)
+        {
+            return (g_inventory != nullptr && g_inventory->AddChainHandler != nullptr)
+                       ? g_inventory->AddChainHandler(g_self, handler, user)
+                       : AMOD_INVALID_TOKEN;
+        }
+
+        inline void                                                 RemoveSlotHandler(AmodToken token)
+        {
+            if (g_inventory != nullptr && g_inventory->RemoveSlotHandler != nullptr)
+            {
+                g_inventory->RemoveSlotHandler(g_self, token);
+            }
+        }
+
+        inline void                                                 RemoveChainHandler(AmodToken token)
+        {
+            if (g_inventory != nullptr && g_inventory->RemoveChainHandler != nullptr)
+            {
+                g_inventory->RemoveChainHandler(g_self, token);
+            }
+        }
+
+        /* Stops the game counting this slot down, and starts it again */
+        inline bool                                                 SetTicking(int slot, bool ticking)
+        {
+            return g_inventory != nullptr && g_inventory->SetTicking != nullptr &&
+                   g_inventory->SetTicking(g_self, slot, ticking ? 1 : 0) != 0;
+        }
+
+        inline bool                                                 IsTicking(int slot)
+        {
+            return g_inventory != nullptr && g_inventory->IsTicking != nullptr &&
+                   g_inventory->IsTicking(g_self, slot) != 0;
         }
 
         

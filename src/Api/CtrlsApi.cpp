@@ -4,6 +4,7 @@
 #include "src/Api/ApiProperty.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/ModContext.h"
+#include "src/Api/Placement.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/MmdApi.h"
 #include "src/Api/TextureApi.h"
@@ -605,11 +606,10 @@ namespace Forge
         }
 
         void TakeSlots(Driving& claim);
-        void HoldSpawnSlot();
 
         void __cdecl DropDeadClaims()
         {
-            HoldSpawnSlot();
+            Placement::HoldSlot();
             LetGoOfSpentRecords();
             for (auto it = g_driving.begin(); it != g_driving.end();)
             {
@@ -811,9 +811,56 @@ namespace Forge
             return ApiProperty::Get(record, *field, value);
         }
 
+        // First value overwritten on a record the mod did not make; restored on unload.
+        struct Written
+        {
+            ModContext* owner;
+            uint8_t* record;
+            const Field* field;
+            uint32_t generation;
+            AmodValue was;
+            std::vector<char> text;
+        };
+
+        std::vector<Written> g_written;
+
+        void RememberWrite(ModContext* owner, uint8_t* record, const Field& field)
+        {
+            const uint32_t generation = WorldApi::LevelGeneration();
+
+            for (const Written& seen : g_written)
+            {
+                const bool same = seen.owner == owner && seen.record == record && seen.field == &field;
+                if (same && seen.generation == generation)
+                {
+                    return;
+                }
+            }
+
+            Written mine = {};
+            mine.owner = owner;
+            mine.record = record;
+            mine.field = &field;
+            mine.generation = generation;
+
+            if (!ApiProperty::Get(record, field, &mine.was))
+            {
+                return;
+            }
+
+            // Get hands back a pointer into the record for text, and the record is about to change
+            if (mine.was.kind == AMOD_VALUE_STRING && mine.was.text != nullptr)
+            {
+                mine.text.assign(mine.was.text, mine.was.text + strlen(mine.was.text) + 1);
+            }
+
+            g_written.push_back(mine);
+        }
+
         int __cdecl ApiSetProperty(AmodMod mod, int index, const char* key, const AmodValue* value)
         {
-            uint8_t* const record = Caller(mod) != nullptr ? RecordOf(CtrlAt(index)) : nullptr;
+            ModContext* const caller = Caller(mod);
+            uint8_t* const record = caller != nullptr ? RecordOf(CtrlAt(index)) : nullptr;
             const Schema* const schema = SchemaOf(record);
 
             if (schema == nullptr)
@@ -834,6 +881,8 @@ namespace Forge
             {
                 return Fail(mod, AMOD_FAIL_REFUSED, "'%s' is read only", key);
             }
+
+            RememberWrite(caller, record, *field);
             return ApiProperty::Set(record, *field, *value);
         }
 
@@ -1116,9 +1165,7 @@ namespace Forge
             }
         }
 
-        // Mod kinds numbered past the game's dispatcher range.
-        constexpr int kFirstModKind = 100;
-
+        // Slot/numbering/borrows live in Placement. This is the ctrl-side handler registry.
         struct Registered
         {
             ModContext* owner;
@@ -1127,30 +1174,7 @@ namespace Forge
             AmodCtrlKindHandler handler;
             void* user;
         };
-
         std::vector<Registered> g_kinds;
-        int g_nextKind = kFirstModKind;
-
-        // Game record a mod has borrowed.
-        struct Borrowed
-        {
-            const void* record;
-            int kind;
-        };
-
-        std::vector<Borrowed> g_borrowed;
-
-        int BorrowedKindOf(const void* record)
-        {
-            for (const Borrowed& known : g_borrowed)
-            {
-                if (known.record == record)
-                {
-                    return known.kind;
-                }
-            }
-            return 0;
-        }
 
         const Registered* KindOf(int kind)
         {
@@ -1221,7 +1245,6 @@ namespace Forge
         typedef void* (__cdecl* CloneRoutine)(const void* source, size_t size);
         typedef void(__cdecl* AppendRoutine)(void* room, void* record);
 
-        CtrlSpawnRoutine g_gameSpawn = nullptr;
 
         void WriteBox(uint8_t* entity, const AmodBox& box, bool solid)
         {
@@ -1334,30 +1357,18 @@ namespace Forge
                 kind, record);
         }
 
-        // Spawn slot: game kinds go through; mod kinds claimed here.
-        void __cdecl SpawnThunk(void* room, void* record)
+        void ClaimCtrlBorrowed(void* room, const void* record, int kind, void*)
         {
-            const int kind = record != nullptr && Readable(record, sizeof(int))
-                ? Read<int>(static_cast<const uint8_t*>(record), 0) : 0;
-            const Registered* const mine = KindOf(kind);
+            ClaimBorrowed(static_cast<uint8_t*>(room), record, kind);
+        }
 
+        void BuildCtrlKind(void* room, void* record, int kind, void*)
+        {
+            (void)room;
+
+            const Registered* const mine = KindOf(kind);
             if (mine == nullptr)
             {
-                if (g_gameSpawn != nullptr)
-                {
-                    g_gameSpawn(room, record);
-                }
-
-                const int borrowed = BorrowedKindOf(record);
-                if (borrowed != 0)
-                {
-                    ClaimBorrowed(static_cast<uint8_t*>(room), record, borrowed);
-                }
-                else if (!g_borrowed.empty())
-                {
-                    FORGE_LOG_INFO("Ctrls: the game stood up record %p (kind %d), which nobody borrowed",
-                        record, kind);
-                }
                 return;
             }
 
@@ -1504,21 +1515,6 @@ namespace Forge
             OfferBlocksToMods(static_cast<uint8_t*>(room), text);
         }
 
-        void HoldSpawnSlot()
-        {
-            void** const slot = static_cast<void**>(GameModule::Resolve(GameAddress::kSpawnPlacementSlot));
-            if (slot == nullptr || *slot == reinterpret_cast<void*>(&SpawnThunk))
-            {
-                return;
-            }
-
-            if (*slot != nullptr)
-            {
-                g_gameSpawn = reinterpret_cast<CtrlSpawnRoutine>(*slot);
-            }
-            *slot = reinterpret_cast<void*>(&SpawnThunk);
-        }
-
         int __cdecl ApiRegisterKind(AmodMod mod, const char* name, AmodCtrlKindHandler handler, void* user)
         {
             ModContext* const caller = Caller(mod);
@@ -1532,9 +1528,16 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "a kind wants a name and a way to answer for it");
             }
 
+            // Placement hands out the number and owns the slot; the handler stays here.
+            const int kind = Placement::RegisterKind(caller, name, &BuildCtrlKind, &ClaimCtrlBorrowed, nullptr);
+            if (kind == 0)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "'%s' is a kind something already registered", name);
+            }
+
             Registered fresh = {};
             fresh.owner = caller;
-            fresh.kind = g_nextKind++;
+            fresh.kind = kind;
             fresh.name.assign(name, name + strlen(name) + 1);
             fresh.handler = handler;
             fresh.user = user;
@@ -1594,7 +1597,7 @@ namespace Forge
 
             if (RoomIsHere(room))
             {
-                SpawnThunk(room, kept);
+                Placement::Stand(room, kept);
             }
 
             SyncIds();
@@ -1639,20 +1642,28 @@ namespace Forge
                 return AMOD_CTRL_NONE;
             }
 
+            // Borrowed record needs a kind to claim under; name is unused (record is the key).
+            char unnamed[32] = {};
+            _snprintf_s(unnamed, _TRUNCATE, "borrowed.%p", record);
+
             Registered borrowed = {};
             borrowed.owner = caller;
-            borrowed.kind = g_nextKind++;
+            borrowed.kind = Placement::RegisterKind(caller, unnamed, &BuildCtrlKind, &ClaimCtrlBorrowed, nullptr);
             borrowed.name.assign(1, '\0');
             borrowed.handler = handler;
             borrowed.user = user;
+
+            if (borrowed.kind == 0)
+            {
+                return AMOD_CTRL_NONE;
+            }
             g_kinds.push_back(borrowed);
 
             FORGE_LOG_INFO("Ctrls: borrowed kind %d, %d record(s) made, first at %p (kind %d)",
                 borrowed.kind, made, record, Read<int>(record, 0));
 
-            // Remember on the record so later spawns reclaim it.
-            const Borrowed kept = { record, borrowed.kind };
-            g_borrowed.push_back(kept);
+            // So later spawns reclaim it.
+            Placement::Borrow(record, borrowed.kind);
 
             // Only if already live in the current room.
             if (RoomIsHere(room))
@@ -2284,15 +2295,16 @@ namespace Forge
         g_table.SetLook = &ApiSetLook;
         g_table.Borrow = &ApiBorrow;
 
-        // Spawn via slot each frame; parser has no slot -- hook Entities_ParseFile.
-        HoldSpawnSlot();
+        // Placement owns the slot; the parser has none, so Entities_ParseFile is still hooked here.
+        if (!Placement::Install())
+        {
+            return false;
+        }
 
         void* const parse = GameModule::Resolve(GameAddress::kEntitiesParseFile);
         std::string mismatch;
 
-        if (parse != nullptr &&
-            GameModule::VerifyBytes(parse, kEntitiesParseFilePrologue,
-                sizeof(kEntitiesParseFilePrologue), mismatch))
+        if (parse != nullptr && GameModule::VerifyBytes(parse, kEntitiesParseFilePrologue, sizeof(kEntitiesParseFilePrologue), mismatch))
         {
             std::string error;
             if (g_parseHook.Install(parse, reinterpret_cast<void*>(&ParseFileDetour),
@@ -2312,16 +2324,14 @@ namespace Forge
             FORGE_LOG_ERROR("Entities_ParseFile does not open as expected (%s)", mismatch.c_str());
         }
 
-        for (size_t at = sizeof(g_table.structSize); at + sizeof(void*) <= sizeof(g_table);
-            at += sizeof(void*))
+        for (size_t at = sizeof(g_table.structSize); at + sizeof(void*) <= sizeof(g_table); at += sizeof(void*))
         {
             void* slot = nullptr;
             memcpy(&slot, reinterpret_cast<const uint8_t*>(&g_table) + at, sizeof(slot));
 
             if (slot == nullptr)
             {
-                FORGE_LOG_ERROR("Ctrls interface leaves slot %d empty, so mods will never see it",
-                    static_cast<int>(at / sizeof(void*)));
+                FORGE_LOG_ERROR("Ctrls interface leaves slot %d empty, so mods will never see it", static_cast<int>(at / sizeof(void*)));
             }
         }
 
@@ -2331,9 +2341,33 @@ namespace Forge
         return true;
     }
 
-    // Claims released via their owned tokens.
     void CtrlsApi::ForgetMod(ModContext* owner)
     {
+        Placement::ForgetMod(owner);
+
+        for (auto it = g_written.begin(); it != g_written.end();)
+        {
+            if (it->owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            // A level of its own took the record with it
+            if (it->generation == WorldApi::LevelGeneration())
+            {
+                AmodValue was = it->was;
+                if (!it->text.empty())
+                {
+                    was.text = it->text.data();
+                }
+
+                ApiProperty::Set(it->record, *it->field, was);
+            }
+
+            it = g_written.erase(it);
+        }
+
         for (auto it = g_kinds.begin(); it != g_kinds.end();)
         {
             it = it->owner == owner ? g_kinds.erase(it) : it + 1;
@@ -2392,11 +2426,7 @@ namespace Forge
             g_driving.pop_back();
         }
 
-        void** const spawn = static_cast<void**>(GameModule::Resolve(GameAddress::kSpawnPlacementSlot));
-        if (spawn != nullptr && *spawn == reinterpret_cast<void*>(&SpawnThunk) && g_gameSpawn != nullptr)
-        {
-            *spawn = reinterpret_cast<void*>(g_gameSpawn);
-        }
+        Placement::Uninstall();
 
         g_parseHook.Uninstall();
         g_originalParse = nullptr;
@@ -2404,7 +2434,7 @@ namespace Forge
         g_doomed.clear();
         g_known.clear();
         g_kinds.clear();
-        g_borrowed.clear();
+        g_written.clear();
         g_table = AmodCtrlsApi{};
     }
 

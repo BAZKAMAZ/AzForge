@@ -25,6 +25,9 @@ namespace Forge
         constexpr uintptr_t kMegaBonusesLeft = 0x006946B0;
         constexpr uintptr_t kOtherBonusesLeft = 0x006946A0;
 
+        // What the dispatcher branches on, at the head of every placement record.
+        constexpr int kPlacementKindBonus = 9;
+
         constexpr size_t kBonusSpawnSize = 0xBC;
         constexpr uintptr_t kBonusSpawnLiveOffset = 0x04;
         constexpr uintptr_t kBonusSpawnNameOffset = 0x05;
@@ -38,6 +41,10 @@ namespace Forge
         // touching pair, each with itself first.
         constexpr uintptr_t kBonusOnTouch = 0x00430B80;
         constexpr uintptr_t kBonusThink = 0x00430A90;
+
+        // Placement -> live bonus. Ninth ctrl-dispatcher branch (= kCtrlSpawnBonus).
+        // __cdecl, plain RET, one arg. Refuses silently: null, kind!=9, live byte clear, type at +0xB8 unresolved.
+        constexpr uintptr_t kBonusSpawn = 0x00431320;
 
         constexpr uintptr_t kBonusResFind = 0x00430680; // __cdecl (name) -> type record
 

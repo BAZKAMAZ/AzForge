@@ -112,6 +112,7 @@
     <ClInclude Include="src\Api\FrameApi.h" />
     <ClInclude Include="src\Api\LauncherApi.h" />
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
+    <ClInclude Include="src\Api\Placement.h" />
     <ClInclude Include="src\Api\RenderApi.h" />
     <ClInclude Include="src\Api\ApiProperty.h" />
     <ClInclude Include="src\Api\ApiRead.h" />
@@ -179,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="src\Api\Placement.cpp" />
     <ClCompile Include="src\Core\ForgeBoot.cpp" />
     <ClCompile Include="src\Core\ForgeCrash.cpp" />
     <ClCompile Include="src\Core\ForgeLog.cpp" />
@@ -236,7 +238,6 @@
   <Target Name="AzForgeWriteSubsystems" AfterTargets="Build">
     <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(ProjectDir)plugins\vs2026\Write-Subsystems.ps1&quot; -Boot &quot;$(ProjectDir)src\Core\ForgeBoot.cpp&quot; -Out &quot;$(ProjectDir)sdk\subsystems.txt&quot;" />
   </Target>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

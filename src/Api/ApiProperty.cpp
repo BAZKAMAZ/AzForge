@@ -55,6 +55,11 @@ namespace Forge
                 value.integer = ApiRead::Read<int>(record, field.offset);
                 break;
 
+            case Kind::Byte:
+                value.kind = AMOD_VALUE_INT;
+                value.integer = ApiRead::Read<uint8_t>(record, field.offset);
+                break;
+
             case Kind::Float:
             case Kind::Floats:
             {
@@ -114,6 +119,16 @@ namespace Forge
                 return 1;
             }
 
+            case Kind::Byte:
+            {
+                if (value.kind != AMOD_VALUE_INT && value.kind != AMOD_VALUE_BOOL)
+                {
+                    return 0;
+                }
+                record[field.offset] = static_cast<uint8_t>(value.integer);
+                return 1;
+            }
+
             case Kind::Float:
             case Kind::Floats:
             {
@@ -156,7 +171,19 @@ namespace Forge
             }
 
             case Kind::Text:
-                return 0;
+            {
+                if (value.kind != AMOD_VALUE_STRING || value.text == nullptr || field.count == 0)
+                {
+                    return 0;
+                }
+
+                const size_t room = field.count;
+                const size_t length = strlen(value.text);
+
+                memset(record + field.offset, 0, room);
+                memcpy(record + field.offset, value.text, length < room - 1 ? length : room - 1);
+                return 1;
+            }
             }
 
             return 0;
@@ -190,6 +217,10 @@ namespace Forge
             case Kind::Float:
             case Kind::Resource:
                 memcpy(record + field.offset, snapshot + field.offset, sizeof(uint32_t));
+                return 1;
+
+            case Kind::Byte:
+                record[field.offset] = snapshot[field.offset];
                 return 1;
 
             case Kind::Text:

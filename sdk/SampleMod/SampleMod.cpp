@@ -1,31 +1,13 @@
 #include <ForgeApi.h>
 
-#include <math.h>
 #include <stdlib.h>
 #include <string.h>
 
 using namespace Amod;
 
-bool g_holding = false;
-bool g_tinting = false;
-bool g_marking = false;
-float g_tint[4] = { 0.0f, 1.0f, 0.0f, 1.0f };
-
-
-const uint32_t kWordMark = 0xF17E;
-
-struct Show
-{
-    bool running;
-    float time;
-    float nextBurst;
-    float nextDrop;
-    int bursts;
-    bool wordSent;
-    float origin[3];
-};
-
-Show g_show = {};
+bool g_watching = false;
+bool g_refusing = false;
+AmodToken g_spawn = AMOD_INVALID_TOKEN;
 
 bool Same(const char* a, const char* b)
 {
@@ -37,592 +19,619 @@ bool Off(int argc, const char** argv, int at)
     return argc > at && Same(argv[at], "off");
 }
 
-const char* KindName(int kind)
+// Every placement the room is about to stand up, before it exists.
+int __cdecl OnBonusSpawn(const AmodBonusSpawnInfo* info, void*)
 {
-    switch (kind)
+    if (g_watching)
     {
-    case AMOD_PARTICLE_KIND_POOL_0:
-        return "pool 0";
-    case AMOD_PARTICLE_KIND_POOL_1:
-        return "pool 1";
-    case AMOD_PARTICLE_KIND_POOL_2:
-        return "pool 2 (never drawn)";
-    default:
-        return "uni";
+        Console::Printf("  %-14s type '%s'%s at %.2f %.2f %.2f\n", info->name, info->resourceId,
+            info->hasType != 0 ? "" : "  <- NO SUCH TYPE", info->position[0], info->position[1],
+            info->position[2]);
     }
+
+    return g_refusing ? 0 : 1;
 }
 
-int __cdecl Hold(AmodParticle particle, float delta, void*)
+AmodToken g_slotEvents = AMOD_INVALID_TOKEN;
+AmodToken g_chainEvents = AMOD_INVALID_TOKEN;
+
+void __cdecl OnSlotEmptied(const AmodInventoryEventInfo* info, void*)
 {
-    AmodParticleDesc desc = {};
-    if (!Particles::Get(particle, desc))
+    Console::Printf("  slot %d: '%s' %s, %d points were riding on it\n", info->slot, info->name,
+        info->event == AMOD_INVENTORY_EXPIRED ? "ran out" : "was used",
+        info->pointsOnRunOut);
+}
+
+void __cdecl OnChain(const AmodChainEventInfo* info, void*)
+{
+    if (info->broke != 0)
     {
+        Console::Printf("  chain broke after %d scored\n", info->points);
+        return;
+    }
+
+    Console::Printf("  chain %d, %d scored\n", info->length, info->points);
+}
+
+int g_kind = 0;
+float g_lived = 0.0f;
+
+int __cdecl OnMineKind(const AmodBonusKindInfo* info, void*)
+{
+    if (info->event == AMOD_BONUS_EVENT_BUILD)
+    {
+        info->body->model = "models/bonus/key.mmd";
+        info->body->texture = "textures/rooms/5_01_wall.jpg";
+        info->body->pointsOnTake = 250;
+
+        info->body->glowColor[0] = 1.0f;
+        info->body->glowColor[3] = 1.0f;
+        info->body->glowColor2[2] = 1.0f;
+        info->body->glowColor2[3] = 1.0f;
+
+        info->body->rockingAmp = 0.05f;
+        info->body->rockingSpeed = 3.0f;
+        info->body->rockingAxis[2] = 1.0f;
+
+        info->body->lightColor[0] = 1.0f;
+        info->body->lightRadius = 1.5f;
+        return 1;
+    }
+
+    // Its own tick, which is the half a type could never have: it climbs while it waits.
+    if (info->event == AMOD_BONUS_EVENT_UPDATE)
+    {
+        g_lived = g_lived + info->deltaTime;
+        info->body->glowColor[1] = g_lived - static_cast<int>(g_lived);
         return 0;
     }
 
-    desc.position[1] += delta * 0.05f;
-    Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_POSITION);
-    return 1;
+    Console::Printf("  kind '%s' taken at %d %d - %d points\n", info->take->tag,
+        info->take->column, info->take->row, info->take->pointsOnTake);
+    return AMOD_BONUS_TAKE_DEFAULT;
 }
 
-int __cdecl DrawNothing(void*)
+int g_borrowKind = 0;
+bool g_suppress = true;
+bool g_borrowing = false;
+AmodToken g_worldEvents = AMOD_INVALID_TOKEN;
+
+int BorrowThisRoom()
 {
-    return 1;
-}
+    const int entities = World::CurrentSpawnCount();
+    int taken = 0;
 
-int __cdecl RefuseTrails(AmodParticleDesc*, void*)
-{
-    return 0;
-}
-
-const uint32_t kMine = 0xA2F0;
-
-int __cdecl MarkBorn(AmodParticle particle, AmodParticleKind, void*)
-{
-    Particles::SetTag(particle, kMine);
-    return 1;
-}
-
-int __cdecl RefuseBorn(AmodParticle, AmodParticleKind, void*)
-{
-    return 0;
-}
-
-float Between(float from, float to)
-{
-    return from + (to - from) * (static_cast<float>(rand()) / static_cast<float>(RAND_MAX));
-}
-
-// Hue as three cosines a third of a turn apart - enough of a rainbow, and no table.
-void Rainbow(float phase, float* out)
-{
-    out[0] = 0.5f + 0.5f * cosf(phase);
-    out[1] = 0.5f + 0.5f * cosf(phase - 2.0944f);
-    out[2] = 0.5f + 0.5f * cosf(phase + 2.0944f);
-    out[3] = 1.0f;
-}
-
-int __cdecl MarkWord(AmodParticle particle, AmodParticleKind, void*)
-{
-    Particles::SetTag(particle, kWordMark);
-    return 1;
-}
-
-void GlyphLook(AmodParticleDesc& desc, char glyph, float size)
-{
-    float scale[2] = { 0.004f, 0.004f };
-    Particles::TextScale(scale);
-
-    desc.structSize = sizeof(desc);
-    desc.kind = AMOD_PARTICLE_KIND_POOL_1;
-    desc.shape = AMOD_PARTICLE_SHAPE_MODEL;
-    desc.model = Particles::TextFont();
-    desc.modelFrame = static_cast<unsigned char>(glyph);
-    desc.glyphScale[0] = scale[0] * size;
-    desc.glyphScale[1] = scale[1] * size;
-}
-
-void Burst(const float* at)
-{
-    AmodParticleDesc desc = {};
-    GlyphLook(desc, '*', 0.8f);
-
-    desc.life = 1.0f;
-    desc.decay = 0.7f;
-    desc.gravity[1] = -0.4f;
-    desc.sizeGrow = 0.0f;
-    desc.spin = Between(-6.0f, 6.0f);
-
-    for (int at_ = 0; at_ < 28; ++at_)
+    for (int at = 0; at < entities; ++at)
     {
-        const float angle = Between(0.0f, 6.2832f);
-        const float lift = Between(-0.6f, 1.0f);
-
-        desc.position[0] = at[0];
-        desc.position[1] = at[1];
-        desc.position[2] = at[2];
-
-        desc.direction[0] = cosf(angle);
-        desc.direction[1] = lift;
-        desc.direction[2] = sinf(angle) * 0.35f;
-        desc.speed = Between(0.10f, 0.26f);
-
-        // A colour of its own for every spark, not one for the whole burst
-        desc.colour[0] = Between(0.2f, 1.0f);
-        desc.colour[1] = Between(0.2f, 1.0f);
-        desc.colour[2] = Between(0.2f, 1.0f);
-        desc.colour[3] = 1.0f;
-
-        Particles::Spawn(desc);
-    }
-}
-
-void Drop(const float* over)
-{
-    AmodParticleDesc desc = {};
-    GlyphLook(desc, '.', 1.2f);
-
-    desc.life = 1.0f;
-    desc.decay = 0.45f;
-    desc.gravity[1] = -0.5f;
-    desc.direction[1] = -1.0f;
-    desc.speed = Between(0.05f, 0.12f);
-    desc.colour[0] = 0.6f;
-    desc.colour[1] = 0.8f;
-    desc.colour[2] = 1.0f;
-    desc.colour[3] = 1.0f;
-
-    for (int made = 0; made < 4; ++made)
-    {
-        desc.position[0] = over[0] + Between(-0.35f, 0.35f);
-        desc.position[1] = over[1] + Between(0.20f, 0.34f);
-        desc.position[2] = over[2];
-        Particles::Spawn(desc);
-    }
-}
-
-int PaintTagged(const float* colour)
-{
-    int painted = 0;
-
-    AmodParticleDesc desc = {};
-    desc.structSize = sizeof(desc);
-    desc.colour[0] = colour[0];
-    desc.colour[1] = colour[1];
-    desc.colour[2] = colour[2];
-    desc.colour[3] = 1.0f;
-
-    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
-    {
-        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-
-        for (int at = Particles::Count(one) - 1; at >= 0; --at)
+        AmodBonusSpawnInfo one = {};
+        if (!Bonuses::GetPlacement(at, one) || one.isLive == 0 || one.kind != 0)
         {
-            const AmodParticle particle = Particles::At(one, at);
-            if (particle == nullptr || Particles::GetTag(particle) != kMine)
-            {
-                continue;
-            }
-
-            if (Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR))
-            {
-                ++painted;
-            }
+            continue;
+        }
+        if (Bonuses::BorrowPlacement(g_borrowKind, at))
+        {
+            ++taken;
         }
     }
-
-    return painted;
+    return taken;
 }
 
-void Report()
+void __cdecl OnWorldEvent(const AmodWorldEventInfo* info, void*)
 {
-    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    if (g_borrowing && info->event == AMOD_WORLD_EVENT_ROOM_CHANGED)
     {
-        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-        Console::Printf("  %-20s %4d live of %d\n", KindName(kind), Particles::Count(one), Particles::Capacity(one));
+        BorrowThisRoom();
     }
 }
 
-int PaintAll(const float* colour)
+struct Dress
 {
-    int painted = 0;
+    AmodModelId model;
+    AmodTextureId texture;
+};
 
-    AmodParticleDesc desc = {};
-    desc.structSize = sizeof(desc);
-    desc.colour[0] = colour[0];
-    desc.colour[1] = colour[1];
-    desc.colour[2] = colour[2];
-    desc.colour[3] = colour[3];
+Dress g_dresses[64] = {};
+int g_dressCount = 0;
+bool g_hah = false;
+float g_hahTime = 0.0f;
+int g_hahAt = 0;
 
-    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
-    {
-        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-
-        for (int at = Particles::Count(one) - 1; at >= 0; --at)
-        {
-            const AmodParticle particle = Particles::At(one, at);
-            if (particle != nullptr && Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR))
-            {
-                ++painted;
-            }
-        }
-    }
-
-    return painted;
-}
-
-int HoldAll(bool holding)
+void CollectDresses()
 {
-    int touched = 0;
+    const int types = Bonuses::TypeCount();
+    g_dressCount = 0;
 
-    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
+    for (int at = 0; at < types && g_dressCount < 64; ++at)
     {
-        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-
-        for (int at = Particles::Count(one) - 1; at >= 0; --at)
-        {
-            const AmodParticle particle = Particles::At(one, at);
-            if (particle == nullptr)
-            {
-                continue;
-            }
-
-            if (holding ? Particles::SetThink(particle, &Hold) : Particles::ClearThink(particle))
-            {
-                ++touched;
-            }
-        }
-    }
-
-    return touched;
-}
-
-AmodTextureId TextureFor(const char* path)
-{
-    static AmodTextureId held = AMOD_INVALID_TEXTURE;
-    static const char* heldPath = nullptr;
-
-    if (held != AMOD_INVALID_TEXTURE && heldPath != nullptr && Same(heldPath, path))
-    {
-        return held;
-    }
-
-    held = Textures::Load(path, true, true);
-    heldPath = held != AMOD_INVALID_TEXTURE ? path : nullptr;
-    return held;
-}
-
-bool BorrowLook(AmodParticleDesc& desc)
-{
-    for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
-    {
-        const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-        const AmodParticle live = Particles::At(one, 0);
-
-        AmodParticleDesc from = {};
-        if (live == nullptr || !Particles::Get(live, from) || from.textureA == 0)
+        AmodBonusType one = {};
+        if (!Bonuses::GetType(at, one) || one.modelId == 0 || one.textureId == 0)
         {
             continue;
         }
 
-        desc.textureA = from.textureA;
-        desc.textureB = from.textureB;
-        desc.shape = from.shape;
-        if (from.size > 0.0f)
+        // Skip a pair already taken, so a table full of keys does not fill the list with them
+        bool seen = false;
+        for (int back = 0; back < g_dressCount; ++back)
         {
-            desc.size = from.size;
+            seen = seen || (g_dresses[back].model == one.modelId && g_dresses[back].texture == one.textureId);
         }
-        return true;
-    }
 
-    return false;
-}
-
-void RunShow(float delta)
-{
-    if (!g_show.running)
-    {
-        return;
-    }
-
-    g_show.time += delta;
-
-    // Six bursts, moving corner to corner around him
-    if (g_show.bursts < 6 && g_show.time >= g_show.nextBurst)
-    {
-        static const float corners[4][2] = { { -0.30f, 0.26f }, { 0.30f, 0.26f }, { -0.30f, 0.06f }, { 0.30f, 0.06f } };
-        const float* const corner = corners[g_show.bursts % 4];
-
-        const float at[3] = { g_show.origin[0] + corner[0], g_show.origin[1] + corner[1], g_show.origin[2] };
-        Burst(at);
-
-        ++g_show.bursts;
-        g_show.nextBurst = g_show.time + 0.35f;
-    }
-
-    // Then the word, marked as it is born so the rainbow finds it and nothing else
-    if (!g_show.wordSent && g_show.bursts >= 6)
-    {
-        const float where[3] = { g_show.origin[0], g_show.origin[1] + 0.12f, g_show.origin[2] };
-
-        Particles::SetBirthHandler(&MarkWord);
-        Particles::SpawnText("FIREWORK", where, 1.6f, 0.02f, 0.28f);
-        Particles::SetBirthHandler(g_marking ? &MarkBorn : nullptr);
-
-        g_show.wordSent = true;
-    }
-
-    // and the rain, while the word is still up
-    if (g_show.wordSent && g_show.time >= g_show.nextDrop && g_show.time < 5.5f)
-    {
-        Drop(g_show.origin);
-        g_show.nextDrop = g_show.time + 0.05f;
-    }
-
-    // The letters are repainted every frame
-    if (g_show.wordSent)
-    {
-        float colour[4] = {};
-        Rainbow(g_show.time * 4.0f, colour);
-
-        AmodParticleDesc desc = {};
-        desc.structSize = sizeof(desc);
-        desc.colour[0] = colour[0];
-        desc.colour[1] = colour[1];
-        desc.colour[2] = colour[2];
-        desc.colour[3] = 1.0f;
-
-        for (int at = Particles::Count(AMOD_PARTICLE_KIND_POOL_1) - 1; at >= 0; --at)
+        if (!seen)
         {
-            const AmodParticle particle = Particles::At(AMOD_PARTICLE_KIND_POOL_1, at);
-            if (particle != nullptr && Particles::GetTag(particle) == kWordMark)
-            {
-                Particles::Set(particle, desc, AMOD_PARTICLE_FIELD_COLOUR);
-            }
+            g_dresses[g_dressCount].model = one.modelId;
+            g_dresses[g_dressCount].texture = one.textureId;
+            ++g_dressCount;
         }
-    }
-
-    if (g_show.time > 6.5f)
-    {
-        g_show.running = false;
     }
 }
 
-void __cdecl ParticlesCommand(int argc, const char** argv, void*)
+int __cdecl OnBorrowedBonus(const AmodBonusKindInfo* info, void*)
 {
-    if (!Particles::IsHere())
+    // BUILD never comes for a borrowed one - the game built it, we only took the two slots.
+    if (info->event == AMOD_BONUS_EVENT_UPDATE)
     {
-        Console::Print("particles: not in a level\n");
+        g_lived = g_lived + info->deltaTime;
+
+        const float wave = g_lived - static_cast<int>(g_lived);
+        info->body->glowColor[0] = wave;
+        info->body->glowColor[2] = 1.0f - wave;
+        info->body->glowColor[3] = 1.0f;
+
+        if (g_hah && g_dressCount > 0)
+        {
+            info->body->modelId = g_dresses[g_hahAt].model;
+            info->body->textureId = g_dresses[g_hahAt].texture;
+        }
+
+        return g_suppress ? 1 : 0;
+    }
+
+    Console::Printf("  borrowed '%s' taken at %d %d - handing it back to the game\n", info->take->resourceId, info->take->column, info->take->row);
+    return AMOD_BONUS_TAKE_DEFAULT;
+}
+
+void __cdecl BonusCommand(int argc, const char** argv, void*)
+{
+    if (g_spawn == AMOD_INVALID_TOKEN)
+    {
+        g_spawn = Bonuses::OnSpawn(&OnBonusSpawn);
+    }
+
+    if (g_spawn == AMOD_INVALID_TOKEN)
+    {
+        Console::Print("bonus: this loader does not offer the spawn event\n");
         return;
     }
 
-    const char* const what = argc > 1 ? argv[1] : "count";
+    const char* const what = argc > 1 ? argv[1] : "watch";
 
-    if (Same(what, "count"))
+    if (Same(what, "watch"))
     {
-        Report();
-        Console::Printf("  hold %s, tint %s, mark %s\n", g_holding ? "on" : "off", g_tinting ? "on" : "off", g_marking ? "on" : "off");
-        return;
-    }
-
-    if (Same(what, "paint") || Same(what, "tint"))
-    {
-        const bool lasting = Same(what, "tint");
-
-        if (lasting && Off(argc, argv, 2))
-        {
-            g_tinting = false;
-            Console::Print("particles: tint off\n");
-            return;
-        }
-
-        float colour[4] = { 1.0f, 0.2f, 0.1f, 1.0f };
-        if (argc > 4)
-        {
-            colour[0] = static_cast<float>(atof(argv[2]));
-            colour[1] = static_cast<float>(atof(argv[3]));
-            colour[2] = static_cast<float>(atof(argv[4]));
-        }
-
-        if (lasting)
-        {
-            g_tint[0] = colour[0];
-            g_tint[1] = colour[1];
-            g_tint[2] = colour[2];
-            g_tinting = true;
-            Console::Printf("particles: tint on, %.2f %.2f %.2f - every particle, every frame\n", colour[0], colour[1], colour[2]);
-            return;
-        }
-
-        const int painted = PaintAll(colour);
-        if (painted == 0)
-        {
-            Console::Print("particles: nothing is in the air - set off an effect or take a bonus\n");
-            return;
-        }
-
-        Console::Printf("particles: %d painted %.2f %.2f %.2f\n", painted, colour[0], colour[1], colour[2]);
-        return;
-    }
-
-    if (Same(what, "spawn"))
-    {
-        const int asked = argc > 2 ? atoi(argv[2]) : 0;
-        const int wanted = asked > 0 ? asked : 16;
-        const int kind = argc > 3 ? atoi(argv[3]) : AMOD_PARTICLE_KIND_POOL_1;
-
-        float focus[3] = {};
-        if (!Camera::GetFocus(focus))
-        {
-            Console::Print("particles: there is nobody to spawn them on\n");
-            return;
-        }
-
-        AmodParticleDesc desc = {};
-        desc.structSize = sizeof(desc);
-        desc.kind = static_cast<AmodParticleKind>(kind);
-        desc.size = 0.03f;
-        desc.sizeGrow = -0.005f;
-        desc.life = 1.0f;
-        desc.decay = 0.4f;
-        desc.speed = 0.25f;
-        desc.gravity[1] = -0.6f;
-        desc.spin = 3.0f;
-        desc.colour[0] = 1.0f;
-        desc.colour[1] = 0.4f;
-        desc.colour[2] = 0.1f;
-        desc.colour[3] = 1.0f;
-
-        const char* const path = argc > 4 ? argv[4] : "textures/rooms/5_01_wall.jpg";
-        desc.textureA = static_cast<int>(TextureFor(path));
-
-        if (desc.textureA == AMOD_INVALID_TEXTURE)
-        {
-            if (!BorrowLook(desc))
-            {
-                Console::Printf("particles: '%s' would not load, and nothing is in the air to borrow from\n", path);
-                return;
-            }
-            Console::Printf("particles: '%s' would not load, borrowed a look instead\n", path);
-        }
-
-        int made = 0;
-        for (int at = 0; at < wanted; ++at)
-        {
-            const float spread = static_cast<float>(rand()) / RAND_MAX - 0.5f;
-            const float across = static_cast<float>(rand()) / RAND_MAX - 0.5f;
-
-            desc.position[0] = focus[0];
-            desc.position[1] = focus[1];
-            desc.position[2] = focus[2];
-
-            desc.direction[0] = spread;
-            desc.direction[1] = 1.0f;
-            desc.direction[2] = across;
-
-            if (Particles::Spawn(desc) != nullptr)
-            {
-                ++made;
-            }
-        }
-
-        Console::Printf("particles: %d of %d spawned into %s\n", made, wanted, KindName(kind));
-        return;
-    }
-
-    if (Same(what, "hold"))
-    {
-        g_holding = !Off(argc, argv, 2);
-        if (!g_holding)
-        {
-            Console::Printf("particles: hold off, gave back %d\n", HoldAll(false));
-            return;
-        }
-
-        Console::Printf("particles: hold on, standing in for %d so far - take a bonus\n", HoldAll(true));
-        return;
-    }
-
-    if (Same(what, "clear"))
-    {
-        int ended = 0;
-        for (int kind = AMOD_PARTICLE_KIND_POOL_0; kind <= AMOD_PARTICLE_KIND_UNI; ++kind)
-        {
-            const AmodParticleKind one = static_cast<AmodParticleKind>(kind);
-            ended += Particles::Count(one);
-            Particles::Clear(one);
-        }
-
-        Console::Printf("particles: %d ended\n", ended);
-        return;
-    }
-
-    if (Same(what, "firework"))
-    {
-        if (!Camera::GetFocus(g_show.origin))
-        {
-            Console::Print("particles: there is nobody to set it off over\n");
-            return;
-        }
-
-        g_show = Show{ true, 0.0f, 0.0f, 0.0f, 0, false,
-            { g_show.origin[0], g_show.origin[1], g_show.origin[2] } };
-
-        Console::Print("particles: six bursts, then the word and the rain\n");
-        return;
-    }
-
-    if (Same(what, "hide"))
-    {
-        Console::Print(Particles::SetDrawHandler(&DrawNothing) ? "particles: the draw is ours\n" : "particles: could not take the draw\n");
-        return;
-    }
-
-    if (Same(what, "show"))
-    {
-        Particles::SetDrawHandler(nullptr);
-        Console::Print("particles: the draw is the game's again\n");
-        return;
-    }
-
-    if (Same(what, "text"))
-    {
-        float focus[3] = {};
-        Camera::GetFocus(focus);
-
-        // The letters are spaced from the font's own metrics, which only the game knows
-        const char* const words = argc > 2 ? argv[2] : "AZFORGE";
-        const float scale = argc > 3 ? static_cast<float>(atof(argv[3])) : 1.0f;
-
-        focus[1] += 0.05f;
-
-        Console::Printf(Particles::SpawnText(words, focus, scale)
-            ? "particles: '%s' floated at scale %.3f\n"
-            : "particles: '%s' refused at scale %.3f - is a game running?\n", words, scale);
-        return;
-    }
-
-    if (Same(what, "mark"))
-    {
-        g_marking = !Off(argc, argv, 2);
-        if (!g_marking)
-        {
-            Particles::SetBirthHandler(nullptr);
-            Console::Print("particles: no longer marking\n");
-            return;
-        }
-
-        Console::Print(Particles::SetBirthHandler(&MarkBorn)
-            ? "particles: marking every new particle; only those get painted now\n"
-            : "particles: could not take the births\n");
+        g_watching = !Off(argc, argv, 2);
+        Console::Print(g_watching
+            ? "bonus: reporting every placement as a room stands it up - walk into one\n"
+            : "bonus: quiet again\n");
         return;
     }
 
     if (Same(what, "none"))
     {
-        const bool off = Off(argc, argv, 2);
-        Particles::SetBirthHandler(off ? nullptr : &RefuseBorn);
-        Console::Print(off ? "particles: births allowed again\n" : "particles: every birth refused\n");
+        g_refusing = !Off(argc, argv, 2);
+        Console::Print(g_refusing
+            ? "bonus: every placement refused - walk into a room to find it empty\n"
+            : "bonus: placements allowed again\n");
         return;
     }
 
-    if (Same(what, "quiet"))
+    if (Same(what, "mine"))
     {
-        Console::Print(Particles::SetSpawnHandler(&RefuseTrails) ? "particles: bonus trails refused\n" : "particles: could not take the spawn\n");
+        const bool carried = argc > 2 && Same(argv[2], "carry");
+
+        Bonuses::NewType made(carried ? "azforge.minekey" : "azforge.mine");
+        made.Texture("textures/rooms/5_01_wall.jpg");
+        made.Model("models/bonus/key.mmd");
+        made.PointsOnTake(500);
+        made.Glow(0.2f, 1.0f, 0.4f);
+
+        if (carried)
+        {
+            made.Icon("textures/console.jpg");
+        }
+        else
+        {
+            made.Behaves(AMOD_BONUS_LIKE_SCORED);
+        }
+
+        Console::Printf(made.Define()
+            ? "bonus: '%s' defined from nothing - place it with 'bonus place %s'\n"
+            : "bonus: '%s' would not take - see forge.log, and a type can only be defined "
+                "outside a level\n",
+            carried ? "azforge.minekey" : "azforge.mine",
+            carried ? "azforge.minekey" : "azforge.mine");
         return;
     }
 
-    if (Same(what, "loud"))
+    if (Same(what, "kind"))
     {
-        Particles::SetSpawnHandler(nullptr);
-        Console::Print("particles: bonus trails allowed again\n");
+        if (g_kind == 0)
+        {
+            g_kind = Bonuses::RegisterKind("azforge.mineKind", &OnMineKind);
+        }
+
+        if (g_kind == 0)
+        {
+            Console::Print("bonus: this loader does not offer kinds of a mod's own\n");
+            return;
+        }
+
+        const int column = argc > 2 ? atoi(argv[2]) : 20;
+        const int row = argc > 3 ? atoi(argv[3]) : 14;
+
+        Console::Printf(Bonuses::PlaceKind(g_kind, column, row, "mine")
+            ? "bonus: kind %d placed at %d %d - it pulses, bobs and lights the floor\n"
+            : "bonus: kind %d would not place at %d %d - are you in a level?\n",
+            g_kind, column, row);
         return;
     }
 
-    Console::Print("particles: count | paint r g b | tint r g b | tint off | spawn [n] [kind] [texture]\n");
-    Console::Print("           text [word] [scale] | hold [off] | mark [off] | none [off] | clear\n");
-    Console::Print("           firework | hide | show | quiet | loud\n");
-    Console::Print("  uni particles exist only while a bonus is being taken\n");
+    // Take over what the level itself put in this room
+    if (Same(what, "borrow"))
+    {
+        if (g_borrowKind == 0)
+        {
+            g_borrowKind = Bonuses::RegisterKind("azforge.borrowed", &OnBorrowedBonus);
+        }
+
+        if (g_borrowKind == 0)
+        {
+            Console::Print("bonus: this loader does not offer kinds of a mod's own\n");
+            return;
+        }
+
+        if (Off(argc, argv, 2))
+        {
+            g_borrowing = false;
+            Console::Printf("bonus: %d given back to the game, look and all\n", Bonuses::ReturnAll());
+            return;
+        }
+
+        if (g_worldEvents == AMOD_INVALID_TOKEN)
+        {
+            g_worldEvents = World::OnEvent(AMOD_WORLD_EVENT_ROOM_CHANGED, &OnWorldEvent);
+        }
+
+        g_borrowing = true;
+        g_suppress = !Same(argc > 2 ? argv[2] : "", "bob");
+
+        Console::Printf("bonus: %d of this room's own taken over - they pulse, %s, and still "
+            "score the game's way when picked up. Every room from here on, too.\n",
+            BorrowThisRoom(), g_suppress ? "no longer bob" : "go on bobbing");
+        return;
+    }
+
+    // Every bonus in the room, wearing a different type's clothes every second
+    if (Same(what, "hah"))
+    {
+        if (Off(argc, argv, 2))
+        {
+            g_hah = false;
+            g_borrowing = false;
+            Console::Printf("bonus: %d given back, wearing what they came in\n", Bonuses::ReturnAll());
+            return;
+        }
+
+        if (g_borrowKind == 0)
+        {
+            Console::Print("bonus: this loader does not offer kinds of a mod's own\n");
+            return;
+        }
+
+        CollectDresses();
+        if (g_dressCount == 0)
+        {
+            Console::Print("bonus: no bonus type in this level carries both a model and a texture\n");
+            return;
+        }
+
+        if (g_worldEvents == AMOD_INVALID_TOKEN)
+        {
+            g_worldEvents = World::OnEvent(AMOD_WORLD_EVENT_ROOM_CHANGED, &OnWorldEvent);
+        }
+
+        g_hah = true;
+        g_borrowing = true;
+        g_suppress = false;
+
+        Console::Printf("bonus: %d taken over, changing between %d looks a second apart - the "
+            "texture always the one cut for that model\n", BorrowThisRoom(), g_dressCount);
+        return;
+    }
+
+    // Every room of the level, without walking into any of them
+    if (Same(what, "rooms"))
+    {
+        const int rooms = World::RoomCount();
+        int total = 0;
+
+        for (int room = 0; room < rooms; ++room)
+        {
+            const int held = Bonuses::PlacementCountIn(room);
+            int live = 0;
+
+            for (int at = 0; at < held; ++at)
+            {
+                AmodBonusSpawnInfo one = {};
+                if (Bonuses::GetPlacement(at, one, room) && one.isLive != 0)
+                {
+                    ++live;
+                }
+            }
+
+            if (live != 0)
+            {
+                Console::Printf("  room %3d  %d bonus(es)\n", room, live);
+                total = total + live;
+            }
+        }
+
+        Console::Printf("bonus: %d standing across %d rooms\n", total, rooms);
+        return;
+    }
+
+    // Dressing a room the player is not in, and the next room is the plainest proof
+    if (Same(what, "far"))
+    {
+        const int room = argc > 2 ? atoi(argv[2]) : 0;
+        const int column = argc > 3 ? atoi(argv[3]) : 20;
+        const int row = argc > 4 ? atoi(argv[4]) : 14;
+
+        Console::Printf(Bonuses::PlaceKindIn(g_kind, room, column, row, "far")
+            ? "bonus: kind put in room %d at %d %d - walk there, it stands up on arrival\n"
+            : "bonus: room %d would not take one at %d %d\n", room, column, row);
+        return;
+    }
+
+    // What one placement says about itself, as against what its type says
+    if (Same(what, "prop"))
+    {
+        const int at = argc > 2 ? atoi(argv[2]) : 0;
+
+        if (argc > 4)
+        {
+            AmodValue wanted = {};
+            wanted.kind = AMOD_VALUE_STRING;
+            wanted.text = argv[4];
+
+            bool numeric = argv[4][0] == '-' || (argv[4][0] >= '0' && argv[4][0] <= '9');
+            bool fractional = argc > 5;
+
+            for (const char* walk = argv[4]; numeric && *walk != '\0'; ++walk)
+            {
+                fractional = fractional || *walk == '.';
+            }
+
+            if (numeric && fractional)
+            {
+                wanted.kind = AMOD_VALUE_FLOAT;
+                wanted.count = 0;
+                for (int give = 4; give < argc && wanted.count < 4; ++give)
+                {
+                    wanted.numbers[wanted.count] = static_cast<float>(atof(argv[give]));
+                    ++wanted.count;
+                }
+            }
+            else if (numeric)
+            {
+                wanted.kind = AMOD_VALUE_INT;
+                wanted.integer = atoi(argv[4]);
+            }
+
+            Console::Printf(Bonuses::SetPlacementProperty(at, argv[3], wanted)
+                ? "bonus: placement %d, '%s' set\n"
+                : "bonus: placement %d would not take '%s'\n", at, argv[3]);
+            return;
+        }
+
+        const int keys = Bonuses::PlacementPropertyCount();
+        for (int key = 0; key < keys; ++key)
+        {
+            const char* const name = Bonuses::PlacementPropertyNameAt(key);
+            AmodValue value = {};
+
+            if (!Bonuses::GetPlacementProperty(at, name, value))
+            {
+                continue;
+            }
+
+            if (value.kind == AMOD_VALUE_STRING)
+            {
+                Console::Printf("  %-10s '%s'\n", name, value.text);
+            }
+            else if (value.kind == AMOD_VALUE_FLOAT)
+            {
+                Console::Printf("  %-10s %.3f\n", name, value.numbers[0]);
+            }
+            else
+            {
+                Console::Printf("  %-10s %d\n", name, value.integer);
+            }
+        }
+        return;
+    }
+
+    if (Same(what, "place"))
+    {
+        const char* const name = argc > 2 ? argv[2] : "key_a";
+        const int column = argc > 3 ? atoi(argv[3]) : 20;
+        const int row = argc > 4 ? atoi(argv[4]) : 14;
+        const char* const texture = argc > 5 ? argv[5] : nullptr;
+
+        // A look of its own, so this one differs from every other bonus of its type
+        Bonuses::NewPlacement made(name, column, row);
+        made.Tag("mine");
+        if (texture != nullptr)
+        {
+            made.Texture(texture);
+        }
+
+        Console::Printf(made.Put()
+            ? "bonus: '%s' placed at %d %d\n"
+            : "bonus: '%s' refused at %d %d - is that a type this level knows?\n", name, column, row);
+        return;
+    }
+
+    if (Same(what, "carried"))
+    {
+        const int slots = Inventory::SlotCount();
+        for (int at = 0; at < slots; ++at)
+        {
+            const Inventory::Item item = Inventory::At(at);
+            if (item.IsEmpty())
+            {
+                continue;
+            }
+
+            Console::Printf("  slot %d  %-12s res '%s'  %.1f of %.1f s\n", at, item.Name(),
+                item.ResourceId(), item.GetTimeLeft(), item.GetTimeTotal());
+        }
+        return;
+    }
+
+    if (Same(what, "room"))
+    {
+        const int entities = World::CurrentSpawnCount();
+        int shown = 0;
+
+        for (int at = 0; at < entities; ++at)
+        {
+            AmodBonusSpawnInfo one = {};
+            if (!Bonuses::GetPlacement(at, one) || one.isLive == 0)
+            {
+                continue;
+            }
+
+            Console::Printf("  %3d  %-12s res '%s'  tag '%s'  cell %d %d%s\n", at, one.name,
+                one.resourceId, one.tag, World::ColumnAt(one.position[0]),
+                World::RowAt(one.position[1]), one.kind != 0 ? "  <- a kind of ours" : "");
+            ++shown;
+        }
+
+        Console::Printf("bonus: %d standing in this room\n", shown);
+        return;
+    }
+
+    if (Same(what, "take"))
+    {
+        if (argc > 3)
+        {
+            const int index = Bonuses::IndexOfCell(atoi(argv[2]), atoi(argv[3]));
+            if (index < 0)
+            {
+                Console::Print("bonus: nothing is standing on that cell\n");
+                return;
+            }
+
+            Console::Print(Bonuses::RemovePlacement(index)
+                ? "bonus: taken out of the room, and the level's count with it\n"
+                : "bonus: it would not go\n");
+            return;
+        }
+
+        const char* const tag = argc > 2 ? argv[2] : "mine";
+        Console::Printf("bonus: %d wearing '%s' taken out at once\n", Bonuses::RemoveTagged(tag), tag);
+        return;
+    }
+
+    if (Same(what, "takeall"))
+    {
+        const char* const name = argc > 2 ? argv[2] : "key_a";
+        Console::Printf("bonus: %d of '%s' taken out at once\n", Bonuses::RemoveNamed(name), name);
+        return;
+    }
+
+    if (Same(what, "events"))
+    {
+        if (Off(argc, argv, 2))
+        {
+            Inventory::RemoveSlotHandler(g_slotEvents);
+            Inventory::RemoveChainHandler(g_chainEvents);
+            g_slotEvents = AMOD_INVALID_TOKEN;
+            g_chainEvents = AMOD_INVALID_TOKEN;
+            Console::Print("bonus: quiet\n");
+            return;
+        }
+
+        // Asking twice would subscribe twice and say everything twice
+        if (g_slotEvents != AMOD_INVALID_TOKEN)
+        {
+            Console::Print("bonus: already telling\n");
+            return;
+        }
+
+        g_slotEvents = Inventory::OnSlot(&OnSlotEmptied);
+        g_chainEvents = Inventory::OnChain(&OnChain);
+
+        Console::Print(g_slotEvents != AMOD_INVALID_TOKEN
+            ? "bonus: telling on every slot that empties and every change of the chain\n"
+            : "bonus: this loader does not offer them\n");
+        return;
+    }
+
+    // Waiting out a totem to see the event is no way to test it
+    if (Same(what, "expire"))
+    {
+        const int slot = argc > 2 ? atoi(argv[2]) : 0;
+
+        const Inventory::Item item = Inventory::At(slot);
+        if (item.IsEmpty())
+        {
+            Console::Printf("bonus: slot %d is empty\n", slot);
+            return;
+        }
+
+        Console::Printf(Inventory::SetTimeLeft(slot, 0.5f)
+            ? "bonus: slot %d has half a second left - watch for 'ran out'\n"
+            : "bonus: slot %d has no timer to shorten\n", slot);
+        return;
+    }
+
+    if (Same(what, "hold"))
+    {
+        const int slot = argc > 2 ? atoi(argv[2]) : 0;
+        const bool ticking = Off(argc, argv, 3);
+
+        Console::Printf(Inventory::SetTicking(slot, ticking)
+            ? "bonus: slot %d %s\n" : "bonus: slot %d would not change\n",
+            slot, ticking ? "counts down again" : "is held where it stands");
+        return;
+    }
+
+    if (Same(what, "move"))
+    {
+        const int from = argc > 2 ? atoi(argv[2]) : 0;
+        const int to = argc > 3 ? atoi(argv[3]) : 1;
+
+        const bool moved = Inventory::Move(from, to);
+        Console::Printf(moved ? "bonus: slot %d -> %d, icon and timer intact\n"
+            : "bonus: %d -> %d refused, try swap\n", from, to);
+        return;
+    }
+
+    if (Same(what, "swap"))
+    {
+        const int first = argc > 2 ? atoi(argv[2]) : 0;
+        const int second = argc > 3 ? atoi(argv[3]) : 1;
+
+        Console::Printf(Inventory::Swap(first, second)
+            ? "bonus: slots %d and %d swapped\n" : "bonus: %d and %d would not swap\n", first, second);
+        return;
+    }
+
+    Console::Print("bonus: watch [off] | none [off] | mine [carry] | kind [col] [row]\n");
+    Console::Print("       borrow [off|bob] | hah [off] | place [name] [col] [row] [texture]\n");
+    Console::Print("       rooms | far [room] [col] [row] | prop <n> [key] [value]\n");
+    Console::Print("       carried | room | take [tag] | take [col] [row] | takeall [name]\n");
+    Console::Print("       move a b | swap a b | events [off] | hold <slot> [off] | expire <slot>\n");
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -632,7 +641,13 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("particles", &ParticlesCommand);
+    Console::AddCommand("bonus", &BonusCommand);
+
+    g_kind = Bonuses::RegisterKind("azforge.mineKind", &OnMineKind);
+    g_borrowKind = Bonuses::RegisterKind("azforge.borrowed", [](const AmodBonusKindInfo* info)
+    {
+        return OnBorrowedBonus(info, nullptr);
+    });
 
     Log(AMOD_LOG_INFO, "%s is up", ModId());
     return AMOD_OK;
@@ -640,23 +655,16 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame)
 {
-    RunShow(frame != nullptr ? frame->delta : 0.0f);
-
-    if (g_tinting)
+    if (!g_hah || g_dressCount == 0)
     {
-        if (g_marking)
-        {
-            PaintTagged(g_tint);
-        }
-        else
-        {
-            PaintAll(g_tint);
-        }
+        return;
     }
 
-    if (g_holding)
+    g_hahTime = g_hahTime + frame->delta;
+    if (g_hahTime >= 1.0f)
     {
-        HoldAll(true);
+        g_hahTime = 0.0f;
+        g_hahAt = (g_hahAt + 1) % g_dressCount;
     }
 }
 

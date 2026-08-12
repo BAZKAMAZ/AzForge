@@ -300,6 +300,9 @@
     <ClInclude Include="src\Game\Addresses\Particles.h">
       <Filter>Game\Addresses</Filter>
     </ClInclude>
+    <ClInclude Include="src\Api\Placement.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -454,6 +457,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\ParticlesApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\Placement.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>
