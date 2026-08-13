@@ -1,4 +1,4 @@
-#include <windows.h>
+﻿#include <windows.h>
 #include <wchar.h>
 
 #include "WinmmExports.h"
@@ -43,9 +43,40 @@ static HMODULE s_self = nullptr;
 
 static volatile LONG s_bootClaimed = 0;
 
-static void ReportFatal(const wchar_t* message)
+static void ReportFatal(const wchar_t* message, DWORD error)
 {
-    MessageBoxW(nullptr, message, L"AzForge", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
+    wchar_t full[1024] = {};
+    _snwprintf_s(full, _TRUNCATE, L"%s\n\nWindows error %lu.", message, error);
+
+    wchar_t path[MAX_PATH + 32] = {};
+    const DWORD copied = GetModuleFileNameW(s_self, path, MAX_PATH);
+
+    if (copied != 0 && copied < MAX_PATH)
+    {
+        wchar_t* const separator = wcsrchr(path, L'\\');
+        if (separator != nullptr)
+        {
+            separator[1] = L'\0';
+            if (wcscat_s(path, L"forge-boot-failed.txt") == 0)
+            {
+                const HANDLE note = CreateFileW(path, GENERIC_WRITE,
+                    FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                    CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+                if (note != INVALID_HANDLE_VALUE)
+                {
+                    const unsigned char bom[2] = { 0xFF, 0xFE };
+                    DWORD written = 0;
+                    WriteFile(note, bom, sizeof(bom), &written, nullptr);
+                    WriteFile(note, full, static_cast<DWORD>(wcslen(full) * sizeof(wchar_t)),
+                              &written, nullptr);
+                    CloseHandle(note);
+                }
+            }
+        }
+    }
+
+    MessageBoxW(nullptr, full, L"AzForge", MB_OK | MB_ICONERROR | MB_SETFOREGROUND);
 }
 
 static bool ResolveSystemWinmm()
@@ -134,9 +165,10 @@ extern "C" void __cdecl EnsureForgeBooted(void)
 
     if (!LoadForge(s_self))
     {
+        const DWORD why = GetLastError();
         ReportFatal(L"AzForge could not load AzForge.dll from the game folder.\n\n"
                     L"Make sure AzForge.dll sits next to game.exe, or remove winmm.dll from "
-                    L"the game folder to run the game unmodified.");
+                    L"the game folder to run the game unmodified.", why);
     }
 }
 
@@ -156,7 +188,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
     {
         ReportFatal(L"AzForge could not forward winmm.dll to the system library.\n\n"
                     L"The game cannot start with this proxy in place. Remove winmm.dll from "
-                    L"the game folder to run the game unmodified.");
+                    L"the game folder to run the game unmodified.", GetLastError());
         return FALSE;
     }
 

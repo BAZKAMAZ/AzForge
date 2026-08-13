@@ -84,8 +84,26 @@ namespace Forge
             g_lockReady = true;
         }
 
-        g_file = CreateFileW(filePath.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr,
+        // Shared so a sync client or second game does not block the log open.
+        const DWORD sharing = FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE;
+
+        g_file = CreateFileW(filePath.c_str(), GENERIC_WRITE, sharing, nullptr,
             CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+
+        // Still refused: second process gets its own .<pid>.log rather than interleaving.
+        if (g_file == INVALID_HANDLE_VALUE)
+        {
+            wchar_t mine[32] = {};
+            _snwprintf_s(mine, _TRUNCATE, L".%lu.log", GetCurrentProcessId());
+
+            std::wstring apart = filePath;
+            const size_t dot = apart.find_last_of(L'.');
+            apart = (dot == std::wstring::npos ? apart : apart.substr(0, dot)) + mine;
+
+            g_file = CreateFileW(apart.c_str(), GENERIC_WRITE, sharing, nullptr,
+                CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, nullptr);
+        }
+
         if (g_file == INVALID_HANDLE_VALUE)
         {
             return false;

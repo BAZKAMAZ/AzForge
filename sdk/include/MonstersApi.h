@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-/* The ten kinds of movement the game has. A defined kind borrows one of them. */
+/* The ten stock movements; DefineKind borrows one. */
 #define AMOD_MONSTER_MOVES_SKULL                                    "skull"
 #define AMOD_MONSTER_MOVES_SNAKE                                    "snake"
 #define AMOD_MONSTER_MOVES_SNAKE2                                   "snake2"
@@ -19,38 +19,38 @@ extern "C" {
 #define AMOD_MONSTER_MOVES_MUMMY                                    "mummy"
 #define AMOD_MONSTER_MOVES_MUMMY2                                   "mummy2"
 
-// An index is where a monster stands this frame; kill the one before it and the number is somebody ...
+// Live index lasts one frame; id lasts the monster.
 typedef uint32_t AmodMonsterId;
 #define AMOD_MONSTER_NONE                                           0
 
-// Which of the three collision boxes a monster definition carries is meant
+// Which type box: MAIN / SECOND / OBJECT.
 #define AMOD_MONSTER_BOX_MAIN                                       0
 #define AMOD_MONSTER_BOX_SECOND                                     1
 #define AMOD_MONSTER_BOX_OBJECT                                     2
 
-/* What a walking monster is doing */
+/* Walk cycle state. */
 #define AMOD_MONSTER_STATE_MOVE                                     0
 #define AMOD_MONSTER_STATE_SIT                                      1
 
-// A mummy2 walks while "walk_left" lasts, stands still through a "stay", then rolls "walk_wait" again
+// mummy2 walk cycle phases.
 #define AMOD_MONSTER_WALK_STEP                                      0
 #define AMOD_MONSTER_WALK_STAY                                      1
 
-/* One definition out of monster_res.txt. */
+/* One type from monster_res.txt. */
 typedef struct AmodMonsterType
 {
     uint32_t structSize;
 
-    const char* name;           /* $name, what a placement is matched by */
+    const char* name;           /* $name */
 
-    float speed;                /* $speed, doubled for a hard $level */
+    float speed;                /* $speed; doubled on hard $level */
     float speedUp;              /* $speed_up */
     float vertSpeed;            /* $vert_speed */
 
-    float partColor[4];         /* $part_color, what the death blast is painted with */
-    float partColorHard[4];     /* $part_color_hard, for $level 1 and 3 */
+    float partColor[4];         /* $part_color (death blast) */
+    float partColorHard[4];     /* $part_color_hard ($level 1/3) */
 
-    // $model by the path it was loaded from, which is what MmdApi's Find takes
+    /* $model path (MmdApi::Find) */
     const char* model;
 
     /* New fields are appended, never inserted. */
@@ -58,19 +58,19 @@ typedef struct AmodMonsterType
 
 AMOD_LAST_FIELD(AmodMonsterType, model, 0x34);
 
-/* A monster defined by a mod, copied from one the game already knows */
+/* Mod type copied from a known game type. */
 typedef struct AmodMonsterTypeDef
 {
     uint32_t structSize;
 
-    const char* name;           /* what levels will name it, and what DefineKind matches */
-    const char* basedOn;        /* a $name the game already knows; its record is the starting point */
+    const char* name;           /* level name / DefineKind match */
+    const char* basedOn;        /* known $name; record is the base */
 
     const char* texEasy;
     const char* texHard;
     const char* model;
 
-    float speed;                /* zero leaves the base's */
+    float speed;                /* 0 = keep base */
     float speedUp;
     float vertSpeed;
 
@@ -79,38 +79,41 @@ typedef struct AmodMonsterTypeDef
 
 AMOD_LAST_FIELD(AmodMonsterTypeDef, vertSpeed, 0x20);
 
-/* One monster standing in the room the player is in. */
+/* One live monster in the current room. */
 typedef struct AmodMonster
 {
     uint32_t structSize;
 
-    const char* name;           /* the definition it came from */
-    const char* tag;            /* $tag, the level author's own label */
+    const char* name;           /* type name */
+    const char* tag;            /* $tag */
 
-    
     const char* moves;
 
     float position[3];
-    int level;                  /* $level; 1 and 3 are the hard variants */
+    int level;                  /* $level; 1/3 = hard */
     int facing;                 /* -1 or 1 */
-    float speed;                /* what it is walking at now, not what the placement was given */
+    float speed;                /* live walk speed */
 
-    /* The two-state cycle belongs to the mummy pair alone */
+    /* mummy pair only */
     int hasState;
     int state;                  /* AMOD_MONSTER_STATE_* */
-    float timeLeft;             /* until the state changes */
+    float timeLeft;             /* until state changes */
 
     int isHard;                 /* $level 1 or 3 */
-    int isDecor;                /* $decor: counts for nothing when killed */
+    int isDecor;                /* $decor: kill does not count */
 
-    AmodMonsterId id;           /* this monster, for as long as it lives and never again */
+    AmodMonsterId id;           /* stable for its lifetime */
+
+    /* index = live list (Get/Kill/...); placed = room list (GetPlaced/...); either -1 if absent */
+    int index;
+    int placed;
 
     /* New fields are appended, never inserted. */
 } AmodMonster;
 
-AMOD_LAST_FIELD(AmodMonster, id, 0x3C);
+AMOD_LAST_FIELD(AmodMonster, placed, 0x44);
 
-/* Where to put one, in the shape a level script writes it */
+/* Placement as a level script writes it. */
 typedef struct AmodMonsterPlacement
 {
     uint32_t structSize;
@@ -122,10 +125,10 @@ typedef struct AmodMonsterPlacement
     int extraB;                 /* $pos[3] */
 
     const char* tag;
-    int level;                  /* 1 and 3 are the hard variants */
-    int facing;                 /* $dir, -1 or 1; zero means 1 */
-    int decor;                  /* counts for nothing when killed */
-    float attackDist;           /* in cells; zero takes the game's own 5 */
+    int level;                  /* 1/3 = hard */
+    int facing;                 /* $dir -1/1; 0 means 1 */
+    int decor;                  /* kill does not count */
+    float attackDist;           /* cells; 0 = game default 5 */
 
     /* New fields are appended, never inserted. */
 } AmodMonsterPlacement;
@@ -134,9 +137,9 @@ AMOD_LAST_FIELD(AmodMonsterPlacement, attackDist, 0x28);
 
 typedef enum AmodMonsterKillResult
 {
-    AMOD_MONSTER_KILL_DEFAULT = 0,  /* the game does with it what it always does */
-    AMOD_MONSTER_KILL_HANDLED = 1,  /* counted as dealt with; the game's own death is skipped */
-    AMOD_MONSTER_KILL_REFUSE = 2    /* it lives - whatever hit it does not */
+    AMOD_MONSTER_KILL_DEFAULT = 0,  /* game default death */
+    AMOD_MONSTER_KILL_HANDLED = 1,  /* handled; skip game death */
+    AMOD_MONSTER_KILL_REFUSE = 2    /* leave it alive */
 } AmodMonsterKillResult;
 
 typedef struct AmodMonsterKillInfo
@@ -149,28 +152,27 @@ typedef struct AmodMonsterKillInfo
     int level;
     int isDecor;
 
-    AmodMonsterId id;           /* the one dying; it stops answering once the handler returns */
+    AmodMonsterId id;           /* dies; stops answering after return */
 
     /* New fields are appended, never inserted. */
 } AmodMonsterKillInfo;
 
 AMOD_LAST_FIELD(AmodMonsterKillInfo, id, 0x20);
 
-typedef AmodMonsterKillResult (__cdecl* AmodMonsterKillHandler)(const AmodMonsterKillInfo* info,
-                                                                void* user);
+typedef AmodMonsterKillResult (__cdecl* AmodMonsterKillHandler)(const AmodMonsterKillInfo* info,  void* user);
 
-/* One frame of one monster whose behaviour a mod took over. */
+/* One frame of a behaviour-driven monster. */
 typedef struct AmodMonsterThinkInfo
 {
     uint32_t structSize;
 
-    int index;                  /* what Get and the properties address it by, this frame */
-    float delta;                /* seconds since the last frame, as the game gave it */
+    int index;                  /* live index this frame */
+    float delta;                /* seconds since last frame */
 
     float position[3];
     int facing;
 
-    AmodMonsterId id;           /* the same monster next frame, when the index will not be */
+    AmodMonsterId id;           /* stable across frames */
 
     /* New fields are appended, never inserted. */
 } AmodMonsterThinkInfo;
@@ -181,43 +183,42 @@ typedef void (__cdecl* AmodMonsterThinkHandler)(const AmodMonsterThinkInfo* info
 
 typedef enum AmodMonsterTouchResult
 {
-    AMOD_MONSTER_TOUCH_DEFAULT = 0, /* the game's own rules: totem, knife, or somebody dies */
-    AMOD_MONSTER_TOUCH_HANDLED = 1, /* the mod dealt with it; none of those rules run */
-    AMOD_MONSTER_TOUCH_REFUSE = 2   /* nothing happens at all, as though they had not met */
+    AMOD_MONSTER_TOUCH_DEFAULT = 0, /* game rules (totem/knife/death) */
+    AMOD_MONSTER_TOUCH_HANDLED = 1, /* handled; skip game rules */
+    AMOD_MONSTER_TOUCH_REFUSE = 2   /* no contact effect */
 } AmodMonsterTouchResult;
 
-/* A monster meeting something */
+/* Monster meeting something. */
 typedef struct AmodMonsterTouchInfo
 {
     uint32_t structSize;
 
-    int index;                  /* the monster, as Get and the properties address it */
+    int index;                  /* live index */
     const char* name;
     const char* tag;
     float position[3];
 
-    int isPlayer;               /* whether what it met is the player */
-    int toucherKind;            /* and what that thing is, if not */
-    int side;                   /* 1..4, which way they met; 3 and 4 are what turn a monster */
+    int isPlayer;               /* met the player */
+    int toucherKind;            /* other kind if not player */
+    int side;                   /* 1..4 side; 3/4 turn the monster */
 
-    AmodMonsterId id;           /* the monster, for keeping past this meeting */
+    AmodMonsterId id;           /* stable past this meeting */
 
     /* New fields are appended, never inserted. */
 } AmodMonsterTouchInfo;
 
 AMOD_LAST_FIELD(AmodMonsterTouchInfo, id, 0x28);
 
-typedef AmodMonsterTouchResult (__cdecl* AmodMonsterTouchHandler)(const AmodMonsterTouchInfo* info,
-                                                                  void* user);
+typedef AmodMonsterTouchResult (__cdecl* AmodMonsterTouchHandler)(const AmodMonsterTouchInfo* info, void* user);
 
-// A monster the room has just built this is where a mod puts back what it wants a particular one to...
+/* Just-built monster; set per-instance state here. */
 typedef struct AmodMonsterSpawnInfo
 {
     uint32_t structSize;
 
     AmodMonsterId id;
-    int index;                  /* what Get and the properties address it by */
-    int placed;                 /* its place in the room's own list, or -1 */
+    int index;                  /* live index */
+    int placed;                 /* room list index, or -1 */
 
     const char* name;
     const char* tag;
@@ -232,19 +233,117 @@ AMOD_LAST_FIELD(AmodMonsterSpawnInfo, isDecor, 0x28);
 
 typedef void (__cdecl* AmodMonsterSpawnHandler)(const AmodMonsterSpawnInfo* info, void* user);
 
+/* Placement before anything is built from it. */
+typedef struct AmodMonsterPlaceInfo
+{
+    uint32_t structSize;
+
+    const char* name;
+    const char* tag;
+    float position[3];
+    int level;
+    int isDecor;
+    int roomIndex;
+
+    /* New fields are appended, never inserted. */
+} AmodMonsterPlaceInfo;
+
+AMOD_LAST_FIELD(AmodMonsterPlaceInfo, roomIndex, 0x20);
+
+/* Before a placement becomes a monster; return 0 to refuse. */
+typedef int (__cdecl* AmodMonsterPlaceHandler)(const AmodMonsterPlaceInfo* info, void* user);
+
+/* Whether the game tick still runs under a behaviour. */
+#define AMOD_MONSTER_ALSO_GAME                                      0
+#define AMOD_MONSTER_INSTEAD_OF_GAME                                1
+
+/* Per-frame act; ALSO_GAME runs the game tick after, else suppresses it. */
+typedef int (__cdecl* AmodMonsterActHandler)(const AmodMonsterThinkInfo* info, void* user);
+
+/* Mod-owned kind: not in monster_res.txt; handler owns build/tick/touch. */
+
+typedef enum AmodMonsterEvent
+{
+    /* Fill body from the record; nonzero to make it. */
+    AMOD_MONSTER_EVENT_BUILD = 0,
+
+    /* Every frame; return ignored (no game tick behind a kind). */
+    AMOD_MONSTER_EVENT_UPDATE = 1,
+
+    /* Contact; return 0 also runs actsLike, else handler only. */
+    AMOD_MONSTER_EVENT_TOUCH = 2
+} AmodMonsterEvent;
+
+/* Body of a mod-owned monster. */
+typedef struct AmodMonsterBody
+{
+    uint32_t structSize;
+
+    const char* name;
+    const char* tag;
+    float position[3];
+    int facing;                 /* -1 or 1; 0 means 1 */
+
+    AmodModelId modelId;
+    AmodTextureId textureId;
+
+    AmodBox box;                /* collision with room/player */
+    int isHidden;
+
+    /* Knife hit box; zeroed = same as box. */
+    AmodBox hitBox;
+
+    /* Contact like this species ("mummy","bat",...); null = walk-through. */
+    const char* actsLike;
+
+    /* Animate like this species; null = still. actsLike already brings its anim. */
+    const char* animatedLike;
+
+    /* Own animation (Mmd::LoadAnimation); wins over animatedLike. */
+    AmodAnimationId animationId;
+
+    /* Starting frameset; null = "move". */
+    const char* frameset;
+
+    /* 1 = hitBox stays fixed; collision box always follows anim. */
+    int keepHitBox;
+
+    /* New fields are appended, never inserted. */
+} AmodMonsterBody;
+
+AMOD_LAST_FIELD(AmodMonsterBody, keepHitBox, 0x70);
+
+typedef struct AmodMonsterKindInfo
+{
+    uint32_t structSize;
+
+    int event;                  /* AMOD_MONSTER_EVENT_* */
+    int kind;
+    const void* record;         /* placement; stable for its life */
+
+    AmodMonsterBody* body;      /* BUILD only */
+    const AmodMonsterThinkInfo* think; /* UPDATE only */
+    const AmodMonsterTouchInfo* touch; /* TOUCH only */
+
+    /* New fields are appended, never inserted. */
+} AmodMonsterKindInfo;
+
+AMOD_LAST_FIELD(AmodMonsterKindInfo, touch, 0x18);
+
+/* Nonzero to build on BUILD; ignored on UPDATE. */
+typedef int (__cdecl* AmodMonsterKindHandler)(const AmodMonsterKindInfo* info, void* user);
+
 typedef struct AmodMonstersApi
 {
     uint32_t structSize;
 
-    /* the definitions monster_res.txt was read into */
-
+    /* Types from monster_res.txt. */
     int (__cdecl* GetTypeCount)(AmodMod mod);
     int (__cdecl* GetType)(AmodMod mod, int index, AmodMonsterType* out);
     int (__cdecl* FindType)(AmodMod mod, const char* name, AmodMonsterType* out);
 
-    /* Appends a definition copied from one the game knows */
+    /* Append a type copied from a known one. */
     int (__cdecl* DefineType)(AmodMod mod, const AmodMonsterTypeDef* type);
-
     
     int (__cdecl* GetTypeProperty)(AmodMod mod, const char* name, const char* key, AmodValue* value);
     int (__cdecl* SetTypeProperty)(AmodMod mod, const char* name, const char* key, const AmodValue* value);
@@ -252,33 +351,21 @@ typedef struct AmodMonstersApi
     int (__cdecl* TypePropertyCount)(AmodMod mod);
     const char* (__cdecl* TypePropertyNameAt)(AmodMod mod, int index);
 
-    /* making a name spawn at all */
+    /* Teach the spawner a name. */
 
-    /* Teaches the spawner a name of the mod's own, moving like one of the ten AMOD_MONSTER_MOVES_* * kinds */
+    /* Teach spawner a name moving like one of the ten AMOD_MONSTER_MOVES_*. */
     int (__cdecl* DefineKind)(AmodMod mod, const char* name, const char* movesLike);
 
-    
-    int (__cdecl* DefineBehaviour)(AmodMod mod, const char* name, AmodMonsterThinkHandler handler,
-                                   void* user);
+    int (__cdecl* DefineBehaviour)(AmodMod mod, const char* name, AmodMonsterThinkHandler handler, void* user);
 
-    /* the monsters standing in the room */
-
+    /* Live monsters in the current room. */
     int (__cdecl* GetCount)(AmodMod mod);
     int (__cdecl* Get)(AmodMod mod, int index, AmodMonster* out);
-
-    
     int (__cdecl* Place)(AmodMod mod, const char* name, int column, int row);
     int (__cdecl* PlaceEx)(AmodMod mod, const AmodMonsterPlacement* where);
-
-    
     int (__cdecl* Kill)(AmodMod mod, int index);
-
-    
     int (__cdecl* SetMovement)(AmodMod mod, int index, const char* movesLike);
-
-    
     int (__cdecl* Move)(AmodMod mod, int index, int dirX, int dirY, int dirZ);
-
     
     int (__cdecl* GetProperty)(AmodMod mod, int index, const char* key, AmodValue* value);
     int (__cdecl* SetProperty)(AmodMod mod, int index, const char* key, const AmodValue* value);
@@ -286,60 +373,81 @@ typedef struct AmodMonstersApi
     int (__cdecl* PropertyCount)(AmodMod mod);
     const char* (__cdecl* PropertyNameAt)(AmodMod mod, int index);
 
-    /* How many monsters this level has lost so far, the game's own count. */
+    /* Level kill tally (game count). */
     int (__cdecl* GetKilledCount)(AmodMod mod);
 
-    /* the rooms the player is not in */
-
-    
+    /* Placements in any room. */
     int (__cdecl* GetPlacedCount)(AmodMod mod, int roomIndex);
     int (__cdecl* GetPlaced)(AmodMod mod, int roomIndex, int index, AmodMonster* out);
     int (__cdecl* GetPlacedProperty)(AmodMod mod, int roomIndex, int index, const char* key, AmodValue* value);
     int (__cdecl* SetPlacedProperty)(AmodMod mod, int roomIndex, int index, const char* key, const AmodValue* value);
 
-    /* being asked */
-
-    /* Asked before any monster dies, whatever killed it - the player's knife, a fall, a mod */
+    /* Before any death (knife, fall, mod, ...). */
     AmodToken (__cdecl* AddKillHandler)(AmodMod mod, AmodMonsterKillHandler handler, void* user);
     void (__cdecl* RemoveKillHandler)(AmodMod mod, AmodToken token);
 
-    /* Asked before a monster acts on what it has walked into, for every kind of monster there is */
+    /* Before a monster acts on contact. */
     AmodToken (__cdecl* AddTouchHandler)(AmodMod mod, AmodMonsterTouchHandler handler, void* user);
     void (__cdecl* RemoveTouchHandler)(AmodMod mod, AmodToken token);
 
-    // Six floats do not fit in one AmodValue, so the boxes are calls rather than properties.
+    /* Boxes are calls (six floats do not fit AmodValue). */
     int (__cdecl* GetTypeBox)(AmodMod mod, const char* name, int which, AmodBox* out);
     int (__cdecl* SetTypeBox)(AmodMod mod, const char* name, int which, const AmodBox* box);
 
-    // The one it is really hit on: here it is that monster alone, on the definition everything after.
+    /* Live object box for that monster alone. */
     int (__cdecl* GetBox)(AmodMod mod, int index, AmodBox* out);
     int (__cdecl* SetBox)(AmodMod mod, int index, const AmodBox* box);
 
-    // Between an index, which lasts a frame, and an id, which lasts the monster
+    /* Index lasts a frame; id lasts the monster. */
     AmodMonsterId (__cdecl* IdAt)(AmodMod mod, int index);
     int (__cdecl* IndexOf)(AmodMod mod, AmodMonsterId id);
 
-    // A monster named the way the level file writes it: "spider_15_7" is the $name and the $pos
-
-    // is a j_skull and what is written on a placement outlives the visit, what is written on the entity...
+    /* Key "name_col_row" as a level file writes it. */
     AmodMonsterId (__cdecl* Find)(AmodMod mod, const char* key);
     int (__cdecl* FindPlaced)(AmodMod mod, int roomIndex, const char* key);
 
-    // Told after each monster is built and before it has moved, whoever built it.
+    /* After build, before first move. */
     AmodToken (__cdecl* AddSpawnHandler)(AmodMod mod, AmodMonsterSpawnHandler handler, void* user);
     void (__cdecl* RemoveSpawnHandler)(AmodMod mod, AmodToken token);
 
-    // Which monster a draw belongs to, asked with the `item` a model draw handler is given
+    /* Monster of a draw `item` from a model draw handler. */
     AmodMonsterId (__cdecl* IdOfDraw)(AmodMod mod, uint32_t item);
 
-    // The same three names, on a monster standing there and what an animation's box writes over, OBJECT...
+    /* Live MAIN/OBJECT boxes (animation writes over them). */
     int (__cdecl* GetLiveBox)(AmodMod mod, int index, int which, AmodBox* out);
     int (__cdecl* SetLiveBox)(AmodMod mod, int index, int which, const AmodBox* box);
 
-    /* Fields added in later API versions go here, and nowhere else. */
+    /* Before a placement becomes a monster; return 0 to refuse. */
+    AmodToken (__cdecl* AddPlaceHandler)(AmodMod mod, AmodMonsterPlaceHandler handler, void* user);
+    void (__cdecl* RemovePlaceHandler)(AmodMod mod, AmodToken token);
+
+    /* Spend a placement (any room) and drop its live monster; not a scored death. */
+    int (__cdecl* RemovePlaced)(AmodMod mod, int roomIndex, int index);
+
+    /* Behaviour for any name (incl. game's); per-frame also/instead of game tick. */
+    int (__cdecl* SetBehaviour)(AmodMod mod, const char* name, AmodMonsterActHandler handler, void* user);
+    int (__cdecl* ClearBehaviour)(AmodMod mod, const char* name);
+
+    /* One monster by index; holds across room leave/return. */
+    int (__cdecl* BorrowMonster)(AmodMod mod, int index, AmodMonsterActHandler handler, void* user);
+    int (__cdecl* ReturnMonster)(AmodMod mod, int index);
+
+    /* Register mod kind; 0 if name taken. Not in the game table. */
+    int (__cdecl* RegisterKind)(AmodMod mod, const char* name, AmodMonsterKindHandler handler, void* user);
+
+    /* Place a registered kind; roomIndex < 0 = current room. */
+    int (__cdecl* PlaceKind)(AmodMod mod, int kind, int roomIndex, const AmodMonsterPlacement* where);
+
+    /* Place/kill in any room; unentered rooms get a placement spent as a death. */
+    int (__cdecl* PlaceIn)(AmodMod mod, int roomIndex, const AmodMonsterPlacement* placement);
+    int (__cdecl* KillIn)(AmodMod mod, int roomIndex, int index);
+
+    /* Play frameset by monster index (not world entity index). */
+    int (__cdecl* PlayAnim)(AmodMod mod, int index, const char* frameset);
+
 } AmodMonstersApi;
 
-AMOD_LAST_FIELD(AmodMonstersApi, SetLiveBox, 0xB4);
+AMOD_LAST_FIELD(AmodMonstersApi, PlayAnim, 0xE4);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -527,19 +635,183 @@ namespace Amod
             return g_monsters != nullptr && g_monsters->FindType(g_monsterSelf, name, &out) != 0;
         }
 
-        /* Which of the ten a name of the mod's own moves like. */
+        /* Teach a name to move like one of the ten. */
         inline bool                                                 DefineKind(const char* name, const char* movesLike)
         {
             return g_monsters != nullptr && g_monsters->DefineKind != nullptr &&
                    g_monsters->DefineKind(g_monsterSelf, name, movesLike) != 0;
         }
 
-        /* And how it behaves, instead of what it borrowed. */
-        inline bool                                                 DefineBehaviour(const char* name, AmodMonsterThinkHandler handler,
-                                                                                    void* user = nullptr)
+        /* Own think instead of the borrowed movement. */
+        inline bool                                                 DefineBehaviour(const char* name, AmodMonsterThinkHandler handler, void* user = nullptr)
         {
             return g_monsters != nullptr && g_monsters->DefineBehaviour != nullptr &&
                    g_monsters->DefineBehaviour(g_monsterSelf, name, handler, user) != 0;
+        }
+
+        /* Behaviour for any name (incl. game's); takes over already-standing too. */
+        inline bool                                                 SetBehaviour(const char* name, AmodMonsterActHandler handler, void* user = nullptr)
+        {
+            return g_monsters != nullptr && g_monsters->SetBehaviour != nullptr &&
+                   g_monsters->SetBehaviour(g_monsterSelf, name, handler, user) != 0;
+        }
+
+        /* Lambda form; captures kept in static. */
+        template <typename Handler>
+        inline bool                                                 SetBehaviour(const char* name, Handler&& handler)
+        {
+            static Handler kept = static_cast<Handler&&>(handler);
+            return SetBehaviour(name, [](const AmodMonsterThinkInfo* info, void*) -> int
+            {
+                return kept(info);
+            }, nullptr);
+        }
+
+        /* Place in any room. */
+        inline bool                                                 PlaceIn(int roomIndex, const AmodMonsterPlacement& where)
+        {
+            return g_monsters != nullptr && g_monsters->PlaceIn != nullptr &&
+                   g_monsters->PlaceIn(g_monsterSelf, roomIndex, &where) != 0;
+        }
+
+        inline bool                                                 PlaceIn(int roomIndex, const char* name, int column, int row, const char* tag = nullptr)
+        {
+            AmodMonsterPlacement where = {};
+            where.structSize = sizeof(where);
+            where.name = name;
+            where.column = column;
+            where.row = row;
+            where.tag = tag;
+            return PlaceIn(roomIndex, where);
+        }
+
+        /* Play frameset by monster index. */
+        inline bool                                                 PlayAnim(int index, const char* frameset)
+        {
+            return g_monsters != nullptr && g_monsters->PlayAnim != nullptr &&
+                   g_monsters->PlayAnim(g_monsterSelf, index, frameset) != 0;
+        }
+
+        /* Kill in any room; unentered rooms spend the placement. */
+        inline bool                                                 KillIn(int roomIndex, int index)
+        {
+            return g_monsters != nullptr && g_monsters->KillIn != nullptr &&
+                   g_monsters->KillIn(g_monsterSelf, roomIndex, index) != 0;
+        }
+
+        /* Register mod kind; 0 if name taken. */
+        inline int                                                  RegisterKind(const char* name, AmodMonsterKindHandler handler, void* user = nullptr)
+        {
+            return (g_monsters != nullptr && g_monsters->RegisterKind != nullptr)
+                ? g_monsters->RegisterKind(g_monsterSelf, name, handler, user) : 0;
+        }
+
+        /* Lambda form; captures kept in static. */
+        template <typename Handler>
+        inline int                                                  RegisterKind(const char* name, Handler&& handler)
+        {
+            static Handler kept = static_cast<Handler&&>(handler);
+            return RegisterKind(name, [](const AmodMonsterKindInfo* info, void*) -> int
+            {
+                return kept(info);
+            }, nullptr);
+        }
+
+        inline bool                                                 PlaceKind(int kind, const AmodMonsterPlacement& where, int roomIndex = -1)
+        {
+            return g_monsters != nullptr && g_monsters->PlaceKind != nullptr &&
+                   g_monsters->PlaceKind(g_monsterSelf, kind, roomIndex, &where) != 0;
+        }
+
+        inline bool                                                 PlaceKind(int kind, int column, int row, const char* tag = nullptr, int roomIndex = -1)
+        {
+            AmodMonsterPlacement where = {};
+            where.structSize = sizeof(where);
+            where.column = column;
+            where.row = row;
+            where.tag = tag;
+            return PlaceKind(kind, where, roomIndex);
+        }
+
+        /* Drive this one monster; outranks name-wide behaviour. */
+        inline bool                                                 Borrow(int index, AmodMonsterActHandler handler, void* user = nullptr)
+        {
+            return g_monsters != nullptr && g_monsters->BorrowMonster != nullptr &&
+                   g_monsters->BorrowMonster(g_monsterSelf, index, handler, user) != 0;
+        }
+
+        /* Lambda form; captures kept in static. */
+        template <typename Handler>
+        inline bool                                                 Borrow(int index, Handler&& handler)
+        {
+            static Handler kept = static_cast<Handler&&>(handler);
+            return Borrow(index, [](const AmodMonsterThinkInfo* info, void*) -> int
+            {
+                return kept(info);
+            }, nullptr);
+        }
+
+        inline bool                                                 Return(int index)
+        {
+            return g_monsters != nullptr && g_monsters->ReturnMonster != nullptr &&
+                   g_monsters->ReturnMonster(g_monsterSelf, index) != 0;
+        }
+
+        /* Hand behaviour back to the game. */
+        inline bool                                                 ClearBehaviour(const char* name)
+        {
+            return g_monsters != nullptr && g_monsters->ClearBehaviour != nullptr &&
+                   g_monsters->ClearBehaviour(g_monsterSelf, name) != 0;
+        }
+
+        /* Before placement becomes a monster; return 0 to refuse. */
+        inline AmodToken                                            OnPlace(AmodMonsterPlaceHandler handler, void* user = nullptr)
+        {
+            return (g_monsters != nullptr && g_monsters->AddPlaceHandler != nullptr)
+                ? g_monsters->AddPlaceHandler(g_monsterSelf, handler, user) : AMOD_INVALID_TOKEN;
+        }
+
+        /* Lambda form; captures kept in static. */
+        template <typename Handler>
+        inline AmodToken                                            OnPlace(Handler&& handler)
+        {
+            static Handler kept = static_cast<Handler&&>(handler);
+            return OnPlace([](const AmodMonsterPlaceInfo* info, void*) -> int
+            {
+                return kept(info);
+            }, nullptr);
+        }
+
+        inline void                                                 RemoveOnPlace(AmodToken token)
+        {
+            if (g_monsters != nullptr && g_monsters->RemovePlaceHandler != nullptr)
+            {
+                g_monsters->RemovePlaceHandler(g_monsterSelf, token);
+            }
+        }
+
+        /* Spend placement (any room); not a scored death. */
+        inline bool                                                 RemovePlaced(int index, int roomIndex = -1)
+        {
+            return g_monsters != nullptr && g_monsters->RemovePlaced != nullptr &&
+                   g_monsters->RemovePlaced(g_monsterSelf, roomIndex, index) != 0;
+        }
+
+        /* Remove every placement in that room. */
+        inline int                                                  RemoveAllPlaced(int roomIndex = -1)
+        {
+            const int held = (g_monsters != nullptr && g_monsters->GetPlacedCount != nullptr)
+                ? g_monsters->GetPlacedCount(g_monsterSelf, roomIndex) : 0;
+            int gone = 0;
+
+            for (int at = 0; at < held; ++at)
+            {
+                if (RemovePlaced(at, roomIndex))
+                {
+                    ++gone;
+                }
+            }
+            return gone;
         }
 
         inline bool                                                 GetTypeBox(const char* name, int which, AmodBox& out)
@@ -580,13 +852,13 @@ namespace Amod
                        : AMOD_INVALID_TOKEN;
         }
 
-        // Inside a model draw handler: which monster this particular draw is.
+        /* Inside a model draw handler: which monster this draw is. */
         inline AmodMonsterId                                        IdOfDraw(uint32_t item)
         {
             return (g_monsters != nullptr && g_monsters->IdOfDraw != nullptr) ? g_monsters->IdOfDraw(g_monsterSelf, item) : AMOD_MONSTER_NONE;
         }
 
-        // Where a mod puts a monster back the way it wants it, every time a room is walked into.
+        /* After each spawn when a room is entered. */
         inline AmodToken                                            OnSpawn(AmodMonsterSpawnHandler handler, void* user = nullptr)
         {
             return (g_monsters != nullptr && g_monsters->AddSpawnHandler != nullptr)
@@ -741,7 +1013,7 @@ namespace Amod
             return (g_monsters != nullptr && g_monsters->IndexOf != nullptr) ? g_monsters->IndexOf(g_monsterSelf, id) : -1;
         }
 
-        // Held by id: every call asks what its index is now, so it means the same monster tomorrow.
+        /* Held by id; Index() resolves the current live index. */
         class Tracked
         {
         public:
@@ -765,13 +1037,13 @@ namespace Amod
         inline Tracked                                              Track(int index) { return Tracked(IdAt(index)); }
         inline Tracked                                              ById(AmodMonsterId id) { return Tracked(id); }
 
-        // "spider_15_7" - the $name a level file gives and the $pos it wrote under it.
+        /* "name_col_row" as a level file writes it. */
         inline Tracked                                              Find(const char* key)
         {
             return Tracked((g_monsters != nullptr && g_monsters->Find != nullptr) ? g_monsters->Find(g_monsterSelf, key) : AMOD_MONSTER_NONE);
         }
 
-        // The same monster in the room's own list, which is what it is built from next time the player walk...
+        /* Placement index in the room list. */
         inline int                                                  FindPlaced(const char* key, int roomIndex = -1)
         {
             return (g_monsters != nullptr && g_monsters->FindPlaced != nullptr) ? g_monsters->FindPlaced(g_monsterSelf, roomIndex, key) : -1;

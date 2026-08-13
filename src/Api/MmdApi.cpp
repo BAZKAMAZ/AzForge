@@ -3509,6 +3509,12 @@ namespace Forge
         return tracked != nullptr ? tracked->model : nullptr;
     }
 
+    void* MmdApi::AnimationFor(AmodAnimationId id)
+    {
+        TrackedAnim* const tracked = AnimById(id);
+        return tracked != nullptr ? tracked->animation : nullptr;
+    }
+
     void MmdApi::ForgetMod(ModContext* owner)
     {
         for (auto it = g_substitutes.begin(); it != g_substitutes.end();)

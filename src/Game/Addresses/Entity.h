@@ -117,6 +117,9 @@ namespace Forge
 
         // Touch: void __cdecl (self, other, side). Both sides called; side 1 up, 2 down, 3 left, 4 right.
         constexpr uintptr_t kEntityTouchHandlerOffset = 0x5BC;
+
+        // void __cdecl (self, flag) - monster touch calls this to die. Empty on mod-built entities.
+        constexpr uintptr_t kEntityDieOffset = 0x5C4;
         constexpr uintptr_t kEntitiesResolveTouches = 0x00413CD0;
 
         // 0 = not in meetings. Ctrl spawn writes 1.
@@ -124,6 +127,10 @@ namespace Forge
 
         constexpr uintptr_t kEntityRockingAxisOffset = 0x4FC;
         constexpr uintptr_t kEntityRockingOffset = 0x508;
+
+        // Entities_Update rebuilds object box +0x158 from the anim frame only when set.
+        // Frame box +0x13C always follows. Monster_Spawn* sets it; without it the box stays fixed.
+        constexpr uintptr_t kMonsterEntityBoxFollowsAnimOffset = 0x174;
 
         // Live bonus entity kind (placement kind is 9).
         constexpr int kEntityKindBonus = 3;
@@ -150,7 +157,7 @@ namespace Forge
         constexpr uintptr_t kBonusSpawnModelOffset = 0x5C;
         constexpr uintptr_t kBonusSpawnTextureOffset = 0x60;
 
-        // A live monster. The placement is kind 10, the entity itself is kind 2.
+        // Live monster entity kind (placement kind is 10).
         constexpr int kEntityKindMonster = 2;
         constexpr uintptr_t kMonsterEntityTagOffset = 0x044;
         constexpr uintptr_t kMonsterEntityObjBoxOffset = 0x158;
@@ -158,7 +165,12 @@ namespace Forge
         constexpr uintptr_t kMonsterEntitySpeedOffset = 0x224;
         constexpr uintptr_t kMonsterEntityPlayerOffset = 0x24C; // cached by the first think
         constexpr uintptr_t kMonsterEntityLevelOffset = 0x4C8;
-        constexpr uintptr_t kMonsterEntityHardOffset = 0x4E4; // 1.0, or 2.0 for a hard $level
+        // 1.0 or 2.0 (hard). Written by every Spawn*, read by nothing -- write the speeds instead.
+        constexpr uintptr_t kMonsterEntityHardOffset = 0x4E4;
+
+        // type+0x54 * hard, and type+0x58 * hard twice -- what actually walks it.
+        constexpr uintptr_t kMonsterEntitySpeedLowOffset = 0x234;
+        constexpr uintptr_t kMonsterEntitySpeedTopOffset = 0x238;
         constexpr uintptr_t kMonsterEntityFacingOffset = 0x588; // -1 or 1
         constexpr uintptr_t kEntityCollidesOffset = 0x595;
 

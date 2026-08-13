@@ -19,6 +19,8 @@ namespace Forge
         static AmodModelId                                          IdFor(void* model);
         static void*                                                ModelFor(AmodModelId id);
 
+        static void*                                                AnimationFor(AmodAnimationId id);
+
         static void                                                 ForgetMod(ModContext* owner);
     };
 }

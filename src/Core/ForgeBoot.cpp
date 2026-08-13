@@ -103,10 +103,7 @@ namespace Forge
             return false;
         }
 
-        if (!Log::Open(Paths::LogFile().wstring()))
-        {
-            return false;
-        }
+        Log::Open(Paths::LogFile().wstring());
 
         g_running = true;
 

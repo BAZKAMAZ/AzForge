@@ -36,7 +36,9 @@ namespace Forge
         constexpr uintptr_t kMonstersLoadResources = 0x0042FFD0;
         constexpr uintptr_t kMonstersFreeResources = 0x0042F660;
         constexpr uintptr_t kMonsterResAppend = 0x0042FF60; // (record**, int*) -> record
-        constexpr uintptr_t kMonsterResFind = 0x0042F5C0; // (name) -> record, by $name
+
+        // __cdecl (name) -> record, by $name. Plain RET
+        constexpr uintptr_t kMonsterResFind = 0x0042F5F0;
         constexpr uintptr_t kMonsterParseSpawn = 0x0042F730;
         constexpr uintptr_t kMonsterKill = 0x0042FDB0; // __fastcall (entity)
 
