@@ -4,6 +4,7 @@
 #include "src/Api/ApiRead.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/ModContext.h"
+#include "src/Api/TextureApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
@@ -38,6 +39,8 @@ namespace Forge
 
         void WriteFloat(uint8_t* base, uintptr_t offset, float value);
         void WriteInt(uint8_t* base, uintptr_t offset, int value);
+        int SkinOf(AmodTextureId texture);
+        AmodTextureId IdOfSkin(int skin);
 
         // Frame lists must outlive particles; copies kept here.
         struct Animation
@@ -624,6 +627,16 @@ namespace Forge
             return true;
         }
 
+        int SkinOf(AmodTextureId texture)
+        {
+            return static_cast<int>(reinterpret_cast<uintptr_t>(TextureApi::TextureFor(texture)));
+        }
+
+        AmodTextureId IdOfSkin(int skin)
+        {
+            return TextureApi::IdFor(reinterpret_cast<const void*>(static_cast<uintptr_t>(skin)));
+        }
+
         void WriteFloat(uint8_t* base, uintptr_t offset, float value)
         {
             if (offset != kNone)
@@ -731,8 +744,8 @@ namespace Forge
             }
             if ((fields & AMOD_PARTICLE_FIELD_TEXTURES) != 0)
             {
-                WriteInt(particle, layout.textureA, desc->textureA);
-                WriteInt(particle, layout.textureB, desc->textureB);
+                WriteInt(particle, layout.textureA, SkinOf(desc->textureA));
+                WriteInt(particle, layout.textureB, SkinOf(desc->textureB));
             }
             if ((fields & AMOD_PARTICLE_FIELD_SHAPE) != 0 && layout.shape != kNone)
             {
@@ -948,8 +961,8 @@ namespace Forge
                 memcpy(filled.colour, at + layout.colour, sizeof(float) * 4);
             }
 
-            filled.textureA = ReadInt(at, layout.textureA);
-            filled.textureB = ReadInt(at, layout.textureB);
+            filled.textureA = IdOfSkin(ReadInt(at, layout.textureA));
+            filled.textureB = IdOfSkin(ReadInt(at, layout.textureB));
 
             if (layout.shape != kNone)
             {
@@ -1260,7 +1273,12 @@ namespace Forge
 
                 g_animations[at].owner = caller;
                 g_animations[at].count = count;
-                memcpy(g_animations[at].frames, textures, sizeof(int) * static_cast<size_t>(count));
+
+                // The flipbook is walked straight into the particle, so it holds the game's own.
+                for (int frame = 0; frame < count; ++frame)
+                {
+                    g_animations[at].frames[frame] = SkinOf(static_cast<AmodTextureId>(textures[frame]));
+                }
                 return static_cast<int>(at) + 1;
             }
 

@@ -43,12 +43,14 @@ typedef struct AmodPlayer
 
     int isDead; /* input ignored */
     int isCrashed; /* fell; picks crash death */
-    int isFading; /* fading out then hidden */
-    int isBurning;
+
+    /* Death kind; Player_Die picks "snd_fire_die" / "snd_shock_die". Fire also runs the scale. */
+    int isOnFire;
+    int isShocked;
 
 } AmodPlayer;
 
-AMOD_LAST_FIELD(AmodPlayer, isBurning, 0x3C);
+AMOD_LAST_FIELD(AmodPlayer, isShocked, 0x3C);
 
 typedef enum AmodPlayerEvent
 {
@@ -245,9 +247,12 @@ typedef struct AmodPlayerApi
     int(__cdecl* SetMoveHandler)(AmodMod mod, AmodPlayerMoveHandler handler, void* user);
     int(__cdecl* ClearMoveHandler)(AmodMod mod);
 
+    /* Fire death via his kill slot (costs a life). Refused if already dead or alight. */
+    int(__cdecl* Burn)(AmodMod mod);
+
 } AmodPlayerApi;
 
-AMOD_LAST_FIELD(AmodPlayerApi, ClearMoveHandler, 0x64);
+AMOD_LAST_FIELD(AmodPlayerApi, Burn, 0x68);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -299,6 +304,11 @@ namespace Amod
         inline bool                                                 Kill(bool crashed)
         {
             return g_player != nullptr && g_player->Kill(g_playerSelf, crashed ? 1 : 0) != 0;
+        }
+
+        inline bool                                                 Burn()
+        {
+            return g_player != nullptr && g_player->Burn != nullptr && g_player->Burn(g_playerSelf) != 0;
         }
 
         inline bool                                                 Revive()

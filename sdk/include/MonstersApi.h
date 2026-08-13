@@ -2,6 +2,7 @@
 #define AZFORGE_MONSTERS_API_H
 
 #include "WorldApi.h"
+#include "MmdApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -445,9 +446,12 @@ typedef struct AmodMonstersApi
     /* Play frameset by monster index (not world entity index). */
     int (__cdecl* PlayAnim)(AmodMod mod, int index, const char* frameset);
 
+    /* What it is playing, same index; caller sets out->structSize. */
+    int (__cdecl* GetAnim)(AmodMod mod, int index, AmodAnimState* out);
+
 } AmodMonstersApi;
 
-AMOD_LAST_FIELD(AmodMonstersApi, PlayAnim, 0xE4);
+AMOD_LAST_FIELD(AmodMonstersApi, GetAnim, 0xE8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -690,6 +694,15 @@ namespace Amod
         {
             return g_monsters != nullptr && g_monsters->PlayAnim != nullptr &&
                    g_monsters->PlayAnim(g_monsterSelf, index, frameset) != 0;
+        }
+
+        /* What that monster is playing right now. */
+        inline bool                                                 GetAnim(int index, AmodAnimState& out)
+        {
+            out = AmodAnimState{};
+            out.structSize = sizeof(out);
+            return g_monsters != nullptr && g_monsters->GetAnim != nullptr &&
+                   g_monsters->GetAnim(g_monsterSelf, index, &out) != 0;
         }
 
         /* Kill in any room; unentered rooms spend the placement. */

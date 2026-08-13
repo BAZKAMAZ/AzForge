@@ -147,9 +147,23 @@ namespace Forge
         constexpr uintptr_t kBonusGlowState2 = 0x00691474;
         constexpr uintptr_t kBonusGlowSprite = 0x0069146C;
 
-        // Door open scale: update writes 0..1 into +0x254 each frame.
-        constexpr uintptr_t kEntityScaleXOffset = 0x250;
-        constexpr uintptr_t kEntityScaleYOffset = 0x254;
+        // Entity_BuildMatrix 0x00409A20: rotate x, then y, then z, scale, then move to +0x124.
+        // Flag 0x4 in +0x48C drops all three for the rocking axis at +0x4FC instead.
+        constexpr uintptr_t kEntityPitchOffset = 0x250;
+        constexpr uintptr_t kEntityRollOffset = 0x258;
+
+        // Monster_Spawn* writes pi here for $dir -1 and leaves 0 for 1: a game model faces +x.
+        constexpr uintptr_t kEntityYawOffset = 0x254;
+
+        // Three floats, and a zero draws as one -- the actual scale, which +0x250 is not.
+        constexpr uintptr_t kEntityScaleOffset = 0x25C;
+
+        // Entities_Update turns the live pair toward these at the global rate, on flag 0x1000.
+        constexpr uintptr_t kEntityWantedPitchOffset = 0x268;
+        constexpr uintptr_t kEntityWantedYawOffset = 0x26C;
+        constexpr uint32_t kEntityTurnsFlag = 0x1000;
+
+        constexpr uintptr_t kEntityTurnRate = 0x00517750; // +0x0C is radians a second
 
         constexpr uintptr_t kEntityModelOffset = 0x274;
         constexpr uintptr_t kEntityTextureOffset = 0x278;

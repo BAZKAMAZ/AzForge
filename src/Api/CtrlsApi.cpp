@@ -2087,17 +2087,17 @@ namespace Forge
                 ? 1 : Fail(mod, AMOD_FAIL_NO_SUCH, "neither that model nor that texture is loaded");
         }
 
-        int __cdecl ApiSetScale(AmodMod mod, int index, float x, float y)
+        int __cdecl ApiSetAngles(AmodMod mod, int index, float pitch, float yaw)
         {
             uint8_t* const ctrl = Caller(mod) != nullptr ? CtrlAt(index) : nullptr;
 
             if (ctrl == nullptr)
             {
-                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no ctrl %d to scale", index);
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no ctrl %d to turn", index);
             }
 
-            memcpy(ctrl + GameAddress::kEntityScaleXOffset, &x, sizeof(x));
-            memcpy(ctrl + GameAddress::kEntityScaleYOffset, &y, sizeof(y));
+            memcpy(ctrl + GameAddress::kEntityPitchOffset, &pitch, sizeof(pitch));
+            memcpy(ctrl + GameAddress::kEntityYawOffset, &yaw, sizeof(yaw));
             return 1;
         }
 
@@ -2278,7 +2278,7 @@ namespace Forge
         g_table.SetTagOn = &ApiSetTagOn;
         g_table.SetTag = &ApiSetTag;
         g_table.SetTouchable = &ApiSetTouchable;
-        g_table.SetScale = &ApiSetScale;
+        g_table.SetAngles = &ApiSetAngles;
         g_table.PlacementCount = &ApiPlacementCount;
         g_table.GetPlacement = &ApiGetPlacement;
         g_table.GetPlacementProperty = &ApiGetPlacementProperty;

@@ -20,12 +20,11 @@
     <ProjectGuid>{6a3f8b21-49dc-4e07-8f56-b21d3c7e94af}</ProjectGuid>
     <RootNamespace>SampleMod</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <AzForgeModId>azforge.monstersrev</AzForgeModId>
-    <AzForgeModName>AzForge monstersRev</AzForgeModName>
+    <AzForgeModId>azforge.animmonster</AzForgeModId>
+    <AzForgeModName>monster anim</AzForgeModName>
     <AzForgeModVersion>1.0.0</AzForgeModVersion>
     <AzForgeModAuthor>AzForge</AzForgeModAuthor>
-    <AzForgeModDescription>
-    </AzForgeModDescription>
+    <AzForgeModDescription>Fire DRAGOOON!!!</AzForgeModDescription>
     <AzForgeModRequires>
     </AzForgeModRequires>
     <AzForgeGameDir>..\..\..\..\..\..\..\..\..\Games\az_orginal</AzForgeGameDir>

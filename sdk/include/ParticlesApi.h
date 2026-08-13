@@ -2,6 +2,7 @@
 #define AZFORGE_PARTICLES_API_H
 
 #include "ForgeTypes.h"
+#include "TextureApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -49,9 +50,9 @@ typedef struct AmodParticleDesc
 
     float colour[4];
 
-    /* Texture ids (Textures::Resolve); two layers, two passes. */
-    int textureA;
-    int textureB;
+    /* Textures::Load / Find; two layers, two passes. */
+    AmodTextureId textureA;
+    AmodTextureId textureB;
 
     int shape; /* AMOD_PARTICLE_SHAPE_* */
 

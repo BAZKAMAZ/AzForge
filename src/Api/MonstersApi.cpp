@@ -783,9 +783,23 @@ namespace Forge
             { "vert_velocity", GameAddress::kEntityMoveVertVelocityOffset, Kind::Float, 0, 0, 0, true }, 
             { "height", GameAddress::kEntityMoveHeightOffset, Kind::Float, 0, 0, 0, true }, 
             { "move_state", GameAddress::kEntityMoveStateNowOffset, Kind::Int, 0, 0, 0, true }, 
-            { "x", GameAddress::kEntityPositionOffset, Kind::Float, 0, 0, 0, true }, 
-            { "y", GameAddress::kEntityPositionOffset + 0x04, Kind::Float, 0, 0, 0, true }, 
+            { "x", GameAddress::kEntityPositionOffset, Kind::Float, 0, 0, 0, true },
+            { "y", GameAddress::kEntityPositionOffset + 0x04, Kind::Float, 0, 0, 0, true },
             { "z", GameAddress::kEntityPositionOffset + 0x08, Kind::Float, 0, 0, 0, true },
+
+            // What the draw turns the model by. A game model is drawn facing +x at yaw 0, and the
+            // spawn writes pi for $dir -1, so a mod's model has to be built facing +x to agree.
+            { "pitch", GameAddress::kEntityPitchOffset, Kind::Float, 0, 0, 0, true },
+            { "yaw", GameAddress::kEntityYawOffset, Kind::Float, 0, 0, 0, true },
+            { "roll", GameAddress::kEntityRollOffset, Kind::Float, 0, 0, 0, true },
+
+            // With "turns" on, the game walks pitch/yaw to these instead of the mod snapping them.
+            { "pitch_to", GameAddress::kEntityWantedPitchOffset, Kind::Float, 0, 0, 0, true },
+            { "yaw_to", GameAddress::kEntityWantedYawOffset, Kind::Float, 0, 0, 0, true },
+            { "turns", GameAddress::kEntityFlagsOffset, Kind::Flag, 0, GameAddress::kEntityTurnsFlag, 0, true },
+
+            // Three floats the draw multiplies by; a zero on any axis draws as one.
+            { "scale", GameAddress::kEntityScaleOffset, Kind::Floats, 3, 0, 0, true },
 
             // Per-entity look without touching the type.
             { "model", GameAddress::kEntityModelOffset, Kind::Resource, 0, 0, GameAddress::kResolveModelSlot, true }, 
@@ -2598,6 +2612,14 @@ namespace Forge
             return 1;
         }
 
+        int __cdecl ApiGetAnim(AmodMod mod, int index, AmodAnimState* out)
+        {
+            const uint8_t* const entity = Caller(mod) != nullptr ? MonsterAt(index) : nullptr;
+            return entity != nullptr
+                ? MmdApi::ReadAnimState(entity + GameAddress::kEntityAnimStateOffset, out)
+                : 0;
+        }
+
         int __cdecl ApiRegisterMonsterKind(AmodMod mod, const char* name, AmodMonsterKindHandler handler, void* user)
         {
             ModContext* const context = Caller(mod);
@@ -3668,6 +3690,7 @@ namespace Forge
         g_table.PlaceIn = &ApiPlaceIn;
         g_table.KillIn = &ApiKillIn;
         g_table.PlayAnim = &ApiPlayAnim;
+        g_table.GetAnim = &ApiGetAnim;
         if (InstallKillHook())
         {
             g_table.AddKillHandler = &ApiAddKillHandler;

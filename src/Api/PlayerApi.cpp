@@ -147,8 +147,8 @@ namespace Forge
             filled.subState = Read<int>(player, GameAddress::kEntitySubStateOffset);
             filled.isDead = (flags & GameAddress::kPlayerFlagDead) != 0 ? 1 : 0;
             filled.isCrashed = (flags & GameAddress::kPlayerFlagCrashed) != 0 ? 1 : 0;
-            filled.isFading = (flags & GameAddress::kPlayerFlagFading) != 0 ? 1 : 0;
-            filled.isBurning = (flags & GameAddress::kPlayerFlagBurning) != 0 ? 1 : 0;
+            filled.isOnFire = (flags & GameAddress::kPlayerFlagOnFire) != 0 ? 1 : 0;
+            filled.isShocked = (flags & GameAddress::kPlayerFlagShocked) != 0 ? 1 : 0;
             return CopyOut(out, out->structSize, &filled, sizeof(filled));
         }
 
@@ -204,6 +204,41 @@ namespace Forge
             return 1;
         }
 
+        typedef void(__cdecl* DieRoutine)(void* entity, int kind);
+
+        int __cdecl ApiBurn(AmodMod mod)
+        {
+            uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
+
+            if (player == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to burn");
+            }
+
+            uint32_t flags = Read<uint32_t>(player, GameAddress::kPlayerFlagsOffset);
+
+            // The game's own fire refuses a second light, and Player_Die refuses the dead
+            if ((flags & (GameAddress::kPlayerFlagDead | GameAddress::kPlayerFlagOnFire)) != 0)
+            {
+                return 0;
+            }
+
+            const DieRoutine die = Read<DieRoutine>(player, GameAddress::kEntityDieOffset);
+            if (die == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "the player has no kill slot to go through");
+            }
+
+            const float scale = GameAddress::kPlayerBurnScale;
+            memcpy(player + GameAddress::kEntityScaleOffset, &scale, sizeof(scale));
+
+            flags |= GameAddress::kPlayerFlagOnFire;
+            memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
+
+            die(player, 0);
+            return 1;
+        }
+
         int __cdecl ApiRevive(AmodMod mod)
         {
             uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
@@ -216,7 +251,7 @@ namespace Forge
             // Clear the four flags; does not undo mid-animation.
             uint32_t flags = Read<uint32_t>(player, GameAddress::kPlayerFlagsOffset);
             flags &= ~(GameAddress::kPlayerFlagDead | GameAddress::kPlayerFlagCrashed |
-                       GameAddress::kPlayerFlagFading | GameAddress::kPlayerFlagBurning);
+                       GameAddress::kPlayerFlagOnFire | GameAddress::kPlayerFlagShocked);
             memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
 
             uint32_t entityFlags = Read<uint32_t>(player, GameAddress::kEntityFlagsOffset);
@@ -1119,6 +1154,7 @@ namespace Forge
         g_table.SetPosition = &ApiSetPosition;
         g_table.SetFacing = &ApiSetFacing;
         g_table.Kill = &ApiKill;
+        g_table.Burn = &ApiBurn;
         g_table.Revive = &ApiRevive;
         g_table.GetLives = &ApiGetLives;
         g_table.SetLives = &ApiSetLives;

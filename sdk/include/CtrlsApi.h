@@ -231,8 +231,8 @@ typedef struct AmodCtrlsApi
     /* Touchable flag; clear to stop collisions. */
     int(__cdecl* SetTouchable)(AmodMod mod, int index, int touchable);
 
-    /* Draw scale; doors open by writing 0..1 here. */
-    int(__cdecl* SetScale)(AmodMod mod, int index, float x, float y);
+    /* Pitch and yaw in radians; a door swings open by winding the yaw up. */
+    int(__cdecl* SetAngles)(AmodMod mod, int index, float pitch, float yaw);
 
     /* Placement list for any room; roomIndex < 0 = current. */
     int(__cdecl* PlacementCount)(AmodMod mod, int roomIndex);
@@ -508,10 +508,10 @@ namespace Amod
                 g_ctrls->SetTag(g_ctrlsSelf, index, tag) != 0;
         }
 
-        inline bool                                                 SetScale(int index, float x, float y)
+        inline bool                                                 SetAngles(int index, float pitch, float yaw)
         {
-            return g_ctrls != nullptr && g_ctrls->SetScale != nullptr &&
-                g_ctrls->SetScale(g_ctrlsSelf, index, x, y) != 0;
+            return g_ctrls != nullptr && g_ctrls->SetAngles != nullptr &&
+                g_ctrls->SetAngles(g_ctrlsSelf, index, pitch, yaw) != 0;
         }
 
         inline bool                                                 SetTouchable(int index, bool touchable)

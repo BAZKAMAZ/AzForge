@@ -16,6 +16,8 @@ namespace Forge
 
         static const AmodMmdApi*                                    Table();
 
+        static int                                                  ReadAnimState(const uint8_t* state, AmodAnimState* out);
+
         static AmodModelId                                          IdFor(void* model);
         static void*                                                ModelFor(AmodModelId id);
 

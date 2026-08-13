@@ -2885,30 +2885,7 @@ namespace Forge
         int __cdecl ApiGetEntityAnim(AmodMod mod, int roomIndex, int index, AmodAnimState* out)
         {
             const uint8_t* const state = Caller(mod) != nullptr ? EntityAnimState(roomIndex, index) : nullptr;
-            if (state == nullptr || out == nullptr)
-            {
-                return 0;
-            }
-
-            uint8_t* const animation = reinterpret_cast<uint8_t*>(Read<uintptr_t>(state, GameAddress::kAnimStateAnimationOffset));
-            const uint8_t* const frameset = reinterpret_cast<const uint8_t*>(Read<uintptr_t>(state, GameAddress::kAnimStateFramesetOffset));
-            const uint32_t flags = Read<uint32_t>(state, GameAddress::kAnimStateFlagsOffset);
-
-            AmodAnimState filled = {};
-            filled.structSize = sizeof(filled);
-            filled.animation = IsAnimation(animation) ? TrackAnim(animation) : AMOD_INVALID_ANIMATION;
-            filled.frameset = (frameset != nullptr && Readable(frameset, GameAddress::kFramesetStride))
-                ? ReadText(frameset, GameAddress::kFramesetNameOffset)
-                : "";
-            filled.frameA = Read<int>(state, GameAddress::kAnimStateFrameAOffset);
-            filled.frameB = Read<int>(state, GameAddress::kAnimStateFrameBOffset);
-            filled.blend = Read<float>(state, GameAddress::kAnimStateBlendOffset);
-            filled.speed = Read<float>(state, GameAddress::kAnimStateSpeedOffset);
-            filled.backwards = Read<int>(state, GameAddress::kAnimStateDirectionOffset) < 0 ? 1 : 0;
-            filled.stopped = (flags & GameAddress::kAnimFlagStopped) != 0 ? 1 : 0;
-            filled.finished = (flags & GameAddress::kAnimFlagFinished) != 0 ? 1 : 0;
-
-            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+            return state != nullptr ? MmdApi::ReadAnimState(state, out) : 0;
         }
 
         int PlayOn(AmodMod mod, int roomIndex, int index, const char* frameset)
@@ -3496,6 +3473,35 @@ namespace Forge
     const AmodMmdApi* MmdApi::Table()
     {
         return g_table.structSize != 0 ? &g_table : nullptr;
+    }
+
+    // The anim state is entity+0x4A0 whoever asks for it, so monsters read it through here too.
+    int MmdApi::ReadAnimState(const uint8_t* state, AmodAnimState* out)
+    {
+        if (state == nullptr || out == nullptr)
+        {
+            return 0;
+        }
+
+        uint8_t* const animation = reinterpret_cast<uint8_t*>(Read<uintptr_t>(state, GameAddress::kAnimStateAnimationOffset));
+        const uint8_t* const frameset = reinterpret_cast<const uint8_t*>(Read<uintptr_t>(state, GameAddress::kAnimStateFramesetOffset));
+        const uint32_t flags = Read<uint32_t>(state, GameAddress::kAnimStateFlagsOffset);
+
+        AmodAnimState filled = {};
+        filled.structSize = sizeof(filled);
+        filled.animation = IsAnimation(animation) ? TrackAnim(animation) : AMOD_INVALID_ANIMATION;
+        filled.frameset = (frameset != nullptr && Readable(frameset, GameAddress::kFramesetStride))
+            ? ReadText(frameset, GameAddress::kFramesetNameOffset)
+            : "";
+        filled.frameA = Read<int>(state, GameAddress::kAnimStateFrameAOffset);
+        filled.frameB = Read<int>(state, GameAddress::kAnimStateFrameBOffset);
+        filled.blend = Read<float>(state, GameAddress::kAnimStateBlendOffset);
+        filled.speed = Read<float>(state, GameAddress::kAnimStateSpeedOffset);
+        filled.backwards = Read<int>(state, GameAddress::kAnimStateDirectionOffset) < 0 ? 1 : 0;
+        filled.stopped = (flags & GameAddress::kAnimFlagStopped) != 0 ? 1 : 0;
+        filled.finished = (flags & GameAddress::kAnimFlagFinished) != 0 ? 1 : 0;
+
+        return CopyOut(out, out->structSize, &filled, sizeof(filled));
     }
 
     AmodModelId MmdApi::IdFor(void* model)

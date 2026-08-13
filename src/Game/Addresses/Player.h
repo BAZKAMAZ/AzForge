@@ -166,8 +166,13 @@ namespace Forge
         constexpr uintptr_t kPlayerFlagsOffset = 0x590;
         constexpr uint32_t kPlayerFlagDead = 0x01; // input is ignored entirely
         constexpr uint32_t kPlayerFlagCrashed = 0x02; // fell to it; picks "crash" over "snd_die"
-        constexpr uint32_t kPlayerFlagFading = 0x04; // +0x25C is running it out
-        constexpr uint32_t kPlayerFlagBurning = 0x08;
+
+        constexpr uint32_t kPlayerFlagOnFire = 0x04;
+        constexpr uint32_t kPlayerFlagShocked = 0x08;
+
+        // Player_Die at entity +0x5C4 (set by Player_Spawn). Fire_TouchPlayer raises fire flag,
+        // writes 1.0 into +0x25C, then calls it.
+        constexpr float kPlayerBurnScale = 1.0f;
 
         // Inventory_IsCarrying/FindSlot/FindSlotIndexed: __cdecl; CMP *I,5 patches for slot count
         constexpr uintptr_t kInventoryIsCarrying = 0x004303D0;
