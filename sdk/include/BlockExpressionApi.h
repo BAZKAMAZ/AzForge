@@ -34,9 +34,12 @@ typedef struct AmodBlockExpressionApi
     int         (__cdecl* ExprCount)(AmodMod mod, AmodBlock block);
     const char* (__cdecl* ExprNameAt)(AmodMod mod, AmodBlock block, int index);
     void        (__cdecl* RemoveExpr)(AmodMod mod, AmodBlock block, const char* key);
+
+    /* Parse a game file (data.pak or mod override) into a block tree. Game keeps no tree itself. */
+    AmodBlock(__cdecl* ParseFile)(AmodMod mod, const char* path);
 } AmodBlockExpressionApi;
 
-AMOD_LAST_FIELD(AmodBlockExpressionApi, RemoveExpr, 0x40);
+AMOD_LAST_FIELD(AmodBlockExpressionApi, ParseFile, 0x44);
 
 #ifdef __cplusplus
 }
@@ -263,6 +266,14 @@ namespace Amod
         inline Block                                                Parse(const char* fragment)
         {
             return Block(g_data != nullptr ? g_data->Parse(g_self, fragment) : nullptr);
+        }
+
+        /* A game file by path, through the same door the game reads it. Free() it when done. */
+        inline Block                                                ParseFile(const char* path)
+        {
+            return Block((g_data != nullptr && g_data->structSize >= sizeof(AmodBlockExpressionApi) && g_data->ParseFile != nullptr)
+                ? g_data->ParseFile(g_self, path)
+                : nullptr);
         }
 
         inline Block                                                On(void* object)

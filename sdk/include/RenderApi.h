@@ -3,31 +3,39 @@
 
 #include "ForgeTypes.h"
 #include "ObjectsMenuApi.h"     /* AmodMenuItem */
+#include "TextureApi.h"         /* AmodTextureId, for the 2D blit */
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Fired once per frame, inside the open scene, before the frame is presented. The frame * pointer is valid only for the call. */
+/* Once per frame inside the open scene; frame valid only for the call. */
 typedef void (__cdecl* AmodRenderCallback)(const AmodFrame* frame, void* user);
 
-/* When an element-draw callback runs, relative to the game's own draw of the item */
+/* When an element-draw callback runs relative to the game's draw. */
 typedef enum AmodElementPhase
 {
-    AMOD_ELEMENT_BEFORE  = 1,   /* before the game draws the item - draws under it */
-    AMOD_ELEMENT_AFTER   = 2,   /* after the game draws the item - draws over it */
-    AMOD_ELEMENT_REPLACE = 4    /* suppress the game's own draw of the item entirely */
+    AMOD_ELEMENT_BEFORE  = 1,   /* under the item */
+    AMOD_ELEMENT_AFTER   = 2,   /* over the item */
+    AMOD_ELEMENT_REPLACE = 4    /* suppress the game's draw */
 } AmodElementPhase;
 
-/* Fired around the game's draw of a menu item */
+/* Around the game's draw of a menu item. */
 typedef void (__cdecl* AmodElementDrawCallback)(AmodMenuItem item, AmodElementPhase phase, void* user);
 
 typedef void (__cdecl* AmodItemStyleCallback)(AmodMenuItem item, float rgba[4], float scale[2], void* user);
 
 typedef int (__cdecl* AmodMenuBackgroundCallback)(const char* menuId, void* user);
 
-/* A menu font, resolved by name through GetFont. Opaque; null means the default system font. */
+/* Menu font from GetFont; null = default system font. */
 typedef void* AmodFont;
+
+/* 2D layout space is always 640x480 (not window pixels). GetViewport for real pixels. */
+#define AMOD_MENU_WIDE                                              640.0f
+#define AMOD_MENU_TALL                                              480.0f
+
+/* What DrawTextLine has always passed. */
+#define AMOD_TEXT_ALIGN_DEFAULT                                     0x24
 
 typedef struct AmodRenderApi
 {
@@ -43,33 +51,35 @@ typedef struct AmodRenderApi
     AmodToken (__cdecl* Subscribe)(AmodMod mod, AmodRenderCallback callback, void* user);
     void (__cdecl* Unsubscribe)(AmodMod mod, AmodToken token);
 
-    
     AmodToken (__cdecl* SubscribeFrameBegin)(AmodMod mod, AmodRenderCallback callback, void* user);
 
-    
-    AmodToken (__cdecl* OnElementDraw)(AmodMod mod, const char* id, uint32_t phases,
-                                       AmodElementDrawCallback callback, void* user);
+    AmodToken (__cdecl* OnElementDraw)(AmodMod mod, const char* id, uint32_t phases, AmodElementDrawCallback callback, void* user);
     void (__cdecl* CancelElementDraw)(AmodMod mod, AmodToken token);
 
-    
     AmodToken (__cdecl* OnItemStyle)(AmodMod mod, const char* id, AmodItemStyleCallback callback, void* user);
     void (__cdecl* CancelItemStyle)(AmodMod mod, AmodToken token);
 
-    
     AmodToken (__cdecl* OnMenuBackground)(AmodMod mod, AmodMenuBackgroundCallback callback, void* user);
     void (__cdecl* CancelMenuBackground)(AmodMod mod, AmodToken token);
 
-    
     /* The menu font of this name (bigitem, multy_e, and so on from menu_cfg.txt), or null for an * unkn... */
     AmodFont (__cdecl* GetFont)(AmodMod mod, const char* name);
 
     /* Named DrawTextLine, not DrawText, because <windows.h> defines a DrawText macro */
     void (__cdecl* DrawTextLine)(AmodMod mod, AmodFont font, float x, float y, const char* text, float scale, uint32_t color);
 
-    /* Fields added in later API versions go here, and nowhere else. */
+    /* Texture in menu space (AMOD_MENU_WIDE). colour multiplies; 0xFFFFFFFF = as-is. */
+    void(__cdecl* DrawSprite)(AmodMod mod, AmodTextureId texture, float x, float y, float w, float h, uint32_t color);
+
+    /* Filled rect with alpha; one white texel stretched (game sprite blit). */
+    void(__cdecl* FillRect)(AmodMod mod, float x, float y, float w, float h, uint32_t color);
+
+    /* DrawTextLine with explicit align; default has always been AMOD_TEXT_ALIGN_DEFAULT. */
+    void(__cdecl* DrawTextLineAligned)(AmodMod mod, AmodFont font, float x, float y, const char* text, float scale, uint32_t color, int align);
+
 } AmodRenderApi;
 
-AMOD_LAST_FIELD(AmodRenderApi, DrawTextLine, 0x34);
+AMOD_LAST_FIELD(AmodRenderApi, DrawTextLineAligned, 0x40);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -79,7 +89,6 @@ AMOD_LAST_FIELD(AmodRenderApi, DrawTextLine, 0x34);
 
 #include <math.h>
 
-/* The device type comes from the mod's own <d3d8.h> when it includes one */
 struct IDirect3DDevice8;
 
 namespace Amod
@@ -235,6 +244,31 @@ namespace Amod
         inline void                                                 Text(float x, float y, const char* text, float scale, unsigned long color)
         {
             Text(nullptr, x, y, text, scale, color);
+        }
+
+        /* Everything below is in menu space: 640x480 whatever the window is. */
+        inline void                                                 Text(AmodFont font, float x, float y, const char* text, float scale, unsigned long color, int align)
+        {
+            if (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->DrawTextLineAligned != nullptr)
+            {
+                g_render->DrawTextLineAligned(g_self, font, x, y, text, scale, static_cast<uint32_t>(color), align);
+            }
+        }
+
+        inline void                                                 Sprite(AmodTextureId texture, float x, float y, float w, float h, unsigned long color = 0xFFFFFFFF)
+        {
+            if (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->DrawSprite != nullptr)
+            {
+                g_render->DrawSprite(g_self, texture, x, y, w, h, static_cast<uint32_t>(color));
+            }
+        }
+
+        inline void                                                 Rect(float x, float y, float w, float h, unsigned long color)
+        {
+            if (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->FillRect != nullptr)
+            {
+                g_render->FillRect(g_self, x, y, w, h, static_cast<uint32_t>(color));
+            }
         }
 
 #if defined(D3DFVF_XYZRHW)

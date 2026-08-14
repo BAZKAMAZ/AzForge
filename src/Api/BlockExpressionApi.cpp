@@ -1,5 +1,5 @@
 #include "src/Api/BlockExpressionApi.h"
-
+#include "src/Api/FilesApi.h"
 #include "src/Api/ModContext.h"
 
 #include <map>
@@ -17,7 +17,7 @@ namespace Forge
         struct Expr
         {
             std::string key;
-            std::string text;   // backing store for AMOD_VALUE_STRING
+            std::string text;
             AmodValue value = {};
         };
 
@@ -388,6 +388,33 @@ namespace Forge
             return root;
         }
 
+        AmodBlock __cdecl ApiParseFile(AmodMod mod, const char* path)
+        {
+            ModStore* const store = StoreOf(mod);
+            const AmodFilesApi* const files = FilesApi::Table();
+
+            if (store == nullptr || files == nullptr || files->Read == nullptr || path == nullptr)
+            {
+                return nullptr;
+            }
+
+            const int size = files->Read(mod, path, nullptr, 0);
+
+            if (size <= 0)
+            {
+                return nullptr;
+            }
+
+            std::vector<char> text(static_cast<size_t>(size) + 1, '\0');
+            files->Read(mod, path, text.data(), size);
+            text[static_cast<size_t>(size)] = '\0';
+
+            Node* const root = NewRoot(*store, path);
+            Parser s{ text.data(), text.data() + size };
+            ParseBody(s, *store, root, 0);
+            return root;
+        }
+
         void __cdecl ApiFree(AmodMod mod, AmodBlock root)
         {
             ModStore* const store = StoreOf(mod);
@@ -607,6 +634,7 @@ namespace Forge
             g_table.ExprCount = &ApiExprCount;
             g_table.ExprNameAt = &ApiExprNameAt;
             g_table.RemoveExpr = &ApiRemoveExpr;
+            g_table.ParseFile = &ApiParseFile;
         }
         return &g_table;
     }

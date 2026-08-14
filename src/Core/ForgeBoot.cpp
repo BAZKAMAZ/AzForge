@@ -8,6 +8,7 @@
 #include "src/Api/MmdApi.h"
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
+#include "src/Api/FilesApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
@@ -158,6 +159,7 @@ namespace Forge
         Subsystems::Record("ctrls", CtrlsApi::Install());
         Subsystems::Record("camera", CameraApi::Install());
         Subsystems::Record("particles", ParticlesApi::Install());
+        Subsystems::Record("files", FilesApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
         Subsystems::Record("input", InputApi::Install());
 

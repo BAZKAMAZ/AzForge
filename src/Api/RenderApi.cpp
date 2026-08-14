@@ -1,7 +1,7 @@
 #include <windows.h>
 
 #include "src/Api/RenderApi.h"
-
+#include "src/Api/TextureApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
@@ -23,21 +23,10 @@ namespace Forge
         typedef void(__fastcall* DecorationsRoutine)(void* menu, void* unused);
 
         // g_pfnDrawStyledText (kDrawStyledTextPtr).
-        typedef void(__cdecl* DrawStyledTextRoutine)(void* font, const char* text, int zero,
-                                                     const float* centre, float* scale,
-                                                     float* color, int align, int zero2);
+        typedef void(__cdecl* DrawStyledTextRoutine)(void* font, const char* text, int zero, const float* centre, float* scale, float* color, int align, int zero2);
 
-        // The game's sprite blit, called through a global pointer; see kDrawSpritePtr. colour is
-        // four floats or null (a logo passes null).
-        typedef void(__cdecl* DrawSpriteRoutine)(int sprite, float x, float y, float w, float h,
-                                                 int zero, float* color, int a7, int a8);
-
-        // The game's $static_text draw, through a global pointer; see kDrawStaticTextPtr. colour
-        // (a6) points at four floats in the record.
-        typedef void(__cdecl* DrawStaticTextRoutine)(void* a1, void* a2, int a3, void* a4, void* a5,
-                                                     float* color, int a7);
-
-        // Resolves a named menu font to its font object; see kMenuFindFont.
+        typedef void(__cdecl* DrawSpriteRoutine)(int sprite, float x, float y, float w, float h, int zero, float* color, int a7, int a8);
+        typedef void(__cdecl* DrawStaticTextRoutine)(void* a1, void* a2, int a3, void* a4, void* a5, float* color, int a7);
         typedef void*(__cdecl* FindFontRoutine)(const char* name);
 
         struct Subscriber
@@ -89,8 +78,6 @@ namespace Forge
         };
         std::vector<HookedVtable> g_vtables;
 
-        // A detour on Menu_DrawDecorations; when a mod draws a menu's background the original is
-        // skipped so the game's own background is replaced.
         InlineHook g_decorHook;
         DecorationsRoutine g_originalDecorations = nullptr;
 
@@ -350,6 +337,95 @@ namespace Forge
                 ((color >> 24) & 0xFF) / 255.0f, // A
             };
             draw(font, text, 0, position, scaling, rgba, 0x24, 0);
+        }
+
+        void Unpack(uint32_t color, float* rgba)
+        {
+            rgba[0] = ((color >> 16) & 0xFF) / 255.0f;
+            rgba[1] = ((color >> 8) & 0xFF) / 255.0f;
+            rgba[2] = (color & 0xFF) / 255.0f;
+            rgba[3] = ((color >> 24) & 0xFF) / 255.0f;
+        }
+
+        void __cdecl ApiDrawTextAligned(AmodMod mod, void* font, float x, float y, const char* text,
+                                        float scale, uint32_t color, int align)
+        {
+            if (Resolve(mod) == nullptr || text == nullptr)
+            {
+                return;
+            }
+            const DrawStyledTextRoutine draw = ActiveTextDraw();
+            if (font == nullptr)
+            {
+                font = GameModule::Resolve(GameAddress::kSystemFont);
+            }
+            if (draw == nullptr || font == nullptr)
+            {
+                return;
+            }
+
+            float position[2] = { x, y };
+            float scaling[2] = { scale, scale };
+            float rgba[4] = {};
+            Unpack(color, rgba);
+
+            draw(font, text, 0, position, scaling, rgba, align, 0);
+        }
+
+        // Slot holds the thunk once styling is in; sprites go through the same door as the game's.
+        DrawSpriteRoutine ActiveSpriteDraw()
+        {
+            return g_spriteSlot != nullptr ? reinterpret_cast<DrawSpriteRoutine>(*g_spriteSlot) : nullptr;
+        }
+
+        void __cdecl ApiDrawSprite(AmodMod mod, AmodTextureId texture, float x, float y, float w,
+            float h, uint32_t color)
+        {
+            const DrawSpriteRoutine draw = ActiveSpriteDraw();
+            void* const skin = Resolve(mod) != nullptr ? TextureApi::TextureFor(texture) : nullptr;
+
+            if (draw == nullptr || skin == nullptr)
+            {
+                return;
+            }
+
+            float rgba[4] = {};
+            Unpack(color, rgba);
+
+            draw(static_cast<int>(reinterpret_cast<uintptr_t>(skin)), x, y, w, h, 0, rgba, 0, 0);
+        }
+
+        // One opaque white texel; blit multiplies by the colour so any rect is this stretched.
+        AmodTextureId g_white = AMOD_INVALID_TEXTURE;
+
+        AmodTextureId WhitePixel(AmodMod mod)
+        {
+            const AmodTextureApi* const textures = TextureApi::Table();
+
+            if (textures == nullptr || textures->Create == nullptr || textures->IsValid == nullptr)
+            {
+                return AMOD_INVALID_TEXTURE;
+            }
+
+            // Remade when the mod that first asked for it took it away on unload
+            if (g_white != AMOD_INVALID_TEXTURE && textures->IsValid(mod, g_white) != 0)
+            {
+                return g_white;
+            }
+
+            const uint32_t texel = 0xFFFFFFFF;
+            g_white = textures->Create(mod, 1, 1, &texel, 0, 1);
+            return g_white;
+        }
+
+        void __cdecl ApiFillRect(AmodMod mod, float x, float y, float w, float h, uint32_t color)
+        {
+            if (Resolve(mod) == nullptr)
+            {
+                return;
+            }
+
+            ApiDrawSprite(mod, WhitePixel(mod), x, y, w, h, color);
         }
 
         bool ElementMatches(const ElementSub& sub, const char* id)
@@ -772,6 +848,9 @@ namespace Forge
         g_table.CancelMenuBackground = &ApiCancelMenuBackground;
         g_table.GetFont = &ApiGetFont;
         g_table.DrawTextLine = &ApiDrawText;
+        g_table.DrawTextLineAligned = &ApiDrawTextAligned;
+        g_table.DrawSprite = &ApiDrawSprite;
+        g_table.FillRect = &ApiFillRect;
 
         FORGE_LOG_INFO("Render interface installed");
         return true;

@@ -303,6 +303,12 @@
     <ClInclude Include="src\Api\Placement.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\FilesApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\FilesApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -460,6 +466,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\Placement.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\FilesApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

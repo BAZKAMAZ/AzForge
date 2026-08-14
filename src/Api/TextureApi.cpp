@@ -506,6 +506,21 @@ namespace Forge
             return 1;
         }
 
+        // Game uses raw texture pointers; mods get AmodTextureId. IdFor rejects wild numbers.
+        AmodTextureId __cdecl ApiFromGame(AmodMod mod, uint32_t handle)
+        {
+            return Caller(mod) != nullptr
+                ? TextureApi::IdFor(reinterpret_cast<const void*>(static_cast<uintptr_t>(handle)))
+                : AMOD_INVALID_TEXTURE;
+        }
+
+        uint32_t __cdecl ApiToGame(AmodMod mod, AmodTextureId id)
+        {
+            return Caller(mod) != nullptr
+                ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(TextureApi::TextureFor(id)))
+                : 0;
+        }
+
         int __cdecl ApiReadPixels(AmodMod mod, AmodTextureId id, void* buffer, int capacity)
         {
             const uint8_t* const texture = Caller(mod) != nullptr ? Resolve(id) : nullptr;
@@ -602,6 +617,8 @@ namespace Forge
         g_table.Create = &ApiCreate;
         g_table.Replace = &ApiReplace;
         g_table.ReadPixels = &ApiReadPixels;
+        g_table.FromGame = &ApiFromGame;
+        g_table.ToGame = &ApiToGame;
 
         void* const load = GameSymbols::Address(GameSymbol::LoadOrFindTexture);
         std::string error;
@@ -614,8 +631,7 @@ namespace Forge
         }
         else
         {
-            FORGE_LOG_WARN("LoadOrFindTexture is not hooked, so a texture cannot stand in for a "
-                           "file: %s", error.c_str());
+            FORGE_LOG_WARN("LoadOrFindTexture is not hooked, so a texture cannot stand in for a file: %s", error.c_str());
         }
 
         return true;

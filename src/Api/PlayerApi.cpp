@@ -171,6 +171,43 @@ namespace Forge
             return 1;
         }
 
+        int __cdecl ApiSetPositionOnly(AmodMod mod, const float* position)
+        {
+            uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
+
+            if (player == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to move");
+            }
+            if (position == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetPositionOnly was given nowhere to move him to");
+            }
+
+            memcpy(player + GameAddress::kEntityPositionOffset, position, 3 * sizeof(float));
+            return 1;
+        }
+
+        int __cdecl ApiSetCollides(AmodMod mod, int collides)
+        {
+            uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
+
+            if (player == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to collide or not");
+            }
+
+            const uint8_t on = collides != 0 ? 1 : 0;
+            memcpy(player + GameAddress::kEntityCollidesOffset, &on, sizeof(on));
+            return 1;
+        }
+
+        int __cdecl ApiCollides(AmodMod mod)
+        {
+            const uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
+            return (player != nullptr && player[GameAddress::kEntityCollidesOffset] != 0) ? 1 : 0;
+        }
+
         int __cdecl ApiSetFacing(AmodMod mod, float facing)
         {
             uint8_t* const player = Caller(mod) != nullptr ? Player() : nullptr;
@@ -1152,6 +1189,9 @@ namespace Forge
         g_table.IsHere = &ApiIsHere;
         g_table.Get = &ApiGet;
         g_table.SetPosition = &ApiSetPosition;
+        g_table.SetPositionOnly = &ApiSetPositionOnly;
+        g_table.SetCollides = &ApiSetCollides;
+        g_table.Collides = &ApiCollides;
         g_table.SetFacing = &ApiSetFacing;
         g_table.Kill = &ApiKill;
         g_table.Burn = &ApiBurn;

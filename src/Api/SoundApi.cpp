@@ -28,6 +28,9 @@ namespace Forge
         // RoomSounds_Append: __stdcall, RET 8 (Ghidra mislabels cdecl).
         typedef uint8_t* (__stdcall* AppendRoutine)(void* array, int* count);
 
+        typedef void(__fastcall* MusicPlayRoutine)(void* music, void* unused, const char* path, int fade, int loop);
+        typedef void(__cdecl* MusicStopRoutine)();
+
         template <typename T>
         T Routine(uintptr_t address)
         {
@@ -63,9 +66,59 @@ namespace Forge
         // Slot filled after Install; resolve per call, not at Install.
         bool Ready()
         {
-            return GameModule::Resolve(GameAddress::kSound) != nullptr &&
-                GameModule::Resolve(GameAddress::kResolveSoundSlot) != nullptr &&
+            return GameModule::Resolve(GameAddress::kSound) != nullptr && GameModule::Resolve(GameAddress::kResolveSoundSlot) != nullptr &&
                 Routine<PlayAtRoutine>(GameAddress::kSoundPlayAt) != nullptr;
+        }
+
+        uint8_t* Music()
+        {
+            return static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kMusic));
+        }
+
+        int __cdecl ApiPlayMusic(AmodMod mod, const char* path, int fade, int loop)
+        {
+            uint8_t* const music = Caller(mod) != nullptr ? Music() : nullptr;
+            const MusicPlayRoutine play = Routine<MusicPlayRoutine>(GameAddress::kMusicPlayFile);
+
+            if (music == nullptr || play == nullptr || path == nullptr || path[0] == '\0')
+            {
+                return 0;
+            }
+
+            play(music, nullptr, path, fade, loop);
+            return 1;
+        }
+
+        int __cdecl ApiStopMusic(AmodMod mod)
+        {
+            const MusicStopRoutine stop = Routine<MusicStopRoutine>(GameAddress::kMusicStopAll);
+
+            if (Caller(mod) == nullptr || stop == nullptr)
+            {
+                return 0;
+            }
+
+            stop();
+            return 1;
+        }
+
+        // Two slots; the one holding a stream is the one being heard
+        const char* __cdecl ApiCurrentMusic(AmodMod mod)
+        {
+            const uint8_t* const music = Caller(mod) != nullptr ? Music() : nullptr;
+
+            for (int slot = 0; music != nullptr && slot < 2; ++slot)
+            {
+                const uint8_t* const at = music + static_cast<size_t>(slot) * GameAddress::kMusicSlotStride;
+
+                if (Readable(at, GameAddress::kMusicStreamOffset + sizeof(uintptr_t)) &&
+                    Read<uintptr_t>(at, GameAddress::kMusicStreamOffset) != 0)
+                {
+                    return reinterpret_cast<const char*>(at + GameAddress::kMusicNameOffset);
+                }
+            }
+
+            return "";
         }
 
         uint8_t* RoomFor(int roomIndex)
@@ -326,6 +379,9 @@ namespace Forge
         g_table.GetRoomSound = &ApiGetRoomSound;
         g_table.SetRoomSound = &ApiSetRoomSound;
         g_table.AddRoomSound = &ApiAddRoomSound;
+        g_table.PlayMusic = &ApiPlayMusic;
+        g_table.StopMusic = &ApiStopMusic;
+        g_table.CurrentMusic = &ApiCurrentMusic;
 
         FORGE_LOG_INFO("Sound interface installed");
         return true;

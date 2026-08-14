@@ -17,6 +17,7 @@
 #include "CtrlsApi.h"
 #include "CameraApi.h"
 #include "ParticlesApi.h"
+#include "FilesApi.h"
 #include "PlayerApi.h"
 #include "SoundApi.h"
 #include "TextureApi.h"
@@ -103,10 +104,12 @@ typedef struct AmodApi
     /* Sparks, smoke and trails: four stores the game draws inside the world render. */
     const AmodParticlesApi* particles;
 
-    /* New subsystems and functions are appended, never inserted. */
+    /* The door the game asks its files through: read one, or answer for a path. */
+    const AmodFilesApi* files;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, particles, 0x80);
+AMOD_LAST_FIELD(AmodApi, files, 0x84);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -125,7 +128,6 @@ AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame);
 #include <stdarg.h>
 #include <stdio.h>
 
-/* Inline layer, compiled into the mod. Changing it does not affect the ABI. Optional. */
 namespace Amod
 {
     inline const AmodApi* g_api = nullptr;
@@ -159,6 +161,7 @@ namespace Amod
         Ctrls::Attach(api->ctrls, api->self);
         Camera::Attach(api->camera, api->self);
         Particles::Attach(api->particles, api->self);
+        Files::Attach(api->files, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);
@@ -227,7 +230,6 @@ namespace Amod
         return g_api != nullptr ? g_api->GetGameBuild() : AMOD_GAME_BUILD_UNKNOWN;
     }
 
-    // Worth asking straight after a refusal: the next call, whatever it is, clears it.
     inline const char*                                              LastError()
     {
         return (g_api != nullptr && g_api->LastError != nullptr) ? g_api->LastError(g_api->self) : "";

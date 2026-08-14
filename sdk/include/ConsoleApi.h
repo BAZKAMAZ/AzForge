@@ -7,7 +7,7 @@
 extern "C" {
 #endif
 
-/* argv[0] = command, argv[1..] = args; valid only for the call. */
+/* argv[0] = command, argv[1..] = args. Words live in the console scratch; copy before any game call. */
 typedef void (__cdecl* AmodConsoleCommand)(int argc, const char** argv, void* user);
 
 typedef struct AmodConsoleApi

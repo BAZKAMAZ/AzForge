@@ -18,6 +18,15 @@ namespace Forge
         constexpr uintptr_t kSoundStop = 0x00402CE0;        // __cdecl (voice)
         constexpr uintptr_t kSoundMove = 0x00402D00;        // __cdecl (voice, position)
 
+        // Music object: two stream slots (second at +0x114). Empty stream (+0x110 null) gets the
+        // new track; name at +0x0D. PlayFile is __thiscall (ECX = kMusic); StopAll is __cdecl ().
+        constexpr uintptr_t kMusic = 0x005028A8;
+        constexpr uintptr_t kMusicPlayFile = 0x004028C0;    // __thiscall (music, path, fade, loop)
+        constexpr uintptr_t kMusicStopAll = 0x00402620;     // __cdecl ()
+        constexpr uintptr_t kMusicSlotStride = 0x114;
+        constexpr uintptr_t kMusicNameOffset = 0x0D;
+        constexpr uintptr_t kMusicStreamOffset = 0x110;
+
         constexpr uintptr_t kLightColourOffset = 0x00; // three floats, r g b
         constexpr uintptr_t kLightAlphaOffset = 0x0C; // one
         constexpr uintptr_t kLightRangeOffset = 0x10;

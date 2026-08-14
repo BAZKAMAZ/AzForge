@@ -181,6 +181,16 @@ typedef struct AmodRoomStatic
 
 AMOD_LAST_FIELD(AmodRoomStatic, matrix, 0x1C);
 
+/* Cell is 8 bytes; game only reads type at +0. +1/+2 unused; +3..+7 free for mods (file carries them). */
+#define AMOD_CELL_BYTES                                             8
+#define AMOD_CELL_TYPE                                              0
+#define AMOD_CELL_FREE_FIRST                                        3
+#define AMOD_CELL_FREE_COUNT                                        5
+
+/* The grid every room has, in cells. A cell is 0.1 of the world, so a room is 4.0 by 2.9. */
+#define AMOD_ROOM_COLUMNS                                           40
+#define AMOD_ROOM_ROWS                                              29
+
 #define AMOD_ENTITY_MONSTER                                         10
 #define AMOD_ENTITY_BONUS                                           9
 #define AMOD_ENTITY_DOOR                                            2
@@ -351,9 +361,20 @@ typedef struct AmodWorldApi
     int(__cdecl* SetEntityHidden)(AmodMod mod, int roomIndex, int index, int hidden);
     int(__cdecl* IsEntityHidden)(AmodMod mod, int roomIndex, int index);
 
+    /* Remove a box; later indices shift up one (same as RemoveStatic). */
+    int(__cdecl* RemoveRoomBox)(AmodMod mod, int roomIndex, int boxIndex);
+
+    /* Write up to AMOD_CELL_BYTES over the cell; returns how many went in. */
+    int(__cdecl* SetRoomCellRecord)(AmodMod mod, int roomIndex, int column, int row,
+        const unsigned char* record, int count);
+
+    /* Room $wall_tex / $floor_tex (0 if the level named none). */
+    AmodTextureId(__cdecl* GetRoomWallTexture)(AmodMod mod, int roomIndex);
+    AmodTextureId(__cdecl* GetRoomFloorTexture)(AmodMod mod, int roomIndex);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, IsEntityHidden, 0xC8);
+AMOD_LAST_FIELD(AmodWorldApi, GetRoomFloorTexture, 0xD8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -505,6 +526,22 @@ namespace Amod
                 : AMOD_INVALID_TEXTURE;
         }
 
+        /* What the level file named this room's walls and floor with, the stone the game itself
+           draws them in. */
+        inline AmodTextureId                                        WallTexture(int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomWallTexture != nullptr
+                ? g_world->GetRoomWallTexture(g_self, roomIndex)
+                : AMOD_INVALID_TEXTURE;
+        }
+
+        inline AmodTextureId                                        FloorTexture(int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomFloorTexture != nullptr
+                ? g_world->GetRoomFloorTexture(g_self, roomIndex)
+                : AMOD_INVALID_TEXTURE;
+        }
+
         /* The room's decoration. */
         inline int                                                  StaticCount(int roomIndex = -1)
         {
@@ -633,6 +670,13 @@ namespace Amod
                 : -1;
         }
 
+        /* Boxes after this one move up one, so held numbers have to come down with them. */
+        inline bool                                                 RemoveBox(int boxIndex, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->RemoveRoomBox != nullptr &&
+                g_world->RemoveRoomBox(g_self, roomIndex, boxIndex) != 0;
+        }
+
         /* Seconds left of the bonus level's countdown; nothing on any other kind. */
         inline float                                                TimeLeft()
         {
@@ -747,6 +791,38 @@ namespace Amod
         inline bool                                                 CellRecord(int roomIndex, int column, int row, unsigned char out[8])
         {
             return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomCellRecord(g_self, roomIndex, column, row, out, 8) != 0;
+        }
+
+        inline bool                                                 SetCellRecord(int column, int row, const unsigned char record[8], int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->SetRoomCellRecord != nullptr &&
+                g_world->SetRoomCellRecord(g_self, roomIndex, column, row, record, AMOD_CELL_BYTES) != 0;
+        }
+
+        /* One of the five the game does not read; `which` is 0..AMOD_CELL_FREE_COUNT-1. */
+        inline unsigned char                                        CellByte(int column, int row, int which, int roomIndex = -1)
+        {
+            unsigned char record[AMOD_CELL_BYTES] = {};
+
+            if (which < 0 || which >= AMOD_CELL_FREE_COUNT || !CellRecord(roomIndex, column, row, record))
+            {
+                return 0;
+            }
+            return record[AMOD_CELL_FREE_FIRST + which];
+        }
+
+        /* Read, change the one byte, write back - the type and the file's own two are left alone. */
+        inline bool                                                 SetCellByte(int column, int row, int which, unsigned char value, int roomIndex = -1)
+        {
+            unsigned char record[AMOD_CELL_BYTES] = {};
+
+            if (which < 0 || which >= AMOD_CELL_FREE_COUNT || !CellRecord(roomIndex, column, row, record))
+            {
+                return false;
+            }
+
+            record[AMOD_CELL_FREE_FIRST + which] = value;
+            return SetCellRecord(column, row, record, roomIndex);
         }
 
         class Entity

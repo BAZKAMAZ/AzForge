@@ -1039,6 +1039,34 @@ namespace Forge
             return lightmap;
         }
 
+        AmodTextureId RoomEntryTexture(AmodMod mod, int roomIndex, uintptr_t offset, const char* what)
+        {
+            const uint8_t* const entry = ApiRead::Caller(mod) != nullptr ? RoomEntry(RoomOrCurrent(roomIndex)) : nullptr;
+            if (entry == nullptr)
+            {
+                return AMOD_INVALID_TEXTURE;
+            }
+
+            const AmodTextureId texture = TextureApi::IdFor(
+                reinterpret_cast<const void*>(Read<uintptr_t>(entry, offset)));
+
+            if (texture == AMOD_INVALID_TEXTURE)
+            {
+                ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "the level named no %s for room %d", what, roomIndex);
+            }
+            return texture;
+        }
+
+        AmodTextureId __cdecl ApiGetRoomWallTexture(AmodMod mod, int roomIndex)
+        {
+            return RoomEntryTexture(mod, roomIndex, GameAddress::kRoomEntryWallTexOffset, "$wall_tex");
+        }
+
+        AmodTextureId __cdecl ApiGetRoomFloorTexture(AmodMod mod, int roomIndex)
+        {
+            return RoomEntryTexture(mod, roomIndex, GameAddress::kRoomEntryFloorTexOffset, "$floor_tex");
+        }
+
         // Room static decoration pieces.
 
         typedef void(__fastcall* RoomAddStaticRoutine)(void* room, void* unused, const void* record,
@@ -1186,6 +1214,33 @@ namespace Forge
             memcpy(out.matrix, piece + GameAddress::kRoomStaticMatrixOffset, sizeof(out.matrix));
         }
 
+        // Put resource in a static slot; bump owners on the new, drop on the old. Slot is a raw
+        // pointer; caller already resolved any mod id.
+        void Hold(uint8_t* slot, void* what, uintptr_t referencesOffset)
+        {
+            uint8_t* const was = reinterpret_cast<uint8_t*>(Read<uintptr_t>(slot, 0));
+            if (was == static_cast<uint8_t*>(what))
+            {
+                return;
+            }
+
+            uint8_t* const taking = static_cast<uint8_t*>(what);
+            if (taking != nullptr && Readable(taking, referencesOffset + sizeof(int)))
+            {
+                const int owners = Read<int>(taking, referencesOffset) + 1;
+                memcpy(taking + referencesOffset, &owners, sizeof(owners));
+            }
+
+            // Room_Free only releases what the slot holds at teardown; give the previous back.
+            if (was != nullptr && Readable(was, referencesOffset + sizeof(int)) && Read<int>(was, referencesOffset) > 0)
+            {
+                const int owners = Read<int>(was, referencesOffset) - 1;
+                memcpy(was + referencesOffset, &owners, sizeof(owners));
+            }
+
+            memcpy(slot, &what, sizeof(what));
+        }
+
         void WriteStatic(uint8_t* piece, const AmodRoomStatic& from)
         {
             uint32_t flags = 0;
@@ -1201,13 +1256,15 @@ namespace Forge
             void* const model = MmdApi::ModelFor(from.model);
             void* const texture = TextureApi::TextureFor(from.texture);
 
+            // Room_Free releases one model and one texture per static; own what we point at or
+            // teardown drives the refcount under zero.
             if (model != nullptr)
             {
-                memcpy(piece + GameAddress::kRoomStaticModelOffset, &model, sizeof(model));
+                Hold(piece + GameAddress::kRoomStaticModelOffset, model, GameAddress::kModelReferencesOffset);
             }
             if (texture != nullptr)
             {
-                memcpy(piece + GameAddress::kRoomStaticTextureOffset, &texture, sizeof(texture));
+                Hold(piece + GameAddress::kRoomStaticTextureOffset, texture, GameAddress::kTextureReferencesOffset);
             }
         }
 
@@ -1638,27 +1695,22 @@ namespace Forge
             return 1;
         }
 
-        int __cdecl ApiGetRoomCellRecord(AmodMod mod, int index, int column, int row,
-            unsigned char* out, int capacity)
+        int __cdecl ApiGetRoomCellRecord(AmodMod mod, int index, int column, int row, unsigned char* out, int capacity)
         {
-            const uint8_t* const room = Room(index);
-            if (Resolve(mod) == nullptr || room == nullptr || out == nullptr ||
-                capacity < static_cast<int>(GameAddress::kRoomCellStride) ||
-                column < 0 || column >= static_cast<int>(GameAddress::kRoomGridColumns) ||
-                row < 0 || row >= static_cast<int>(GameAddress::kRoomGridRows))
+            // -1 is the current room here as it is everywhere else; it used to be a plain refusal.
+            const uint8_t* const room = Room(RoomOrCurrent(index));
+            if (Resolve(mod) == nullptr || room == nullptr || out == nullptr || capacity < static_cast<int>(GameAddress::kRoomCellStride) || column < 0 || 
+                column >= static_cast<int>(GameAddress::kRoomGridColumns) || row < 0 || row >= static_cast<int>(GameAddress::kRoomGridRows))
             {
                 return 0;
             }
-            const size_t cell = (static_cast<size_t>(row) * GameAddress::kRoomGridColumns +
-                static_cast<size_t>(column)) * GameAddress::kRoomCellStride;
+
+            const size_t cell = (static_cast<size_t>(row) * GameAddress::kRoomGridColumns + static_cast<size_t>(column)) * GameAddress::kRoomCellStride;
             memcpy(out, room + GameAddress::kRoomCellsOffset + cell, GameAddress::kRoomCellStride);
             return 1;
         }
 
-        // Room collision boxes.
-
-        typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size,
-            const char* sourceFile, int sourceLine);
+        typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size, const char* sourceFile, int sourceLine);
 
         // Collision boxes that stop a body.
         struct BoxSnapshot
@@ -1810,7 +1862,37 @@ namespace Forge
             return count;
         }
 
-        // Light triangles (surfaces a light may fall on).
+        // Count only; array stays the same size. Entries after the removed one shift up.
+        int __cdecl ApiRemoveRoomBox(AmodMod mod, int roomIndex, int boxIndex)
+        {
+            ModContext* const caller = ApiRead::Caller(mod);
+            uint8_t* const room = caller != nullptr ? Room(RoomOrCurrent(roomIndex)) : nullptr;
+            if (room == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "there is no room %d to take a box out of", roomIndex);
+            }
+
+            const int count = Read<int>(room, GameAddress::kRoomCollisionBoxCountOffset);
+            uint8_t* const boxes = reinterpret_cast<uint8_t*>(Read<uintptr_t>(room, GameAddress::kRoomCollisionBoxesOffset));
+            if (boxes == nullptr || boxIndex < 0 || boxIndex >= count)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "room %d has no box %d", roomIndex, boxIndex);
+            }
+
+            KeepBoxes(caller, RoomOrCurrent(roomIndex), room);
+
+            const size_t stride = GameAddress::kRoomCollisionBoxStride;
+            const size_t after = static_cast<size_t>(count - boxIndex - 1);
+            if (after > 0)
+            {
+                memmove(boxes + static_cast<size_t>(boxIndex) * stride,
+                    boxes + static_cast<size_t>(boxIndex + 1) * stride, after * stride);
+            }
+
+            const int left = count - 1;
+            memcpy(room + GameAddress::kRoomCollisionBoxCountOffset, &left, sizeof(left));
+            return 1;
+        }
 
         struct TriangleSnapshot
         {
@@ -2010,6 +2092,34 @@ namespace Forge
             room[GameAddress::kRoomCellsOffset + at + GameAddress::kRoomCellTypeOffset] =
                 static_cast<uint8_t>(type);
             return 1;
+        }
+
+        // Other half of GetRoomCellRecord. Cell is 8 bytes; game only reads type at +0x00.
+        // +0x01/+0x02 unused from file; +0x03.. zero in shipped rooms -- five bytes free for a mod.
+        int __cdecl ApiSetRoomCellRecord(AmodMod mod, int roomIndex, int column, int row, const unsigned char* record, int count)
+        {
+            ModContext* const caller = ApiRead::Caller(mod);
+            uint8_t* const room = caller != nullptr ? Room(RoomOrCurrent(roomIndex)) : nullptr;
+
+            if (room == nullptr || column < 0 || column >= static_cast<int>(GameAddress::kRoomGridColumns) || row < 0 || 
+                row >= static_cast<int>(GameAddress::kRoomGridRows))
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "room %d has no cell %d,%d", roomIndex, column, row);
+            }
+            if (record == nullptr || count <= 0)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetRoomCellRecord was given no bytes to write");
+            }
+
+            KeepGrid(caller, RoomOrCurrent(roomIndex), room);
+
+            const size_t stride = GameAddress::kRoomCellStride;
+            const size_t writing = static_cast<size_t>(count) < stride ? static_cast<size_t>(count) : stride;
+            const size_t at = (static_cast<size_t>(row) * GameAddress::kRoomGridColumns +
+                static_cast<size_t>(column)) * stride;
+
+            memcpy(room + GameAddress::kRoomCellsOffset + at, record, writing);
+            return static_cast<int>(writing);
         }
 
         int __cdecl ApiSetRoomCells(AmodMod mod, int roomIndex, const char* cells, int count)
@@ -2227,6 +2337,10 @@ namespace Forge
         g_table.GetRoomBox = &ApiGetRoomBox;
         g_table.SetRoomBox = &ApiSetRoomBox;
         g_table.AddRoomBox = &ApiAddRoomBox;
+        g_table.RemoveRoomBox = &ApiRemoveRoomBox;
+        g_table.SetRoomCellRecord = &ApiSetRoomCellRecord;
+        g_table.GetRoomWallTexture = &ApiGetRoomWallTexture;
+        g_table.GetRoomFloorTexture = &ApiGetRoomFloorTexture;
         FrameApi::AddInternalTick(&WatchClock);
         g_table.GetTimeLeft = &ApiGetTimeLeft;
         g_table.SetTimeLeft = &ApiSetTimeLeft;
@@ -2356,8 +2470,7 @@ namespace Forge
                 ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(room, GameAddress::kRoomLightTrianglesOffset))
                 : nullptr;
 
-            if (room != nullptr && triangles != nullptr && !it->bytes.empty() &&
-                Readable(triangles, it->bytes.size()))
+            if (room != nullptr && triangles != nullptr && !it->bytes.empty() && Readable(triangles, it->bytes.size()))
             {
                 memcpy(triangles, it->bytes.data(), it->bytes.size());
             }
@@ -2381,8 +2494,7 @@ namespace Forge
                 ? reinterpret_cast<uint8_t*>(Read<uintptr_t>(room, GameAddress::kRoomCollisionBoxesOffset))
                 : nullptr;
 
-            if (room != nullptr && boxes != nullptr && !it->bytes.empty() &&
-                Readable(boxes, it->bytes.size()))
+            if (room != nullptr && boxes != nullptr && !it->bytes.empty() && Readable(boxes, it->bytes.size()))
             {
                 memcpy(boxes, it->bytes.data(), it->bytes.size());
             }
@@ -2456,8 +2568,7 @@ namespace Forge
                 memcpy(entity + GameAddress::kEntityLightOffsetOffset, it->bytes, sizeof(it->bytes));
 
                 uint32_t flags = Read<uint32_t>(entity, GameAddress::kEntityFlagsOffset);
-                flags = (flags & ~GameAddress::kEntityLightFlag) |
-                    (it->flags & GameAddress::kEntityLightFlag);
+                flags = (flags & ~GameAddress::kEntityLightFlag) | (it->flags & GameAddress::kEntityLightFlag);
                 memcpy(entity + GameAddress::kEntityFlagsOffset, &flags, sizeof(flags));
             }
             it = g_entityLights.erase(it);

@@ -121,8 +121,10 @@
     <ClInclude Include="src\Api\MonstersApi.h" />
     <ClInclude Include="src\Api\MmdApi.h" />
     <ClInclude Include="src\Api\CameraApi.h" />
+    <ClInclude Include="src\Api\FilesApi.h" />
     <ClInclude Include="src\Api\ParticlesApi.h" />
     <ClInclude Include="sdk\include\ParticlesApi.h" />
+    <ClInclude Include="sdk\include\FilesApi.h" />
     <ClInclude Include="src\Api\CtrlsApi.h" />
     <ClInclude Include="src\Api\PlayerApi.h" />
     <ClInclude Include="src\Api\SoundApi.h" />
@@ -210,6 +212,7 @@
     <ClCompile Include="src\Api\MonstersApi.cpp" />
     <ClCompile Include="src\Api\MmdApi.cpp" />
     <ClCompile Include="src\Api\CameraApi.cpp" />
+    <ClCompile Include="src\Api\FilesApi.cpp" />
     <ClCompile Include="src\Api\ParticlesApi.cpp" />
     <ClCompile Include="src\Api\CtrlsApi.cpp" />
     <ClCompile Include="src\Api\PlayerApi.cpp" />

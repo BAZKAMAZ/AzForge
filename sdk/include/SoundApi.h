@@ -49,9 +49,16 @@ typedef struct AmodSoundApi
     /* Add room loop; takes effect next visit. Index or -1. */
     int(__cdecl* AddRoomSound)(AmodMod mod, int roomIndex, const AmodRoomSound* sound);
 
+    /* Streamed music (not a sound); same door as console "music play". fade = crossfade. */
+    int(__cdecl* PlayMusic)(AmodMod mod, const char* path, int fade, int loop);
+    int(__cdecl* StopMusic)(AmodMod mod);
+
+    /* What is playing now, or "" - read off the stream slot the game filled. */
+    const char* (__cdecl* CurrentMusic)(AmodMod mod);
+
 } AmodSoundApi;
 
-AMOD_LAST_FIELD(AmodSoundApi, AddRoomSound, 0x24);
+AMOD_LAST_FIELD(AmodSoundApi, CurrentMusic, 0x30);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -124,6 +131,25 @@ namespace Amod
         inline int                                                  AddRoomSound(const AmodRoomSound& sound, int roomIndex = -1)
         {
             return g_sound != nullptr ? g_sound->AddRoomSound(g_soundSelf, roomIndex, &sound) : -1;
+        }
+
+        inline bool                                                 PlayMusic(const char* path, bool fade = true, bool loop = true)
+        {
+            return g_sound != nullptr && g_sound->structSize >= sizeof(AmodSoundApi) && g_sound->PlayMusic != nullptr &&
+                g_sound->PlayMusic(g_soundSelf, path, fade ? 1 : 0, loop ? 1 : 0) != 0;
+        }
+
+        inline bool                                                 StopMusic()
+        {
+            return g_sound != nullptr && g_sound->structSize >= sizeof(AmodSoundApi) && g_sound->StopMusic != nullptr &&
+                g_sound->StopMusic(g_soundSelf) != 0;
+        }
+
+        inline const char*                                          CurrentMusic()
+        {
+            return (g_sound != nullptr && g_sound->structSize >= sizeof(AmodSoundApi) && g_sound->CurrentMusic != nullptr)
+                ? g_sound->CurrentMusic(g_soundSelf)
+                : "";
         }
     }
 }

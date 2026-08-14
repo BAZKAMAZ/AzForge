@@ -36,3 +36,6 @@ plugins/vscode/templates/
 plugins/vs2026/Extension/Template/Mod.cpp
 plugins/vs2026/Extension/Template/Mod.vcxproj
 plugins/vs2026/Extension/Template/resmod/
+
+# room_grid.py writes its dumps beside itself
+tools/*.grid.txt

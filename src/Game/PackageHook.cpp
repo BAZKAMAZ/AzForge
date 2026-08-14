@@ -7,6 +7,7 @@
 #include "src/Game/PackageFile.h"
 #include "src/Hook/InlineHook.h"
 #include "src/Mods/ModFileSystem.h"
+#include "src/Api/FilesApi.h"
 
 #include <string.h>
 
@@ -14,8 +15,9 @@ namespace Forge
 {
     namespace
     {
-        // Package_OpenFile is __thiscall: ECX = self, path on stack, RET 4
-        typedef void* (__fastcall* PackageOpenFileRoutine)(void* self, void* unused, const char* path);
+        // Package_OpenFile: RET 4, one stack arg -> __stdcall. Not __fastcall(self, unused, path):
+        // same bytes, but it looked like ECX carried something and led to Package_Free as __cdecl.
+        typedef void* (__stdcall* PackageOpenFileRoutine)(const char* path);
 
         constexpr char kAllocationTag[] = ".\\AzForge\\PackageHook.cpp";
 
@@ -57,11 +59,26 @@ namespace Forge
             return file;
         }
 
-        void* __fastcall PackageOpenFileDetour(void* self, void* unused, const char* path)
+        void* __stdcall PackageOpenFileDetour(const char* path)
         {
             std::vector<uint8_t> bytes;
             std::string providerId;
             std::string error;
+
+            // An answer given at runtime stands in front of the archives, and in front of the
+            // game's own copy. It lives in memory only, so nothing on disk is any different.
+            const char* servedBy = "";
+
+            if (path != nullptr && FilesApi::Served(path, bytes, servedBy))
+            {
+                GamePackageFile* const answered = BuildPackageFile(path, bytes);
+
+                if (answered != nullptr)
+                {
+                    ++g_served;
+                    return answered;
+                }
+            }
 
             const ModFileResult result = ModFileSystem::Read(path, bytes, providerId, error);
 
@@ -85,7 +102,7 @@ namespace Forge
                     path, providerId.c_str(), error.c_str());
             }
 
-            return g_original(self, unused, path);
+            return g_original(path);
         }
     }
 

@@ -250,9 +250,20 @@ typedef struct AmodPlayerApi
     /* Fire death via his kill slot (costs a life). Refused if already dead or alight. */
     int(__cdecl* Burn)(AmodMod mod);
 
+    /* Where he is, without touching where he was. SetPosition moves both, which reads as a
+       teleport and is right for one; a mod nudging him every frame wants this, because the game
+       reckons his fall and his heading from the difference between the two. */
+    int(__cdecl* SetPositionOnly)(AmodMod mod, const float* position);
+
+    /* Whether the game pushes him out of the room's boxes for itself. It does that after his own
+       update and whoever wrote that update, so a mod driving him was having its work undone in the
+       same frame. Put it down and the collisions are the mod's to answer for - all of them. */
+    int(__cdecl* SetCollides)(AmodMod mod, int collides);
+    int(__cdecl* Collides)(AmodMod mod);
+
 } AmodPlayerApi;
 
-AMOD_LAST_FIELD(AmodPlayerApi, Burn, 0x68);
+AMOD_LAST_FIELD(AmodPlayerApi, Collides, 0x74);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -294,6 +305,26 @@ namespace Amod
         {
             const float position[3] = { x, y, z };
             return g_player != nullptr && g_player->SetPosition(g_playerSelf, position) != 0;
+        }
+
+        inline bool                                                 SetCollides(bool collides)
+        {
+            return g_player != nullptr && g_player->SetCollides != nullptr &&
+                g_player->SetCollides(g_playerSelf, collides ? 1 : 0) != 0;
+        }
+
+        inline bool                                                 Collides()
+        {
+            return g_player != nullptr && g_player->Collides != nullptr &&
+                g_player->Collides(g_playerSelf) != 0;
+        }
+
+        /* Moves him and leaves where he was alone, so his fall and his heading still add up. */
+        inline bool                                                 SetPositionOnly(float x, float y, float z)
+        {
+            const float position[3] = { x, y, z };
+            return g_player != nullptr && g_player->SetPositionOnly != nullptr &&
+                g_player->SetPositionOnly(g_playerSelf, position) != 0;
         }
 
         inline bool                                                 SetFacing(float facing)

@@ -1,153 +1,176 @@
-# The monsters workbench
+# The SampleMod console
 
-One console command, `monster`, that drives every part of `MonstersApi`. Load the mod, start a
-level, open the console and type. Typing `monster` on its own lists this room's placements and
-prints the commands.
+Start a level, open the console and type. Most print something useful with no arguments at all —
+`cellsweep` is the one exception, it writes.
 
 ## Start here
 
 ```
-monster live
-monster grab 0
-monster grab off 0
+roomtex
+panel
+block
 ```
 
-The first prints what is standing here. The second takes that one monster over — it rises and
-stops walking, because the mod is driving it now. The third gives it back to the game.
+The first says which stone this room is made of. The second puts a panel on the screen — if you can
+see it, the 2D calls work. The third prints the whole level file as a tree.
 
-## The two numbers, before anything else
+## The room's own textures
 
-The game counts monsters in two different orders and mixing them is the commonest way to act on
-the wrong one:
+`roomtex [room]` — no number means the room you are standing in.
 
-- **live** — monsters standing in this room. `grab`, `speed`, `anim` and `drive` count in these.
-- **placed** — the room's placement list, in room-file order. `clear` and `killfar` count in these.
-
-The live list is built at its head, so the newest monster is **first** there while its placement
-is **last** in the file. They frequently read backwards from each other. Both listings print both
-numbers, so you never have to guess:
+It prints the id, the path and the size of each:
 
 ```
-monster live      live 0  placed 1  spider   tag ''
-monster list      placed 0  live 1  spider   tag ''
+roomtex
+    roomtex: $wall_tex is <id> <texture>, <w>x<h>
+    roomtex: $floor_tex is <id> <texture>, <w>x<h>
 ```
 
-## Looking
+These are the objects the game is drawing with, not a second copy loaded by name. Use them when you
+add geometry that has to match the room.
+
+## Drawing in 2D
 
 | Type this | And you get |
 | --- | --- |
-| `monster list` | the room's placements, with the live number beside each |
-| `monster live` | what is standing here, with the placement number beside each |
-| `monster speed 0` | what monster 0 actually walks at, and what `hard` claims |
+| `panel` | the panel appears — a rect, a bar, a line of text, two sprites |
+| `panel` | again, and it is gone |
 
-## Making them appear and disappear
+**Everything 2D is in 640x480**, whatever your window is. Not pixels. `Render::GetViewport` gives
+the real size when you want pixels.
 
-| Type this | And you get |
-| --- | --- |
-| `monster mine` | a monster of the mod's own making at 20 14 |
-| `monster mine 24 10` | the same, at your cell |
-| `monster mine totem 22 14` | one you walk straight through |
-| `monster mine quiet 22 14` | one that is met, says so, and does nothing else |
-| `monster mine stiff 22 14` | one whose hit box does not stretch with its animation |
-| `monster far 3` | a spider in room 3 — walk there and it is standing |
-| `monster far 3 bat 24 10` | that species, that room, that cell |
-| `monster clear` | every placement here spent — no deaths, no score, no tally |
-| `monster clear 3` | the same for room 3, without going there |
-| `monster killfar 3 0` | placement 0 of room 3 killed, and the level counts it killed |
-| `monster none` | no monster may be built at all — walk into a room to find it empty |
-| `monster none off` | allowed again |
+## Texture handles
 
-## Driving them
+`texhandle [n]` — walks texture `n` out to the game's numbering and back.
 
-| Type this | And you get |
-| --- | --- |
-| `monster drive spider` | every spider rises, **and still walks** — the game's tick runs too |
-| `monster drive spider instead` | every spider rises and stops walking — the game's tick does not |
-| `monster drive off` | all of them handed back |
-| `monster grab 0` | that one monster alone, whatever its name |
-| `monster grab off 0` | given back |
+```
+texhandle 12
+    texhandle: 12 '<name>' is id <id>, the game calls it 0x<pointer>, and back is <id> - the same
+```
 
-`grab` beats `drive`: what is said about one monster wins over what is said about its whole name.
+The words to look for at the end are **the same**. Anything else means the round trip lost it.
 
-## Speed and animation
+You need this when a draw handler tells you which texture the game is using: it says so in the
+game's numbering, and everything else in the API wants an `AmodTextureId`.
+
+## Music
 
 | Type this | And you get |
 | --- | --- |
-| `monster speed 0` | its real speed, its walking range, and what `hard` says |
-| `monster speed 0 0.6` | it walks at that — and still will after you leave the room |
-| `monster anim 0 move` | plays that frameset on monster 0 |
-| `monster anim 0 stay` | another one, if its animation has it |
+| `mus` | what is playing right now |
+| `mus music/light3.ogg` | that track, faded in over whatever was playing |
+| `mus music/light3.ogg cut` | the same, cut in with no fade |
+| `mus stop` | silence |
 
-## Using it from your own mod
+Any `.ogg` under `music/` works, and so does one your mod serves for a path that does not exist on
+disk — see `fileserve`.
 
-A kind of your own, which the game knows nothing about:
+## Reading game files
 
-```cpp
-const int kind = Monsters::RegisterKind("mymod.watcher", [](const AmodMonsterKindInfo* info)
-{
-    if (info->event == AMOD_MONSTER_EVENT_BUILD)
+`fileread <path>` reads exactly what the game would read, out of `data.pak` or off the disk.
+
+```
+fileread levels/orange/002.room
+    fileread: 'levels/orange/002.room' is 336807 byte(s), starting 4d 52 05 00 a7 23 05 00
+```
+
+`block [path]` reads a file and prints it as a tree. With no path it takes the level you are in.
+
+Nested blocks are indented and braced, so what comes back reads like the file it came from:
+
+```
+block
+    block: levels/level_orange.txt
+    $header
     {
-        info->body->actsLike = "spider";      // contact: kills the player, dies to the knife
-        info->body->animatedLike = "spider";  // and its animation, model and skin
-        return 1;
+      $next_level "levels/bonus_orange.txt"
+      $music "music/light3.ogg"
+      ...
     }
-
-    if (info->event == AMOD_MONSTER_EVENT_TOUCH)
+    $rooms
     {
-        return 0;   // 0 lets what actsLike named happen as well
-    }
-
-    Monsters::At(info->think->index)["facing"].Set(info->think->position[0] > 0.0f ? -1 : 1);
-    return 0;
-});
-
-Monsters::PlaceKind(kind, 20, 14, "first");
+      $room
+      {
+        $room_file "levels/orange/002.room"
+        $floor_tex "textures/rooms/orange/01_floor.bmp"
+        ...
 ```
 
-Register kinds in `AmodInit`, not on a command: a room file naming one is read the moment the
-player walks in, and by then it is too late to ask.
+```
+block levels/orange/002_ctrl.txt
+block scripts/menu_cfg.txt
+```
 
-A model and animation of your own, rather than a species':
+
+## Answering for a file
+
+`fileserve` puts bytes in front of the game's own copy, in memory only
+
+| Type this | And you get |
+| --- | --- |
+| `fileserve` | every path this mod is currently answering for |
+| `fileserve some/path.txt hello` | that path now reads as `hello`, for the game too |
+| `fileserve some/path.txt` | the game's own copy back |
+
+```
+fileserve levels/mine.txt hello
+    fileserve: 'levels/mine.txt' now answers with 5 byte(s), and reads back as 5
+
+fileread levels/mine.txt
+    fileread: 'levels/mine.txt' is 5 byte(s), starting 68 65 6c 6c 6f ...
+```
+
+`fileread` there is going through the same door the game uses, and getting the mod's answer rather
+than a file — there is no `levels/mine.txt` anywhere on disk. That is the whole point: a mod can
+replace any room, script or texture the game asks for without touching `data.pak`.
+
+## The five spare bytes in every cell
+
+A cell of the room grid is eight bytes and the game reads one of them. Three come out of the file;
+**the five from `AMOD_CELL_FREE_FIRST` are yours**, they already ride inside the `.room`, and
+nothing in the game will touch them.
+
+| Type this | And you get |
+| --- | --- |
+| `cellbyte 20 14` | all eight bytes of that cell, the game's three shown apart from your five |
+| `cellbyte 20 14 1 10` | free byte 1 of that cell set to 10, and read straight back |
+| `cellsweep 7` | free byte 0 of every cell in the room set to 7 |
+| `cellcheck 7` | how many cells still hold it |
+
+The pair that matters:
+
+```
+cellsweep 7
+    cellsweep: 1160 cell(s) marked with 7, 0 did not hold it
+```
+
+now walk out of the room and back, then
+
+```
+cellcheck 7
+    cellcheck: 1160 of 1160 cell(s) still hold 7
+```
+
+If the second number holds after a room change, the grid is a place your mod can keep things.
+
+## What each one is really testing
+
+| Command | The call behind it |
+| --- | --- |
+| `roomtex` | `World::WallTexture`, `World::FloorTexture` |
+| `texhandle` | `Textures::ToGame`, `Textures::FromGame` |
+| `panel` | `Render::Rect`, `Render::Sprite`, `Render::Text` with an align |
+| `mus` | `Sound::PlayMusic`, `StopMusic`, `CurrentMusic` |
+| `block` | `Data::ParseFile` and the `Data::Block` walk |
+| `fileread`, `fileserve` | `Files::Read`, `Files::Serve`, `Files::Clear` |
+| `cellbyte`, `cellsweep`, `cellcheck` | `World::CellRecord`, `CellByte`, `SetCellByte` |
+
+## One trap worth knowing
+
+`argv` points into the **game's own console scratch**. Anything you ask the game for may write over
+it. Copy what you need before the first call out — every command here that takes a path does:
 
 ```cpp
-info->body->modelId = Mmd::Load("models/firedragon.mmd");
-info->body->animationId = Mmd::LoadAnimation("scripts/anim_firedragon.txt");
-info->body->textureId = Textures::Load("textures/firedragon.jpg");
-info->body->frameset = "move";
+char path[260] = {};
+Keep(path, sizeof(path), argv[1]);
 ```
-
-Both files go inside the `.amod` and the loader serves them to the game. The animation file is the
-game's own format, and `$range` counts frames of **your** model:
-
-```
-$animation
-{
-    $frameset { $name "move"   $fps 17 $range 0 6  $loop 1 }
-    $frameset { $name "attack" $fps 20 $range 7 13 $break 1 $follow "move" }
-}
-```
-
-Driving one of the game's own monsters:
-
-```cpp
-Monsters::SetBehaviour("spider", [](const AmodMonsterThinkInfo* info)
-{
-    return AMOD_MONSTER_ALSO_GAME;   // your handler ran; now the game walks it as usual
-});
-```
-
-Return `AMOD_MONSTER_INSTEAD_OF_GAME` and the game's own tick does not run at all. `Borrow` takes
-one monster rather than every monster of a name, and outranks `SetBehaviour` on that one.
-
-Refusing monsters before they exist, which is how a level is emptied for a conversion:
-
-```cpp
-Monsters::OnPlace([](const AmodMonsterPlaceInfo* info)
-{
-    return 0;   // this placement never becomes a monster, in any room
-});
-```
-
-`DefineKind` and `DefineBehaviour` are the older, simpler pair: they teach the game's spawner a
-name that moves like one of its own. Reach for them when that is all you want; reach for
-`RegisterKind` and `SetBehaviour` when you need your own entity, or a say over the game's tick.
