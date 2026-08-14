@@ -1067,10 +1067,296 @@ namespace Forge
             return RoomEntryTexture(mod, roomIndex, GameAddress::kRoomEntryFloorTexOffset, "$floor_tex");
         }
 
-        // Room static decoration pieces.
+        // The 0x58 block the end-of-level screen scores and a save carries, as eight pairs
+        uint8_t* LevelStats()
+        {
+            uint8_t* const stats = static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kLevelStats));
+            return Readable(stats, GameAddress::kLevelStatsSize) ? stats : nullptr;
+        }
 
-        typedef void(__fastcall* RoomAddStaticRoutine)(void* room, void* unused, const void* record,
-            char translucent, char lit);
+        const uintptr_t kStatPairs[8] =
+        {
+            GameAddress::kStatCrystalsOffset, GameAddress::kStatBonusesOffset,
+            GameAddress::kStatSuperOffset, GameAddress::kStatMonstersOffset,
+            GameAddress::kStatLightRoomsOffset, GameAddress::kStatDarkRoomsOffset,
+            GameAddress::kStatSecretRoomsOffset, GameAddress::kStatEighthOffset
+        };
+
+        int __cdecl ApiGetLevelStats(AmodMod mod, AmodLevelStats* out)
+        {
+            const uint8_t* const stats = ApiRead::Caller(mod) != nullptr ? LevelStats() : nullptr;
+
+            if (out == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetLevelStats wants somewhere to answer");
+            }
+            if (stats == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "the level statistic is not up yet");
+            }
+
+            AmodLevelStats filled = {};
+            filled.structSize = sizeof(filled);
+
+            // Written through as pairs, in the order the struct declares them
+            int* const into = &filled.crystalsTaken;
+
+            for (int pair = 0; pair < 8; ++pair)
+            {
+                into[pair * 2] = Read<int>(stats, kStatPairs[pair]);
+                into[pair * 2 + 1] = Read<int>(stats, kStatPairs[pair] + sizeof(int));
+            }
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetLevelStats(AmodMod mod, const AmodLevelStats* stats)
+        {
+            uint8_t* const block = ApiRead::Caller(mod) != nullptr ? LevelStats() : nullptr;
+
+            if (stats == nullptr || block == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "the level statistic is not up yet");
+            }
+
+            const int* const from = &stats->crystalsTaken;
+
+            for (int pair = 0; pair < 8; ++pair)
+            {
+                memcpy(block + kStatPairs[pair], &from[pair * 2], sizeof(int));
+                memcpy(block + kStatPairs[pair] + sizeof(int), &from[pair * 2 + 1], sizeof(int));
+            }
+
+            return 1;
+        }
+
+        uint8_t* ThingAt(int roomIndex, int index)
+        {
+            const uint8_t* const room = Room(RoomOrCurrent(roomIndex));
+
+            if (room == nullptr || !Readable(room, GameAddress::kRoomThingCountOffset + sizeof(int)))
+            {
+                return nullptr;
+            }
+
+            const int count = Read<int>(room, GameAddress::kRoomThingCountOffset);
+
+            if (index < 0 || index >= count || count <= 0 || count > 0x1000)
+            {
+                return nullptr;
+            }
+
+            const uint8_t* const* const things = reinterpret_cast<const uint8_t* const*>(
+                Read<uintptr_t>(room, GameAddress::kRoomThingsOffset));
+
+            if (things == nullptr || !Readable(things, static_cast<size_t>(count) * sizeof(void*)))
+            {
+                return nullptr;
+            }
+
+            uint8_t* const thing = const_cast<uint8_t*>(things[index]);
+            return Readable(thing, 0x58) ? thing : nullptr;
+        }
+
+        // The tag decides the size, and a tag the game does not write is worth nothing in a save
+        int SavedSizeOf(int tag)
+        {
+            switch (tag)
+            {
+            case 2: return 12;
+            case 9: return 1;
+            case 10: return 1;
+            case 11: return 1;
+            default: return 0;
+            }
+        }
+
+        uintptr_t ValueOffsetOf(int tag)
+        {
+            return tag == 10 ? GameAddress::kThingKind10Offset : GameAddress::kThingKind2Offset;
+        }
+
+        int __cdecl ApiGetRoomThingCount(AmodMod mod, int roomIndex)
+        {
+            const uint8_t* const room = ApiRead::Caller(mod) != nullptr ? Room(RoomOrCurrent(roomIndex)) : nullptr;
+
+            if (room == nullptr || !Readable(room, GameAddress::kRoomThingCountOffset + sizeof(int)))
+            {
+                return 0;
+            }
+
+            const int count = Read<int>(room, GameAddress::kRoomThingCountOffset);
+            return (count > 0 && count < 0x1000) ? count : 0;
+        }
+
+        int __cdecl ApiGetRoomThing(AmodMod mod, int roomIndex, int index, AmodRoomThing* out)
+        {
+            const uint8_t* const thing = ApiRead::Caller(mod) != nullptr ? ThingAt(roomIndex, index) : nullptr;
+
+            if (out == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetRoomThing wants somewhere to answer");
+            }
+            if (thing == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "room %d has no thing %d", roomIndex, index);
+            }
+
+            const int tag = Read<int>(thing, GameAddress::kThingTagOffset);
+            const uintptr_t at = ValueOffsetOf(tag);
+
+            AmodRoomThing filled = {};
+            filled.structSize = sizeof(filled);
+            filled.tag = tag;
+            filled.saved = SavedSizeOf(tag);
+
+            if (tag == 2)
+            {
+                for (int which = 0; which < 3; ++which)
+                {
+                    filled.values[which] = Read<int>(thing, at + static_cast<uintptr_t>(which) * sizeof(int));
+                }
+            }
+            else if (filled.saved != 0)
+            {
+                filled.values[0] = thing[at];
+            }
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetRoomThing(AmodMod mod, int roomIndex, int index, const AmodRoomThing* thing)
+        {
+            uint8_t* const at = ApiRead::Caller(mod) != nullptr ? ThingAt(roomIndex, index) : nullptr;
+
+            if (thing == nullptr || at == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "room %d has no thing %d", roomIndex, index);
+            }
+
+            // The tag is the game's, not a mod's: it decides how much a save takes and changing it
+            // would move every byte after it
+            const int tag = Read<int>(at, GameAddress::kThingTagOffset);
+            const int saved = SavedSizeOf(tag);
+
+            if (saved == 0)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_REFUSED, "a thing tagged %d is never saved", tag);
+            }
+
+            const uintptr_t where = ValueOffsetOf(tag);
+
+            if (tag == 2)
+            {
+                for (int which = 0; which < 3; ++which)
+                {
+                    memcpy(at + where + static_cast<uintptr_t>(which) * sizeof(int),
+                        &thing->values[which], sizeof(int));
+                }
+            }
+            else
+            {
+                // One byte, because one byte is what is written - the rest of that dword belongs to
+                // something else
+                at[where] = static_cast<uint8_t>(thing->values[0]);
+            }
+
+            return 1;
+        }
+
+        uint8_t* ContainerOf(int roomIndex)
+        {
+            uint8_t* const room = Room(RoomOrCurrent(roomIndex));
+
+            if (room == nullptr || !Readable(room, GameAddress::kRoomContainerOffset + sizeof(uintptr_t)))
+            {
+                return nullptr;
+            }
+
+            uint8_t* const container = reinterpret_cast<uint8_t*>(
+                Read<uintptr_t>(room, GameAddress::kRoomContainerOffset));
+
+            if (container == nullptr || !Readable(container, 0x4C))
+            {
+                return nullptr;
+            }
+
+            // The game refuses anything that does not open with this, and so does everything here
+            return Read<uint32_t>(container, 0) == GameAddress::kSaveThingMagic ? container : nullptr;
+        }
+
+        int __cdecl ApiGetRoomMemory(AmodMod mod, int roomIndex, AmodRoomMemory* out)
+        {
+            const uint8_t* const container = ApiRead::Caller(mod) != nullptr ? ContainerOf(roomIndex) : nullptr;
+
+            if (out == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetRoomMemory wants somewhere to answer");
+            }
+
+            AmodRoomMemory filled = {};
+            filled.structSize = sizeof(filled);
+
+            if (container != nullptr)
+            {
+                filled.isSaved = 1;
+                filled.state = container[GameAddress::kContainerStateOffset];
+                filled.hasExtra = Read<int>(container, GameAddress::kContainerExtraFlagOffset) != 0 ? 1 : 0;
+                filled.extra = Read<int>(container, GameAddress::kContainerExtraOffset);
+            }
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetRoomMemory(AmodMod mod, int roomIndex, const AmodRoomMemory* memory)
+        {
+            uint8_t* const container = ApiRead::Caller(mod) != nullptr ? ContainerOf(roomIndex) : nullptr;
+
+            if (memory == nullptr || container == nullptr)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_HERE, "room %d keeps nothing a save would take",
+                    roomIndex);
+            }
+
+            container[GameAddress::kContainerStateOffset] = static_cast<uint8_t>(memory->state);
+
+            if (memory->hasExtra != 0 &&
+                Read<int>(container, GameAddress::kContainerExtraFlagOffset) != 0)
+            {
+                memcpy(container + GameAddress::kContainerExtraOffset, &memory->extra, sizeof(int));
+            }
+
+            return 1;
+        }
+
+        int __cdecl ApiGetRoomSavedSize(AmodMod mod, int roomIndex)
+        {
+            if (ApiRead::Caller(mod) == nullptr)
+            {
+                return 0;
+            }
+
+            const int count = ApiGetRoomThingCount(mod, roomIndex);
+            int size = 0;
+
+            for (int at = 0; at < count; ++at)
+            {
+                const uint8_t* const thing = ThingAt(roomIndex, at);
+                size += thing != nullptr ? SavedSizeOf(Read<int>(thing, GameAddress::kThingTagOffset)) : 0;
+            }
+
+            const uint8_t* const container = ContainerOf(roomIndex);
+
+            if (container != nullptr)
+            {
+                size += 1;
+                size += Read<int>(container, GameAddress::kContainerExtraFlagOffset) != 0 ? 4 : 0;
+            }
+
+            return size;
+        }
+
+        typedef void(__fastcall* RoomAddStaticRoutine)(void* room, void* unused, const void* record,  char translucent, char lit);
 
         typedef void(__cdecl* RoomFreeStaticsRoutine)(void* head);
 
@@ -2341,6 +2627,14 @@ namespace Forge
         g_table.SetRoomCellRecord = &ApiSetRoomCellRecord;
         g_table.GetRoomWallTexture = &ApiGetRoomWallTexture;
         g_table.GetRoomFloorTexture = &ApiGetRoomFloorTexture;
+        g_table.GetLevelStats = &ApiGetLevelStats;
+        g_table.SetLevelStats = &ApiSetLevelStats;
+        g_table.GetRoomThingCount = &ApiGetRoomThingCount;
+        g_table.GetRoomThing = &ApiGetRoomThing;
+        g_table.SetRoomThing = &ApiSetRoomThing;
+        g_table.GetRoomMemory = &ApiGetRoomMemory;
+        g_table.SetRoomMemory = &ApiSetRoomMemory;
+        g_table.GetRoomSavedSize = &ApiGetRoomSavedSize;
         FrameApi::AddInternalTick(&WatchClock);
         g_table.GetTimeLeft = &ApiGetTimeLeft;
         g_table.SetTimeLeft = &ApiSetTimeLeft;

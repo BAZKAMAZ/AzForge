@@ -18,6 +18,9 @@
 #include "CameraApi.h"
 #include "ParticlesApi.h"
 #include "FilesApi.h"
+#include "ConfigApi.h"
+#include "DatApi.h"
+#include "SavApi.h"
 #include "PlayerApi.h"
 #include "SoundApi.h"
 #include "TextureApi.h"
@@ -107,9 +110,18 @@ typedef struct AmodApi
     /* The door the game asks its files through: read one, or answer for a path. */
     const AmodFilesApi* files;
 
+    /* Azangara.cfg, which is the game's variable list rather than a settings file. */
+    const AmodConfigApi* config;
+
+    /* scores.dat, the leaderboard. */
+    const AmodDatApi* scores;
+
+    /* packs.sav, which palaces the player has opened. */
+    const AmodSavApi* progress;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, files, 0x84);
+AMOD_LAST_FIELD(AmodApi, progress, 0x90);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -162,6 +174,9 @@ namespace Amod
         Camera::Attach(api->camera, api->self);
         Particles::Attach(api->particles, api->self);
         Files::Attach(api->files, api->self);
+        Config::Attach(api->config, api->self);
+        Scores::Attach(api->scores, api->self);
+        Progress::Attach(api->progress, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

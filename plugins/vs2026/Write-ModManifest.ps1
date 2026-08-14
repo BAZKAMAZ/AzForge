@@ -5,6 +5,10 @@
 #   api_version  read from the SDK, so a mod cannot claim a version its headers are not
 #   requires     read from what the mod's own sources use, so it cannot forget one
 #
+# capabilities is NOT worked out and never can be: it is what a mod ASKS FOR, not what it happens
+# to call. 'interop' reads and writes the game's memory and patches its code, and the loader hands
+# that table only to a mod that says the word - so it has to be typed, in Mod Settings.
+#
 # Both come from the SDK as shipped - ForgeApi.h and subsystems.txt - and neither needs the
 # loader's sources, which do not travel with it.
 
@@ -17,6 +21,7 @@ param(
     [string] $Author = '',
     [string] $Description = '',
     [string] $Requires = '',
+    [string] $Capabilities = '',
     [Parameter(Mandatory = $true)] [string] $Entry,
     [string] $Icon = '',
     [string] $Sources = ''
@@ -114,6 +119,8 @@ else {
 
 # --- the manifest -------------------------------------------------------------------------------
 
+$asked = @($Capabilities -split '[;, ]' | ForEach-Object { $_.Trim() } | Where-Object { $_ })
+
 $manifest = [ordered] @{
     id           = $Id
     name         = $Name
@@ -122,6 +129,7 @@ $manifest = [ordered] @{
     description  = $Description
     api_version  = $api
     requires     = $needs
+    capabilities = $asked
     game_version = '1.0'
     entry        = $Entry
 }
@@ -147,7 +155,15 @@ elseif ($needs.Count -eq 1) {
     $json = $json -replace '"requires":\s*"([^"]*)"', '"requires": [ "$1" ]'
 }
 
+if ($asked.Count -eq 0) {
+    $json = $json -replace '"capabilities":\s*(""|null)', '"capabilities": []'
+}
+elseif ($asked.Count -eq 1) {
+    $json = $json -replace '"capabilities":\s*"([^"]*)"', '"capabilities": [ "$1" ]'
+}
+
 Set-Content -Path $path -Value $json -Encoding utf8
 
 $how = if ($declared.Count -gt 0) { 'as declared' } else { 'from the sources' }
-Write-Host "mod.json -> $path (API $api, requires ${how}: $($needs -join ', '))"
+$also = if ($asked.Count -gt 0) { "; asks for $($asked -join ', ')" } else { '' }
+Write-Host "mod.json -> $path (API $api, requires ${how}: $($needs -join ', ')${also})"

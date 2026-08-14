@@ -2,8 +2,8 @@
 #define AZFORGE_WORLD_API_H
 
 #include "ForgeTypes.h"
-#include "MmdApi.h" /* a room's statics hold a model */
-#include "TextureApi.h" /* a room's lightmap is handed over as a texture */
+#include "MmdApi.h"
+#include "TextureApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -17,6 +17,54 @@ extern "C" {
 
 #define AMOD_CELL_EMPTY                                             ' '
 #define AMOD_CELL_WALL                                              'W'
+
+/* What the level counted, as pairs of got and total - the block the end-of-level screen scores.
+   Names are the game's own, from $percent_str in a statistic script. */
+typedef struct AmodLevelStats
+{
+    uint32_t structSize;
+
+    int crystalsTaken;      int crystalsTotal;      /* $col_crystals */
+    int bonusesTaken;       int bonusesTotal;       /* $col_bonus */
+    int superTaken;         int superTotal;         /* $col_super */
+    int monstersKilled;     int monstersTotal;      /* $monsters */
+    int lightRoomsSeen;     int lightRoomsTotal;    /* $rooms_light */
+    int darkRoomsSeen;      int darkRoomsTotal;     /* $rooms_dark */
+    int secretRoomsSeen;    int secretRoomsTotal;   /* $rooms_secret */
+    int eighthTaken;        int eighthTotal;        /* scored, named in no script */
+
+} AmodLevelStats;
+
+AMOD_LAST_FIELD(AmodLevelStats, eighthTotal, 0x40);
+
+/* One thing a room remembers - and what a save records of it. The level section is nothing but
+   these, in order, with no index and no tags. */
+typedef struct AmodRoomThing
+{
+    uint32_t structSize;
+
+    int tag;        /* 2, 9, 10, 11; anything else is never written */
+    int saved;      /* bytes a save takes: 12, 1 or 0 */
+
+    int values[3];  /* tag 2 keeps three, the rest use values[0] */
+
+} AmodRoomThing;
+
+AMOD_LAST_FIELD(AmodRoomThing, values, 0x0C);
+
+/* A room's own line in a save: 0, 1 or 5 bytes. */
+typedef struct AmodRoomMemory
+{
+    uint32_t structSize;
+
+    int isSaved;    /* 0 when the room writes nothing */
+    int state;      /* the one byte every saved room keeps */
+    int hasExtra;   /* whether the four extra bytes go too */
+    int extra;
+
+} AmodRoomMemory;
+
+AMOD_LAST_FIELD(AmodRoomMemory, extra, 0x10);
 
 /* Level fields. Strings valid until unload; missing keys are "". */
 typedef struct AmodWorldLevel
@@ -372,9 +420,24 @@ typedef struct AmodWorldApi
     AmodTextureId(__cdecl* GetRoomWallTexture)(AmodMod mod, int roomIndex);
     AmodTextureId(__cdecl* GetRoomFloorTexture)(AmodMod mod, int roomIndex);
 
+    /* Live while playing, and the same block a save carries. */
+    int(__cdecl* GetLevelStats)(AmodMod mod, AmodLevelStats* out);
+    int(__cdecl* SetLevelStats)(AmodMod mod, const AmodLevelStats* stats);
+
+    /* Change one and save, and the level comes back changed. */
+    int(__cdecl* GetRoomThingCount)(AmodMod mod, int roomIndex);
+    int(__cdecl* GetRoomThing)(AmodMod mod, int roomIndex, int index, AmodRoomThing* out);
+    int(__cdecl* SetRoomThing)(AmodMod mod, int roomIndex, int index, const AmodRoomThing* thing);
+
+    int(__cdecl* GetRoomMemory)(AmodMod mod, int roomIndex, AmodRoomMemory* out);
+    int(__cdecl* SetRoomMemory)(AmodMod mod, int roomIndex, const AmodRoomMemory* memory);
+
+    /* Bytes this room takes in a save, things and line together. */
+    int(__cdecl* GetRoomSavedSize)(AmodMod mod, int roomIndex);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, GetRoomFloorTexture, 0xD8);
+AMOD_LAST_FIELD(AmodWorldApi, GetRoomSavedSize, 0xF8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -526,8 +589,65 @@ namespace Amod
                 : AMOD_INVALID_TEXTURE;
         }
 
-        /* What the level file named this room's walls and floor with, the stone the game itself
-           draws them in. */
+        /* What a room remembers. */
+        inline int                                                  RoomThingCount(int roomIndex = -1)
+        {
+            return (g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomThingCount != nullptr)
+                ? g_world->GetRoomThingCount(g_self, roomIndex)
+                : 0;
+        }
+
+        inline bool                                                 GetRoomThing(int index, AmodRoomThing& out, int roomIndex = -1)
+        {
+            out = AmodRoomThing{};
+            out.structSize = sizeof(out);
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomThing != nullptr &&
+                g_world->GetRoomThing(g_self, roomIndex, index, &out) != 0;
+        }
+
+        inline bool                                                 SetRoomThing(int index, const AmodRoomThing& thing, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->SetRoomThing != nullptr &&
+                g_world->SetRoomThing(g_self, roomIndex, index, &thing) != 0;
+        }
+
+        inline bool                                                 GetRoomMemory(AmodRoomMemory& out, int roomIndex = -1)
+        {
+            out = AmodRoomMemory{};
+            out.structSize = sizeof(out);
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomMemory != nullptr &&
+                g_world->GetRoomMemory(g_self, roomIndex, &out) != 0;
+        }
+
+        inline bool                                                 SetRoomMemory(const AmodRoomMemory& memory, int roomIndex = -1)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->SetRoomMemory != nullptr &&
+                g_world->SetRoomMemory(g_self, roomIndex, &memory) != 0;
+        }
+
+        inline int                                                  RoomSavedSize(int roomIndex = -1)
+        {
+            return (g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomSavedSize != nullptr)
+                ? g_world->GetRoomSavedSize(g_self, roomIndex)
+                : 0;
+        }
+
+        /* What the level counted. */
+        inline bool                                                 GetLevelStats(AmodLevelStats& out)
+        {
+            out = AmodLevelStats{};
+            out.structSize = sizeof(out);
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetLevelStats != nullptr &&
+                g_world->GetLevelStats(g_self, &out) != 0;
+        }
+
+        inline bool                                                 SetLevelStats(const AmodLevelStats& stats)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->SetLevelStats != nullptr &&
+                g_world->SetLevelStats(g_self, &stats) != 0;
+        }
+
+        /* $wall_tex and $floor_tex - the stone the game draws the room in. */
         inline AmodTextureId                                        WallTexture(int roomIndex = -1)
         {
             return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->GetRoomWallTexture != nullptr

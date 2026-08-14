@@ -14,6 +14,9 @@
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
+#include "src/Api/ConfigApi.h"
+#include "src/Api/DatApi.h"
+#include "src/Api/SavApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
@@ -163,6 +166,9 @@ namespace Forge
         context.table.camera = CameraApi::Table();
         context.table.particles = ParticlesApi::Table();
         context.table.files = FilesApi::Table();
+        context.table.config = ConfigApi::Table();
+        context.table.scores = DatApi::Table();
+        context.table.progress = SavApi::Table();
         context.table.input = InputApi::Table();
 
         context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;

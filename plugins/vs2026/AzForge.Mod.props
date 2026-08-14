@@ -27,6 +27,10 @@
          happens to be there. Either way a name the loader does not offer fails the build instead
          of being found out as a silent refusal to load. -->
     <AzForgeModRequires Condition="'$(AzForgeModRequires)' == ''"></AzForgeModRequires>
+    <!-- What the mod ASKS FOR, which is not the same as what it uses. 'interop' reads and writes
+         the game's memory and patches its code, and the loader withholds that table until a mod
+         names it here. Nothing derives this; it is typed on purpose. -->
+    <AzForgeModCapabilities Condition="'$(AzForgeModCapabilities)' == ''"></AzForgeModCapabilities>
 
     <!-- Where the game is installed; the mod is put in <this>\mods and F5 runs <this>\game.exe -->
     <AzForgeGameDir Condition="'$(AzForgeGameDir)' != ''">$(AzForgeGameDir.TrimEnd('\'))</AzForgeGameDir>
@@ -102,7 +106,7 @@
   <!-- mod.json is written from the settings, so api_version can never drift from the SDK -->
   <Target Name="AzForgeWriteManifest" AfterTargets="AzForgeStage">
     <!-- A path ending in a backslash would escape the quote after it and swallow the next argument -->
-    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(AzForgeScriptsDir)Write-ModManifest.ps1&quot; -Package &quot;$(AzForgeStageDir.TrimEnd('\'))&quot; -Sdk &quot;$(AzForgeSdkDir.TrimEnd('\'))&quot; -Id &quot;$(AzForgeModId)&quot; -Name &quot;$(AzForgeModName)&quot; -Version &quot;$(AzForgeModVersion)&quot; -Author &quot;$(AzForgeModAuthor)&quot; -Description &quot;$(AzForgeModDescription)&quot; -Requires &quot;$(AzForgeModRequires)&quot; -Entry &quot;bin/$(TargetFileName)&quot; -Icon &quot;$(AzForgeModIcon)&quot; -Sources &quot;$(ProjectDir.TrimEnd('\'))&quot;" />
+    <Exec Command="powershell -NoProfile -ExecutionPolicy Bypass -File &quot;$(AzForgeScriptsDir)Write-ModManifest.ps1&quot; -Package &quot;$(AzForgeStageDir.TrimEnd('\'))&quot; -Sdk &quot;$(AzForgeSdkDir.TrimEnd('\'))&quot; -Id &quot;$(AzForgeModId)&quot; -Name &quot;$(AzForgeModName)&quot; -Version &quot;$(AzForgeModVersion)&quot; -Author &quot;$(AzForgeModAuthor)&quot; -Description &quot;$(AzForgeModDescription)&quot; -Requires &quot;$(AzForgeModRequires)&quot; -Capabilities &quot;$(AzForgeModCapabilities)&quot; -Entry &quot;bin/$(TargetFileName)&quot; -Icon &quot;$(AzForgeModIcon)&quot; -Sources &quot;$(ProjectDir.TrimEnd('\'))&quot;" />
   </Target>
 
   <Target Name="AzForgePack" AfterTargets="AzForgeWriteManifest">

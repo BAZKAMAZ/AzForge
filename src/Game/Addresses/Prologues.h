@@ -41,6 +41,12 @@ namespace Forge
     // Package_OpenFile: PUSH ESI / MOV ESI,[ESP+8] → 5 bytes
     constexpr uint8_t kPackageOpenFilePrologue[] = { 0x56, 0x8B, 0x74, 0x24, 0x08 };
 
+    // GamePacks_OpenLevel opens with SUB ESP, 0x104 — six bytes, one instruction, fits exactly.
+    constexpr uint8_t kGamePacksOpenLevelPrologue[] = { 0x81, 0xEC, 0x04, 0x01, 0x00, 0x00 };
+
+    // Game_SaveToFile / Game_LoadFromFile open identically: PUSH EBP + ESP-relative LEA — eight bytes.
+    constexpr uint8_t kGameSaveLoadPrologue[] = { 0x55, 0x8D, 0xAC, 0x24, 0x8C, 0xF8, 0xFF, 0xFF };
+
     // App_Shutdown: PUSH EBX / PUSH 0x004cccb0 → 6 bytes (immediate must stay intact)
     constexpr uint8_t kAppShutdownPrologue[] = { 0x53, 0x68, 0xB0, 0xCC, 0x4C, 0x00 };
 

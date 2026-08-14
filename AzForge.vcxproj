@@ -122,9 +122,16 @@
     <ClInclude Include="src\Api\MmdApi.h" />
     <ClInclude Include="src\Api\CameraApi.h" />
     <ClInclude Include="src\Api\FilesApi.h" />
+    <ClInclude Include="src\Api\ConfigApi.h" />
+    <ClInclude Include="src\Api\DatApi.h" />
+    <ClInclude Include="src\Api\SavApi.h" />
     <ClInclude Include="src\Api\ParticlesApi.h" />
     <ClInclude Include="sdk\include\ParticlesApi.h" />
     <ClInclude Include="sdk\include\FilesApi.h" />
+    <ClInclude Include="sdk\include\ConfigApi.h" />
+    <ClInclude Include="sdk\include\DatApi.h" />
+    <ClInclude Include="sdk\include\SavApi.h" />
+    <ClInclude Include="src\Game\Addresses\Saves.h" />
     <ClInclude Include="src\Api\CtrlsApi.h" />
     <ClInclude Include="src\Api\PlayerApi.h" />
     <ClInclude Include="src\Api\SoundApi.h" />
@@ -213,6 +220,9 @@
     <ClCompile Include="src\Api\MmdApi.cpp" />
     <ClCompile Include="src\Api\CameraApi.cpp" />
     <ClCompile Include="src\Api\FilesApi.cpp" />
+    <ClCompile Include="src\Api\ConfigApi.cpp" />
+    <ClCompile Include="src\Api\DatApi.cpp" />
+    <ClCompile Include="src\Api\SavApi.cpp" />
     <ClCompile Include="src\Api\ParticlesApi.cpp" />
     <ClCompile Include="src\Api\CtrlsApi.cpp" />
     <ClCompile Include="src\Api\PlayerApi.cpp" />

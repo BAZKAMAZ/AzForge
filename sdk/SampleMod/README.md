@@ -1,176 +1,164 @@
 # The SampleMod console
 
-Start a level, open the console and type. Most print something useful with no arguments at all —
-`cellsweep` is the one exception, it writes.
+Nine commands over the config file, the saves and what a level remembers. Open the console and type.
+Every one of them prints its own usage with no arguments.
+
+Most want a level being played. `cfg` and `slot` are the two that answer from the menu as well.
 
 ## Start here
 
 ```
-roomtex
-panel
-block
+cfg
+scores
+prog
+slot
 ```
 
-The first says which stone this room is made of. The second puts a panel on the screen — if you can
-see it, the 2D calls work. The third prints the whole level file as a tree.
+Four counts: how many config keys, how many scores and castles, how many palaces are open, and which
+save slots hold a game.
 
-## The room's own textures
-
-`roomtex [room]` — no number means the room you are standing in.
-
-It prints the id, the path and the size of each:
-
-```
-roomtex
-    roomtex: $wall_tex is <id> <texture>, <w>x<h>
-    roomtex: $floor_tex is <id> <texture>, <w>x<h>
-```
-
-These are the objects the game is drawing with, not a second copy loaded by name. Use them when you
-add geometry that has to match the room.
-
-## Drawing in 2D
+## The config file
 
 | Type this | And you get |
 | --- | --- |
-| `panel` | the panel appears — a rect, a bar, a line of text, two sprites |
-| `panel` | again, and it is gone |
-
-**Everything 2D is in 640x480**, whatever your window is. Not pixels. `Render::GetViewport` gives
-the real size when you want pixels.
-
-## Texture handles
-
-`texhandle [n]` — walks texture `n` out to the game's numbering and back.
+| `cfg` | how many keys there are |
+| `cfg list` | every one, with its value |
+| `cfg ed_enable` | that key: value, number, default, flags |
+| `cfg ed_enable 1` | set it — and the in-game level editor comes up |
+| `cfg mymod_speed 2.5` | a key the game never had; it is added and will be saved |
+| `cfgsave` | write `Azangara.cfg` now instead of at quit |
 
 ```
-texhandle 12
-    texhandle: 12 '<name>' is id <id>, the game calls it 0x<pointer>, and back is <id> - the same
+cfg mymod_speed 2.5
+    cfg: 'mymod_speed' is new, added as "2.5" and will be saved
+cfgsave
+    cfgsave: written - look in Azangara.cfg
 ```
 
-The words to look for at the end are **the same**. Anything else means the round trip lost it.
+Open the file and the line is there. Calling `Add` on every start is safe: a key already present
+keeps whatever the player set.
 
-You need this when a draw handler tells you which texture the game is using: it says so in the
-game's numbering, and everything else in the API wants an `AmodTextureId`.
+## The leaderboard
 
-## Music
+`scores.dat`. Entries are grouped by castle, so the index is a walk across all of them.
 
 | Type this | And you get |
 | --- | --- |
-| `mus` | what is playing right now |
-| `mus music/light3.ogg` | that track, faded in over whatever was playing |
-| `mus music/light3.ogg cut` | the same, cut in with no fade |
-| `mus stop` | silence |
+| `scores` | the count, and which level each castle is for |
+| `scores list` | every entry, and whether the next save keeps it |
+| `scores add levels/level_t.txt Bob 25000` | a new one |
+| `scores test` | writes name and points, reads them back, puts them back |
+| `scores remove 0` | drops one |
+| `scores save` | write `scores.dat` now |
 
-Any `.ogg` under `music/` works, and so does one your mod serves for a path that does not exist on
-disk — see `fileserve`.
+**The level is a path, not a name.** `scores` with no arguments prints the ones the table knows —
+copy one from there. `levels/level_t.txt`, not `level_t`.
 
-## Reading game files
+## Palaces
 
-`fileread <path>` reads exactly what the game would read, out of `data.pak` or off the disk.
-
-```
-fileread levels/orange/002.room
-    fileread: 'levels/orange/002.room' is 336807 byte(s), starting 4d 52 05 00 a7 23 05 00
-```
-
-`block [path]` reads a file and prints it as a tree. With no path it takes the level you are in.
-
-Nested blocks are indented and braced, so what comes back reads like the file it came from:
-
-```
-block
-    block: levels/level_orange.txt
-    $header
-    {
-      $next_level "levels/bonus_orange.txt"
-      $music "music/light3.ogg"
-      ...
-    }
-    $rooms
-    {
-      $room
-      {
-        $room_file "levels/orange/002.room"
-        $floor_tex "textures/rooms/orange/01_floor.bmp"
-        ...
-```
-
-```
-block levels/orange/002_ctrl.txt
-block scripts/menu_cfg.txt
-```
-
-
-## Answering for a file
-
-`fileserve` puts bytes in front of the game's own copy, in memory only
+`packs.sav` — the levels the player has opened, by menu id.
 
 | Type this | And you get |
 | --- | --- |
-| `fileserve` | every path this mod is currently answering for |
-| `fileserve some/path.txt hello` | that path now reads as `hello`, for the game too |
-| `fileserve some/path.txt` | the game's own copy back |
+| `prog` | how many are open, and which pack |
+| `prog list` | their ids |
+| `prog open ID_CTRLY_GREEN` | opened |
+| `prog close ID_CTRLY_GREEN` | closed, and blocked from reopening |
+| `prog test` | Add, GetId, SetId, Remove, each read back — on ids of its own |
+| `prog save` | write `packs.sav` now |
 
-```
-fileserve levels/mine.txt hello
-    fileserve: 'levels/mine.txt' now answers with 5 byte(s), and reads back as 5
+The button on the CASTLES screen is set when that screen is built, so **leave and come back** to see
+a change.
 
-fileread levels/mine.txt
-    fileread: 'levels/mine.txt' is 5 byte(s), starting 68 65 6c 6c 6f ...
-```
+Closing needs one more thing to stick across a restart: the screen reopens everything listed in
+`$enabled_castles` in `scripts/menu_std_new.txt` every time it is built. Take the id out of that list,
+or have your mod call `Progress::Block` in `AmodInit` — the block itself does not survive a restart.
 
-`fileread` there is going through the same door the game uses, and getting the mod's answer rather
-than a file — there is no `levels/mine.txt` anywhere on disk. That is the whole point: a mod can
-replace any room, script or texture the game asks for without touching `data.pak`.
+## Saved games
 
-## The five spare bytes in every cell
-
-A cell of the room grid is eight bytes and the game reads one of them. Three come out of the file;
-**the five from `AMOD_CELL_FREE_FIRST` are yours**, they already ride inside the `.room`, and
-nothing in the game will touch them.
+One file a slot, `saves/saveNNN.sav`.
 
 | Type this | And you get |
 | --- | --- |
-| `cellbyte 20 14` | all eight bytes of that cell, the game's three shown apart from your five |
-| `cellbyte 20 14 1 10` | free byte 1 of that cell set to 10, and read straight back |
-| `cellsweep 7` | free byte 0 of every cell in the room set to 7 |
-| `cellcheck 7` | how many cells still hold it |
+| `slot` | the slots that hold a game, with their name and level |
+| `slot save 1 test` | this game written to slot 1 |
+| `slot load 1` | that game back |
+| `slot drop 1` | the file deleted |
 
-The pair that matters:
+**`slot save` needs a level being played.** From the menu there is nothing to save, and the command
+says so rather than leaving a half-written file.
 
-```
-cellsweep 7
-    cellsweep: 1160 cell(s) marked with 7, 0 did not hold it
-```
+## A mod's own state in a save
 
-now walk out of the room and back, then
+`quest` keeps a step and a note, and they ride inside the game's own save file.
 
 ```
-cellcheck 7
-    cellcheck: 1160 of 1160 cell(s) still hold 7
+quest found the key
+    quest: step 1, "found the key"
+slot save 1 test
+[restart the game]
+slot load 1
+    quest: slot 1 gave back step 1, "found the key"
 ```
 
-If the second number holds after a room change, the grid is a place your mod can keep things.
+A mod's bytes go after everything the game wrote, where the game never looks — so a save with them
+still loads in a game with no loader at all.
+
+## What a level remembers
+
+`chg` is the same idea by name and value, and AzForge writes it into the slot for you.
+
+| Type this | And you get |
+| --- | --- |
+| `chg` | every remembered change, with the level it belongs to |
+| `chg door_7` | what that one stands at |
+| `chg door_7 1` | set it on the level being played |
+
+It is kept per slot and handed back before the level is drawn. Applying it is your mod's — only your
+mod knows that `door_7` is a particular ctrl in a particular room.
+
+`thing` is the other half: the records the game itself saves.
+
+| Type this | And you get |
+| --- | --- |
+| `thing` | this room's records, its own line, and the bytes the whole level takes |
+| `thing 3 1` | record 3 set — save the slot and it comes back changed |
+
+```
+thing
+    thing: room 8 keeps 16, and takes 18 byte(s) in a save
+       3  tag 9    1 byte(s)  1
+      15  tag 10   1 byte(s)  1
+      room line: saved, state 1, extra yes (116)
+    thing: the level section takes 343 byte(s) of things and lines, over 16 room(s)
+```
+
+Tags 2, 9, 10 and 11 are saved; anything else is not, and shows `0 byte(s)`.
+
+## The level statistic
+
+The eight pairs the end-of-level screen turns into points.
+
+| Type this | And you get |
+| --- | --- |
+| `stats` | all eight, got and total |
+| `stats monsters 3` | that counter set |
+
+`crystals`, `bonuses`, `super`, `monsters`, `light`, `dark`, `secret`, `eighth`. The first seven are
+the game's own names, out of `$percent_str` in a statistic script. The eighth is scored and named
+nowhere.
+
+Set one and both the end-of-level screen and the next save follow it.
 
 ## What each one is really testing
 
 | Command | The call behind it |
 | --- | --- |
-| `roomtex` | `World::WallTexture`, `World::FloorTexture` |
-| `texhandle` | `Textures::ToGame`, `Textures::FromGame` |
-| `panel` | `Render::Rect`, `Render::Sprite`, `Render::Text` with an align |
-| `mus` | `Sound::PlayMusic`, `StopMusic`, `CurrentMusic` |
-| `block` | `Data::ParseFile` and the `Data::Block` walk |
-| `fileread`, `fileserve` | `Files::Read`, `Files::Serve`, `Files::Clear` |
-| `cellbyte`, `cellsweep`, `cellcheck` | `World::CellRecord`, `CellByte`, `SetCellByte` |
-
-## One trap worth knowing
-
-`argv` points into the **game's own console scratch**. Anything you ask the game for may write over
-it. Copy what you need before the first call out — every command here that takes a path does:
-
-```cpp
-char path[260] = {};
-Keep(path, sizeof(path), argv[1]);
-```
+| `cfg`, `cfgsave` | `Config::Has`, `Get`, `Set`, `Add`, `Save` |
+| `scores` | `Scores::Get`, `Add`, `SetName`, `SetPoint`, `Remove`, `Save` |
+| `prog` | `Progress::Open`, `Close`, `SetId`, `Remove`, `Block`, `Save` |
+| `slot` | `Progress::SlotExists`, `SlotName`, `SlotLevel`, `SaveSlot`, `LoadSlot`, `DeleteSlot` |
+| `quest` | `Progress::OnSlotSave`, `OnSlotLoad`, `WriteSlotData` |
+| `chg` | `Progress::SetLevelChange`, `GetLevelChange`, `LevelChangeAt` |
+| `thing` | `World::GetRoomThing`, `SetRoomThing`, `GetRoomMemory`, `RoomSavedSize` |
+| `stats` | `World::GetLevelStats`, `SetLevelStats` |

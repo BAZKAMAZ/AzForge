@@ -42,6 +42,28 @@ namespace Forge
         // Console: Config** @ kConfig, cmds @ +0x08; Write __cdecl; Register __thiscall; handler __cdecl(argc,argv)
         constexpr uintptr_t kConfig = 0x0067A0D8;
         constexpr uintptr_t kConfigCommandsOffset = 0x08;
+
+        // Azangara.cfg written by Config_Write: walks config+0x04 down +0x18 links and prints
+        // `name "value"`. A mod-registered cvar shows for free if its flags allow it.
+        constexpr uintptr_t kConfigCvarsOffset = 0x04;
+        constexpr uintptr_t kConfigRegisterCvar = 0x00423590; // __thiscall (config, name, default, flags)
+        constexpr uintptr_t kCvarFind = 0x004231C0;           // __thiscall (config, name) -> cvar
+        constexpr uintptr_t kCvarSetString = 0x00424890;      // __thiscall (cvar, text)
+        constexpr uintptr_t kCvarSetFloat = 0x00424930;       // __thiscall (cvar, float)
+        constexpr uintptr_t kConfigWrite = 0x00423060;        // __thiscall (config, path or null, force)
+
+        // nsVar (0x1C bytes). +0x10 = default, +0x14 = live value. Config_Write prints +0x14.
+        constexpr size_t kCvarSize = 0x1C;
+        constexpr uintptr_t kCvarNameOffset = 0x04;
+        constexpr uintptr_t kCvarFlagsOffset = 0x08;
+        constexpr uintptr_t kCvarFloatOffset = 0x0C;
+        constexpr uintptr_t kCvarDefaultOffset = 0x10;
+        constexpr uintptr_t kCvarValueTextOffset = 0x14;
+        constexpr uintptr_t kCvarNextOffset = 0x18;
+
+        // Config_Write: bit 1 says write me, bit 4 says never
+        constexpr uint32_t kCvarArchiveFlag = 0x01;
+        constexpr uint32_t kCvarNeverWriteFlag = 0x04;
         constexpr uintptr_t kGameConsoleWrite = 0x004220C0;
         constexpr uintptr_t kCmdRegister = 0x00423990;
         constexpr uintptr_t kConsoleExecute = 0x004237B0;

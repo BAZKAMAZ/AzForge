@@ -309,6 +309,27 @@
     <ClInclude Include="src\Api\FilesApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\ConfigApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ConfigApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\DatApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\SavApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\DatApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\SavApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Saves.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -469,6 +490,15 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\FilesApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ConfigApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\DatApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\SavApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

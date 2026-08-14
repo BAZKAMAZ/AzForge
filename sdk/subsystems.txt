@@ -2,6 +2,7 @@
 bonuses
 box_menu
 camera
+config
 console
 ctrls
 files
@@ -16,7 +17,9 @@ monsters
 objects_menu
 particles
 player
+progress
 render
+scores
 sound
 textures
 world

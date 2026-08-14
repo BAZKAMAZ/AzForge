@@ -9,6 +9,9 @@
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
+#include "src/Api/ConfigApi.h"
+#include "src/Api/DatApi.h"
+#include "src/Api/SavApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
@@ -160,6 +163,9 @@ namespace Forge
         Subsystems::Record("camera", CameraApi::Install());
         Subsystems::Record("particles", ParticlesApi::Install());
         Subsystems::Record("files", FilesApi::Install());
+        Subsystems::Record("config", ConfigApi::Install());
+        Subsystems::Record("scores", DatApi::Install());
+        Subsystems::Record("progress", SavApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
         Subsystems::Record("input", InputApi::Install());
 

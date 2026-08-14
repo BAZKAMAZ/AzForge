@@ -11,6 +11,9 @@
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
+#include "src/Api/ConfigApi.h"
+#include "src/Api/DatApi.h"
+#include "src/Api/SavApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
@@ -271,6 +274,9 @@ namespace Forge
         CameraApi::ForgetMod(&m_context);
         ParticlesApi::ForgetMod(&m_context);
         FilesApi::ForgetMod(&m_context);
+        ConfigApi::ForgetMod(&m_context);
+        DatApi::ForgetMod(&m_context);
+        SavApi::ForgetMod(&m_context);
 
         // Detours last — they point into the DLL about to go.
         InteropApi::ForgetMod(&m_context);
