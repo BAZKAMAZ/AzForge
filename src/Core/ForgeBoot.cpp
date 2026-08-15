@@ -17,6 +17,7 @@
 #include "src/Api/SoundApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
+#include "src/Api/LevelEditorApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
@@ -168,6 +169,7 @@ namespace Forge
         Subsystems::Record("progress", SavApi::Install());
         Subsystems::Record("interop", InteropApi::Install());
         Subsystems::Record("input", InputApi::Install());
+        Subsystems::Record("level_editor", LevelEditorApi::Install());
 
         ModManagerApi::Install();
         Subsystems::Record("block_expression", true);
@@ -212,6 +214,7 @@ namespace Forge
         WorldApi::Uninstall();
         InteropApi::Uninstall();
         InputApi::Uninstall();
+        LevelEditorApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
         ModState::Clear();

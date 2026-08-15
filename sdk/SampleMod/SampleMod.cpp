@@ -5,561 +5,643 @@
 
 using namespace Amod;
 
-void Keep(char* out, int capacity, const char* text)
+float g_cursorX = 320.0f;
+float g_cursorY = 240.0f;
+
+int g_stopWorld = 1;
+int g_stopRender = 1;
+int g_stopInput = 1;
+int g_suppressGame = 1;
+
+int g_wanted = 0;
+int g_gameEditorWas = 0;
+int g_worldPhaseSeen = 0;
+
+void __cdecl EditFrame(float seconds, void*)
 {
-    int at = 0;
+    const float step = seconds * 240.0f;
 
-    while (text != nullptr && text[at] != '\0' && at < capacity - 1)
-    {
-        out[at] = text[at];
-        ++at;
-    }
-
-    out[at] = '\0';
+    g_cursorX += Input::IsDown(0x27) ? step : 0.0f;
+    g_cursorX -= Input::IsDown(0x25) ? step : 0.0f;
+    g_cursorY += Input::IsDown(0x28) ? step : 0.0f;
+    g_cursorY -= Input::IsDown(0x26) ? step : 0.0f;
 }
 
-void __cdecl ConfigCommand(int argc, const char** argv, void*)
+void __cdecl EditDrawWorld(void*)
 {
-    if (argc < 2)
-    {
-        Console::Printf("cfg: %d key(s); 'cfg <name>' reads one, 'cfg <name> <value>' writes it\n",
-            Config::Count());
-        return;
-    }
+    g_worldPhaseSeen = 1;
+}
 
-    // The console's words are the game's own scratch, and asking the game anything overwrites them
-    char name[128] = {};
-    Keep(name, sizeof(name), argv[1]);
+void __cdecl EditDraw(void*)
+{
+    char line[128] = {};
 
-    if (strcmp(name, "list") == 0)
+    if (g_suppressGame != 0)
     {
-        for (int at = 0; at < Config::Count(); ++at)
+        Render::Rect(0.0f, 0.0f, 640.0f, 480.0f, 0xC0101018);
+
+        for (float x = 0.0f; x <= 640.0f; x += 40.0f)
         {
-            const char* const key = Config::NameAt(at);
-            Console::Printf("  %-24s \"%s\"\n", key, Config::Text(key));
+            Render::Rect(x, 0.0f, 1.0f, 480.0f, 0x40FFFFFF);
         }
-        return;
+
+        for (float y = 0.0f; y <= 480.0f; y += 40.0f)
+        {
+            Render::Rect(0.0f, y, 640.0f, 1.0f, 0x40FFFFFF);
+        }
+
+        Render::Rect(g_cursorX - 6.0f, g_cursorY - 6.0f, 12.0f, 12.0f, 0xFFFFCC00);
+        Render::Text(350.0f, 56.0f, "arrows move the marker", 0.6f, 0xFF9999AA);
     }
 
-    if (argc > 2)
-    {
-        char value[260] = {};
-        Keep(value, sizeof(value), argv[2]);
+    snprintf(line, sizeof(line), "edit: world %s, render %s, input %s, game editor %s",
+        g_stopWorld != 0 ? "stopped" : "running",
+        g_stopRender != 0 ? "stopped" : "drawn",
+        g_stopInput != 0 ? "stopped" : "acting",
+        g_suppressGame != 0 ? "silent" : "showing");
 
-        // Added rather than refused when it is new, which is the whole point of the command
-        if (!Config::Has(name))
+    Render::Text(16.0f, 16.0f, line, 0.6f, 0xFFFFFFFF);
+    Render::Text(16.0f, 36.0f, g_worldPhaseSeen != 0
+        ? "world phase reached" : "world phase silent - the render is stopped", 0.6f, 0xFF9999AA);
+
+    g_worldPhaseSeen = 0;
+}
+
+void __cdecl EditCommand(int argc, const char** argv, void*)
+{
+    if (argc > 1)
+    {
+        if (strcmp(argv[1], "world") == 0) { g_stopWorld = g_stopWorld != 0 ? 0 : 1; }
+        else if (strcmp(argv[1], "render") == 0) { g_stopRender = g_stopRender != 0 ? 0 : 1; }
+        else if (strcmp(argv[1], "input") == 0) { g_stopInput = g_stopInput != 0 ? 0 : 1; }
+        else if (strcmp(argv[1], "game") == 0) { g_suppressGame = g_suppressGame != 0 ? 0 : 1; }
+        else
         {
-            Config::Add(name, value, AMOD_CONFIG_SAVED);
-            Console::Printf("cfg: '%s' is new, added as \"%s\" and will be saved\n", name, value);
+            Console::Print("edit: world | render | input | game, each one a toggle\n");
             return;
         }
 
-        Console::Printf(Config::Set(name, value)
-            ? "cfg: '%s' is now \"%s\"\n" : "cfg: '%s' would not take \"%s\"\n", name, value);
+        AmodEditorMode mode = {};
+        mode.structSize = sizeof(mode);
+        mode.stopWorld = g_stopWorld;
+        mode.stopRender = g_stopRender;
+        mode.stopInput = g_stopInput;
+        mode.suppressGame = g_suppressGame;
+
+        LevelEditor::SetMode(mode);
+
+        Console::Printf("edit: world %s, render %s, input %s, game editor %s\n",
+            g_stopWorld != 0 ? "stops" : "runs",
+            g_stopRender != 0 ? "stops" : "draws",
+            g_stopInput != 0 ? "stops" : "acts",
+            g_suppressGame != 0 ? "silent" : "shows");
         return;
     }
 
-    AmodConfigKey key = {};
+    g_wanted = g_wanted != 0 ? 0 : 1;
 
-    if (!Config::Get(name, key))
-    {
-        Console::Printf("cfg: there is no '%s'\n", name);
-        return;
-    }
-
-    Console::Printf("cfg: %s = \"%s\" (%.3f), default \"%s\", flags 0x%02X%s\n", key.name, key.value,
-        key.number, key.fallback, key.flags,
-        (key.flags & AMOD_CONFIG_SAVED) != 0 ? " - written to the .cfg" : " - this run only");
+    Console::Printf(g_wanted != 0
+        ? "edit: entered\n"
+        : "edit: left - the backdrop and the key capture keep going\n");
 }
 
-// Proves the round trip: the file on disk is what Config_Write printed, not a copy of anything
-void __cdecl ConfigSaveCommand(int, const char**, void*)
+int g_groupSample = -1;
+int g_brushWall = -1;
+int g_brushCross = -1;
+int g_brushPickup = -1;
+
+int __cdecl PaintWall(int column, int row, void*)
 {
-    Console::Printf(Config::Save()
-        ? "cfgsave: written - look in Azangara.cfg\n" : "cfgsave: the config object is not up\n");
+    Console::Printf("brush: painted %d,%d\n", column, row);
+    return 1;
 }
 
-// scores.dat, grouped by castle rather than kept in one run
-void __cdecl ScoresCommand(int argc, const char** argv, void*)
+int __cdecl PaintCross(int column, int row, void*)
 {
-    if (argc < 2)
+    for (int y = row - 1; y <= row + 1; ++y)
     {
-        Console::Printf("scores: %d entr(ies) in %d castle(s)\n", Scores::Count(),
-            Scores::CastleCount());
-
-        int shown = 0;
-
-        for (int at = 0; at < Scores::Count() && shown < 16; ++at)
+        for (int x = column - 1; x <= column + 1; ++x)
         {
-            AmodScoreEntry entry = {};
+            LevelEditor::SetGridCell(x, y, 'W');
+        }
+    }
 
-            if (!Scores::Get(at, entry) || entry.inCastle != 0)
+    return 0;
+}
+
+void __cdecl DrawPickup(float x, float y, float size, void*)
+{
+    Render::Rect(x + size * 0.5f, y + size * 0.5f, size * 3.0f, size * 3.0f, 0xFF33CC66);
+}
+
+const char* __cdecl SaveWall(int roomX, int roomY, void*)
+{
+    static char block[256] = {};
+
+    snprintf(block, sizeof(block),
+        "$sample_block \n{\n\t$room %d %d\n\t$note \"written by SampleMod\"\n}\n\n", roomX, roomY);
+
+    return block;
+}
+
+const char* __cdecl SavePickup(int roomX, int roomY, void*)
+{
+    static char blocks[4096] = {};
+
+    int columns = 0;
+    int rows = 0;
+    int at = 0;
+
+    blocks[0] = '\0';
+
+    if (!LevelEditor::GridSize(columns, rows))
+    {
+        return nullptr;
+    }
+
+    for (int row = 0; row < rows; ++row)
+    {
+        for (int column = 0; column < columns; ++column)
+        {
+            // snprintf answers with what it wanted to write, so the room left is checked first and
+            // never derived from its return
+            const int left = static_cast<int>(sizeof(blocks)) - at;
+
+            if (LevelEditor::GetGridCell(column, row, AMOD_BRUSH_ENTITIES) != 'X' || left <= 128)
             {
                 continue;
             }
 
-            Console::Printf("  castle %d: %d entr(ies), level \"%s\"\n", entry.castle,
-                Scores::CastleEntryCount(entry.castle), entry.level);
-            ++shown;
+            at += snprintf(blocks + at, left,
+                "$bonus\n{\n\t$room_pos %i %i\n\t$pos %i %i\n\t$name \"sample\"\n}\n\n",
+                roomX, roomY, column, row);
         }
-
-        Console::Print("scores: list | add <level> <name> <points> | save\n");
-        return;
     }
 
-    char what[64] = {};
-    Keep(what, sizeof(what), argv[1]);
-
-    if (strcmp(what, "list") == 0)
-    {
-        for (int at = 0; at < Scores::Count(); ++at)
-        {
-            AmodScoreEntry entry = {};
-
-            if (Scores::Get(at, entry))
-            {
-                // 'kept' or 'DROPPED': an entry never written on is thrown away by the next save
-                Console::Printf("  %2d  castle %d.%-2d  %-16s %-24s %8d  %.1fs  %s\n", at,
-                    entry.castle, entry.inCastle, entry.name, entry.level, entry.score, entry.time,
-                    entry.filled != 0 ? "kept" : "DROPPED on save");
-            }
-        }
-        return;
-    }
-
-    if (strcmp(what, "save") == 0)
-    {
-        Console::Printf(Scores::Save()
-            ? "scores: written to scores.dat\n" : "scores: the table is not up\n");
-        return;
-    }
-
-    if (strcmp(what, "add") == 0 && argc > 4)
-    {
-        char level[64] = {};
-        char name[64] = {};
-        Keep(level, sizeof(level), argv[2]);
-        Keep(name, sizeof(name), argv[3]);
-
-        const int points = atoi(argv[4]);
-        const int castle = Scores::CastleOfLevel(level);
-        const int at = Scores::Add(level, name, 0.0f, points);
-
-        Console::Printf(at >= 0
-            ? "scores: '%s' went in at %d, castle %d, with %d\n"
-            : "scores: refused - '%s' (%d), castle %d, %d beat nothing there\n",
-            name, at, castle, points);
-
-        // Said with both strings side by side, so a mismatch is read rather than guessed at
-        if (at < 0)
-        {
-            Console::Printf("scores: %s\n", LastError());
-            Console::Printf("scores: you asked for \"%s\"\n", level);
-
-            AmodScoreEntry first = {};
-
-            if (Scores::Get(0, first))
-            {
-                Console::Printf("scores: the table holds e.g. \"%s\" (%d points there)\n",
-                    first.level, first.score);
-            }
-        }
-        return;
-    }
-
-    if (strcmp(what, "test") == 0)
-    {
-        if (Scores::Count() <= 0)
-        {
-            Console::Print("scores: the table is empty, so there is nothing to write over\n");
-            return;
-        }
-
-        AmodScoreEntry before = {};
-        Scores::Get(0, before);
-
-        char keptName[64] = {};
-        Keep(keptName, sizeof(keptName), before.name);
-
-        const int keptPoints = before.score;
-
-        const bool named = Scores::SetName(0, "AzForgeTest");
-        const bool sameName = strcmp(Scores::GetName(0), "AzForgeTest") == 0;
-
-        const bool pointed = Scores::SetPoint(0, 12345);
-        const bool samePoint = Scores::GetPoint(0) == 12345;
-
-        Console::Printf("scores: SetName %s, GetName %s\n", named ? "ok" : "REFUSED",
-            sameName ? "matches" : "DOES NOT MATCH");
-        Console::Printf("scores: SetPoint %s, GetPoint %s (%d)\n", pointed ? "ok" : "REFUSED",
-            samePoint ? "matches" : "DOES NOT MATCH", Scores::GetPoint(0));
-
-        // Put back what was there, so the test costs the player nothing
-        Scores::SetName(0, keptName);
-        Scores::SetPoint(0, keptPoints);
-
-        Console::Printf("scores: put back \"%s\" %d; Remove is not tested here because it drops a "
-            "real entry - use 'scores remove <n>'\n", keptName, keptPoints);
-        return;
-    }
-
-    if (strcmp(what, "remove") == 0 && argc > 2)
-    {
-        const int index = atoi(argv[2]);
-        const int was = Scores::Count();
-
-        Console::Printf(Scores::Remove(index)
-            ? "scores: %d dropped, %d left (was %d)\n" : "scores: %d would not drop (%d, was %d)\n",
-            index, Scores::Count(), was);
-        return;
-    }
-
-    Console::Print("scores: list | add <level> <name> <points> | test | remove <n> | save\n");
+    return at != 0 ? blocks : nullptr;
 }
 
-// packs.sav, the levels the player has opened
-void __cdecl ProgressCommand(int argc, const char** argv, void*)
+AmodTextureId g_brushTexture = AMOD_INVALID_TEXTURE;
+
+void __cdecl BrushCommand(int argc, const char** argv, void*)
 {
-    if (argc < 2)
+    if (argc > 1 && strcmp(argv[1], "add") == 0)
     {
-        Console::Printf("prog: %d level(s) open, pack %d of %d; 'prog list', 'prog open <id>', "
-            "'prog close <id>', 'prog save'\n",
-            Progress::Count(), Progress::Current(), Progress::PackCount());
-        return;
-    }
-
-    char what[64] = {};
-    Keep(what, sizeof(what), argv[1]);
-
-    if (strcmp(what, "list") == 0)
-    {
-        for (int at = 0; at < Progress::Count(); ++at)
+        if (g_brushWall >= 0)
         {
-            Console::Printf("  %2d  %s\n", at, Progress::NameAt(at));
-        }
-        return;
-    }
-
-    if (strcmp(what, "save") == 0)
-    {
-        Console::Printf(Progress::Save()
-            ? "prog: written to packs.sav\n" : "prog: the pack list is not up\n");
-        return;
-    }
-
-    if (argc > 2)
-    {
-        char id[260] = {};
-        Keep(id, sizeof(id), argv[2]);
-
-        if (strcmp(what, "open") == 0)
-        {
-            Console::Printf("prog: '%s' is open, at %d\n", id, Progress::Open(id));
+            Console::Print("brush: already added\n");
             return;
         }
-        if (strcmp(what, "close") == 0)
-        {
-            Console::Printf(Progress::Close(id)
-                ? "prog: '%s' is closed again\n" : "prog: '%s' was not open\n", id);
-            return;
-        }
-    }
 
-    if (strcmp(what, "test") == 0)
-    {
-        const int was = Progress::Count();
+        g_groupSample = LevelEditor::AddGroup("Sample", AMOD_BRUSH_GEOMETRY);
 
-        // Add and Remove and SetId and GetId, each read back rather than believed
-        const int at = Progress::Add("AZFORGE_TEST_LEVEL");
-        const bool added = at >= 0 && Progress::Count() == was + 1;
-        const bool found = Progress::IsOpen("AZFORGE_TEST_LEVEL");
+        const int group = g_groupSample >= 0 ? g_groupSample : AMOD_BRUSH_GEOMETRY;
 
-        Console::Printf("prog: Add %s at %d, count %d -> %d\n", added ? "ok" : "FAILED", at, was,
-            Progress::Count());
-        Console::Printf("prog: IsOpen %s, GetId(%d) = \"%s\"\n", found ? "yes" : "NO", at,
-            Progress::GetId(at));
+        AmodBrushDesc wall = {};
+        wall.structSize = sizeof(wall);
+        wall.label = "Sample Wall";
+        wall.cell = 'W';
+        wall.key = '1';
+        wall.group = group;
+        wall.texture = g_brushTexture;
+        wall.paint = &PaintWall;
+        wall.kind = AMOD_BRUSH_KIND_CTRL;
+        wall.save = &SaveWall;
 
-        const bool renamed = at >= 0 && Progress::SetId(at, "AZFORGE_TEST_RENAMED");
-        const bool sameId = at >= 0 && strcmp(Progress::GetId(at), "AZFORGE_TEST_RENAMED") == 0;
+        g_brushWall = LevelEditor::AddBrush(wall);
+        g_brushCross = LevelEditor::AddBrush("Wall 3x3", 'W', '2', group, &PaintCross);
+        
+        AmodBrushDesc pickup = {};
+        pickup.structSize = sizeof(pickup);
+        pickup.label = "Sample Pickup";
+        pickup.cell = 'X';
+        pickup.key = '5';
+        pickup.group = AMOD_BRUSH_ENTITIES;
+        pickup.kind = AMOD_BRUSH_KIND_BONUS;
+        pickup.draw = &DrawPickup;
+        pickup.save = &SavePickup;
 
-        Console::Printf("prog: SetId %s, GetId %s\n", renamed ? "ok" : "REFUSED",
-            sameId ? "matches" : "DOES NOT MATCH");
+        g_brushPickup = LevelEditor::AddBrush(pickup);
 
-        const bool dropped = at >= 0 && Progress::Remove(at);
-
-        Console::Printf("prog: Remove %s, count back to %d (was %d)%s\n", dropped ? "ok" : "FAILED",
-            Progress::Count(), was, Progress::Count() == was ? "" : " - MISMATCH");
-
-        // Remove blocks the id it dropped, and the test's id must not stay blocked
-        Progress::Block("AZFORGE_TEST_RENAMED", false);
-        Progress::Block("AZFORGE_TEST_LEVEL", false);
-
-        Console::Print("prog: nothing of the game's was touched - the test used ids of its own\n");
+        Console::Printf(g_brushWall >= 0
+            ? "brush: group %d added - M walks past the game's two, B picks\n"
+            : "brush: would not be added (group %d)\n", g_groupSample);
         return;
     }
 
-    Console::Print("prog: list | open <id> | close <id> | test | save\n");
+    if (argc > 1 && strcmp(argv[1], "remove") == 0)
+    {
+        LevelEditor::RemoveBrush(g_brushWall);
+        LevelEditor::RemoveBrush(g_brushCross);
+        LevelEditor::RemoveBrush(g_brushPickup);
+        LevelEditor::RemoveGroup(g_groupSample);
+
+        g_brushWall = -1;
+        g_brushCross = -1;
+        g_brushPickup = -1;
+        g_groupSample = -1;
+
+        Console::Print("brush: removed\n");
+        return;
+    }
+
+    int currentGroup = -1;
+    int currentIndex = -1;
+
+    LevelEditor::GetCurrentBrush(currentGroup, currentIndex);
+
+    for (int group = 0; group < LevelEditor::GroupCount(); ++group)
+    {
+        Console::Printf("brush: group %d '%s' paints grid %d, holds %d\n", group,
+            LevelEditor::GroupName(group), LevelEditor::GroupLayer(group),
+            LevelEditor::BrushCount(group));
+
+        for (int at = 0; at < LevelEditor::BrushCount(group); ++at)
+        {
+            AmodBrushInfo info = {};
+
+            if (!LevelEditor::GetBrush(group, at, info))
+            {
+                continue;
+            }
+
+            Console::Printf("  %s%2d  cell '%c'  key '%c'  %08X  %-20s%s\n",
+                (group == currentGroup && at == currentIndex) ? "->" : "  ",
+                at, info.cell != 0 ? info.cell : ' ', info.key != 0 ? info.key : ' ',
+                info.colour, info.label, info.isMine != 0 ? "  (mine)" : "");
+        }
+    }
+
+    Console::Print("brush: 'brush add' and 'brush remove'\n");
 }
 
-void __cdecl SlotCommand(int argc, const char** argv, void*)
+void __cdecl RoomCreated(int x, int y, void*)
 {
-    if (argc < 2)
+    int columns = 0;
+    int rows = 0;
+
+    if (!LevelEditor::GridSize(columns, rows))
     {
-        for (int slot = 0; slot < 10; ++slot)
-        {
-            if (Progress::SlotExists(slot))
-            {
-                // The name is copied before the level is asked for: both come out of one buffer
-                char name[80] = {};
-                Keep(name, sizeof(name), Progress::SlotName(slot));
-
-                Console::Printf("  %d  \"%s\"  on %s\n", slot, name, Progress::SlotLevel(slot));
-            }
-        }
-
-        Console::Print("slot: save <n> <name> | load <n> | drop <n>\n");
         return;
     }
 
-    char what[32] = {};
-    Keep(what, sizeof(what), argv[1]);
+    for (int column = 0; column < columns; ++column)
+    {
+        const int row = column * rows / columns;
 
-    const int slot = argc > 2 ? atoi(argv[2]) : 0;
+        LevelEditor::SetGridCell(column, row, 'W');
+        LevelEditor::SetGridCell(column, rows - 1 - row, 'W');
+    }
 
+    Console::Printf("maze: room %d,%d made and crossed\n", x, y);
+}
+
+void __cdecl RoomLoaded(const AmodRoomFiles* files, void*)
+{
+    const Data::Block root = Data::ParseFile(files->bonuses);
+    int restored = 0;
+
+    if (!root.IsValid())
+    {
+        return;
+    }
+
+    for (int at = 0; at < root.ChildCount(); ++at)
+    {
+        const Data::Block block = root.ChildAt(at);
+
+        if (strcmp(block.Name(), "bonus") != 0 || strcmp(block["name"].Text(), "sample") != 0)
+        {
+            continue;
+        }
+
+        LevelEditor::SetGridCell(static_cast<int>(block["pos"].Number(0)),
+            static_cast<int>(block["pos"].Number(1)), 'X', AMOD_BRUSH_ENTITIES);
+
+        ++restored;
+    }
+
+    root.Free();
+    Console::Printf("maze: room %d,%d loaded, %d pickup(s) put back\n", files->x, files->y, restored);
+}
+
+void __cdecl MazeCommand(int argc, const char** argv, void*)
+{
+    const char* const what = argc > 1 ? argv[1] : "";
+    const int x = argc > 2 ? atoi(argv[2]) : 0;
+    const int y = argc > 3 ? atoi(argv[3]) : 0;
+    const char* const path = argc > 4 ? argv[4] : "rooms/sample.txt";
+
+    if (strcmp(what, "goto") == 0)
+    {
+        if (LevelEditor::SetMazeCursor(x, y)) { Console::Printf("maze: on %d,%d\n", x, y); }
+        else { Console::Printf("maze: goto %d,%d - %s\n", x, y, LastError()); }
+        return;
+    }
+
+    // Grows the maze to reach, and leaves the cursor on the room whether it existed or not
+    if (strcmp(what, "new") == 0)
+    {
+        if (LevelEditor::CreateRoom(x, y)) { Console::Printf("maze: cursor on %d,%d\n", x, y); }
+        else { Console::Printf("maze: new %d,%d - %s\n", x, y, LastError()); }
+        return;
+    }
+
+    if (strcmp(what, "del") == 0)
+    {
+        if (LevelEditor::RemoveRoom(x, y)) { Console::Printf("maze: %d,%d is empty\n", x, y); }
+        else { Console::Printf("maze: del %d,%d - %s\n", x, y, LastError()); }
+        return;
+    }
+
+    if (strcmp(what, "clear") == 0)
+    {
+        if (LevelEditor::ClearRoom(x, y)) { Console::Printf("maze: %d,%d emptied\n", x, y); }
+        else { Console::Printf("maze: clear %d,%d - %s\n", x, y, LastError()); }
+        return;
+    }
+
+    if (strcmp(what, "row") == 0 || strcmp(what, "col") == 0)
+    {
+        const char* const which = what[0] == 'r' ? "row" : "column";
+
+        if (what[0] == 'r' ? LevelEditor::InsertRow(x) : LevelEditor::InsertColumn(x))
+        {
+            Console::Printf("maze: %s inserted before %d\n", which, x);
+        }
+        else
+        {
+            Console::Printf("maze: %s at %d - %s\n", which, x, LastError());
+        }
+        return;
+    }
+
+    // The .txt plus its _ctrls, _monsters and _bonuses - the brushes are asked for their blocks
     if (strcmp(what, "save") == 0)
     {
-        char name[80] = {};
-        Keep(name, sizeof(name), argc > 3 ? argv[3] : "mod");
-
-        Console::Printf(Progress::SaveSlot(slot, name)
-            ? "slot: %d written as \"%s\"\n" : "slot: %d would not be written (\"%s\")\n", slot, name);
+        if (LevelEditor::SaveRoom(x, y, path)) { Console::Printf("maze: %d,%d written to '%s'\n", x, y, path); }
+        else { Console::Printf("maze: save %d,%d - %s\n", x, y, LastError()); }
         return;
     }
 
     if (strcmp(what, "load") == 0)
     {
-        Console::Printf(Progress::LoadSlot(slot)
-            ? "slot: %d loaded\n" : "slot: %d would not load\n", slot);
+        if (LevelEditor::LoadRoom(x, y, path)) { Console::Printf("maze: '%s' is now %d,%d\n", path, x, y); }
+        else { Console::Printf("maze: load '%s' - %s\n", path, LastError()); }
         return;
     }
 
-    if (strcmp(what, "drop") == 0)
+    int columns = 0;
+    int rows = 0;
+    int cursorX = -1;
+    int cursorY = -1;
+
+    if (!LevelEditor::MazeSize(columns, rows))
     {
-        Console::Printf(Progress::DeleteSlot(slot)
-            ? "slot: %d deleted\n" : "slot: %d holds nothing\n", slot);
+        Console::Printf("maze: %s\n", LastError());
         return;
     }
 
-    Console::Print("slot: save <n> <name> | load <n> | drop <n>\n");
-}
+    LevelEditor::GetMazeCursor(cursorX, cursorY);
+    Console::Printf("maze: %dx%d, cursor on %d,%d\n", columns, rows, cursorX, cursorY);
 
-char g_questNote[128] = "nothing yet";
-int g_questStep = 0;
-
-void __cdecl OnSlotSave(int slot, void*)
-{
-    char kept[160] = {};
-    const int size = snprintf(kept, sizeof(kept), "%d|%s", g_questStep, g_questNote);
-
-    Console::Printf("quest: slot %d takes step %d, \"%s\"\n", slot, g_questStep, g_questNote);
-    Progress::WriteSlotData(kept, size + 1);
-}
-
-void __cdecl OnSlotLoad(int slot, const void* bytes, int size, void*)
-{
-    // Told even when there is nothing: a save made before this mod existed reads exactly like that
-    if (bytes == nullptr || size <= 0)
+    // The editor allocates its maze at startup but leaves it 0x0 until a level is loaded into it
+    if (columns <= 0 || rows <= 0)
     {
-        Console::Printf("quest: slot %d holds nothing of this mod's\n", slot);
-        return;
+        Console::Print("maze: empty - 'maze new 0 0' puts the first room in\n");
     }
 
-    char kept[160] = {};
-    Keep(kept, sizeof(kept), static_cast<const char*>(bytes));
-
-    const char* const bar = strchr(kept, '|');
-
-    g_questStep = atoi(kept);
-    Keep(g_questNote, sizeof(g_questNote), bar != nullptr ? bar + 1 : "");
-
-    Console::Printf("quest: slot %d gave back step %d, \"%s\"\n", slot, g_questStep, g_questNote);
-}
-
-void __cdecl LevelChangeCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
+    for (int row = 0; row < rows; ++row)
     {
-        Console::Printf("chg: %d remembered\n", Progress::LevelChangeCount());
+        char line[80] = {};
+        int at = 0;
 
-        for (int at = 0; at < Progress::LevelChangeCount(); ++at)
+        for (int column = 0; column < columns && at < static_cast<int>(sizeof(line)) - 1; ++column)
         {
-            AmodLevelChange held = {};
-
-            if (Progress::LevelChangeAt(at, held))
-            {
-                Console::Printf("  %-28s %-16s = %d\n", held.level, held.name, held.value);
-            }
+            line[at++] = (column == cursorX && row == cursorY) ? '@'
+                : (LevelEditor::HasRoom(column, row) ? '#' : '.');
         }
 
-        Console::Print("chg: <name> <value> sets it on the level being played\n");
-        return;
+        Console::Printf("  %s\n", line);
     }
 
-    AmodWorldLevel level = {};
-
-    if (!World::GetLevel(level) || level.script == nullptr || level.script[0] == '\0')
-    {
-        Console::Print("chg: no level is being played, so there is nothing to remember it against\n");
-        return;
-    }
-
-    // Copied before anything else is asked of the game, which would write over the console's words
-    char script[260] = {};
-    char name[64] = {};
-    Keep(script, sizeof(script), level.script);
-    Keep(name, sizeof(name), argv[1]);
-
-    if (argc < 3)
-    {
-        Console::Printf("chg: %s in %s is %d\n", name, script,
-            Progress::GetLevelChange(script, name, -1));
-        return;
-    }
-
-    const int value = atoi(argv[2]);
-
-    Console::Printf(Progress::SetLevelChange(script, name, value)
-        ? "chg: %s in %s set to %d - 'slot save 1 x' keeps it\n"
-        : "chg: %s in %s would not take %d\n", name, script, value);
+    Console::Print("maze: goto|new|del|clear <x> <y>, row|col <at>, save|load <x> <y> [path]\n");
 }
 
-void __cdecl ThingCommand(int argc, const char** argv, void*)
+const char* __cdecl LevelWrite(const AmodLevelPart* part, void*)
 {
-    const int room = World::CurrentRoom();
+    static char block[512] = {};
 
-    if (argc > 2)
+    if (part->part == AMOD_LEVEL_HEADER)
     {
-        const int index = atoi(argv[1]);
-        const int value = atoi(argv[2]);
+        return "\t$next_level \"\"\n\t$music \"music/light1.ogg\"\n\t$bonus 0\n"
+            "\t$bonus_time 0\n\t$bonus_count 0\n\t$quest_list\n\t{\n\t}\n";
+    }
 
-        AmodRoomThing thing = {};
+    // The parser refuses a level with no $player_start, and the loader will not invent one
+    if (part->part == AMOD_LEVEL_TAIL)
+    {
+        return "$player_start\n{\n\t$room_pos 0 0\n\t$pos 20 14\n}\n\n";
+    }
 
-        if (!World::GetRoomThing(index, thing))
-        {
-            Console::Printf("thing: this room has no %d\n", index);
-            return;
-        }
+    // Per room, which the game's own writer cannot do: it gives every room the same two textures
+    snprintf(block, sizeof(block),
+        "\t\t$floor_tex \"textures/rooms/3_02_floor.jpg\"\n"
+        "\t\t$wall_tex \"textures/rooms/3_01_wall.jpg\"\n\n"
+        "\t\t$active_items \"%s/%03i_ctrls.txt\"\n\n"
+        "\t\t$monsters \"%s/%03i_monsters.txt\"\n"
+        "\t\t$bonuses \"%s/%03i_bonuses.txt\"\n\n"
+        "\t\t$type \"%s\"\n\t\t$demo \"\"\n\t\t$music \"\"\n",
+        part->rooms, part->id, part->rooms, part->id, part->rooms, part->id,
+        ((part->x + part->y) % 2) != 0 ? "dark" : "light");
 
-        thing.values[0] = value;
+    return block;
+}
 
-        Console::Printf(World::SetRoomThing(index, thing)
-            ? "thing: %d set to %d - save the slot and it comes back\n"
-            : "thing: %d would not take %d\n", index, value);
+const char* __cdecl RoomWrite(const AmodRoomPart* part, void*)
+{
+    static char header[256] = {};
+
+    if (part->part != AMOD_ROOM_HEADER)
+    {
+        return nullptr;
+    }
+
+    const float light = ((part->x + part->y) % 2) != 0 ? 0.15f : 0.35f;
+
+    snprintf(header, sizeof(header),
+        "$back_wall 1\n$light_ambient %.2f %.2f %.2f\n$tex_wall_scale 1\n$tex_floor_scale 1\n\n"
+        "$ladder_cut 1\n$ladder_cross 1\n$chain_cut 1\n$chain_cross 1\n\n", light, light, light);
+
+    return header;
+}
+
+void __cdecl LevelCommand(int argc, const char** argv, void*)
+{
+    const char* const path = argc > 1 ? argv[1] : "levels/sample.txt";
+
+    if (LevelEditor::SaveLevel(path)) { Console::Printf("savelevel: '%s' written\n", path); }
+    else { Console::Printf("savelevel: '%s' - %s\n", path, LastError()); }
+}
+
+
+int g_backdrop = 0;
+
+void __cdecl EditBackdrop(void*)
+{
+    if (g_backdrop == 0)
+    {
         return;
     }
 
-    Console::Printf("thing: room %d keeps %d, and takes %d byte(s) in a save\n", room,
-        World::RoomThingCount(), World::RoomSavedSize());
+    Render::Rect(0.0f, 0.0f, 640.0f, 480.0f, 0xFF101828);
 
-    for (int at = 0; at < World::RoomThingCount(); ++at)
+    for (float y = 0.0f; y < 480.0f; y += 8.0f)
     {
-        AmodRoomThing thing = {};
+        Render::Rect(0.0f, y, 640.0f, 1.0f, 0xFF16203A);
+    }
+}
 
-        if (!World::GetRoomThing(at, thing))
+int __cdecl EditKey(int key, int, void*)
+{
+    if (key != 0x71)
+    {
+        return 0;
+    }
+
+    Console::Print("part: F2 taken from the editor\n");
+    return 1;
+}
+
+const char* const g_partNames[] = { "grid", "lines", "status", "palette", "maze" };
+
+void __cdecl PartCommand(int argc, const char** argv, void*)
+{
+    const char* const what = argc > 1 ? argv[1] : "";
+
+    if (strcmp(what, "back") == 0)
+    {
+        if (argc > 2) { g_backdrop = strcmp(argv[2], "off") == 0 ? 0 : 1; }
+        else { g_backdrop = g_backdrop != 0 ? 0 : 1; }
+
+        Console::Printf("part: backdrop %s\n", g_backdrop != 0 ? "on" : "off");
+        return;
+    }
+
+    if (strcmp(what, "say") == 0 && argc > 2)
+    {
+        const int line = atoi(argv[2]);
+
+        if (LevelEditor::SetStatusLine(line, argc > 3 ? argv[3] : nullptr))
+        {
+            Console::Printf("part: line %d is now '%s'\n", line, LevelEditor::GetStatusLine(line));
+        }
+        else
+        {
+            Console::Printf("part: line %d - %s\n", line, LastError());
+        }
+        return;
+    }
+
+    // A game brush keeps its name and its colour in its own record; nothing gives them back
+    if ((strcmp(what, "name") == 0 || strcmp(what, "colour") == 0) && argc > 3)
+    {
+        const int group = atoi(argv[2]);
+        const int index = atoi(argv[3]);
+        AmodBrushInfo info = {};
+
+        const bool done = what[0] == 'n'
+            ? LevelEditor::SetBrushLabel(group, index, argc > 4 ? argv[4] : nullptr)
+            : LevelEditor::SetBrushColour(group, index, argc > 4 ? strtoul(argv[4], nullptr, 16) : 0);
+
+        if (done && LevelEditor::GetBrush(group, index, info))
+        {
+            Console::Printf("part: brush %d of group %d is '%s' in %08X\n", index, group,
+                info.label, info.colour);
+        }
+        else
+        {
+            Console::Printf("part: brush %d of group %d - %s\n", index, group, LastError());
+        }
+        return;
+    }
+
+    if (strcmp(what, "icon") == 0 && argc > 2)
+    {
+        const int icon = atoi(argv[2]);
+        const AmodTextureId texture = argc > 3
+            ? Textures::Load(argv[3])
+            : AMOD_INVALID_TEXTURE;
+
+        if (LevelEditor::SetIcon(icon, texture)) { Console::Printf("part: icon %d set\n", icon); }
+        else { Console::Printf("part: icon %d - %s\n", icon, LastError()); }
+        return;
+    }
+
+    if (strcmp(what, "screen") == 0)
+    {
+        if (argc > 2) { LevelEditor::SetScreen(atoi(argv[2])); }
+
+        Console::Printf("part: screen %d, the %s one\n", LevelEditor::GetScreen(),
+            LevelEditor::GetScreen() == AMOD_EDITOR_SCREEN_MAZE ? "maze" : "room");
+        return;
+    }
+
+    for (int at = 0; at < 5; ++at)
+    {
+        AmodEditorPart place = {};
+
+        if (strcmp(what, g_partNames[at]) != 0 || !LevelEditor::GetPart(at, place))
         {
             continue;
         }
 
-        if (thing.tag == 2)
+        if (argc > 2 && strcmp(argv[2], "off") == 0) { place.shown = 0; }
+        else if (argc > 2 && strcmp(argv[2], "on") == 0) { place.shown = 1; }
+        else if (argc > 3)
         {
-            Console::Printf("  %2d  tag %-3d %2d byte(s)  %d %d %d\n", at, thing.tag, thing.saved,
-                thing.values[0], thing.values[1], thing.values[2]);
+            place.x = static_cast<float>(atof(argv[2]));
+            place.y = static_cast<float>(atof(argv[3]));
+            place.size = argc > 4 ? static_cast<float>(atof(argv[4])) : place.size;
+            place.scale = argc > 5 ? static_cast<float>(atof(argv[5])) : place.scale;
         }
         else
         {
-            Console::Printf("  %2d  tag %-3d %2d byte(s)  %d\n", at, thing.tag, thing.saved,
-                thing.values[0]);
-        }
-    }
-
-    AmodRoomMemory memory = {};
-
-    if (World::GetRoomMemory(memory))
-    {
-        Console::Printf("  room line: %s, state %d, extra %s (%d)\n",
-            memory.isSaved != 0 ? "saved" : "NOT saved", memory.state,
-            memory.hasExtra != 0 ? "yes" : "no", memory.extra);
-    }
-
-    // The whole level, so the total can be checked against the file
-    int total = 0;
-
-    for (int at = 0; at < World::RoomCount(); ++at)
-    {
-        total += World::RoomSavedSize(at);
-    }
-
-    Console::Printf("thing: the level section takes %d byte(s) of things and lines, over %d room(s)\n",
-        total, World::RoomCount());
-}
-
-void __cdecl QuestCommand(int argc, const char** argv, void*)
-{
-    if (argc > 1)
-    {
-        char said[128] = {};
-        Keep(said, sizeof(said), argv[1]);
-
-        Keep(g_questNote, sizeof(g_questNote), said);
-        ++g_questStep;
-    }
-
-    Console::Printf("quest: step %d, \"%s\" - 'slot save 1 x' keeps it, 'slot load 1' brings it back\n",
-        g_questStep, g_questNote);
-}
-
-void __cdecl StatsCommand(int argc, const char** argv, void*)
-{
-    AmodLevelStats stats = {};
-
-    if (!World::GetLevelStats(stats))
-    {
-        Console::Print("stats: no level is being played\n");
-        return;
-    }
-
-    if (argc > 2)
-    {
-        // 'stats monsters 3' - to see the end-of-level screen and the save follow
-        char which[32] = {};
-        Keep(which, sizeof(which), argv[1]);
-
-        const int value = atoi(argv[2]);
-
-        if (strcmp(which, "crystals") == 0) { stats.crystalsTaken = value; }
-        else if (strcmp(which, "bonuses") == 0) { stats.bonusesTaken = value; }
-        else if (strcmp(which, "super") == 0) { stats.superTaken = value; }
-        else if (strcmp(which, "monsters") == 0) { stats.monstersKilled = value; }
-        else if (strcmp(which, "light") == 0) { stats.lightRoomsSeen = value; }
-        else if (strcmp(which, "dark") == 0) { stats.darkRoomsSeen = value; }
-        else if (strcmp(which, "secret") == 0) { stats.secretRoomsSeen = value; }
-        else if (strcmp(which, "eighth") == 0) { stats.eighthTaken = value; }
-        else
-        {
-            Console::Print("stats: crystals | bonuses | super | monsters | light | dark | secret | eighth\n");
+            Console::Printf("part: %s off|on, or %s <x> <y> [size] [scale]\n", what, what);
             return;
         }
 
-        World::SetLevelStats(stats);
+        if (LevelEditor::SetPart(at, place))
+        {
+            Console::Printf("part: %s %s at %.0f,%.0f size %.0f scale %.2f\n", g_partNames[at],
+                place.shown != 0 ? "shown" : "hidden", place.x, place.y, place.size, place.scale);
+        }
+        else
+        {
+            Console::Printf("part: %s - %s\n", g_partNames[at], LastError());
+        }
+        return;
     }
 
-    Console::Printf("stats: crystals %d/%d  bonuses %d/%d  super %d/%d  monsters %d/%d\n",
-        stats.crystalsTaken, stats.crystalsTotal, stats.bonusesTaken, stats.bonusesTotal,
-        stats.superTaken, stats.superTotal, stats.monstersKilled, stats.monstersTotal);
+    for (int at = 0; at < 5; ++at)
+    {
+        AmodEditorPart place = {};
 
-    Console::Printf("stats: light %d/%d  dark %d/%d  secret %d/%d  eighth %d/%d\n",
-        stats.lightRoomsSeen, stats.lightRoomsTotal, stats.darkRoomsSeen, stats.darkRoomsTotal,
-        stats.secretRoomsSeen, stats.secretRoomsTotal, stats.eighthTaken, stats.eighthTotal);
+        if (LevelEditor::GetPart(at, place))
+        {
+            Console::Printf("part: %-8s %s  %.0f,%.0f  size %.0f  scale %.2f\n", g_partNames[at],
+                place.shown != 0 ? "shown " : "hidden", place.x, place.y, place.size, place.scale);
+        }
+    }
+
+    for (int line = 0; line < AMOD_EDITOR_STATUS_LINES; ++line)
+    {
+        Console::Printf("part: line %d  \"%s\"\n", line, LevelEditor::GetStatusLine(line));
+    }
+
+    Console::Print("part: <name> off|on, <name> <x> <y> [size] [scale], 'part say <line> [text]',\n");
+    Console::Print("      'part name|colour <group> <index> [text|AARRGGBB]', 'part screen [0|1]',\n");
+    Console::Print("      'part icon 0|1 [path]', 'part back [on|off]'\n");
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -569,24 +651,47 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("stats", &StatsCommand);
+    Console::AddCommand("edit", &EditCommand);
+    Console::AddCommand("brush", &BrushCommand);
+    Console::AddCommand("maze", &MazeCommand);
+    Console::AddCommand("part", &PartCommand);
+    Console::AddCommand("savelevel", &LevelCommand);
 
-    Progress::OnSlotSave(&OnSlotSave);
-    Progress::OnSlotLoad(&OnSlotLoad);
+    g_brushTexture = Textures::Load("textures/editor/cursor.png");
 
-    Console::AddCommand("thing", &ThingCommand);
-    Console::AddCommand("chg", &LevelChangeCommand);
-    Console::AddCommand("quest", &QuestCommand);
-    Console::AddCommand("scores", &ScoresCommand);
-    Console::AddCommand("prog", &ProgressCommand);
-    Console::AddCommand("slot", &SlotCommand);
-    Console::AddCommand("cfg", &ConfigCommand);
-    Console::AddCommand("cfgsave", &ConfigSaveCommand);
+    LevelEditor::OnFrame(&EditFrame);
+    LevelEditor::OnDraw(&EditDraw);
+    LevelEditor::OnDraw(AMOD_EDITOR_DRAW_WORLD, &EditDrawWorld);
+
+    // These come whether or not a mod is holding the editor
+    LevelEditor::OnDraw(AMOD_EDITOR_DRAW_BACKDROP, &EditBackdrop);
+    LevelEditor::OnKey(&EditKey); //Uncomment it if you want to suppress F2 keystrokes.
+    LevelEditor::OnRoomCreated(&RoomCreated);
+    LevelEditor::OnRoomLoaded(&RoomLoaded);
+    LevelEditor::OnLevelWrite(&LevelWrite);
+    LevelEditor::OnRoomWrite(&RoomWrite);
+
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
+    const int on = LevelEditor::IsGameEditorOn() ? 1 : 0;
+
+    if (on != g_gameEditorWas)
+    {
+        g_gameEditorWas = on;
+        g_wanted = on;
+    }
+
+    if (g_wanted != 0 && !LevelEditor::IsActive())
+    {
+        LevelEditor::Enter(g_stopWorld != 0, g_stopRender != 0, g_stopInput != 0, g_suppressGame != 0);
+    }
+    else if (g_wanted == 0 && LevelEditor::IsActive())
+    {
+        LevelEditor::Leave();
+    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

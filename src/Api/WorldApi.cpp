@@ -1302,7 +1302,7 @@ namespace Forge
                 filled.isSaved = 1;
                 filled.state = container[GameAddress::kContainerStateOffset];
                 filled.hasExtra = Read<int>(container, GameAddress::kContainerExtraFlagOffset) != 0 ? 1 : 0;
-                filled.extra = Read<int>(container, GameAddress::kContainerExtraOffset);
+                filled.extra = filled.hasExtra != 0 ? Read<int>(container, GameAddress::kContainerExtraOffset) : 0;
             }
 
             return CopyOut(out, out->structSize, &filled, sizeof(filled));
@@ -2705,6 +2705,80 @@ namespace Forge
     uint8_t* WorldApi::RoomAt(int index)
     {
         return Room(index);
+    }
+
+    int WorldApi::RoomRecordBytes(int index)
+    {
+        const uint8_t* const room = Room(index);
+
+        if (room == nullptr || !Readable(room, GameAddress::kRoomThingCountOffset + sizeof(int)))
+        {
+            return 0;
+        }
+
+        const int count = Read<int>(room, GameAddress::kRoomThingCountOffset);
+        int size = 0;
+
+        for (int at = 0; at < count && count < 0x1000; ++at)
+        {
+            const uint8_t* const thing = ThingAt(index, at);
+            size += thing != nullptr ? SavedSizeOf(Read<int>(thing, GameAddress::kThingTagOffset)) : 0;
+        }
+
+        return size;
+    }
+
+    int WorldApi::RoomStateBytes(int index)
+    {
+        const uint8_t* const container = ContainerOf(index);
+
+        if (container == nullptr)
+        {
+            return 0;
+        }
+
+        return Read<int>(container, GameAddress::kContainerExtraFlagOffset) != 0 ? 5 : 1;
+    }
+
+    bool WorldApi::RoomRecordPlace(int index, int record, int& offset, int& size, int& tag)
+    {
+        offset = 0;
+        size = 0;
+        tag = 0;
+
+        const uint8_t* const room = Room(index);
+
+        if (room == nullptr || record < 0 || !Readable(room, GameAddress::kRoomThingCountOffset + sizeof(int)))
+        {
+            return false;
+        }
+
+        const int count = Read<int>(room, GameAddress::kRoomThingCountOffset);
+
+        for (int at = 0; at < count && count < 0x1000; ++at)
+        {
+            const uint8_t* const thing = ThingAt(index, at);
+            const int held = thing != nullptr ? Read<int>(thing, GameAddress::kThingTagOffset) : 0;
+            const int takes = SavedSizeOf(held);
+
+            if (at == record)
+            {
+                tag = held;
+                size = takes;
+                return takes != 0;
+            }
+
+            offset += takes;
+        }
+
+        return false;
+    }
+
+    const char* WorldApi::LevelScript()
+    {
+        return g_level != nullptr && IsLevelLoaded()
+            ? reinterpret_cast<const char*>(g_level + GameAddress::kLevelScriptOffset)
+            : "";
     }
 
     uint8_t* WorldApi::FirstLiveEntity()

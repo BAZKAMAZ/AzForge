@@ -39,3 +39,6 @@ plugins/vs2026/Extension/Template/resmod/
 
 # room_grid.py writes its dumps beside itself
 tools/*.grid.txt
+
+# scratch for one chat, never committed
+handoff*.txt

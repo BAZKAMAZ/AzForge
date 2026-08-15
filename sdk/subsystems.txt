@@ -12,6 +12,7 @@ input
 interop
 inventory
 launcher
+level_editor
 mmd
 monsters
 objects_menu

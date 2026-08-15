@@ -15,3 +15,4 @@
 #include "src/Game/Addresses/Particles.h"
 #include "src/Game/Addresses/Prologues.h"
 #include "src/Game/Addresses/Saves.h"
+#include "src/Game/Addresses/Editor.h"

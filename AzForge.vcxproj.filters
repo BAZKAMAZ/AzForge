@@ -330,6 +330,15 @@
     <ClInclude Include="src\Game\Addresses\Saves.h">
       <Filter>Game\Addresses</Filter>
     </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Editor.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\LevelEditorApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\LevelEditorApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -499,6 +508,9 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\SavApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\LevelEditorApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

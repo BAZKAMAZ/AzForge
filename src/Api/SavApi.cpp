@@ -2,6 +2,7 @@
 
 #include "src/Api/SavApi.h"
 #include "src/Api/ApiRead.h"
+#include "src/Api/WorldApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
@@ -1000,6 +1001,283 @@ namespace Forge
             return 1;
         }
 
+        // Starts with the level it was written in; the only identifier for the layout below.
+        bool SlotHoldsLoadedLevel(int slot)
+        {
+            char path[GameAddress::kSaveLevelPathSize] = {};
+            FILE* file = nullptr;
+
+            if (fopen_s(&file, FullPath(SlotPath(slot)).string().c_str(), "rb") != 0 || file == nullptr)
+            {
+                return false;
+            }
+
+            const bool read = fseek(file, static_cast<long>(GameAddress::kSaveLevelSection), SEEK_SET) == 0 &&
+                fread(path, 1, sizeof(path), file) == sizeof(path);
+
+            fclose(file);
+            path[sizeof(path) - 1] = '\0';
+
+            return read && _stricmp(path, WorldApi::LevelScript()) == 0;
+        }
+
+        constexpr long kSlotRecords = static_cast<long>(GameAddress::kSaveLevelSection +
+            GameAddress::kSaveLevelPathSize + GameAddress::kSaveMazeCursorSize);
+
+        long RecordsBefore(int roomIndex)
+        {
+            long at = kSlotRecords;
+
+            for (int room = 0; room < roomIndex; ++room)
+            {
+                at += WorldApi::RoomRecordBytes(room);
+            }
+
+            return at;
+        }
+
+        // Every room's records go before any room's line, so a line is past all of them
+        long LineBefore(int roomIndex)
+        {
+            long at = RecordsBefore(WorldApi::RoomTotal());
+
+            for (int room = 0; room < roomIndex; ++room)
+            {
+                at += WorldApi::RoomStateBytes(room);
+            }
+
+            return at;
+        }
+
+        bool SlotBytes(int slot, long offset, void* bytes, int size, bool writing)
+        {
+            std::error_code sizing;
+            const auto held = std::filesystem::file_size(FullPath(SlotPath(slot)), sizing);
+
+            if (sizing || offset < 0 || size <= 0 || static_cast<uintmax_t>(offset + size) > held)
+            {
+                return false;
+            }
+
+            FILE* file = nullptr;
+
+            if (fopen_s(&file, FullPath(SlotPath(slot)).string().c_str(), writing ? "r+b" : "rb") != 0 ||
+                file == nullptr)
+            {
+                return false;
+            }
+
+            const bool done = fseek(file, offset, SEEK_SET) == 0 &&
+                (writing ? fwrite(bytes, 1, size, file) : fread(bytes, 1, size, file)) == static_cast<size_t>(size);
+
+            fclose(file);
+            return done;
+        }
+
+        int SlotReady(AmodMod mod, int slot, int roomIndex)
+        {
+            if (Caller(mod) == nullptr || slot < 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "there is no slot %d", slot);
+            }
+            if (!LevelIsLoaded())
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE,
+                    "a slot's level section is laid out by live state, so its level has to be loaded");
+            }
+            if (roomIndex < 0 || roomIndex >= WorldApi::RoomTotal())
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "this level has no room %d", roomIndex);
+            }
+            if (!SlotIsWhole(slot))
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no finished save in slot %d", slot);
+            }
+            if (!SlotHoldsLoadedLevel(slot))
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED,
+                    "slot %d was saved in another level, and this one's layout does not describe it", slot);
+            }
+
+            return 1;
+        }
+
+        int __cdecl ApiGetSlotRoomThing(AmodMod mod, int slot, int roomIndex, int index, AmodRoomThing* out)
+        {
+            int offset = 0;
+            int size = 0;
+            int tag = 0;
+
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetSlotRoomThing wants somewhere to answer");
+            }
+
+            const int ready = SlotReady(mod, slot, roomIndex);
+
+            if (ready != 1)
+            {
+                return ready;
+            }
+            if (!WorldApi::RoomRecordPlace(roomIndex, index, offset, size, tag))
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "room %d writes no record %d", roomIndex, index);
+            }
+
+            uint8_t bytes[12] = {};
+
+            if (!SlotBytes(slot, RecordsBefore(roomIndex) + offset, bytes, size, false))
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "slot %d is too short for room %d record %d",
+                    slot, roomIndex, index);
+            }
+
+            AmodRoomThing filled = {};
+            filled.structSize = sizeof(filled);
+            filled.tag = tag;
+            filled.saved = size;
+
+            if (size == 12)
+            {
+                memcpy(filled.values, bytes, sizeof(filled.values));
+            }
+            else
+            {
+                filled.values[0] = bytes[0];
+            }
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetSlotRoomThing(AmodMod mod, int slot, int roomIndex, int index, const AmodRoomThing* thing)
+        {
+            int offset = 0;
+            int size = 0;
+            int tag = 0;
+
+            if (thing == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetSlotRoomThing wants a value");
+            }
+
+            const int ready = SlotReady(mod, slot, roomIndex);
+
+            if (ready != 1)
+            {
+                return ready;
+            }
+            if (!WorldApi::RoomRecordPlace(roomIndex, index, offset, size, tag))
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "room %d writes no record %d", roomIndex, index);
+            }
+            if (thing->tag != 0 && thing->tag != tag)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED,
+                    "the tag is what decides the length, and a different one would move every byte after it");
+            }
+
+            uint8_t bytes[12] = {};
+
+            if (size == 12)
+            {
+                memcpy(bytes, thing->values, sizeof(bytes));
+            }
+            else
+            {
+                bytes[0] = static_cast<uint8_t>(thing->values[0]);
+            }
+
+            return SlotBytes(slot, RecordsBefore(roomIndex) + offset, bytes, size, true)
+                ? 1
+                : Fail(mod, AMOD_FAIL_REFUSED, "slot %d would not take room %d record %d", slot, roomIndex, index);
+        }
+
+        int __cdecl ApiGetSlotRoomMemory(AmodMod mod, int slot, int roomIndex, AmodRoomMemory* out)
+        {
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetSlotRoomMemory wants somewhere to answer");
+            }
+
+            const int ready = SlotReady(mod, slot, roomIndex);
+
+            if (ready != 1)
+            {
+                return ready;
+            }
+
+            const int size = WorldApi::RoomStateBytes(roomIndex);
+
+            AmodRoomMemory filled = {};
+            filled.structSize = sizeof(filled);
+
+            if (size != 0)
+            {
+                uint8_t bytes[5] = {};
+
+                if (!SlotBytes(slot, LineBefore(roomIndex), bytes, size, false))
+                {
+                    return Fail(mod, AMOD_FAIL_REFUSED, "slot %d is too short for room %d", slot, roomIndex);
+                }
+
+                filled.isSaved = 1;
+                filled.hasExtra = size == 5 ? 1 : 0;
+                filled.state = bytes[size - 1];
+
+                if (size == 5)
+                {
+                    memcpy(&filled.extra, bytes, sizeof(filled.extra));
+                }
+            }
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiSetSlotRoomMemory(AmodMod mod, int slot, int roomIndex, const AmodRoomMemory* memory)
+        {
+            if (memory == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "SetSlotRoomMemory wants a value");
+            }
+
+            const int ready = SlotReady(mod, slot, roomIndex);
+
+            if (ready != 1)
+            {
+                return ready;
+            }
+
+            const int size = WorldApi::RoomStateBytes(roomIndex);
+
+            if (size == 0)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "room %d writes no line a save would hold", roomIndex);
+            }
+            if (memory->hasExtra != 0 && size != 5)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED,
+                    "the four extra bytes are the room's own, and adding them would move every byte after");
+            }
+
+            const long line = LineBefore(roomIndex);
+            uint8_t state = static_cast<uint8_t>(memory->state);
+
+            if (memory->hasExtra != 0)
+            {
+                uint8_t four[4] = {};
+                memcpy(four, &memory->extra, sizeof(four));
+
+                if (!SlotBytes(slot, line, four, sizeof(four), true))
+                {
+                    return Fail(mod, AMOD_FAIL_REFUSED, "slot %d would not take room %d", slot, roomIndex);
+                }
+            }
+
+            return SlotBytes(slot, line + size - 1, &state, 1, true)
+                ? 1
+                : Fail(mod, AMOD_FAIL_REFUSED, "slot %d would not take room %d", slot, roomIndex);
+        }
+
         int __cdecl ApiSave(AmodMod mod)
         {
             uint8_t* const packs = Caller(mod) != nullptr ? Packs() : nullptr;
@@ -1054,6 +1332,10 @@ namespace Forge
         g_table.ClearLevelChange = &ApiClearLevelChange;
         g_table.LevelChangeCount = &ApiLevelChangeCount;
         g_table.LevelChangeAt = &ApiLevelChangeAt;
+        g_table.GetSlotRoomThing = &ApiGetSlotRoomThing;
+        g_table.SetSlotRoomThing = &ApiSetSlotRoomThing;
+        g_table.GetSlotRoomMemory = &ApiGetSlotRoomMemory;
+        g_table.SetSlotRoomMemory = &ApiSetSlotRoomMemory;
 
         void* const target = GameModule::Resolve(GameAddress::kGamePacksOpenLevel);
         std::string error;

@@ -1,5 +1,4 @@
 #include "src/Api/ConsoleApi.h"
-
 #include "src/Api/FrameApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
@@ -16,8 +15,7 @@ namespace Forge
     namespace
     {
         typedef void(__cdecl* ConsoleWriteRoutine)(int level, const char* fmt, ...);
-        typedef void(__fastcall* CmdRegisterRoutine)(void* config, void* unused,
-                                                     const char* name, void* handler);
+        typedef void(__fastcall* CmdRegisterRoutine)(void* config, void* unused, const char* name, void* handler);
         typedef void(__fastcall* ConsoleExecuteRoutine)(void* config, void* unused, const char* line);
         typedef void*(__fastcall* CmdFindRoutine)(void* table, void* unused, const char* name);
         typedef void(__cdecl* FreeTrackedRoutine)(void* block);
@@ -41,7 +39,6 @@ namespace Forge
         };
 
         std::map<std::string, Command> g_commands;
-
         std::set<std::string> g_gameRegistered;
 
         ModContext* Resolve(AmodMod mod)
@@ -61,8 +58,7 @@ namespace Forge
         {
             void* const config = Config();
             return config != nullptr
-                       ? reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(config) +
-                                                     GameAddress::kConfigCommandsOffset)
+                       ? reinterpret_cast<uint32_t*>(static_cast<uint8_t*>(config) + GameAddress::kConfigCommandsOffset)
                        : nullptr;
         }
 
@@ -108,8 +104,7 @@ namespace Forge
 
             if (next != 0)
             {
-                SetField(reinterpret_cast<void*>(next), GameAddress::kCmdNodePrevOffset,
-                         reinterpret_cast<uint32_t>(previous));
+                SetField(reinterpret_cast<void*>(next), GameAddress::kCmdNodePrevOffset, reinterpret_cast<uint32_t>(previous));
             }
 
             if (g_freeTracked != nullptr)
@@ -171,6 +166,19 @@ namespace Forge
                 return false;
             }
 
+            uint32_t* const table = CommandTable();
+            const int* const taken = (table != nullptr && g_cmdFind != nullptr)
+                ? static_cast<const int*>(g_cmdFind(table, nullptr, name.c_str()))
+                : nullptr;
+
+            if (taken != nullptr && *taken != 0)
+            {
+                FORGE_LOG_WARN("The console already answers to '%s', so a mod's command of that "
+                    "name will not run - pick another", name.c_str());
+                g_gameRegistered.insert(name);
+                return false;
+            }
+
             g_cmdRegister(config, nullptr, name.c_str(), reinterpret_cast<void*>(&Dispatch));
             g_gameRegistered.insert(name);
             return true;
@@ -227,16 +235,11 @@ namespace Forge
 
     bool ConsoleApi::Install()
     {
-        g_write = reinterpret_cast<ConsoleWriteRoutine>(
-            GameSymbols::Address(GameSymbol::GameConsoleWrite));
-        g_cmdRegister = reinterpret_cast<CmdRegisterRoutine>(
-            GameSymbols::Address(GameSymbol::CmdRegister));
-        g_execute = reinterpret_cast<ConsoleExecuteRoutine>(
-            GameSymbols::Address(GameSymbol::ConsoleExecute));
-
+        g_write = reinterpret_cast<ConsoleWriteRoutine>(GameSymbols::Address(GameSymbol::GameConsoleWrite));
         g_cmdFind = reinterpret_cast<CmdFindRoutine>(GameModule::Resolve(GameAddress::kCmdFind));
-        g_freeTracked = reinterpret_cast<FreeTrackedRoutine>(
-            GameSymbols::Address(GameSymbol::MemFreeTracked));
+        g_cmdRegister = reinterpret_cast<CmdRegisterRoutine>(GameSymbols::Address(GameSymbol::CmdRegister));
+        g_execute = reinterpret_cast<ConsoleExecuteRoutine>(GameSymbols::Address(GameSymbol::ConsoleExecute));
+        g_freeTracked = reinterpret_cast<FreeTrackedRoutine>(GameSymbols::Address(GameSymbol::MemFreeTracked));
 
         if (g_write == nullptr || g_cmdRegister == nullptr || g_execute == nullptr)
         {

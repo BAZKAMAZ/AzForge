@@ -34,6 +34,15 @@ namespace Forge
         // Every room of the level, whether the player is in it or not
         static int                                                  RoomTotal();
         static uint8_t*                                             RoomAt(int index);
+
+        static int                                                  RoomRecordBytes(int index);
+        static int                                                  RoomStateBytes(int index);
+
+        // Where one record sits inside its room's block, and what it is
+        static bool                                                 RoomRecordPlace(int index, int record, int& offset, int& size, int& tag);
+
+        // What the level section opens with, and what a slot is checked against
+        static const char*                                          LevelScript();
  
         // Live entity list of the current room. Null ends the walk.
         static uint8_t*                                             FirstLiveEntity();

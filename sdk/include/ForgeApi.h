@@ -27,6 +27,7 @@
 #include "InteropApi.h"
 #include "ModManagerApi.h"
 #include "InputApi.h"
+#include "LevelEditorApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,9 +120,12 @@ typedef struct AmodApi
     /* packs.sav, which palaces the player has opened. */
     const AmodSavApi* progress;
 
+    /* The editor seams: what stops, and where a mod draws instead. */
+    const AmodLevelEditorApi* levelEditor;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, progress, 0x90);
+AMOD_LAST_FIELD(AmodApi, levelEditor, 0x94);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -180,6 +184,7 @@ namespace Amod
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);
+        LevelEditor::Attach(api->levelEditor, api->self);
         return true;
     }
 

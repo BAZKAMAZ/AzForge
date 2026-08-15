@@ -2,6 +2,7 @@
 #define AZFORGE_SAV_API_H
 
 #include "ForgeTypes.h"
+#include "WorldApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -94,9 +95,16 @@ typedef struct AmodSavApi
     int(__cdecl* LevelChangeCount)(AmodMod mod);
     int(__cdecl* LevelChangeAt)(AmodMod mod, int index, AmodLevelChange* out);
 
+    /* Game level section stored in a disk slot; valid only for the loaded level. Fixed length; tag and four extra bytes are room-owned. */
+    int(__cdecl* GetSlotRoomThing)(AmodMod mod, int slot, int roomIndex, int index, AmodRoomThing* out);
+    int(__cdecl* SetSlotRoomThing)(AmodMod mod, int slot, int roomIndex, int index, const AmodRoomThing* thing);
+
+    int(__cdecl* GetSlotRoomMemory)(AmodMod mod, int slot, int roomIndex, AmodRoomMemory* out);
+    int(__cdecl* SetSlotRoomMemory)(AmodMod mod, int slot, int roomIndex, const AmodRoomMemory* memory);
+
 } AmodSavApi;
 
-AMOD_LAST_FIELD(AmodSavApi, LevelChangeAt, 0x74);
+AMOD_LAST_FIELD(AmodSavApi, SetSlotRoomMemory, 0x84);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -290,6 +298,35 @@ namespace Amod
             out.structSize = sizeof(out);
             return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->LevelChangeAt != nullptr &&
                 g_sav->LevelChangeAt(g_savSelf, index, &out) != 0;
+        }
+
+        /* The game's own level section, patched where it lies. Wants that level loaded. */
+        inline bool                                                 GetSlotRoomThing(int slot, int roomIndex, int index, AmodRoomThing& out)
+        {
+            out = AmodRoomThing{};
+            out.structSize = sizeof(out);
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->GetSlotRoomThing != nullptr &&
+                g_sav->GetSlotRoomThing(g_savSelf, slot, roomIndex, index, &out) != 0;
+        }
+
+        inline bool                                                 SetSlotRoomThing(int slot, int roomIndex, int index, const AmodRoomThing& thing)
+        {
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->SetSlotRoomThing != nullptr &&
+                g_sav->SetSlotRoomThing(g_savSelf, slot, roomIndex, index, &thing) != 0;
+        }
+
+        inline bool                                                 GetSlotRoomMemory(int slot, int roomIndex, AmodRoomMemory& out)
+        {
+            out = AmodRoomMemory{};
+            out.structSize = sizeof(out);
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->GetSlotRoomMemory != nullptr &&
+                g_sav->GetSlotRoomMemory(g_savSelf, slot, roomIndex, &out) != 0;
+        }
+
+        inline bool                                                 SetSlotRoomMemory(int slot, int roomIndex, const AmodRoomMemory& memory)
+        {
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->SetSlotRoomMemory != nullptr &&
+                g_sav->SetSlotRoomMemory(g_savSelf, slot, roomIndex, &memory) != 0;
         }
 
         inline int                                                  Current()

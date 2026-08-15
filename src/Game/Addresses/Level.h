@@ -17,6 +17,8 @@ namespace Forge
         constexpr uintptr_t kLevelEnableCastleOffset = 0x300;
         constexpr uintptr_t kLevelBackgroundOffset = 0x400;
         constexpr uintptr_t kLevelMusicOffset = 0x500;
+        constexpr uintptr_t kLevelStart = 0x0040E880; // __cdecl (path, flag)
+
         constexpr uintptr_t kLevelStartTitleOffset = 0x600;
         constexpr uintptr_t kLevelEndTitleOffset = 0x700;
         constexpr uintptr_t kLevelBonusOffset = 0x800;

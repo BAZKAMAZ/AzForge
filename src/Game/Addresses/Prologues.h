@@ -162,6 +162,52 @@ namespace Forge
     // MonsterRes_FindByName: four pushes + MOV EDI,[0x0069145c]
     constexpr uint8_t kMonsterResFindPrologue[] = { 0x53, 0x55, 0x56, 0x57, 0x8B, 0x3D, 0x5C, 0x14, 0x69, 0x00 };
 
+    // PUSH EBP / MOV EBP,ESP / AND ESP,-8
+    constexpr uint8_t kEditorDrawPrologue[] = { 0x55, 0x8B, 0xEC, 0x83, 0xE4, 0xF8 };
+
+    // SUB ESP,0xC / FLDZ
+    constexpr uint8_t kEntitiesUpdatePrologue[] = { 0x83, 0xEC, 0x0C, 0xD9, 0xEE };
+
+    // SUB ESP,0x34 / PUSH ESI / MOV ESI,ECX
+    constexpr uint8_t kRenderWorldPrologue[] = { 0x83, 0xEC, 0x34, 0x56, 0x8B, 0xF1 };
+
+    // SUB ESP,0x6C / PUSH EBX / PUSH EBP
+    constexpr uint8_t kDrawObjectsPrologue[] = { 0x83, 0xEC, 0x6C, 0x53, 0x55 };
+
+    // INC [ECX+8] / CMP [ECX+8],2
+    constexpr uint8_t kGroupNextPrologue[] = { 0xFF, 0x41, 0x08, 0x83, 0x79, 0x08, 0x02 };
+
+    // MOV EAX,[ESP+4] / CMP EAX,1
+    constexpr uint8_t kFindByCellPrologue[] = { 0x8B, 0x44, 0x24, 0x04, 0x83, 0xF8, 0x01 };
+
+    // FLD [0x004cc068] - six bytes, and the whole first instruction
+    constexpr uint8_t kRoomDrawPrologue[] = { 0xD9, 0x05, 0x68, 0xC0, 0x4C, 0x00 };
+
+    // PUSH ESI / MOV ESI,ECX / MOV ECX,[ESI+4]
+    constexpr uint8_t kGrowRowsPrologue[] = { 0x56, 0x8B, 0xF1, 0x8B, 0x4E, 0x04 };
+
+    // MOV EAX,[ESP+4] / PUSH ESI / MOV ESI,ECX
+    constexpr uint8_t kNameAssignPrologue[] = { 0x8B, 0x44, 0x24, 0x04, 0x56, 0x8B, 0xF1 };
+
+    // PUSH -1 / PUSH the SEH handler / MOV EAX,FS:[0]
+    constexpr uint8_t kSaveRoomFilePrologue[] = { 0x6A, 0xFF, 0x68, 0x0B, 0x58, 0x4C, 0x00 };
+
+    // PUSH ESI / MOV ESI,ECX / MOV [ESI],CRoomEdit::vftable - nine bytes, because that last
+    // one is six and cutting it in half sends the trampoline into the middle of an instruction
+    constexpr uint8_t kRoomEditInitPrologue[] = { 0x56, 0x8B, 0xF1, 0xC7, 0x06, 0x78, 0xC0, 0x4C, 0x00 };
+
+    // MOV EAX,[ESP+4] / MOV EDX,[ESP+8]
+    constexpr uint8_t kRoomEditSetPlacePrologue[] = { 0x8B, 0x44, 0x24, 0x04, 0x8B, 0x54, 0x24, 0x08 };
+
+    // SUB ESP,0x320
+    constexpr uint8_t kSaveLevelPrologue[] = { 0x81, 0xEC, 0x20, 0x03, 0x00, 0x00 };
+
+    // PUSH -1 / PUSH the SEH handler
+    constexpr uint8_t kLoadRoomFilePrologue[] = { 0x6A, 0xFF, 0x68, 0x4B, 0x58, 0x4C, 0x00 };
+
+    // PUSH ECX / MOV EAX,[ESP+0xC] / MOV EAX,[ECX+EAX*4] - both layer walks open alike
+    constexpr uint8_t kLayerPrologue[] = { 0x51, 0x8B, 0x44, 0x24, 0x0C, 0x8B, 0x04, 0x81 };
+
     struct MonsterTouchSite
     {
         uintptr_t address;

@@ -142,6 +142,9 @@
     <ClInclude Include="src\Api\ModManagerApi.h" />
     <ClInclude Include="src\Api\InputApi.h" />
     <ClInclude Include="sdk\include\InputApi.h" />
+    <ClInclude Include="src\Api\LevelEditorApi.h" />
+    <ClInclude Include="sdk\include\LevelEditorApi.h" />
+    <ClInclude Include="src\Game\Addresses\Editor.h" />
     <ClInclude Include="sdk\include\ModManagerApi.h" />
     <ClInclude Include="src\Api\ModContext.h" />
     <ClInclude Include="src\Api\ModOwnership.h" />
@@ -233,6 +236,7 @@
     <ClCompile Include="src\Api\InteropApi.cpp" />
     <ClCompile Include="src\Api\ModManagerApi.cpp" />
     <ClCompile Include="src\Api\InputApi.cpp" />
+    <ClCompile Include="src\Api\LevelEditorApi.cpp" />
     <ClCompile Include="src\Api\ModOwnership.cpp" />
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />
     <ClCompile Include="src\Mods\ModHost.cpp" />

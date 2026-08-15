@@ -328,15 +328,12 @@ namespace Forge
                 if (!AtEnd(s) && *s.p == '{')
                 {
                     ++s.p; // '{'
-                    Node* child = FindChild(node, key.c_str());
-                    if (child == nullptr)
-                    {
-                        auto owned = std::make_unique<Node>();
-                        owned->name = key;
-                        child = owned.get();
-                        node->children.push_back(std::move(owned));
-                        store.live.insert(child);
-                    }
+
+                    auto owned = std::make_unique<Node>();
+                    owned->name = key;
+                    Node* const child = owned.get();
+                    node->children.push_back(std::move(owned));
+                    store.live.insert(child);
                     if (depth < 64)
                     {
                         ParseBody(s, store, child, depth + 1);
@@ -365,8 +362,6 @@ namespace Forge
                 node->exprs.push_back(std::move(expr));
             }
         }
-
-        // --- the table -----------------------------------------------------------------
 
         AmodBlock __cdecl ApiNewTree(AmodMod mod, const char* name)
         {

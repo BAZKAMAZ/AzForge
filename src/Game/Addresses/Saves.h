@@ -58,6 +58,11 @@ namespace Forge
         constexpr uintptr_t kSaveLevelOffset = 0x48;
         constexpr size_t kSaveCaptionSize = 65;
 
+        // ---- the level section
+        constexpr size_t kSaveLevelSection = 0x770; // straight after the header
+        constexpr size_t kSaveLevelPathSize = 0x100;
+        constexpr size_t kSaveMazeCursorSize = 8;
+
         // ---- room things (typed records) --------------------------------------------------------
         constexpr uintptr_t kRoomThingsOffset = 0x2678; // array of pointers
         constexpr uintptr_t kRoomThingCountOffset = 0x267C;

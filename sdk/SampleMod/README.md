@@ -1,164 +1,177 @@
-# The SampleMod console
+`TAB` walks between the room screen and the maze screen, `B` picks a brush, `M` a group, `C` empties
+the room, `F3` loads `levels/temp.txt`. `F2` would save and run it, but SampleMod takes that key.
 
-Nine commands over the config file, the saves and what a level remembers. Open the console and type.
-Every one of them prints its own usage with no arguments.
+| Command | What it does |
+| --- | --- |
+| `edit` | the mod's own screen |
+| `brush` | brushes and a group of the mod's own |
+| `maze` | the grid of rooms |
+| `part` | the game's editor's looks |
+| `savelevel` | write the whole level out |
 
-Most want a level being played. `cfg` and `slot` are the two that answer from the menu as well.
+---
 
-## Start here
-
-```
-cfg
-scores
-prog
-slot
-```
-
-Four counts: how many config keys, how many scores and castles, how many palaces are open, and which
-save slots hold a game.
-
-## The config file
+## `edit` — an editor of the mod's own
 
 | Type this | And you get |
 | --- | --- |
-| `cfg` | how many keys there are |
-| `cfg list` | every one, with its value |
-| `cfg ed_enable` | that key: value, number, default, flags |
-| `cfg ed_enable 1` | set it — and the in-game level editor comes up |
-| `cfg mymod_speed 2.5` | a key the game never had; it is added and will be saved |
-| `cfgsave` | write `Azangara.cfg` now instead of at quit |
+| `edit` | the mod's screen up, or down again |
+| `edit world` | whether entities keep updating |
+| `edit render` | whether the 3D world keeps being drawn |
+| `edit input` | whether the game still acts on keys — Esc, the player |
+| `edit game` | whether the game's own editor still draws and takes keys |
+
+The four toggles are independent and each one can be left alone. Arrows move a marker while the
+mod's screen is up.
+
+`edit` down does not stop the backdrop, the key capture or anything under `part` — those are what
+the game's editor *is*, not what stands in for it.
 
 ```
-cfg mymod_speed 2.5
-    cfg: 'mymod_speed' is new, added as "2.5" and will be saved
-cfgsave
-    cfgsave: written - look in Azangara.cfg
+edit game
+    edit: world stops, render stops, input stops, game editor shows
 ```
 
-Open the file and the line is there. Calling `Add` on every start is safe: a key already present
-keeps whatever the player set.
+---
 
-## The leaderboard
-
-`scores.dat`. Entries are grouped by castle, so the index is a walk across all of them.
+## `brush` — brushes of the mod's own
 
 | Type this | And you get |
 | --- | --- |
-| `scores` | the count, and which level each castle is for |
-| `scores list` | every entry, and whether the next save keeps it |
-| `scores add levels/level_t.txt Bob 25000` | a new one |
-| `scores test` | writes name and points, reads them back, puts them back |
-| `scores remove 0` | drops one |
-| `scores save` | write `scores.dat` now |
-
-**The level is a path, not a name.** `scores` with no arguments prints the ones the table knows —
-copy one from there. `levels/level_t.txt`, not `level_t`.
-
-## Palaces
-
-`packs.sav` — the levels the player has opened, by menu id.
-
-| Type this | And you get |
-| --- | --- |
-| `prog` | how many are open, and which pack |
-| `prog list` | their ids |
-| `prog open ID_CTRLY_GREEN` | opened |
-| `prog close ID_CTRLY_GREEN` | closed, and blocked from reopening |
-| `prog test` | Add, GetId, SetId, Remove, each read back — on ids of its own |
-| `prog save` | write `packs.sav` now |
-
-The button on the CASTLES screen is set when that screen is built, so **leave and come back** to see
-a change.
-
-Closing needs one more thing to stick across a restart: the screen reopens everything listed in
-`$enabled_castles` in `scripts/menu_std_new.txt` every time it is built. Take the id out of that list,
-or have your mod call `Progress::Block` in `AmodInit` — the block itself does not survive a restart.
-
-## Saved games
-
-One file a slot, `saves/saveNNN.sav`.
-
-| Type this | And you get |
-| --- | --- |
-| `slot` | the slots that hold a game, with their name and level |
-| `slot save 1 test` | this game written to slot 1 |
-| `slot load 1` | that game back |
-| `slot drop 1` | the file deleted |
-
-**`slot save` needs a level being played.** From the menu there is nothing to save, and the command
-says so rather than leaving a half-written file.
-
-## A mod's own state in a save
-
-`quest` keeps a step and a note, and they ride inside the game's own save file.
+| `brush` | every group and brush listed, the held one arrowed, the mod's marked `(mine)` |
+| `brush add` | a "Sample" group with three brushes |
+| `brush remove` | all of it taken out again |
 
 ```
-quest found the key
-    quest: step 1, "found the key"
-slot save 1 test
-[restart the game]
-slot load 1
-    quest: slot 1 gave back step 1, "found the key"
+brush
+    brush: group 0 'Geometry' paints grid 0, holds 14
+    brush: group 1 'Entities' paints grid 1, holds 19
+    brush: group 2 'Sample'   paints grid 0, holds 2
+      ->  0  cell 'W'  key '1'  FFFFFFFF  Sample Wall       (mine)
 ```
 
-A mod's bytes go after everything the game wrote, where the game never looks — so a save with them
-still loads in a game with no loader at all.
+The three brushes:
 
-## What a level remembers
+| Brush | Key | What it shows |
+| --- | --- | --- |
+| `Sample Wall` | `1` | the plain case — the handler returns non-zero and the loader writes the cell. Its `texture` is what a painted cell looks like |
+| `Wall 3x3` | `2` | writes nine cells around the one it was handed, then returns zero |
+| `Sample Pickup` | `3` | the entities grid: a `draw` handler of its own, and blocks written into `_bonuses.txt` and read back |
 
-`chg` is the same idea by name and value, and AzForge writes it into the slot for you.
+A group paints one of the two grids the room editor holds; which brushes are in it is the mod's.
+`M` walks past the game's two into it.
+
+---
+
+## `maze` — the grid of rooms
 
 | Type this | And you get |
 | --- | --- |
-| `chg` | every remembered change, with the level it belongs to |
-| `chg door_7` | what that one stands at |
-| `chg door_7 1` | set it on the level being played |
+| `maze` | the size, the cursor, and a map: `#` a room, `.` empty, `@` the cursor |
+| `maze goto <x> <y>` | the cursor onto a cell that already exists |
+| `maze new <x> <y>` | a room there, the maze grown to reach it, the cursor on it |
+| `maze del <x> <y>` | the room freed and the cell emptied |
+| `maze clear <x> <y>` | both grids of a room emptied and the wall border put back |
+| `maze row <at>` | a row inserted before that index |
+| `maze col <at>` | a column, likewise |
+| `maze save <x> <y> [path]` | one room out to a constructor file |
+| `maze load <x> <y> [path]` | one room in from one, over whatever was there |
 
-It is kept per slot and handed back before the level is drawn. Applying it is your mod's — only your
-mod knows that `door_7` is a particular ctrl in a particular room.
+The path defaults to `rooms/sample.txt`.
 
-`thing` is the other half: the records the game itself saves.
+```
+maze new 2 1
+    maze: room 2,1 made and crossed
+    maze: cursor on 2,1
+maze
+    maze: 3x2, cursor on 2,1
+      ...
+      ..@
+```
+
+Every grid and brush call answers for the cell the cursor is on, so `maze goto` is how a mod edits
+a room it is not standing in. On a fresh maze start with `maze new 0 0`.
+
+Saving writes the `.txt` and the `_ctrls`, `_monsters` and `_bonuses` files beside it.
+
+---
+
+## `savelevel` — write the level out
 
 | Type this | And you get |
 | --- | --- |
-| `thing` | this room's records, its own line, and the bytes the whole level takes |
-| `thing 3 1` | record 3 set — save the slot and it comes back changed |
+| `savelevel` | the level written to `levels/sample.txt` |
+| `savelevel <path>` | the same, somewhere else |
 
-```
-thing
-    thing: room 8 keeps 16, and takes 18 byte(s) in a save
-       3  tag 9    1 byte(s)  1
-      15  tag 10   1 byte(s)  1
-      room line: saved, state 1, extra yes (116)
-    thing: the level section takes 343 byte(s) of things and lines, over 16 room(s)
-```
+Every room goes out beside it, compiled into the `.room` files the level points at. SampleMod fills
+in what the game writes as constants: per-room textures and `$type` in the level file, and per-room
+ambient light in each room file — the rooms come out light, dark, light on a checkerboard.
 
-Tags 2, 9, 10 and 11 are saved; anything else is not, and shows `0 byte(s)`.
+---
 
-## The level statistic
-
-The eight pairs the end-of-level screen turns into points.
+## `part` — the game's editor's looks
 
 | Type this | And you get |
 | --- | --- |
-| `stats` | all eight, got and total |
-| `stats monsters 3` | that counter set |
+| `part` | all five pieces listed, and the four status lines |
+| `part <piece> off` | that piece hidden |
+| `part <piece> on` | it back |
+| `part <piece> <x> <y> [size] [scale]` | it moved |
+| `part say <line> <text>` | one of the four status lines written by the mod |
+| `part say <line>` | that line given back to the game |
+| `part name <group> <index> <text>` | a brush renamed, the game's own included |
+| `part name <group> <index>` | its name back |
+| `part colour <group> <index> <AARRGGBB>` | a brush recoloured |
+| `part colour <group> <index> 0` | its colour back |
+| `part icon 0 <path>` | the editor's mouse cursor |
+| `part icon 1 <path>` | what an empty maze cell shows — maze screen only |
+| `part icon <0\|1>` | the game's own sprite back |
+| `part screen <0\|1>` | the room screen or the maze screen, the same as TAB |
+| `part back [on\|off]` | a backdrop under the whole editor |
 
-`crystals`, `bonuses`, `super`, `monsters`, `light`, `dark`, `secret`, `eighth`. The first seven are
-the game's own names, out of `$percent_str` in a statistic script. The eighth is scored and named
-nowhere.
+The five pieces, and what `size` and `scale` mean for each:
 
-Set one and both the end-of-level screen and the next save follow it.
+| Piece | x, y | `size` | `scale` |
+| --- | --- | --- | --- |
+| `grid` | its top left corner | one cell, 12 | — |
+| `lines` | follows `grid` | — | — |
+| `status` | the first of the four lines | the step to the next, 15 | the letters, 1 |
+| `palette` | the top of the brush list | the step to the next row, 15 | the letters, 1 |
+| `maze` | — | the maze screen's zoom, 0.1 to 2 | — |
 
-## What each one is really testing
+y is measured from the top, as `Render` measures it.
 
-| Command | The call behind it |
+```
+part status off
+part palette 530 20 24 1.6
+part grid 100 60 8
+part say 0 "Brush: %s"
+part colour 0 1 FF4488FF
+part back on
+```
+
+A `%s` in a status line is filled with the held brush on line 0 and the group on line 1. Everything
+else is drawn as it stands.
+
+---
+
+## Every call it demonstrates
+
+| The call | Where to see it |
 | --- | --- |
-| `cfg`, `cfgsave` | `Config::Has`, `Get`, `Set`, `Add`, `Save` |
-| `scores` | `Scores::Get`, `Add`, `SetName`, `SetPoint`, `Remove`, `Save` |
-| `prog` | `Progress::Open`, `Close`, `SetId`, `Remove`, `Block`, `Save` |
-| `slot` | `Progress::SlotExists`, `SlotName`, `SlotLevel`, `SaveSlot`, `LoadSlot`, `DeleteSlot` |
-| `quest` | `Progress::OnSlotSave`, `OnSlotLoad`, `WriteSlotData` |
-| `chg` | `Progress::SetLevelChange`, `GetLevelChange`, `LevelChangeAt` |
-| `thing` | `World::GetRoomThing`, `SetRoomThing`, `GetRoomMemory`, `RoomSavedSize` |
-| `stats` | `World::GetLevelStats`, `SetLevelStats` |
+| `Enter`, `Leave`, `IsActive`, `SetMode`, `IsGameEditorOn` | `edit` |
+| `OnFrame`, `OnDraw`, `OnDraw(AMOD_EDITOR_DRAW_WORLD, …)` | the mod's screen |
+| `AddGroup`, `AddBrush`, `GetBrush`, `GetCurrentBrush`, `RemoveBrush`, `RemoveGroup` | `brush` |
+| `GetGridCell`, `SetGridCell`, `GridSize` | the paint and save handlers |
+| `MazeSize`, `GetMazeCursor`, `SetMazeCursor`, `HasRoom` | `maze` |
+| `CreateRoom`, `RemoveRoom`, `ClearRoom`, `InsertRow`, `InsertColumn` | `maze new`, `del`, `clear`, `row`, `col` |
+| `LoadRoom`, `SaveRoom` | `maze save`, `maze load` |
+| `OnRoomCreated`, `OnRoomLoaded` | `maze new`, `maze load` |
+| `OnRoomWrite`, `OnLevelWrite`, `SaveLevel` | `savelevel` |
+| `GetPart`, `SetPart` | `part` |
+| `SetStatusLine`, `GetStatusLine` | `part say` |
+| `SetBrushLabel`, `SetBrushColour` | `part name`, `part colour` |
+| `SetIcon` | `part icon` |
+| `GetScreen`, `SetScreen` | `part screen` |
+| `OnDraw(AMOD_EDITOR_DRAW_BACKDROP, …)` | `part back` |
+| `OnKey` | F2, which the mod takes |
