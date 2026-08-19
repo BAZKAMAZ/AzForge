@@ -7,6 +7,7 @@
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
+#include "src/Game/D3d8Hook.h"
 #include "src/Hook/InlineHook.h"
 
 #include <string>
@@ -64,6 +65,14 @@ namespace Forge
             AmodToken token;
         };
 
+        struct DeviceSub
+        {
+            ModContext* owner;
+            AmodDeviceCallback callback;
+            void* user;
+            AmodToken token;
+        };
+
         InlineHook g_hook;
         PresentRoutine g_originalPresent = nullptr;
         const float* g_delta = nullptr;
@@ -91,6 +100,7 @@ namespace Forge
         std::vector<ElementSub> g_elementSubs;
         std::vector<StyleSub> g_styleSubs;
         std::vector<BgSub> g_bgSubs;
+        std::vector<DeviceSub> g_deviceSubs;
         AmodToken g_nextToken = 1;
 
         void** g_drawSlot = nullptr;
@@ -295,6 +305,58 @@ namespace Forge
                 {
                     g_bgSubs.erase(it);
                     return;
+                }
+            }
+        }
+
+        AmodToken __cdecl ApiOnDevice(AmodMod mod, AmodDeviceCallback callback, void* user)
+        {
+            ModContext* const context = Resolve(mod);
+            if (context == nullptr || callback == nullptr)
+            {
+                return AMOD_INVALID_TOKEN;
+            }
+            const AmodToken token = g_nextToken++;
+            g_deviceSubs.push_back(DeviceSub{ context, callback, user, token });
+            return token;
+        }
+
+        // Every token this subsystem hands out comes from one counter, so one canceller does.
+        void __cdecl ApiCancel(AmodMod mod, AmodToken token)
+        {
+            ModContext* const context = Resolve(mod);
+            if (context == nullptr || token == AMOD_INVALID_TOKEN)
+            {
+                return;
+            }
+            ApiUnsubscribe(mod, token);
+            ApiCancelElementDraw(mod, token);
+            ApiCancelItemStyle(mod, token);
+            ApiCancelMenuBackground(mod, token);
+            for (auto it = g_deviceSubs.begin(); it != g_deviceSubs.end(); ++it)
+            {
+                if (it->owner == context && it->token == token)
+                {
+                    g_deviceSubs.erase(it);
+                    return;
+                }
+            }
+        }
+
+        uint32_t __cdecl ApiDeviceGeneration(AmodMod mod)
+        {
+            return Resolve(mod) != nullptr ? D3d8Hook::Generation() : 0;
+        }
+
+        // What the d3d8 hook reports, passed on to the mods that asked.
+        void OnDeviceEvent(DeviceEvent event, void* device)
+        {
+            const std::vector<DeviceSub> snapshot = g_deviceSubs;
+            for (const DeviceSub& subscriber : snapshot)
+            {
+                if (subscriber.callback != nullptr)
+                {
+                    subscriber.callback(static_cast<AmodDeviceEvent>(event), device, subscriber.user);
                 }
             }
         }
@@ -851,6 +913,11 @@ namespace Forge
         g_table.DrawTextLineAligned = &ApiDrawTextAligned;
         g_table.DrawSprite = &ApiDrawSprite;
         g_table.FillRect = &ApiFillRect;
+        g_table.OnDevice = &ApiOnDevice;
+        g_table.Cancel = &ApiCancel;
+        g_table.DeviceGeneration = &ApiDeviceGeneration;
+
+        D3d8Hook::SetSink(&OnDeviceEvent);
 
         FORGE_LOG_INFO("Render interface installed");
         return true;
@@ -888,6 +955,8 @@ namespace Forge
         }
         g_vtables.clear();
 
+        D3d8Hook::SetSink(nullptr);
+
         g_hook.Uninstall();
         g_beginHook.Uninstall();
         g_decorHook.Uninstall();
@@ -901,6 +970,7 @@ namespace Forge
         g_elementSubs.clear();
         g_styleSubs.clear();
         g_bgSubs.clear();
+        g_deviceSubs.clear();
         g_drawSlot = nullptr;
         g_originalDraw = nullptr;
         g_spriteSlot = nullptr;
@@ -939,6 +1009,10 @@ namespace Forge
         for (auto it = g_bgSubs.begin(); it != g_bgSubs.end();)
         {
             it = it->owner == owner ? g_bgSubs.erase(it) : ++it;
+        }
+        for (auto it = g_deviceSubs.begin(); it != g_deviceSubs.end();)
+        {
+            it = it->owner == owner ? g_deviceSubs.erase(it) : ++it;
         }
     }
 }

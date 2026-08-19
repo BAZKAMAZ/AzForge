@@ -37,6 +37,7 @@
 #include "src/Game/GameFunctions.h"
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
+#include "src/Game/D3d8Hook.h"
 #include "src/Game/PackageHook.h"
 #include "src/Game/ShutdownHook.h"
 #include "src/Mods/ModFileSystem.h"
@@ -236,6 +237,7 @@ namespace Forge
         ModHost::UnloadAll();
         ModLoadScreen::Uninstall();
         PackageHook::Uninstall();
+        D3d8Hook::Detach();
         ShutdownHook::Uninstall();
         LauncherApi::Uninstall();
         ObjectsMenuApi::Uninstall();
@@ -279,6 +281,11 @@ namespace Forge
 extern "C" __declspec(dllexport) void __cdecl AzForge_Boot()
 {
     (void)Forge::Boot::Run();
+}
+
+extern "C" __declspec(dllexport) void* __cdecl AzForge_HookD3d8(void* d3d8)
+{
+    return Forge::D3d8Hook::Attach(d3d8);
 }
 
 extern "C" __declspec(dllexport) void __cdecl AzForge_Shutdown()

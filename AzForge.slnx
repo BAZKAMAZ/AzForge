@@ -3,7 +3,7 @@
     <Platform Name="x86" />
   </Configurations>
   <Project Path="AzForge.vcxproj" Id="35552fb5-dfb1-4d0e-a86d-ed6c1c7bf288" />
-  <Project Path="WinmmProxy/WinmmProxy.vcxproj" Id="7f2c1a94-6b3d-4a58-9e21-c0d47b8f5a13" />
+  <Project Path="D3d8Proxy/D3d8Proxy.vcxproj" Id="8ee9c7dc-873f-4440-9cb4-3788e1c33165" />
   <Project Path="AmodPack/AmodPack.vcxproj" Id="2d9e4f31-58a7-4c62-b0d3-6e91f4a27c85" />
   <Project Path="sdk/SampleMod/SampleMod.vcxproj" Id="6a3f8b21-49dc-4e07-8f56-b21d3c7e94af" />
   <Project Path="CoreMod/CoreMod.vcxproj" Id="c4e19a70-5d82-4b36-9af1-3e0b7d68c215" />

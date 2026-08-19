@@ -27,6 +27,17 @@ typedef void (__cdecl* AmodItemStyleCallback)(AmodMenuItem item, float rgba[4], 
 
 typedef int (__cdecl* AmodMenuBackgroundCallback)(const char* menuId, void* user);
 
+/* What happened to the Direct3D device. */
+typedef enum AmodDeviceEvent
+{
+    AMOD_DEVICE_CREATED  = 1,   /* a new one; everything built on the old one is dead */
+    AMOD_DEVICE_LOST     = 2,   /* before the game resets it: release D3DPOOL_DEFAULT resources */
+    AMOD_DEVICE_RESET    = 3,   /* the reset took: same device, build them again */
+    AMOD_DEVICE_RELEASED = 4    /* gone; the pointer identifies it, it is not to be called */
+} AmodDeviceEvent;
+
+typedef void (__cdecl* AmodDeviceCallback)(AmodDeviceEvent event, void* device, void* user);
+
 /* Menu font from GetFont; null = default system font. */
 typedef void* AmodFont;
 
@@ -77,9 +88,20 @@ typedef struct AmodRenderApi
     /* DrawTextLine with explicit align; default has always been AMOD_TEXT_ALIGN_DEFAULT. */
     void(__cdecl* DrawTextLineAligned)(AmodMod mod, AmodFont font, float x, float y, const char* text, float scale, uint32_t color, int align);
 
+    /* A reset with a mod's D3DPOOL_DEFAULT resource still alive fails and the game does not come
+       back, so AMOD_DEVICE_LOST is the one event that has to be acted on. */
+    AmodToken (__cdecl* OnDevice)(AmodMod mod, AmodDeviceCallback callback, void* user);
+
+    /* Drops any token this subsystem handed out. */
+    void (__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
+    /* Counts device incarnations: a resource made under an older one is dead even when the new
+       device landed on the same address. */
+    uint32_t (__cdecl* DeviceGeneration)(AmodMod mod);
+
 } AmodRenderApi;
 
-AMOD_LAST_FIELD(AmodRenderApi, DrawTextLineAligned, 0x40);
+AMOD_LAST_FIELD(AmodRenderApi, DeviceGeneration, 0x4C);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -223,6 +245,28 @@ namespace Amod
             {
                 g_render->CancelMenuBackground(g_self, token);
             }
+        }
+
+        inline AmodToken                                            OnDevice(AmodDeviceCallback callback, void* user = nullptr)
+        {
+            return g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->OnDevice != nullptr
+                ? g_render->OnDevice(g_self, callback, user)
+                : AMOD_INVALID_TOKEN;
+        }
+
+        inline void                                                 Cancel(AmodToken token)
+        {
+            if (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->Cancel != nullptr)
+            {
+                g_render->Cancel(g_self, token);
+            }
+        }
+
+        inline unsigned long                                        DeviceGeneration()
+        {
+            return g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) && g_render->DeviceGeneration != nullptr
+                ? g_render->DeviceGeneration(g_self)
+                : 0;
         }
 
         /* The menu font of this name, or null if there is none; pass it to Text. */
@@ -475,11 +519,17 @@ namespace Amod
         }
 
         
+        /* A copy of the backbuffer. Its render target lives in D3DPOOL_DEFAULT, so it listens for
+           the device events: one left alive across a reset makes the reset fail. */
         class FrameCapture
         {
         public:
             FrameCapture() = default;
-            ~FrameCapture() { Release(); }
+            ~FrameCapture()
+            {
+                Cancel(m_token);
+                Release();
+            }
 
             FrameCapture(const FrameCapture&) = delete;
             FrameCapture& operator=(const FrameCapture&) = delete;
@@ -490,6 +540,11 @@ namespace Amod
                 if (device == nullptr)
                 {
                     return nullptr;
+                }
+
+                if (m_token == AMOD_INVALID_TOKEN)
+                {
+                    m_token = OnDevice(&OnDeviceEvent, this);
                 }
 
                 IDirect3DSurface8* back = nullptr;
@@ -513,6 +568,7 @@ namespace Amod
                     }
                     m_width = static_cast<int>(desc.Width);
                     m_height = static_cast<int>(desc.Height);
+                    m_generation = DeviceGeneration();
                 }
 
                 IDirect3DSurface8* destination = nullptr;
@@ -527,17 +583,41 @@ namespace Amod
 
             void                                                   Release()
             {
-                if (m_texture != nullptr)
+                if (m_texture != nullptr && m_generation == DeviceGeneration())
                 {
                     m_texture->Release();
-                    m_texture = nullptr;
                 }
+                Drop();
+            }
+
+        private:
+            static void __cdecl                                    OnDeviceEvent(AmodDeviceEvent event, void* device, void* user)
+            {
+                (void)device;
+                FrameCapture* const self = static_cast<FrameCapture*>(user);
+
+                if (event == AMOD_DEVICE_LOST)
+                {
+                    self->Release();
+                }
+                else
+                {
+                    self->Drop();
+                }
+            }
+
+            /* Lets go without releasing: the device the texture belonged to is already gone. */
+            void                                                   Drop()
+            {
+                m_texture = nullptr;
+                m_generation = 0;
                 m_width = 0;
                 m_height = 0;
             }
 
-        private:
             IDirect3DTexture8* m_texture = nullptr;
+            unsigned long m_generation = 0;
+            AmodToken m_token = AMOD_INVALID_TOKEN;
             int m_width = 0;
             int m_height = 0;
         };
@@ -563,7 +643,8 @@ namespace Amod
             /* Whether the texture outlived its device and has to be loaded again. */
             bool                                                   IsStale() const
             {
-                return m_texture != nullptr && m_device != Device();
+                return m_texture != nullptr &&
+                       (m_device != Device() || m_generation != DeviceGeneration());
             }
 
             int                                                    Width() const { return m_width; }
@@ -707,6 +788,7 @@ namespace Amod
                 m_texture->UnlockRect(0);
                 delete[] file;
                 m_device = device;
+                m_generation = DeviceGeneration();
                 m_width = width;
                 m_height = height;
                 return true;
@@ -716,7 +798,6 @@ namespace Amod
             {
                 if (m_texture != nullptr)
                 {
-                    m_texture->Release();
                     // The old device took its textures with it; releasing through a dead pointer
                     // is a crash, so a stale one is dropped rather than freed
                     if (!IsStale())
@@ -728,6 +809,7 @@ namespace Amod
                 }
 
                 m_device = nullptr;
+                m_generation = 0;
                 m_width = 0;
                 m_height = 0;
             }
@@ -797,6 +879,7 @@ namespace Amod
 
             IDirect3DTexture8* m_texture = nullptr;
             IDirect3DDevice8* m_device = nullptr;
+            unsigned long m_generation = 0;
             int m_width = 0;
             int m_height = 0;
         };
