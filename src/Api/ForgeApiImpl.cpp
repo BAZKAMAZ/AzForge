@@ -23,6 +23,7 @@
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/LevelEditorApi.h"
+#include "src/Api/DemoApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/RenderApi.h"
 #include "src/Api/WorldApi.h"
@@ -172,6 +173,7 @@ namespace Forge
         context.table.sav = SavApi::Table();
         context.table.input = InputApi::Table();
         context.table.levelEditor = LevelEditorApi::Table();
+        context.table.demo = DemoApi::Table();
 
         context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;
 

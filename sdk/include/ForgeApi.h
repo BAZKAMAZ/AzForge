@@ -28,6 +28,7 @@
 #include "ModManagerApi.h"
 #include "InputApi.h"
 #include "LevelEditorApi.h"
+#include "DemoApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -123,9 +124,12 @@ typedef struct AmodApi
     /* The editor seams: what stops, and where a mod draws instead. */
     const AmodLevelEditorApi* levelEditor;
 
+    /* The scripts a level plays itself with: read them, change them, or drive one. */
+    const AmodDemoApi* demo;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, levelEditor, 0x94);
+AMOD_LAST_FIELD(AmodApi, demo, 0x98);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -185,6 +189,7 @@ namespace Amod
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);
         LevelEditor::Attach(api->levelEditor, api->self);
+        Demo::Attach(api->demo, api->self);
         return true;
     }
 

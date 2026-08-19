@@ -339,6 +339,18 @@
     <ClInclude Include="src\Api\LevelEditorApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="src\Game\D3d8Hook.h">
+      <Filter>Game</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Game\Addresses\Demo.h">
+      <Filter>Game\Addresses</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\DemoApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\DemoApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -511,6 +523,12 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\LevelEditorApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game\D3d8Hook.cpp">
+      <Filter>Game</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\DemoApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

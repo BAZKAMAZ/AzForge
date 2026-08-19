@@ -1,157 +1,90 @@
-`TAB` walks between the room screen and the maze screen, `B` picks a brush, `M` a group, `C` empties
-the room, `F3` loads `levels/temp.txt`. `F2` would save and run it, but SampleMod takes that key.
+# Demo level
 
-| Command | What it does |
-| --- | --- |
-| `edit` | the mod's own screen |
-| `brush` | brushes and a group of the mod's own |
-| `maze` | the grid of rooms |
-| `part` | the game's editor's looks |
-| `savelevel` | write the whole level out |
+A level plays itself from the scripts it names with `$demo`: `data/levels/<castle>/demo_NNN.txt`.
+Each one is a list of `$move_cmd` blocks that drive the player, with `$cam_cmd` and `$view_cmd`
+blocks driving the camera and `$time_cmd` bending game time.
 
----
-
-## `edit` — an editor of the mod's own
+One command, `demo`, reads all of that, writes to it, drives it and watches it.
 
 | Type this | And you get |
 | --- | --- |
-| `edit` | the mod's screen up, or down again |
-| `edit world` | whether entities keep updating |
-| `edit render` | whether the 3D world keeps being drawn |
-| `edit input` | whether the game still acts on keys — Esc, the player |
-| `edit game` | whether the game's own editor still draws and takes keys |
-
-The four toggles are independent and each one can be left alone. Arrows move a marker while the
-mod's screen is up.
-
-`edit` down does not stop the backdrop, the key capture or anything under `part` — those are what
-the game's editor *is*, not what stands in for it.
-
-```
-edit game
-    edit: world stops, render stops, input stops, game editor shows
-```
-
----
-
-## `brush` — brushes of the mod's own
-
-| Type this | And you get |
-| --- | --- |
-| `brush` | every group and brush listed, the held one arrowed, the mod's marked `(mine)` |
-| `brush add` | a "Sample" group with three brushes |
-| `brush remove` | all of it taken out again |
-
-```
-brush
-    brush: group 0 'Geometry' paints grid 0, holds 14
-    brush: group 1 'Entities' paints grid 1, holds 19
-    brush: group 2 'Sample'   paints grid 0, holds 2
-      ->  0  cell 'W'  key '1'  FFFFFFFF  Sample Wall       (mine)
-```
-
-The three brushes:
-
-| Brush | Key | What it shows |
-| --- | --- | --- |
-| `Sample Wall` | `1` | the plain case — the handler returns non-zero and the loader writes the cell. Its `texture` is what a painted cell looks like |
-| `Wall 3x3` | `2` | writes nine cells around the one it was handed, then returns zero |
-| `Sample Pickup` | `3` | the entities grid: a `draw` handler of its own, and blocks written into `_bonuses.txt` and read back |
-
-A group paints one of the two grids the room editor holds; which brushes are in it is the mod's.
-`M` walks past the game's two into it.
+| `demo` | every script of this level, the running one arrowed |
+| `demo <n>` | one script written out whole — every move and every list on it |
+| `demo play <n>` | that script from its first command |
+| `demo stop` | the demo ended, whatever `$break_time` says |
+| `demo next` | on to the level's next script |
+| `demo watch` | starts, ends, breaks and every move as it is reached |
+| `demo drive` | the mod drives the player instead of the script |
+| `demo add <path>` | a script of the mod's own, read by the game's own parser |
+| `demo remove <n>` | one the mod added, taken out |
+| `demo suppress [0\|1]` | the level's own scripts dropped as the level loads |
+| `demo break <n> <secs>` | `$break_time` |
+| `demo set <n> <move> pause\|horz\|vert\|jump\|end <value>` | one field of one `$move_cmd` |
+| `demo cam\|view <n> <move> <i> <x> <y> <z> [time] [auto]` | one `$cam_cmd` or `$view_cmd` |
+| `demo time <n> <move> <i> <pause> <factor> <secs>` | one `$time_cmd` |
+| `demo start <n> <x> <y> <z> <vx> <vy> <vz>` | `$camera_start` |
+| `demo make` | a whole script built out of nothing, around where the player stands |
+| `demo addmove <n> <pause> [horz] [vert] [jump] [end]` | a `$move_cmd` appended |
+| `demo addcam\|addview <n> <move> <x> <y> <z> [time] [auto]` | a `$cam_cmd` or `$view_cmd` appended |
+| `demo addtime <n> <move> <pause> <factor> <secs>` | a `$time_cmd` appended |
 
 ---
 
-## `maze` — the grid of rooms
-
-| Type this | And you get |
-| --- | --- |
-| `maze` | the size, the cursor, and a map: `#` a room, `.` empty, `@` the cursor |
-| `maze goto <x> <y>` | the cursor onto a cell that already exists |
-| `maze new <x> <y>` | a room there, the maze grown to reach it, the cursor on it |
-| `maze del <x> <y>` | the room freed and the cell emptied |
-| `maze clear <x> <y>` | both grids of a room emptied and the wall border put back |
-| `maze row <at>` | a row inserted before that index |
-| `maze col <at>` | a column, likewise |
-| `maze save <x> <y> [path]` | one room out to a constructor file |
-| `maze load <x> <y> [path]` | one room in from one, over whatever was there |
-
-The path defaults to `rooms/sample.txt`.
+## Reading
 
 ```
-maze new 2 1
-    maze: room 2,1 made and crossed
-    maze: cursor on 2,1
-maze
-    maze: 3x2, cursor on 2,1
-      ...
-      ..@
+demo
+    demo: 1 script(s), playing
+      -> 0  22 move(s)  break 0.02  no $player_place
+    demo: on move 7 of script 0, 18.34s in
+
+demo 0
+    demo: script 0 starts the camera at -1.40 -0.40 1.10 looking -1.60 -0.60 0.00
+       0  pause 8.00
+            cam  -1.40 -0.40 1.10  0.01s
+            cam  -0.30 -0.40 1.10  3.00s
+            cam  -1.35 -0.30 2.80  3.00s  auto
+            view -1.60 -0.60 0.00  0.01s
+       1  horz 1 vert 0 jump 0 to -0.95
+       2  horz 1 vert 0 jump 1 to -0.30
 ```
 
-Every grid and brush call answers for the cell the cursor is on, so `maze goto` is how a mod edits
-a room it is not standing in. On a fresh maze start with `maze new 0 0`.
+A move is a pause **or** a move, never both: the game reads `$pause` first and a non-zero one is
+the whole command. A move runs until `$end_coord` passes the player's own coordinate.
 
-Saving writes the `.txt` and the `_ctrls`, `_monsters` and `_bonuses` files beside it.
+## Driving
 
----
+`demo drive` registers an input handler and returns non-zero from it, so what the script wanted is
+thrown away and the player walks right and jumps twice a second instead. `demo drive` again gives
+the script its player back.
 
-## `savelevel` — write the level out
+That handler is the whole seam between a demo and a mod: it is handed the player's position and
+hands back horizontal, vertical and jump — the same three the keyboard produces.
 
-| Type this | And you get |
-| --- | --- |
-| `savelevel` | the level written to `levels/sample.txt` |
-| `savelevel <path>` | the same, somewhere else |
+## Building one
 
-Every room goes out beside it, compiled into the `.room` files the level points at. SampleMod fills
-in what the game writes as constants: per-room textures and `$type` in the level file, and per-room
-ambient light in each room file — the rooms come out light, dark, light on a checkerboard.
-
----
-
-## `part` — the game's editor's looks
-
-| Type this | And you get |
-| --- | --- |
-| `part` | all five pieces listed, and the four status lines |
-| `part <piece> off` | that piece hidden |
-| `part <piece> on` | it back |
-| `part <piece> <x> <y> [size] [scale]` | it moved |
-| `part say <line> <text>` | one of the four status lines written by the mod |
-| `part say <line>` | that line given back to the game |
-| `part name <group> <index> <text>` | a brush renamed, the game's own included |
-| `part name <group> <index>` | its name back |
-| `part colour <group> <index> <AARRGGBB>` | a brush recoloured |
-| `part colour <group> <index> 0` | its colour back |
-| `part icon 0 <path>` | the editor's mouse cursor |
-| `part icon 1 <path>` | what an empty maze cell shows — maze screen only |
-| `part icon <0\|1>` | the game's own sprite back |
-| `part screen <0\|1>` | the room screen or the maze screen, the same as TAB |
-| `part back [on\|off]` | a backdrop under the whole editor |
-
-The five pieces, and what `size` and `scale` mean for each:
-
-| Piece | x, y | `size` | `scale` |
-| --- | --- | --- | --- |
-| `grid` | its top left corner | one cell, 12 | — |
-| `lines` | follows `grid` | — | — |
-| `status` | the first of the four lines | the step to the next, 15 | the letters, 1 |
-| `palette` | the top of the brush list | the step to the next row, 15 | the letters, 1 |
-| `maze` | — | the maze screen's zoom, 0.1 to 2 | — |
-
-y is measured from the top, as `Render` measures it.
+`set`, `cam`, `view` and `time` write over a record that is already there, and a move the level
+never gave a `$cam_cmd` has nothing to write over — `demo 0` says how many each move holds. The
+`add` half makes them:
 
 ```
-part status off
-part palette 530 20 24 1.6
-part grid 100 60 8
-part say 0 "Brush: %s"
-part colour 0 1 FF4488FF
-part back on
+demo make               a script of three moves, a camera, a view and a time slice
+demo addmove 1 0 1 0 1 0.5    walk right, jumping, until x passes 0.5
+demo addcam 1 0 0 -1 3 2 1    a camera on move 0, two seconds, handed back at the end
 ```
 
-A `%s` in a status line is filled with the held brush on line 0 and the group on line 1. Everything
-else is drawn as it stands.
+A `$cam_cmd` with a time of zero is what the game's own parser throws away, so `addcam` refuses one
+too.
+
+Scripts and records made this way live until the level changes — nothing recreates them, because
+there is no file to read them back from. A script from `demo add` does come back, being a file.
+
+## A script of the mod's own
+
+`demo add rooms/mine.txt` parses one with the game's own parser and appends it to the level's list.
+It comes back for every level after that, so a mod that wants one level's demo removes it again on
+the next. `demo suppress` drops what the level named, and the two together replace a level's demos
+outright.
 
 ---
 
@@ -159,19 +92,16 @@ else is drawn as it stands.
 
 | The call | Where to see it |
 | --- | --- |
-| `Enter`, `Leave`, `IsActive`, `SetMode`, `IsGameEditorOn` | `edit` |
-| `OnFrame`, `OnDraw`, `OnDraw(AMOD_EDITOR_DRAW_WORLD, …)` | the mod's screen |
-| `AddGroup`, `AddBrush`, `GetBrush`, `GetCurrentBrush`, `RemoveBrush`, `RemoveGroup` | `brush` |
-| `GetGridCell`, `SetGridCell`, `GridSize` | the paint and save handlers |
-| `MazeSize`, `GetMazeCursor`, `SetMazeCursor`, `HasRoom` | `maze` |
-| `CreateRoom`, `RemoveRoom`, `ClearRoom`, `InsertRow`, `InsertColumn` | `maze new`, `del`, `clear`, `row`, `col` |
-| `LoadRoom`, `SaveRoom` | `maze save`, `maze load` |
-| `OnRoomCreated`, `OnRoomLoaded` | `maze new`, `maze load` |
-| `OnRoomWrite`, `OnLevelWrite`, `SaveLevel` | `savelevel` |
-| `GetPart`, `SetPart` | `part` |
-| `SetStatusLine`, `GetStatusLine` | `part say` |
-| `SetBrushLabel`, `SetBrushColour` | `part name`, `part colour` |
-| `SetIcon` | `part icon` |
-| `GetScreen`, `SetScreen` | `part screen` |
-| `OnDraw(AMOD_EDITOR_DRAW_BACKDROP, …)` | `part back` |
-| `OnKey` | F2, which the mod takes |
+| `IsPlaying`, `Count`, `Current`, `Elapsed`, `MoveIndex`, `MoveCount` | `demo` |
+| `GetMove`, `GetCamera`, `GetView`, `GetTime` | `demo <n>` |
+| `GetCameraStart`, `GetPlace`, `GetBreakTime` | `demo`, `demo <n>` |
+| `SetMove` | `demo set` |
+| `SetCamera`, `SetView` | `demo cam`, `demo view` |
+| `SetTime` | `demo time` |
+| `SetCameraStart`, `SetBreakTime` | `demo start`, `demo break` |
+| `Play`, `Stop`, `Next` | `demo play`, `demo stop`, `demo next` |
+| `Add`, `Remove`, `SuppressLevelDemos` | `demo add`, `demo remove`, `demo suppress` |
+| `OnDemo`, `OnMove` | `demo watch` |
+| `OnInput` | `demo drive` |
+| `Cancel` | both of those, switched off again |
+| `Create`, `AddMove`, `AddCamera`, `AddView`, `AddTime` | `demo make`, and `demo addmove`, `addcam`, `addview`, `addtime` one at a time |

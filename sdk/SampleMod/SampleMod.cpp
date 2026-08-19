@@ -5,643 +5,600 @@
 
 using namespace Amod;
 
-float g_cursorX = 320.0f;
-float g_cursorY = 240.0f;
+AmodToken g_demoToken = AMOD_INVALID_TOKEN;
+AmodToken g_moveToken = AMOD_INVALID_TOKEN;
+AmodToken g_inputToken = AMOD_INVALID_TOKEN;
 
-int g_stopWorld = 1;
-int g_stopRender = 1;
-int g_stopInput = 1;
-int g_suppressGame = 1;
+float g_driveJump = 0.0f;
 
-int g_wanted = 0;
-int g_gameEditorWas = 0;
-int g_worldPhaseSeen = 0;
-
-void __cdecl EditFrame(float seconds, void*)
+const char* EventName(AmodDemoEvent event)
 {
-    const float step = seconds * 240.0f;
-
-    g_cursorX += Input::IsDown(0x27) ? step : 0.0f;
-    g_cursorX -= Input::IsDown(0x25) ? step : 0.0f;
-    g_cursorY += Input::IsDown(0x28) ? step : 0.0f;
-    g_cursorY -= Input::IsDown(0x26) ? step : 0.0f;
-}
-
-void __cdecl EditDrawWorld(void*)
-{
-    g_worldPhaseSeen = 1;
-}
-
-void __cdecl EditDraw(void*)
-{
-    char line[128] = {};
-
-    if (g_suppressGame != 0)
+    switch (event)
     {
-        Render::Rect(0.0f, 0.0f, 640.0f, 480.0f, 0xC0101018);
-
-        for (float x = 0.0f; x <= 640.0f; x += 40.0f)
-        {
-            Render::Rect(x, 0.0f, 1.0f, 480.0f, 0x40FFFFFF);
-        }
-
-        for (float y = 0.0f; y <= 480.0f; y += 40.0f)
-        {
-            Render::Rect(0.0f, y, 640.0f, 1.0f, 0x40FFFFFF);
-        }
-
-        Render::Rect(g_cursorX - 6.0f, g_cursorY - 6.0f, 12.0f, 12.0f, 0xFFFFCC00);
-        Render::Text(350.0f, 56.0f, "arrows move the marker", 0.6f, 0xFF9999AA);
+    case AMOD_DEMO_STARTED: return "started";
+    case AMOD_DEMO_ENDED:   return "ended";
+    case AMOD_DEMO_BROKEN:  return "broken";
     }
-
-    snprintf(line, sizeof(line), "edit: world %s, render %s, input %s, game editor %s",
-        g_stopWorld != 0 ? "stopped" : "running",
-        g_stopRender != 0 ? "stopped" : "drawn",
-        g_stopInput != 0 ? "stopped" : "acting",
-        g_suppressGame != 0 ? "silent" : "showing");
-
-    Render::Text(16.0f, 16.0f, line, 0.6f, 0xFFFFFFFF);
-    Render::Text(16.0f, 36.0f, g_worldPhaseSeen != 0
-        ? "world phase reached" : "world phase silent - the render is stopped", 0.6f, 0xFF9999AA);
-
-    g_worldPhaseSeen = 0;
+    return "?";
 }
 
-void __cdecl EditCommand(int argc, const char** argv, void*)
+void __cdecl DemoHappened(AmodDemoEvent event, int script, void*)
 {
-    if (argc > 1)
+    Console::Printf("demo: script %d %s\n", script, EventName(event));
+}
+
+void __cdecl MoveReached(int script, int move, void*)
+{
+    AmodDemoMove step = {};
+
+    if (!Demo::GetMove(script, move, &step))
     {
-        if (strcmp(argv[1], "world") == 0) { g_stopWorld = g_stopWorld != 0 ? 0 : 1; }
-        else if (strcmp(argv[1], "render") == 0) { g_stopRender = g_stopRender != 0 ? 0 : 1; }
-        else if (strcmp(argv[1], "input") == 0) { g_stopInput = g_stopInput != 0 ? 0 : 1; }
-        else if (strcmp(argv[1], "game") == 0) { g_suppressGame = g_suppressGame != 0 ? 0 : 1; }
-        else
-        {
-            Console::Print("edit: world | render | input | game, each one a toggle\n");
-            return;
-        }
-
-        AmodEditorMode mode = {};
-        mode.structSize = sizeof(mode);
-        mode.stopWorld = g_stopWorld;
-        mode.stopRender = g_stopRender;
-        mode.stopInput = g_stopInput;
-        mode.suppressGame = g_suppressGame;
-
-        LevelEditor::SetMode(mode);
-
-        Console::Printf("edit: world %s, render %s, input %s, game editor %s\n",
-            g_stopWorld != 0 ? "stops" : "runs",
-            g_stopRender != 0 ? "stops" : "draws",
-            g_stopInput != 0 ? "stops" : "acts",
-            g_suppressGame != 0 ? "silent" : "shows");
+        Console::Printf("demo: script %d move %d\n", script, move);
         return;
     }
 
-    g_wanted = g_wanted != 0 ? 0 : 1;
+    if (step.pause > 0.0f)
+    {
+        Console::Printf("demo: %d.%d pause %.2f\n", script, move, step.pause);
+        return;
+    }
 
-    Console::Printf(g_wanted != 0
-        ? "edit: entered\n"
-        : "edit: left - the backdrop and the key capture keep going\n");
+    Console::Printf("demo: %d.%d horz %d vert %d jump %d to %.2f\n", script, move,
+        step.horizontal, step.vertical, step.jump, step.endCoord);
 }
 
-int g_groupSample = -1;
-int g_brushWall = -1;
-int g_brushCross = -1;
-int g_brushPickup = -1;
-
-int __cdecl PaintWall(int column, int row, void*)
+// Walks right and jumps twice a second, whatever the script was going to do.
+int __cdecl DriveInstead(const float position[3], int* horizontal, int* vertical, int* jump, float seconds, void*)
 {
-    Console::Printf("brush: painted %d,%d\n", column, row);
+    (void)position;
+    (void)vertical;
+
+    g_driveJump += seconds;
+
+    *horizontal = 1;
+    *jump = 0;
+
+    if (g_driveJump >= 0.5f)
+    {
+        g_driveJump = 0.0f;
+        *jump = 1;
+    }
+
     return 1;
 }
 
-int __cdecl PaintCross(int column, int row, void*)
+void ListScripts()
 {
-    for (int y = row - 1; y <= row + 1; ++y)
+    const int count = Demo::Count();
+    const int current = Demo::Current();
+
+    if (count == 0)
     {
-        for (int x = column - 1; x <= column + 1; ++x)
-        {
-            LevelEditor::SetGridCell(x, y, 'W');
-        }
-    }
-
-    return 0;
-}
-
-void __cdecl DrawPickup(float x, float y, float size, void*)
-{
-    Render::Rect(x + size * 0.5f, y + size * 0.5f, size * 3.0f, size * 3.0f, 0xFF33CC66);
-}
-
-const char* __cdecl SaveWall(int roomX, int roomY, void*)
-{
-    static char block[256] = {};
-
-    snprintf(block, sizeof(block),
-        "$sample_block \n{\n\t$room %d %d\n\t$note \"written by SampleMod\"\n}\n\n", roomX, roomY);
-
-    return block;
-}
-
-const char* __cdecl SavePickup(int roomX, int roomY, void*)
-{
-    static char blocks[4096] = {};
-
-    int columns = 0;
-    int rows = 0;
-    int at = 0;
-
-    blocks[0] = '\0';
-
-    if (!LevelEditor::GridSize(columns, rows))
-    {
-        return nullptr;
-    }
-
-    for (int row = 0; row < rows; ++row)
-    {
-        for (int column = 0; column < columns; ++column)
-        {
-            // snprintf answers with what it wanted to write, so the room left is checked first and
-            // never derived from its return
-            const int left = static_cast<int>(sizeof(blocks)) - at;
-
-            if (LevelEditor::GetGridCell(column, row, AMOD_BRUSH_ENTITIES) != 'X' || left <= 128)
-            {
-                continue;
-            }
-
-            at += snprintf(blocks + at, left,
-                "$bonus\n{\n\t$room_pos %i %i\n\t$pos %i %i\n\t$name \"sample\"\n}\n\n",
-                roomX, roomY, column, row);
-        }
-    }
-
-    return at != 0 ? blocks : nullptr;
-}
-
-AmodTextureId g_brushTexture = AMOD_INVALID_TEXTURE;
-
-void __cdecl BrushCommand(int argc, const char** argv, void*)
-{
-    if (argc > 1 && strcmp(argv[1], "add") == 0)
-    {
-        if (g_brushWall >= 0)
-        {
-            Console::Print("brush: already added\n");
-            return;
-        }
-
-        g_groupSample = LevelEditor::AddGroup("Sample", AMOD_BRUSH_GEOMETRY);
-
-        const int group = g_groupSample >= 0 ? g_groupSample : AMOD_BRUSH_GEOMETRY;
-
-        AmodBrushDesc wall = {};
-        wall.structSize = sizeof(wall);
-        wall.label = "Sample Wall";
-        wall.cell = 'W';
-        wall.key = '1';
-        wall.group = group;
-        wall.texture = g_brushTexture;
-        wall.paint = &PaintWall;
-        wall.kind = AMOD_BRUSH_KIND_CTRL;
-        wall.save = &SaveWall;
-
-        g_brushWall = LevelEditor::AddBrush(wall);
-        g_brushCross = LevelEditor::AddBrush("Wall 3x3", 'W', '2', group, &PaintCross);
-
-        AmodBrushDesc pickup = {};
-        pickup.structSize = sizeof(pickup);
-        pickup.label = "Sample Pickup";
-        pickup.cell = 'X';
-        pickup.key = '5';
-        pickup.group = AMOD_BRUSH_ENTITIES;
-        pickup.kind = AMOD_BRUSH_KIND_BONUS;
-        pickup.draw = &DrawPickup;
-        pickup.save = &SavePickup;
-
-        g_brushPickup = LevelEditor::AddBrush(pickup);
-
-        Console::Printf(g_brushWall >= 0
-            ? "brush: group %d added - M walks past the game's two, B picks\n"
-            : "brush: would not be added (group %d)\n", g_groupSample);
+        Console::Print("demo: this level has no demo scripts\n");
         return;
     }
 
-    if (argc > 1 && strcmp(argv[1], "remove") == 0)
+    Console::Printf("demo: %d script(s), %s\n", count,
+        Demo::IsPlaying() ? "playing" : "idle");
+
+    for (int i = 0; i < count; ++i)
     {
-        LevelEditor::RemoveBrush(g_brushWall);
-        LevelEditor::RemoveBrush(g_brushCross);
-        LevelEditor::RemoveBrush(g_brushPickup);
-        LevelEditor::RemoveGroup(g_groupSample);
+        AmodDemoPlace place = {};
+        char where[64] = {};
 
-        g_brushWall = -1;
-        g_brushCross = -1;
-        g_brushPickup = -1;
-        g_groupSample = -1;
-
-        Console::Print("brush: removed\n");
-        return;
-    }
-
-    int currentGroup = -1;
-    int currentIndex = -1;
-
-    LevelEditor::GetCurrentBrush(currentGroup, currentIndex);
-
-    for (int group = 0; group < LevelEditor::GroupCount(); ++group)
-    {
-        Console::Printf("brush: group %d '%s' paints grid %d, holds %d\n", group,
-            LevelEditor::GroupName(group), LevelEditor::GroupLayer(group),
-            LevelEditor::BrushCount(group));
-
-        for (int at = 0; at < LevelEditor::BrushCount(group); ++at)
+        if (Demo::GetPlace(i, &place))
         {
-            AmodBrushInfo info = {};
-
-            if (!LevelEditor::GetBrush(group, at, info))
-            {
-                continue;
-            }
-
-            Console::Printf("  %s%2d  cell '%c'  key '%c'  %08X  %-20s%s\n",
-                (group == currentGroup && at == currentIndex) ? "->" : "  ",
-                at, info.cell != 0 ? info.cell : ' ', info.key != 0 ? info.key : ' ',
-                info.colour, info.label, info.isMine != 0 ? "  (mine)" : "");
+            snprintf(where, sizeof(where), "player %d,%d room %d,%d", place.playerX, place.playerY,
+                place.roomX, place.roomY);
         }
+        else
+        {
+            snprintf(where, sizeof(where), "no $player_place");
+        }
+
+        Console::Printf("  %s %d  %d move(s)  break %.2f  %s\n", i == current ? "->" : "  ", i,
+            Demo::MoveCount(i), Demo::BreakTime(i), where);
     }
 
-    Console::Print("brush: 'brush add' and 'brush remove'\n");
+    if (current >= 0)
+    {
+        Console::Printf("demo: on move %d of script %d, %.2fs in\n", Demo::MoveIndex(), current,
+            Demo::Elapsed());
+    }
 }
 
-void __cdecl RoomCreated(int x, int y, void*)
+void DumpScript(int script)
 {
-    int columns = 0;
-    int rows = 0;
+    const int moves = Demo::MoveCount(script);
+    float position[3] = {};
+    float view[3] = {};
 
-    if (!LevelEditor::GridSize(columns, rows))
+    if (moves == 0)
     {
+        Console::Printf("demo: there is no script %d\n", script);
         return;
     }
 
-    for (int column = 0; column < columns; ++column)
+    if (Demo::GetCameraStart(script, position, view))
     {
-        const int row = column * rows / columns;
-
-        LevelEditor::SetGridCell(column, row, 'W');
-        LevelEditor::SetGridCell(column, rows - 1 - row, 'W');
+        Console::Printf("demo: script %d starts the camera at %.2f %.2f %.2f looking %.2f %.2f %.2f\n",
+            script, position[0], position[1], position[2], view[0], view[1], view[2]);
+    }
+    else
+    {
+        Console::Printf("demo: script %d has no $camera_start\n", script);
     }
 
-    Console::Printf("maze: room %d,%d made and crossed\n", x, y);
-}
-
-void __cdecl RoomLoaded(const AmodRoomFiles* files, void*)
-{
-    const Data::Block root = Data::ParseFile(files->bonuses);
-    int restored = 0;
-
-    if (!root.IsValid())
+    for (int i = 0; i < moves; ++i)
     {
-        return;
-    }
+        AmodDemoMove step = {};
 
-    for (int at = 0; at < root.ChildCount(); ++at)
-    {
-        const Data::Block block = root.ChildAt(at);
-
-        if (strcmp(block.Name(), "bonus") != 0 || strcmp(block["name"].Text(), "sample") != 0)
+        if (!Demo::GetMove(script, i, &step))
         {
             continue;
         }
 
-        LevelEditor::SetGridCell(static_cast<int>(block["pos"].Number(0)),
-            static_cast<int>(block["pos"].Number(1)), 'X', AMOD_BRUSH_ENTITIES);
-
-        ++restored;
-    }
-
-    root.Free();
-    Console::Printf("maze: room %d,%d loaded, %d pickup(s) put back\n", files->x, files->y, restored);
-}
-
-void __cdecl MazeCommand(int argc, const char** argv, void*)
-{
-    const char* const what = argc > 1 ? argv[1] : "";
-    const int x = argc > 2 ? atoi(argv[2]) : 0;
-    const int y = argc > 3 ? atoi(argv[3]) : 0;
-    const char* const path = argc > 4 ? argv[4] : "rooms/sample.txt";
-
-    if (strcmp(what, "goto") == 0)
-    {
-        if (LevelEditor::SetMazeCursor(x, y)) { Console::Printf("maze: on %d,%d\n", x, y); }
-        else { Console::Printf("maze: goto %d,%d - %s\n", x, y, LastError()); }
-        return;
-    }
-
-    // Grows the maze to reach, and leaves the cursor on the room whether it existed or not
-    if (strcmp(what, "new") == 0)
-    {
-        if (LevelEditor::CreateRoom(x, y)) { Console::Printf("maze: cursor on %d,%d\n", x, y); }
-        else { Console::Printf("maze: new %d,%d - %s\n", x, y, LastError()); }
-        return;
-    }
-
-    if (strcmp(what, "del") == 0)
-    {
-        if (LevelEditor::RemoveRoom(x, y)) { Console::Printf("maze: %d,%d is empty\n", x, y); }
-        else { Console::Printf("maze: del %d,%d - %s\n", x, y, LastError()); }
-        return;
-    }
-
-    if (strcmp(what, "clear") == 0)
-    {
-        if (LevelEditor::ClearRoom(x, y)) { Console::Printf("maze: %d,%d emptied\n", x, y); }
-        else { Console::Printf("maze: clear %d,%d - %s\n", x, y, LastError()); }
-        return;
-    }
-
-    if (strcmp(what, "row") == 0 || strcmp(what, "col") == 0)
-    {
-        const char* const which = what[0] == 'r' ? "row" : "column";
-
-        if (what[0] == 'r' ? LevelEditor::InsertRow(x) : LevelEditor::InsertColumn(x))
+        if (step.pause > 0.0f)
         {
-            Console::Printf("maze: %s inserted before %d\n", which, x);
+            Console::Printf("  %2d  pause %.2f\n", i, step.pause);
         }
         else
         {
-            Console::Printf("maze: %s at %d - %s\n", which, x, LastError());
+            Console::Printf("  %2d  horz %d vert %d jump %d to %.2f\n", i, step.horizontal,
+                step.vertical, step.jump, step.endCoord);
         }
-        return;
-    }
 
-    // The .txt plus its _ctrls, _monsters and _bonuses - the brushes are asked for their blocks
-    if (strcmp(what, "save") == 0)
-    {
-        if (LevelEditor::SaveRoom(x, y, path)) { Console::Printf("maze: %d,%d written to '%s'\n", x, y, path); }
-        else { Console::Printf("maze: save %d,%d - %s\n", x, y, LastError()); }
-        return;
-    }
-
-    if (strcmp(what, "load") == 0)
-    {
-        if (LevelEditor::LoadRoom(x, y, path)) { Console::Printf("maze: '%s' is now %d,%d\n", path, x, y); }
-        else { Console::Printf("maze: load '%s' - %s\n", path, LastError()); }
-        return;
-    }
-
-    int columns = 0;
-    int rows = 0;
-    int cursorX = -1;
-    int cursorY = -1;
-
-    if (!LevelEditor::MazeSize(columns, rows))
-    {
-        Console::Printf("maze: %s\n", LastError());
-        return;
-    }
-
-    LevelEditor::GetMazeCursor(cursorX, cursorY);
-    Console::Printf("maze: %dx%d, cursor on %d,%d\n", columns, rows, cursorX, cursorY);
-
-    // The editor allocates its maze at startup but leaves it 0x0 until a level is loaded into it
-    if (columns <= 0 || rows <= 0)
-    {
-        Console::Print("maze: empty - 'maze new 0 0' puts the first room in\n");
-    }
-
-    for (int row = 0; row < rows; ++row)
-    {
-        char line[80] = {};
-        int at = 0;
-
-        for (int column = 0; column < columns && at < static_cast<int>(sizeof(line)) - 1; ++column)
+        for (int c = 0; c < step.camCount; ++c)
         {
-            line[at++] = (column == cursorX && row == cursorY) ? '@'
-                : (LevelEditor::HasRoom(column, row) ? '#' : '.');
+            AmodDemoCamera camera = {};
+            if (Demo::GetCamera(script, i, c, &camera))
+            {
+                Console::Printf("        cam  %.2f %.2f %.2f  %.2fs%s\n", camera.position[0],
+                    camera.position[1], camera.position[2], camera.time,
+                    camera.giveBack != 0 ? "  auto" : "");
+            }
         }
 
-        Console::Printf("  %s\n", line);
-    }
+        for (int v = 0; v < step.viewCount; ++v)
+        {
+            AmodDemoCamera camera = {};
+            if (Demo::GetView(script, i, v, &camera))
+            {
+                Console::Printf("        view %.2f %.2f %.2f  %.2fs%s\n", camera.position[0],
+                    camera.position[1], camera.position[2], camera.time,
+                    camera.giveBack != 0 ? "  auto" : "");
+            }
+        }
 
-    Console::Print("maze: goto|new|del|clear <x> <y>, row|col <at>, save|load <x> <y> [path]\n");
-}
-
-const char* __cdecl LevelWrite(const AmodLevelPart* part, void*)
-{
-    static char block[512] = {};
-
-    if (part->part == AMOD_LEVEL_HEADER)
-    {
-        return "\t$next_level \"\"\n\t$music \"music/light1.ogg\"\n\t$bonus 0\n"
-            "\t$bonus_time 0\n\t$bonus_count 0\n\t$quest_list\n\t{\n\t}\n";
-    }
-
-    // The parser refuses a level with no $player_start, and the loader will not invent one
-    if (part->part == AMOD_LEVEL_TAIL)
-    {
-        return "$player_start\n{\n\t$room_pos 0 0\n\t$pos 20 14\n}\n\n";
-    }
-
-    // Per room, which the game's own writer cannot do: it gives every room the same two textures
-    snprintf(block, sizeof(block),
-        "\t\t$floor_tex \"textures/rooms/3_02_floor.jpg\"\n"
-        "\t\t$wall_tex \"textures/rooms/3_01_wall.jpg\"\n\n"
-        "\t\t$active_items \"%s/%03i_ctrls.txt\"\n\n"
-        "\t\t$monsters \"%s/%03i_monsters.txt\"\n"
-        "\t\t$bonuses \"%s/%03i_bonuses.txt\"\n\n"
-        "\t\t$type \"%s\"\n\t\t$demo \"\"\n\t\t$music \"\"\n",
-        part->rooms, part->id, part->rooms, part->id, part->rooms, part->id,
-        ((part->x + part->y) % 2) != 0 ? "dark" : "light");
-
-    return block;
-}
-
-const char* __cdecl RoomWrite(const AmodRoomPart* part, void*)
-{
-    static char header[256] = {};
-
-    if (part->part != AMOD_ROOM_HEADER)
-    {
-        return nullptr;
-    }
-
-    const float light = ((part->x + part->y) % 2) != 0 ? 0.15f : 0.35f;
-
-    snprintf(header, sizeof(header),
-        "$back_wall 1\n$light_ambient %.2f %.2f %.2f\n$tex_wall_scale 1\n$tex_floor_scale 1\n\n"
-        "$ladder_cut 1\n$ladder_cross 1\n$chain_cut 1\n$chain_cross 1\n\n", light, light, light);
-
-    return header;
-}
-
-void __cdecl LevelCommand(int argc, const char** argv, void*)
-{
-    const char* const path = argc > 1 ? argv[1] : "levels/sample.txt";
-
-    if (LevelEditor::SaveLevel(path)) { Console::Printf("savelevel: '%s' written\n", path); }
-    else { Console::Printf("savelevel: '%s' - %s\n", path, LastError()); }
-}
-
-
-int g_backdrop = 0;
-
-void __cdecl EditBackdrop(void*)
-{
-    if (g_backdrop == 0)
-    {
-        return;
-    }
-
-    Render::Rect(0.0f, 0.0f, 640.0f, 480.0f, 0xFF101828);
-
-    for (float y = 0.0f; y < 480.0f; y += 8.0f)
-    {
-        Render::Rect(0.0f, y, 640.0f, 1.0f, 0xFF16203A);
+        for (int t = 0; t < step.timeCount; ++t)
+        {
+            AmodDemoTime slice = {};
+            if (Demo::GetTime(script, i, t, &slice))
+            {
+                Console::Printf("        time pause %.2f factor %.2f for %.2fs\n", slice.pause,
+                    slice.factor, slice.time);
+            }
+        }
     }
 }
 
-int __cdecl EditKey(int key, int, void*)
+void SetField(int argc, const char** argv)
 {
-    if (key != 0x71)
+    if (argc < 6)
     {
-        return 0;
+        Console::Print("demo set <script> <move> pause|horz|vert|jump|end <value>\n");
+        return;
     }
 
-    Console::Print("part: F2 taken from the editor\n");
-    return 1;
+    const int script = atoi(argv[2]);
+    const int move = atoi(argv[3]);
+    const char* const field = argv[4];
+    const float value = static_cast<float>(atof(argv[5]));
+
+    AmodDemoMove step = {};
+    if (!Demo::GetMove(script, move, &step))
+    {
+        Console::Printf("demo: script %d has no move %d\n", script, move);
+        return;
+    }
+
+    if (strcmp(field, "pause") == 0) { step.pause = value; }
+    else if (strcmp(field, "horz") == 0) { step.horizontal = static_cast<int>(value); }
+    else if (strcmp(field, "vert") == 0) { step.vertical = static_cast<int>(value); }
+    else if (strcmp(field, "jump") == 0) { step.jump = static_cast<int>(value); }
+    else if (strcmp(field, "end") == 0) { step.endCoord = value; }
+    else
+    {
+        Console::Print("demo set: pause, horz, vert, jump or end\n");
+        return;
+    }
+
+    if (Demo::SetMove(script, move, step))
+    {
+        Console::Printf("demo: %d.%d %s is now %.2f\n", script, move, field, value);
+    }
+    else
+    {
+        Console::Printf("demo: %d.%d %s was refused\n", script, move, field);
+    }
 }
 
-const char* const g_partNames[] = { "grid", "lines", "status", "palette", "maze" };
-
-void __cdecl PartCommand(int argc, const char** argv, void*)
+void SetCameraCommand(int argc, const char** argv, bool view)
 {
-    const char* const what = argc > 1 ? argv[1] : "";
-
-    if (strcmp(what, "back") == 0)
+    if (argc < 8)
     {
-        if (argc > 2) { g_backdrop = strcmp(argv[2], "off") == 0 ? 0 : 1; }
-        else { g_backdrop = g_backdrop != 0 ? 0 : 1; }
-
-        Console::Printf("part: backdrop %s\n", g_backdrop != 0 ? "on" : "off");
+        Console::Printf("demo %s <script> <move> <index> <x> <y> <z> [time] [auto]\n",
+            view ? "view" : "cam");
         return;
     }
 
-    if (strcmp(what, "say") == 0 && argc > 2)
-    {
-        const int line = atoi(argv[2]);
+    const int script = atoi(argv[2]);
+    const int move = atoi(argv[3]);
+    const int index = atoi(argv[4]);
 
-        if (LevelEditor::SetStatusLine(line, argc > 3 ? argv[3] : nullptr))
-        {
-            Console::Printf("part: line %d is now '%s'\n", line, LevelEditor::GetStatusLine(line));
-        }
-        else
-        {
-            Console::Printf("part: line %d - %s\n", line, LastError());
-        }
+    AmodDemoCamera camera = {};
+    const bool read = view ? Demo::GetView(script, move, index, &camera)
+                           : Demo::GetCamera(script, move, index, &camera);
+
+    if (!read)
+    {
+        AmodDemoMove step = {};
+        Demo::GetMove(script, move, &step);
+
+        Console::Printf("demo: %d.%d holds %d cam and %d view - 'demo add%s' makes one\n", script,
+            move, step.camCount, step.viewCount, view ? "view" : "cam");
         return;
     }
 
-    // A game brush keeps its name and its colour in its own record; nothing gives them back
-    if ((strcmp(what, "name") == 0 || strcmp(what, "colour") == 0) && argc > 3)
+    camera.position[0] = static_cast<float>(atof(argv[5]));
+    camera.position[1] = static_cast<float>(atof(argv[6]));
+    camera.position[2] = static_cast<float>(atof(argv[7]));
+
+    if (argc > 8)
     {
-        const int group = atoi(argv[2]);
-        const int index = atoi(argv[3]);
-        AmodBrushInfo info = {};
+        camera.time = static_cast<float>(atof(argv[8]));
+    }
+    if (argc > 9)
+    {
+        camera.giveBack = atoi(argv[9]);
+    }
 
-        const bool done = what[0] == 'n'
-            ? LevelEditor::SetBrushLabel(group, index, argc > 4 ? argv[4] : nullptr)
-            : LevelEditor::SetBrushColour(group, index, argc > 4 ? strtoul(argv[4], nullptr, 16) : 0);
+    const bool written = view ? Demo::SetView(script, move, index, camera)
+                              : Demo::SetCamera(script, move, index, camera);
 
-        if (done && LevelEditor::GetBrush(group, index, info))
-        {
-            Console::Printf("part: brush %d of group %d is '%s' in %08X\n", index, group,
-                info.label, info.colour);
-        }
-        else
-        {
-            Console::Printf("part: brush %d of group %d - %s\n", index, group, LastError());
-        }
+    Console::Printf("demo: %s %d.%d.%d %s\n", view ? "view" : "cam", script, move, index,
+        written ? "written" : "refused");
+}
+
+void SetTimeCommand(int argc, const char** argv)
+{
+    if (argc < 8)
+    {
+        Console::Print("demo time <script> <move> <index> <pause> <factor> <seconds>\n");
         return;
     }
 
-    if (strcmp(what, "icon") == 0 && argc > 2)
-    {
-        const int icon = atoi(argv[2]);
-        const AmodTextureId texture = argc > 3
-            ? Textures::Load(argv[3])
-            : AMOD_INVALID_TEXTURE;
+    AmodDemoTime slice = {};
+    slice.structSize = sizeof(slice);
+    slice.pause = static_cast<float>(atof(argv[5]));
+    slice.factor = static_cast<float>(atof(argv[6]));
+    slice.time = static_cast<float>(atof(argv[7]));
 
-        if (LevelEditor::SetIcon(icon, texture)) { Console::Printf("part: icon %d set\n", icon); }
-        else { Console::Printf("part: icon %d - %s\n", icon, LastError()); }
+    const int script = atoi(argv[2]);
+    const int move = atoi(argv[3]);
+    const int index = atoi(argv[4]);
+
+    Console::Printf("demo: time %d.%d.%d %s\n", script, move, index,
+        Demo::SetTime(script, move, index, slice) ? "written" : "refused");
+}
+
+void StartCommand(int argc, const char** argv)
+{
+    if (argc < 9)
+    {
+        Console::Print("demo start <script> <x> <y> <z> <vx> <vy> <vz>\n");
         return;
     }
 
-    if (strcmp(what, "screen") == 0)
-    {
-        if (argc > 2) { LevelEditor::SetScreen(atoi(argv[2])); }
+    float position[3] = {};
+    float view[3] = {};
 
-        Console::Printf("part: screen %d, the %s one\n", LevelEditor::GetScreen(),
-            LevelEditor::GetScreen() == AMOD_EDITOR_SCREEN_MAZE ? "maze" : "room");
+    position[0] = static_cast<float>(atof(argv[3]));
+    position[1] = static_cast<float>(atof(argv[4]));
+    position[2] = static_cast<float>(atof(argv[5]));
+    view[0] = static_cast<float>(atof(argv[6]));
+    view[1] = static_cast<float>(atof(argv[7]));
+    view[2] = static_cast<float>(atof(argv[8]));
+
+    Console::Printf("demo: camera start %s\n",
+        Demo::SetCameraStart(atoi(argv[2]), position, view) ? "written" : "refused");
+}
+
+void MakeScript()
+{
+    AmodPlayer player = {};
+
+    if (!Player::Get(player))
+    {
+        Console::Print("demo: there is no player to build a demo around\n");
         return;
     }
 
-    for (int at = 0; at < 5; ++at)
+    const int script = Demo::Create();
+
+    if (script < 0)
     {
-        AmodEditorPart place = {};
-
-        if (strcmp(what, g_partNames[at]) != 0 || !LevelEditor::GetPart(at, place))
-        {
-            continue;
-        }
-
-        if (argc > 2 && strcmp(argv[2], "off") == 0) { place.shown = 0; }
-        else if (argc > 2 && strcmp(argv[2], "on") == 0) { place.shown = 1; }
-        else if (argc > 3)
-        {
-            place.x = static_cast<float>(atof(argv[2]));
-            place.y = static_cast<float>(atof(argv[3]));
-            place.size = argc > 4 ? static_cast<float>(atof(argv[4])) : place.size;
-            place.scale = argc > 5 ? static_cast<float>(atof(argv[5])) : place.scale;
-        }
-        else
-        {
-            Console::Printf("part: %s off|on, or %s <x> <y> [size] [scale]\n", what, what);
-            return;
-        }
-
-        if (LevelEditor::SetPart(at, place))
-        {
-            Console::Printf("part: %s %s at %.0f,%.0f size %.0f scale %.2f\n", g_partNames[at],
-                place.shown != 0 ? "shown" : "hidden", place.x, place.y, place.size, place.scale);
-        }
-        else
-        {
-            Console::Printf("part: %s - %s\n", g_partNames[at], LastError());
-        }
+        Console::Print("demo: an empty script was refused\n");
         return;
     }
 
-    for (int at = 0; at < 5; ++at)
-    {
-        AmodEditorPart place = {};
+    AmodDemoMove step = {};
+    step.structSize = sizeof(step);
+    step.pause = 2.0f;
 
-        if (LevelEditor::GetPart(at, place))
-        {
-            Console::Printf("part: %-8s %s  %.0f,%.0f  size %.0f  scale %.2f\n", g_partNames[at],
-                place.shown != 0 ? "shown " : "hidden", place.x, place.y, place.size, place.scale);
-        }
+    const int wait = Demo::AddMove(script, step);
+
+    AmodDemoCamera camera = {};
+    camera.structSize = sizeof(camera);
+    camera.position[0] = player.position[0];
+    camera.position[1] = player.position[1] + 0.4f;
+    camera.position[2] = player.position[2] + 1.5f;
+    camera.time = 2.0f;
+    camera.giveBack = 1;
+
+    AmodDemoCamera look = camera;
+    look.position[0] = player.position[0];
+    look.position[1] = player.position[1];
+    look.position[2] = player.position[2];
+
+    AmodDemoTime slice = {};
+    slice.structSize = sizeof(slice);
+    slice.factor = 0.5f;
+    slice.time = 2.0f;
+
+    Demo::AddCamera(script, wait, camera);
+    Demo::AddView(script, wait, look);
+    Demo::AddTime(script, wait, slice);
+
+    // Then a third of a room to the right and back again, with a jump on the way
+    step.pause = 0.0f;
+    step.horizontal = 1;
+    step.endCoord = player.position[0] + 0.3f;
+    Demo::AddMove(script, step);
+
+    step.horizontal = -1;
+    step.jump = 1;
+    step.endCoord = player.position[0];
+    Demo::AddMove(script, step);
+
+    Console::Printf("demo: script %d built, %d move(s) - 'demo play %d' runs it\n", script,
+        Demo::MoveCount(script), script);
+}
+
+void AddMoveCommand(int argc, const char** argv)
+{
+    if (argc < 4)
+    {
+        Console::Print("demo addmove <script> <pause> [horz] [vert] [jump] [end]\n");
+        return;
     }
 
-    for (int line = 0; line < AMOD_EDITOR_STATUS_LINES; ++line)
+    AmodDemoMove step = {};
+    step.structSize = sizeof(step);
+    step.pause = static_cast<float>(atof(argv[3]));
+    step.horizontal = argc > 4 ? atoi(argv[4]) : 0;
+    step.vertical = argc > 5 ? atoi(argv[5]) : 0;
+    step.jump = argc > 6 ? atoi(argv[6]) : 0;
+    step.endCoord = argc > 7 ? static_cast<float>(atof(argv[7])) : 0.0f;
+
+    const int script = atoi(argv[2]);
+    const int added = Demo::AddMove(script, step);
+
+    Console::Printf("demo: move %d %s, script %d now holds %d\n", added,
+        added >= 0 ? "added" : "refused", script, Demo::MoveCount(script));
+}
+
+void AddCameraCommand(int argc, const char** argv, bool view)
+{
+    if (argc < 7)
     {
-        Console::Printf("part: line %d  \"%s\"\n", line, LevelEditor::GetStatusLine(line));
+        Console::Printf("demo add%s <script> <move> <x> <y> <z> [time] [auto]\n",
+            view ? "view" : "cam");
+        return;
     }
 
-    Console::Print("part: <name> off|on, <name> <x> <y> [size] [scale], 'part say <line> [text]',\n");
-    Console::Print("      'part name|colour <group> <index> [text|AARRGGBB]', 'part screen [0|1]',\n");
-    Console::Print("      'part icon 0|1 [path]', 'part back [on|off]'\n");
+    AmodDemoCamera camera = {};
+    camera.structSize = sizeof(camera);
+    camera.position[0] = static_cast<float>(atof(argv[4]));
+    camera.position[1] = static_cast<float>(atof(argv[5]));
+    camera.position[2] = static_cast<float>(atof(argv[6]));
+    camera.time = argc > 7 ? static_cast<float>(atof(argv[7])) : 1.0f;
+    camera.giveBack = argc > 8 ? atoi(argv[8]) : 0;
+
+    const int script = atoi(argv[2]);
+    const int move = atoi(argv[3]);
+    const int added = view ? Demo::AddView(script, move, camera)
+                           : Demo::AddCamera(script, move, camera);
+
+    AmodDemoMove step = {};
+    Demo::GetMove(script, move, &step);
+
+    Console::Printf("demo: %s %d %s, %d.%d now holds %d cam, %d view, %d time\n",
+        view ? "view" : "cam", added, added >= 0 ? "added" : "refused", script, move,
+        step.camCount, step.viewCount, step.timeCount);
+}
+
+void AddTimeCommand(int argc, const char** argv)
+{
+    if (argc < 7)
+    {
+        Console::Print("demo addtime <script> <move> <pause> <factor> <seconds>\n");
+        return;
+    }
+
+    AmodDemoTime slice = {};
+    slice.structSize = sizeof(slice);
+    slice.pause = static_cast<float>(atof(argv[4]));
+    slice.factor = static_cast<float>(atof(argv[5]));
+    slice.time = static_cast<float>(atof(argv[6]));
+
+    const int script = atoi(argv[2]);
+    const int move = atoi(argv[3]);
+    const int added = Demo::AddTime(script, move, slice);
+
+    AmodDemoMove step = {};
+    Demo::GetMove(script, move, &step);
+
+    Console::Printf("demo: time %d %s, %d.%d now holds %d\n", added,
+        added >= 0 ? "added" : "refused", script, move, step.timeCount);
+}
+
+void WatchCommand()
+{
+    if (g_demoToken != AMOD_INVALID_TOKEN)
+    {
+        Demo::Cancel(g_demoToken);
+        Demo::Cancel(g_moveToken);
+        g_demoToken = AMOD_INVALID_TOKEN;
+        g_moveToken = AMOD_INVALID_TOKEN;
+        Console::Print("demo: not watching\n");
+        return;
+    }
+
+    g_demoToken = Demo::OnDemo(&DemoHappened);
+    g_moveToken = Demo::OnMove(&MoveReached);
+
+    Console::Print("demo: watching starts, ends and every move\n");
+}
+
+void DriveCommand()
+{
+    if (g_inputToken != AMOD_INVALID_TOKEN)
+    {
+        Demo::Cancel(g_inputToken);
+        g_inputToken = AMOD_INVALID_TOKEN;
+        Console::Print("demo: the script drives again\n");
+        return;
+    }
+
+    g_driveJump = 0.0f;
+    g_inputToken = Demo::OnInput(&DriveInstead);
+
+    Console::Print("demo: the mod drives - right and a jump every half second\n");
+}
+
+void __cdecl DemoCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        ListScripts();
+        return;
+    }
+
+    const char* const what = argv[1];
+
+    if (strcmp(what, "play") == 0 && argc > 2)
+    {
+        const int script = atoi(argv[2]);
+        Console::Printf("demo: script %d %s\n", script, Demo::Play(script) ? "playing" : "refused");
+    }
+    else if (strcmp(what, "stop") == 0)
+    {
+        Console::Printf("demo: %s\n", Demo::Stop() ? "stopped" : "nothing was playing");
+    }
+    else if (strcmp(what, "next") == 0)
+    {
+        Console::Printf("demo: %s\n", Demo::Next() ? "on the next script" : "that was the last");
+    }
+    else if (strcmp(what, "add") == 0 && argc > 2)
+    {
+        const int added = Demo::Add(argv[2]);
+        Console::Printf("demo: '%s' %s\n", argv[2], added >= 0 ? "added" : "refused");
+    }
+    else if (strcmp(what, "remove") == 0 && argc > 2)
+    {
+        const int script = atoi(argv[2]);
+        Console::Printf("demo: script %d %s\n", script,
+            Demo::Remove(script) ? "removed" : "refused");
+    }
+    else if (strcmp(what, "suppress") == 0)
+    {
+        const int on = argc > 2 ? atoi(argv[2]) : 1;
+        Demo::SuppressLevelDemos(on != 0);
+        Console::Printf("demo: the level's own scripts are %s from the next level\n",
+            on != 0 ? "dropped" : "kept");
+    }
+    else if (strcmp(what, "break") == 0 && argc > 3)
+    {
+        const int script = atoi(argv[2]);
+        const float seconds = static_cast<float>(atof(argv[3]));
+        Console::Printf("demo: break time %s\n",
+            Demo::SetBreakTime(script, seconds) ? "written" : "refused");
+    }
+    else if (strcmp(what, "set") == 0)
+    {
+        SetField(argc, argv);
+    }
+    else if (strcmp(what, "cam") == 0)
+    {
+        SetCameraCommand(argc, argv, false);
+    }
+    else if (strcmp(what, "view") == 0)
+    {
+        SetCameraCommand(argc, argv, true);
+    }
+    else if (strcmp(what, "time") == 0)
+    {
+        SetTimeCommand(argc, argv);
+    }
+    else if (strcmp(what, "make") == 0)
+    {
+        MakeScript();
+    }
+    else if (strcmp(what, "addmove") == 0)
+    {
+        AddMoveCommand(argc, argv);
+    }
+    else if (strcmp(what, "addcam") == 0)
+    {
+        AddCameraCommand(argc, argv, false);
+    }
+    else if (strcmp(what, "addview") == 0)
+    {
+        AddCameraCommand(argc, argv, true);
+    }
+    else if (strcmp(what, "addtime") == 0)
+    {
+        AddTimeCommand(argc, argv);
+    }
+    else if (strcmp(what, "start") == 0)
+    {
+        StartCommand(argc, argv);
+    }
+    else if (strcmp(what, "watch") == 0)
+    {
+        WatchCommand();
+    }
+    else if (strcmp(what, "drive") == 0)
+    {
+        DriveCommand();
+    }
+    else if (argv[1][0] >= '0' && argv[1][0] <= '9')
+    {
+        DumpScript(atoi(argv[1]));
+    }
+    else
+    {
+        Console::Print("demo, demo <n>, 'demo play|remove <n>', 'demo stop|next|watch|drive',\n");
+        Console::Print("      'demo add <path>', 'demo suppress [0|1]', 'demo break <n> <secs>',\n");
+        Console::Print("      'demo set <n> <move> pause|horz|vert|jump|end <value>',\n");
+        Console::Print("      'demo cam|view <n> <move> <i> <x> <y> <z> [time] [auto]',\n");
+        Console::Print("      'demo time <n> <move> <i> <pause> <factor> <secs>',\n");
+        Console::Print("      'demo start <n> <x> <y> <z> <vx> <vy> <vz>', 'demo make',\n");
+        Console::Print("      'demo addmove <n> <pause> [horz] [vert] [jump] [end]',\n");
+        Console::Print("      'demo addcam|addview <n> <move> <x> <y> <z> [time] [auto]',\n");
+        Console::Print("      'demo addtime <n> <move> <pause> <factor> <secs>'\n");
+    }
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -651,47 +608,12 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("edit", &EditCommand);
-    Console::AddCommand("brush", &BrushCommand);
-    Console::AddCommand("maze", &MazeCommand);
-    Console::AddCommand("part", &PartCommand);
-    Console::AddCommand("savelevel", &LevelCommand);
-
-    g_brushTexture = Textures::Load("textures/editor/cursor.png");
-
-    LevelEditor::OnFrame(&EditFrame);
-    LevelEditor::OnDraw(&EditDraw);
-    LevelEditor::OnDraw(AMOD_EDITOR_DRAW_WORLD, &EditDrawWorld);
-
-    // These come whether or not a mod is holding the editor
-    LevelEditor::OnDraw(AMOD_EDITOR_DRAW_BACKDROP, &EditBackdrop);
-    LevelEditor::OnKey(&EditKey); //Uncomment it if you want to suppress F2 keystrokes.
-    LevelEditor::OnRoomCreated(&RoomCreated);
-    LevelEditor::OnRoomLoaded(&RoomLoaded);
-    LevelEditor::OnLevelWrite(&LevelWrite);
-    LevelEditor::OnRoomWrite(&RoomWrite);
-
+    Console::AddCommand("demo", &DemoCommand);
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
-    const int on = LevelEditor::IsGameEditorOn() ? 1 : 0;
-
-    if (on != g_gameEditorWas)
-    {
-        g_gameEditorWas = on;
-        g_wanted = on;
-    }
-
-    if (g_wanted != 0 && !LevelEditor::IsActive())
-    {
-        LevelEditor::Enter(g_stopWorld != 0, g_stopRender != 0, g_stopInput != 0, g_suppressGame != 0);
-    }
-    else if (g_wanted == 0 && LevelEditor::IsActive())
-    {
-        LevelEditor::Leave();
-    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

@@ -15,6 +15,7 @@
 #include "src/Api/DatApi.h"
 #include "src/Api/SavApi.h"
 #include "src/Api/LevelEditorApi.h"
+#include "src/Api/DemoApi.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
@@ -279,6 +280,7 @@ namespace Forge
         DatApi::ForgetMod(&m_context);
         SavApi::ForgetMod(&m_context);
         LevelEditorApi::ForgetMod(&m_context);
+        DemoApi::ForgetMod(&m_context);
 
         // Detours last — they point into the DLL about to go.
         InteropApi::ForgetMod(&m_context);

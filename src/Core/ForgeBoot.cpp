@@ -21,6 +21,7 @@
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/LevelEditorApi.h"
+#include "src/Api/DemoApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
@@ -211,6 +212,7 @@ namespace Forge
         Install("interop", &InteropApi::Install);
         Install("input", &InputApi::Install);
         Install("level_editor", &LevelEditorApi::Install);
+        Install("demo", &DemoApi::Install);
 
         ModManagerApi::Install();
         Subsystems::Record("block_expression", true);
@@ -257,6 +259,7 @@ namespace Forge
         InteropApi::Uninstall();
         InputApi::Uninstall();
         LevelEditorApi::Uninstall();
+        DemoApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
         ModState::Clear();

@@ -1,4 +1,4 @@
-# Writes sdk\subsystems.txt: every subsystem name the loader records, taken from the loader itself.
+﻿# Writes sdk\subsystems.txt: every subsystem name the loader records, taken from the loader itself.
 #
 # A mod's build reads that file to check - and to work out - what it requires. Because the list is
 # generated here and ships with the SDK, adding a subsystem to ForgeBoot.cpp is all it takes for
@@ -17,14 +17,14 @@ if (-not (Test-Path $Boot)) {
 }
 
 $names = @()
-foreach ($hit in Select-String -Path $Boot -Pattern 'Subsystems::Record\(\s*"([^"]+)"') {
+foreach ($hit in Select-String -Path $Boot -Pattern '(?:Subsystems::Record|Install)\(\s*"([^"]+)"') {
     foreach ($match in $hit.Matches) {
         $names += $match.Groups[1].Value
     }
 }
 
 if ($names.Count -eq 0) {
-    throw "No Subsystems::Record calls in $Boot - has the way they are declared changed?"
+    throw "No subsystem names in $Boot - has the way they are declared changed?"
 }
 
 $names = $names | Sort-Object -Unique

@@ -211,6 +211,18 @@ namespace Forge
     // PUSH ECX / MOV EAX,[ESP+0xC] / MOV EAX,[ECX+EAX*4] - both layer walks open alike
     constexpr uint8_t kLayerPrologue[] = { 0x51, 0x8B, 0x44, 0x24, 0x0C, 0x8B, 0x04, 0x81 };
 
+    // Demo_Active: CMP byte ptr [0x00694635],0 -> 7, taken whole so the JZ after it stays put
+    constexpr uint8_t kDemoActivePrologue[] = { 0x80, 0x3D, 0x35, 0x46, 0x69, 0x00, 0x00 };
+
+    // Demo_GetMove: MOV ECX,[ECX+0xC] / TEST ECX,ECX -> 5
+    constexpr uint8_t kDemoGetMovePrologue[] = { 0x8B, 0x49, 0x0C, 0x85, 0xC9 };
+
+    // Demo_Break: PUSH ESI / MOV ESI,ECX / MOV EAX,[ESI+0xC] -> 6
+    constexpr uint8_t kDemoBreakPrologue[] = { 0x56, 0x8B, 0xF1, 0x8B, 0x46, 0x0C };
+
+    // Demo_LoadList: SUB ESP,0x58 / PUSH EBP / PUSH ESI / MOV ESI,[ESP+0x64] -> 9
+    constexpr uint8_t kDemoLoadListPrologue[] = { 0x83, 0xEC, 0x58, 0x55, 0x56, 0x8B, 0x74, 0x24, 0x64 };
+
     struct MonsterTouchSite
     {
         uintptr_t address;
