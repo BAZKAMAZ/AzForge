@@ -449,9 +449,13 @@ typedef struct AmodMonstersApi
     /* What it is playing, same index; caller sets out->structSize. */
     int (__cdecl* GetAnim)(AmodMod mod, int index, AmodAnimState* out);
 
+    /* Every handler this subsystem hands a token for. The Remove* entries above are the older
+       spellings of the same call, kept for mods already built against them. */
+    void (__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodMonstersApi;
 
-AMOD_LAST_FIELD(AmodMonstersApi, GetAnim, 0xE8);
+AMOD_LAST_FIELD(AmodMonstersApi, Cancel, 0xEC);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -795,11 +799,12 @@ namespace Amod
             }, nullptr);
         }
 
-        inline void                                                 RemoveOnPlace(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_monsters != nullptr && g_monsters->RemovePlaceHandler != nullptr)
+            if (g_monsters != nullptr && g_monsters->structSize >= sizeof(AmodMonstersApi) &&
+                g_monsters->Cancel != nullptr)
             {
-                g_monsters->RemovePlaceHandler(g_monsterSelf, token);
+                g_monsters->Cancel(g_monsterSelf, token);
             }
         }
 

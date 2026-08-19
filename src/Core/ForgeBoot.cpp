@@ -1,3 +1,6 @@
+#include <string>
+#include <set>
+#include <fstream>
 #include "src/Core/ForgeBoot.h"
 #include "src/Api/BoxMenuApi.h"
 #include "src/Api/ConsoleApi.h"
@@ -49,6 +52,43 @@ namespace Forge
         HMODULE g_module = nullptr;
         ModRegistry g_registry;
         bool g_running = false;
+
+        // Disables subsystems listed in mods/skip.txt for fault isolation.
+        bool Skipped(const char* name)
+        {
+            static std::set<std::string> named;
+            static bool read = false;
+
+            if (!read)
+            {
+                read = true;
+
+                std::ifstream file(Paths::ModsDirectory() / L"skip.txt");
+                std::string line;
+
+                while (std::getline(file, line))
+                {
+                    while (!line.empty() && (line.back() == 13 || line.back() == 32))
+                    {
+                        line.pop_back();
+                    }
+
+                    if (!line.empty())
+                    {
+                        named.insert(line);
+                        FORGE_LOG_WARN("'%s' is named in skip.txt and is not installed", line.c_str());
+                    }
+                }
+            }
+
+            return named.count(name) != 0;
+        }
+
+        // The name is written once: Record both installs the subsystem and reports it.
+        void Install(const char* name, bool (*install)())
+        {
+            Subsystems::Record(name, !Skipped(name) && install());
+        }
 
         void WriteBanner()
         {
@@ -145,31 +185,31 @@ namespace Forge
         }
 
         // Failures are non-fatal: subsystem table entry is null, mod that needs it is refused.
-        Subsystems::Record("launcher", LauncherApi::Install());
-        Subsystems::Record("objects_menu", ObjectsMenuApi::Install());
-        Subsystems::Record("box_menu", BoxMenuApi::Install());
-        Subsystems::Record("frame", FrameApi::Install());
-        Subsystems::Record("console", ConsoleApi::Install());
-        Subsystems::Record("render", RenderApi::Install());
-        Subsystems::Record("world", WorldApi::Install());
-        Subsystems::Record("bonuses", BonusesApi::Install());
-        Subsystems::Record("inventory", InventoryApi::Install());
-        Subsystems::Record("hud", HudApi::Install());
-        Subsystems::Record("monsters", MonstersApi::Install());
-        Subsystems::Record("mmd", MmdApi::Install());
-        Subsystems::Record("textures", TextureApi::Install());
-        Subsystems::Record("sound", SoundApi::Install());
-        Subsystems::Record("player", PlayerApi::Install());
-        Subsystems::Record("ctrls", CtrlsApi::Install());
-        Subsystems::Record("camera", CameraApi::Install());
-        Subsystems::Record("particles", ParticlesApi::Install());
-        Subsystems::Record("files", FilesApi::Install());
-        Subsystems::Record("config", ConfigApi::Install());
-        Subsystems::Record("scores", DatApi::Install());
-        Subsystems::Record("progress", SavApi::Install());
-        Subsystems::Record("interop", InteropApi::Install());
-        Subsystems::Record("input", InputApi::Install());
-        Subsystems::Record("level_editor", LevelEditorApi::Install());
+        Install("launcher", &LauncherApi::Install);
+        Install("objects_menu", &ObjectsMenuApi::Install);
+        Install("box_menu", &BoxMenuApi::Install);
+        Install("frame", &FrameApi::Install);
+        Install("console", &ConsoleApi::Install);
+        Install("render", &RenderApi::Install);
+        Install("world", &WorldApi::Install);
+        Install("bonuses", &BonusesApi::Install);
+        Install("inventory", &InventoryApi::Install);
+        Install("hud", &HudApi::Install);
+        Install("monsters", &MonstersApi::Install);
+        Install("mmd", &MmdApi::Install);
+        Install("textures", &TextureApi::Install);
+        Install("sound", &SoundApi::Install);
+        Install("player", &PlayerApi::Install);
+        Install("ctrls", &CtrlsApi::Install);
+        Install("camera", &CameraApi::Install);
+        Install("particles", &ParticlesApi::Install);
+        Install("files", &FilesApi::Install);
+        Install("config", &ConfigApi::Install);
+        Install("scores", &DatApi::Install);
+        Install("sav", &SavApi::Install);
+        Install("interop", &InteropApi::Install);
+        Install("input", &InputApi::Install);
+        Install("level_editor", &LevelEditorApi::Install);
 
         ModManagerApi::Install();
         Subsystems::Record("block_expression", true);
@@ -219,6 +259,9 @@ namespace Forge
         ModScan::Shutdown();
         ModState::Clear();
         ModManagerApi::Clear();
+
+        ModHost::ReleaseCache();
+
         Subsystems::Clear();
         g_registry.Clear();
 

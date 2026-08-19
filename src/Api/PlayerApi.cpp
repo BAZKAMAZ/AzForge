@@ -1203,6 +1203,7 @@ namespace Forge
         g_table.SetScore = &ApiSetScore;
         g_table.AddEventHandler = &ApiAddEventHandler;
         g_table.RemoveEventHandler = &ApiRemoveEventHandler;
+        g_table.Cancel = &ApiRemoveEventHandler;
         g_table.Drive = &ApiDrive;
         g_table.Release = &ApiRelease;
         g_table.Driver = &ApiDriver;

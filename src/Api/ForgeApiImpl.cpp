@@ -169,7 +169,7 @@ namespace Forge
         context.table.files = FilesApi::Table();
         context.table.config = ConfigApi::Table();
         context.table.scores = DatApi::Table();
-        context.table.progress = SavApi::Table();
+        context.table.sav = SavApi::Table();
         context.table.input = InputApi::Table();
         context.table.levelEditor = LevelEditorApi::Table();
 

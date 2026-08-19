@@ -25,6 +25,8 @@ namespace Forge
         typedef void*(__fastcall* FindItemRoutine)(void* menu, void* unused, const char* itemId);
         typedef void*(__fastcall* FindMenuRoutine)(void* manager, void* unused, const char* menuId);
         typedef void(__fastcall* TakeClickResultRoutine)(void* menu, void* unused, void* dest);
+        typedef void(__fastcall* MenuClickRoutine)(void* menu, void* unused, float x, float y);
+        typedef void* (__fastcall* HoveredInGroupRoutine)(void* menu, void* unused, int group);
 
         struct Subscription
         {
@@ -39,6 +41,11 @@ namespace Forge
         InlineHook g_loadHook;
         InlineHook g_parseHook;
         InlineHook g_clickHook;
+        InlineHook g_newGameHook;
+
+        MenuClickRoutine g_originalNewGameClick = nullptr;
+        MenuClickRoutine g_menuBaseClick = nullptr;
+        HoveredInGroupRoutine g_hovered = nullptr;
 
         RegisterRoutine g_originalRegister = nullptr;
         LoadFromScriptRoutine g_originalLoad = nullptr;
@@ -1775,8 +1782,33 @@ namespace Forge
 
         AmodObjectsMenuApi g_table = {};
 
-        bool InstallOne(InlineHook& hook, GameSymbol symbol, void* detour,
-                        const uint8_t* prologue, size_t prologueLength)
+        void __fastcall NewGameClickDetour(void* menu, void* unused, float x, float y)
+        {
+            static bool said = false;
+
+            if (g_hovered != nullptr && g_hovered(menu, nullptr, 0) == nullptr)
+            {
+                if (!said)
+                {
+                    FORGE_LOG_WARN("A NEW GAME click landed on nothing, which that screen does "
+                        "not survive on its own - the click is being dropped");
+                    said = true;
+                }
+                if (g_menuBaseClick != nullptr)
+                {
+                    g_menuBaseClick(menu, nullptr, x, y);
+                }
+
+                return;
+            }
+
+            if (g_originalNewGameClick != nullptr)
+            {
+                g_originalNewGameClick(menu, unused, x, y);
+            }
+        }
+
+        bool InstallOne(InlineHook& hook, GameSymbol symbol, void* detour, const uint8_t* prologue, size_t prologueLength)
         {
             void* const target = GameSymbols::Address(symbol);
             if (target == nullptr)
@@ -1876,6 +1908,25 @@ namespace Forge
             FORGE_LOG_WARN("Menu_TakeClickResult was not hooked, so click events are off");
         }
 
+        void* const newGameTarget = GameModule::Resolve(GameAddress::kNewGameOnClick);
+        std::string newGameMismatch;
+        std::string newGameError;
+
+        g_menuBaseClick = reinterpret_cast<MenuClickRoutine>(GameModule::Resolve(GameAddress::kMenuOnClick));
+        g_hovered = reinterpret_cast<HoveredInGroupRoutine>(GameModule::Resolve(GameAddress::kMenuHoveredInGroup));
+
+        if (newGameTarget != nullptr && g_hovered != nullptr && GameModule::VerifyBytes(newGameTarget, kNewGameOnClickPrologue, sizeof(kNewGameOnClickPrologue), 
+            newGameMismatch) && g_newGameHook.Install(newGameTarget, reinterpret_cast<void*>(&NewGameClickDetour), kNewGameOnClickPrologue, 
+                sizeof(kNewGameOnClickPrologue), newGameError))
+        {
+            g_originalNewGameClick = reinterpret_cast<MenuClickRoutine>(g_newGameHook.Trampoline());
+        }
+        else
+        {
+            FORGE_LOG_WARN("The NEW GAME click is not guarded, so a click landing on nothing "
+                "still crashes: %s", newGameError.empty() ? newGameMismatch.c_str() : newGameError.c_str());
+        }
+
         g_table.structSize = sizeof(AmodObjectsMenuApi);
         g_table.Subscribe = &ApiSubscribe;
         g_table.Unsubscribe = &ApiUnsubscribe;
@@ -1917,11 +1968,15 @@ namespace Forge
         g_loadHook.Uninstall();
         g_parseHook.Uninstall();
         g_clickHook.Uninstall();
+        g_newGameHook.Uninstall();
 
         g_originalRegister = nullptr;
         g_originalLoad = nullptr;
         g_originalParse = nullptr;
         g_originalTakeClick = nullptr;
+        g_originalNewGameClick = nullptr;
+        g_menuBaseClick = nullptr;
+        g_hovered = nullptr;
         g_findItem = nullptr;
         g_findMenu = nullptr;
 

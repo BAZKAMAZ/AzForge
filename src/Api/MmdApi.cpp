@@ -824,11 +824,10 @@ namespace Forge
             return g_originalLoadAnim != nullptr ? g_originalLoadAnim(path) : nullptr;
         }
 
-        // the frame's own draw list
-
         struct QueuedDraw
         {
             ModContext* owner;
+            int blend;
             uint8_t item[GameAddress::kDrawItemSize];
         };
 
@@ -837,6 +836,22 @@ namespace Forge
         uint8_t* Scene()
         {
             return static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kScene));
+        }
+
+        // The four the game parsed out of scripts/rs at start-up and kept side by side
+        uint32_t StateFor(const uint8_t* scene, int blend)
+        {
+            const uintptr_t offsets[] =
+            {
+                GameAddress::kSceneStateSolidOffset,
+                GameAddress::kSceneStateBlendOffset,
+                GameAddress::kSceneStateAddOffset,
+                GameAddress::kSceneStateMulOffset,
+            };
+
+            return (scene != nullptr && blend >= 0 && blend < static_cast<int>(std::size(offsets)) && Readable(scene, offsets[blend] + sizeof(uint32_t)))
+                ? Read<uint32_t>(scene, offsets[blend])
+                : 0;
         }
 
         int QueueUsed()
@@ -854,26 +869,53 @@ namespace Forge
         void __fastcall SceneDrawModelsDetour(void* scene, void* unused)
         {
             const SceneAddModelRoutine add = Routine<SceneAddModelRoutine>(GameAddress::kSceneAddModel);
+            const std::vector<QueuedDraw> queued = g_queued;
 
-            if (add != nullptr)
-            {
-                for (const QueuedDraw& queued : g_queued)
-                {
-                    add(queued.item);
-                }
-            }
-
-            static bool reported = false;
-            if (!reported && !g_queued.empty())
-            {
-                reported = true;
-                FORGE_LOG_INFO("The scene took %d model(s) from a mod; its list now holds %d", static_cast<int>(g_queued.size()), QueueUsed());
-            }
             g_queued.clear();
 
-            if (g_originalDraw != nullptr)
+            if (add == nullptr || g_originalDraw == nullptr)
             {
+                return;
+            }
+
+            uint8_t* const at = static_cast<uint8_t*>(scene);
+            uint32_t* const slot = (at != nullptr && Readable(at, GameAddress::kSceneStateSolidOffset + sizeof(uint32_t)))
+                ? reinterpret_cast<uint32_t*>(at + GameAddress::kSceneStateSolidOffset)
+                : nullptr;
+            const uint32_t solid = slot != nullptr ? *slot : 0;
+
+            for (int blend = AMOD_DRAW_BLEND_NONE; blend <= AMOD_DRAW_BLEND_MUL; ++blend)
+            {
+                int taken = 0;
+
+                for (const QueuedDraw& one : queued)
+                {
+                    if (one.blend == blend)
+                    {
+                        add(one.item);
+                        ++taken;
+                    }
+                }
+
+                // The first pass carries the game's own draws as well, so it runs either way
+                if (taken == 0 && blend != AMOD_DRAW_BLEND_NONE)
+                {
+                    continue;
+                }
+
+                const uint32_t state = StateFor(at, blend);
+
+                if (slot != nullptr && state != 0)
+                {
+                    *slot = state;
+                }
+
                 g_originalDraw(scene, unused);
+
+                if (slot != nullptr)
+                {
+                    *slot = solid;
+                }
             }
         }
 
@@ -1738,6 +1780,9 @@ namespace Forge
 
             QueuedDraw queued = {};
             queued.owner = context;
+            queued.blend = (draw->blend >= AMOD_DRAW_BLEND_NONE && draw->blend <= AMOD_DRAW_BLEND_MUL)
+                ? draw->blend
+                : AMOD_DRAW_BLEND_NONE;
 
             uint8_t* const item = queued.item;
             item[GameAddress::kDrawItemFlagsOffset] = static_cast<uint8_t>(
@@ -3420,6 +3465,7 @@ namespace Forge
         {
             g_table.AddDrawHandler = &ApiAddDrawHandler;
             g_table.RemoveDrawHandler = &ApiRemoveDrawHandler;
+            g_table.Cancel = &ApiRemoveDrawHandler;
             g_table.DrawWith = &ApiDrawWith;
         }
 

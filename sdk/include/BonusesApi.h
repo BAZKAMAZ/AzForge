@@ -314,10 +314,11 @@ typedef struct AmodBonusesApi
     int (__cdecl* PlacementPropertyCount)(AmodMod mod);
     const char* (__cdecl* PlacementPropertyNameAt)(AmodMod mod, int index);
 
-    /* Fields added in later API versions go here. */
+    void (__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodBonusesApi;
 
-AMOD_LAST_FIELD(AmodBonusesApi, PlacementPropertyNameAt, 0x8C);
+AMOD_LAST_FIELD(AmodBonusesApi, Cancel, 0x90);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -522,11 +523,12 @@ namespace Amod
             }, nullptr);
         }
 
-        inline void                                                 RemoveOnTake(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_bonuses != nullptr && g_bonuses->RemoveTakeHandler != nullptr)
+            if (g_bonuses != nullptr && g_bonuses->structSize >= sizeof(AmodBonusesApi) &&
+                g_bonuses->Cancel != nullptr)
             {
-                g_bonuses->RemoveTakeHandler(g_bonusSelf, token);
+                g_bonuses->Cancel(g_bonusSelf, token);
             }
         }
 
@@ -1033,14 +1035,6 @@ namespace Amod
                 {
                     return kept(info);
                 }, nullptr);
-        }
-
-        inline void                                                 RemoveSpawnHandler(AmodToken token)
-        {
-            if (g_bonuses != nullptr && g_bonuses->RemoveSpawnHandler != nullptr)
-            {
-                g_bonuses->RemoveSpawnHandler(g_bonusSelf, token);
-            }
         }
 
         /* Register a mod kind (not in the game table). 0 if name taken. */

@@ -52,6 +52,15 @@ namespace Forge
                 return;
             }
 
+            // Windows reuses HWND values; a recreated window may already use our proc, causing recursive chaining.
+            const LONG_PTR standing = GetWindowLongPtrA(window, GWLP_WNDPROC);
+
+            if (standing == reinterpret_cast<LONG_PTR>(&WindowProc))
+            {
+                g_window = window;
+                return;
+            }
+
             const LONG_PTR previous = SetWindowLongPtrA(window, GWLP_WNDPROC,
                                                         reinterpret_cast<LONG_PTR>(&WindowProc));
             if (previous == 0)

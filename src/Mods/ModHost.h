@@ -18,6 +18,8 @@ namespace Forge
     {
     public:
         static void                                                 SweepCache();
+        static void                                                 ReleaseCache();
+        static bool                                                 CacheIsMineAlone();
 
         static void                                                 Load(const std::vector<ModRecord>& loadOrder, ModPhase phase, void (*afterEach)());
         static void                                                 UnloadAll();

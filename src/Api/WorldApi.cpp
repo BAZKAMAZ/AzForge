@@ -2583,6 +2583,7 @@ namespace Forge
         g_table.GetRoomCollisionBox = &ApiGetRoomCollisionBox;
         g_table.AddEventHandler = &ApiAddEventHandler;
         g_table.RemoveEventHandler = &ApiRemoveEventHandler;
+        g_table.Cancel = &ApiRemoveEventHandler;
         g_table.GetEntityCount = &ApiGetEntityCount;
         g_table.GetEntity = &ApiGetEntity;
         g_table.GetRoomCellRecord = &ApiGetRoomCellRecord;

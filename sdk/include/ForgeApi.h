@@ -118,7 +118,7 @@ typedef struct AmodApi
     const AmodDatApi* scores;
 
     /* packs.sav, which palaces the player has opened. */
-    const AmodSavApi* progress;
+    const AmodSavApi* sav;
 
     /* The editor seams: what stops, and where a mod draws instead. */
     const AmodLevelEditorApi* levelEditor;
@@ -180,7 +180,7 @@ namespace Amod
         Files::Attach(api->files, api->self);
         Config::Attach(api->config, api->self);
         Scores::Attach(api->scores, api->self);
-        Progress::Attach(api->progress, api->self);
+        Sav::Attach(api->sav, api->self);
         Interop::Attach(api->interop, api->self);
         Mods::Attach(api->modManager, api->self);
         Input::Attach(api->input, api->self);

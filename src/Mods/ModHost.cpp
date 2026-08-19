@@ -1,10 +1,12 @@
-#include "src/Mods/ModHost.h"
+#include <windows.h>
 
+#include "src/Mods/ModHost.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Mods/ModLibrary.h"
 #include "src/Mods/ModState.h"
 
+#include <filesystem>
 #include <map>
 #include <memory>
 #include <set>
@@ -13,12 +15,61 @@ namespace Forge
 {
     namespace
     {
-        // unique_ptr so ModLibrary (and its AmodApi table) does not move.
         std::vector<std::unique_ptr<ModLibrary>> g_loaded;
 
         size_t g_failed = 0;
         std::set<std::string> g_loadedIds;
         std::map<std::string, std::string> g_failures;
+
+        // Opened with DELETE_ON_CLOSE; leftover markers belong to other running game instances.
+        HANDLE g_liveMarker = INVALID_HANDLE_VALUE;
+
+        std::filesystem::path MarkerPath()
+        {
+            return Paths::CacheDirectory() / (L".live-" + std::to_wstring(GetCurrentProcessId()));
+        }
+
+        int LiveMarkers()
+        {
+            std::error_code iteration;
+            int found = 0;
+
+            for (const std::filesystem::directory_entry& item :
+                std::filesystem::directory_iterator(Paths::CacheDirectory(), iteration))
+            {
+                found += item.path().filename().wstring().rfind(L".live-", 0) == 0 ? 1 : 0;
+            }
+
+            return found;
+        }
+
+        void HoldCache()
+        {
+            std::error_code creation;
+            std::filesystem::create_directories(Paths::CacheDirectory(), creation);
+
+            g_liveMarker = CreateFileW(MarkerPath().c_str(), GENERIC_WRITE,
+                FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr, CREATE_ALWAYS,
+                FILE_ATTRIBUTE_HIDDEN | FILE_FLAG_DELETE_ON_CLOSE, nullptr);
+        }
+    }
+
+    void ModHost::ReleaseCache()
+    {
+        if (g_liveMarker != INVALID_HANDLE_VALUE)
+        {
+            CloseHandle(g_liveMarker);
+            g_liveMarker = INVALID_HANDLE_VALUE;
+        }
+
+        // Only now, with our own marker gone, does an empty directory mean nobody is left
+        std::error_code removal;
+        std::filesystem::remove(Paths::CacheDirectory(), removal);
+    }
+
+    bool ModHost::CacheIsMineAlone()
+    {
+        return LiveMarkers() <= 1;
     }
 
     void ModHost::SweepCache()
@@ -26,27 +77,31 @@ namespace Forge
         const std::filesystem::path cache = Paths::CacheDirectory();
 
         std::error_code status;
-        if (!std::filesystem::is_directory(cache, status))
+        const bool there = std::filesystem::is_directory(cache, status);
+
+        // Asked before our marker exists; zero means no other instance is running.
+        if (there && LiveMarkers() != 0)
         {
+            FORGE_LOG_INFO("Another copy of the game is running, so the cache is left alone");
+            HoldCache();
             return;
         }
 
         size_t removed = 0;
-        size_t retained = 0;
 
-        std::error_code iteration;
-        for (const std::filesystem::directory_entry& item :
-            std::filesystem::directory_iterator(cache, iteration))
+        if (there)
         {
-            std::error_code removal;
-            if (std::filesystem::remove(item.path(), removal))
+            std::error_code iteration;
+            for (const std::filesystem::directory_entry& item :
+                std::filesystem::directory_iterator(cache, iteration))
             {
-                ++removed;
+                std::error_code removal;
+                removed += std::filesystem::remove(item.path(), removal) ? 1 : 0;
             }
-            else
-            {
-                ++retained;
-            }
+
+            // A crash takes every file with the process but leaves the directory standing
+            std::error_code emptied;
+            std::filesystem::remove(cache, emptied);
         }
 
         if (removed != 0)
@@ -54,14 +109,7 @@ namespace Forge
             FORGE_LOG_INFO("Swept %zu file(s) left in the cache by an earlier run", removed);
         }
 
-        if (retained != 0)
-        {
-            FORGE_LOG_INFO("%zu cached file(s) are in use by another instance and were left alone",
-                retained);
-        }
-
-        std::error_code directory;
-        std::filesystem::remove(cache, directory);
+        HoldCache();
     }
 
     size_t ModHost::CodeModCount(const std::vector<ModRecord>& loadOrder)
@@ -155,9 +203,6 @@ namespace Forge
             g_loaded.back()->Unload();
             g_loaded.pop_back();
         }
-
-        std::error_code removal;
-        std::filesystem::remove(Paths::CacheDirectory(), removal);
 
         g_failed = 0;
         g_loadedIds.clear();

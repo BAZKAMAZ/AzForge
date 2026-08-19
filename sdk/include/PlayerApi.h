@@ -261,9 +261,13 @@ typedef struct AmodPlayerApi
     int(__cdecl* SetCollides)(AmodMod mod, int collides);
     int(__cdecl* Collides)(AmodMod mod);
 
+    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
+       spelling of the same call, kept for mods already built against it. */
+    void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodPlayerApi;
 
-AMOD_LAST_FIELD(AmodPlayerApi, Collides, 0x74);
+AMOD_LAST_FIELD(AmodPlayerApi, Cancel, 0x78);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -384,11 +388,12 @@ namespace Amod
             return g_player != nullptr ? g_player->AddEventHandler(g_playerSelf, event, handler, user) : AMOD_INVALID_TOKEN;
         }
 
-        inline void                                                 Off(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_player != nullptr)
+            if (g_player != nullptr && g_player->structSize >= sizeof(AmodPlayerApi) &&
+                g_player->Cancel != nullptr)
             {
-                g_player->RemoveEventHandler(g_playerSelf, token);
+                g_player->Cancel(g_playerSelf, token);
             }
         }
 

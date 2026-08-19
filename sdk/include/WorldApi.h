@@ -435,9 +435,13 @@ typedef struct AmodWorldApi
     /* Bytes this room takes in a save, things and line together. */
     int(__cdecl* GetRoomSavedSize)(AmodMod mod, int roomIndex);
 
+    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
+       spelling of the same call, kept for mods already built against it. */
+    void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, GetRoomSavedSize, 0xF8);
+AMOD_LAST_FIELD(AmodWorldApi, Cancel, 0xFC);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -870,11 +874,11 @@ namespace Amod
             return g_world != nullptr ? g_world->AddEventHandler(g_self, event, handler, user) : AMOD_INVALID_TOKEN;
         }
 
-        inline void                                                 RemoveEvent(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_world != nullptr)
+            if (g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->Cancel != nullptr)
             {
-                g_world->RemoveEventHandler(g_self, token);
+                g_world->Cancel(g_self, token);
             }
         }
 

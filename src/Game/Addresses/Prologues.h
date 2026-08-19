@@ -72,6 +72,9 @@ namespace Forge
     // Menu_TakeClickResult: MOV EDX,[ECX+0x5c] / MOV EAX,[ESP+0x4] → 7
     constexpr uint8_t kMenuTakeClickResultPrologue[] = { 0x8B, 0x51, 0x5C, 0x8B, 0x44, 0x24, 0x04 };
 
+    // NewGameMenu_OnClick: FLD [ESP+8] / PUSH ESI / PUSH EDI → 6
+    constexpr uint8_t kNewGameOnClickPrologue[] = { 0xD9, 0x44, 0x24, 0x08, 0x56, 0x57 };
+
     // Game_FrameTick: SUB ESP,0x50 / PUSH ESI / PUSH EDI → 5
     constexpr uint8_t kGameFrameTickPrologue[] = { 0x83, 0xEC, 0x50, 0x56, 0x57 };
 

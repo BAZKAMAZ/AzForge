@@ -114,7 +114,7 @@ AMOD_LAST_FIELD(AmodSavApi, SetSlotRoomMemory, 0x84);
 
 namespace Amod
 {
-    namespace Progress
+    namespace Sav
     {
         inline const AmodSavApi* g_sav = nullptr;
         inline AmodMod g_savSelf = nullptr;

@@ -3651,6 +3651,7 @@ namespace Forge
         g_table.FindPlaced = &ApiFindPlaced;
         g_table.AddSpawnHandler = &ApiAddSpawnHandler;
         g_table.RemoveSpawnHandler = &ApiRemoveSpawnHandler;
+        g_table.Cancel = &ApiRemoveSpawnHandler;
         g_table.IdOfDraw = &ApiIdOfDraw;
         g_table.GetLiveBox = &ApiGetLiveBox;
         g_table.SetLiveBox = &ApiSetLiveBox;

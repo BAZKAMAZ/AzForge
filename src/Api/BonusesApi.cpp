@@ -2355,6 +2355,7 @@ namespace Forge
         g_bonusTable.SetTypeProperty = &ApiSetTypeProperty;
         g_bonusTable.AddSpawnHandler = &ApiAddSpawnHandler;
         g_bonusTable.RemoveSpawnHandler = &ApiRemoveSpawnHandler;
+        g_bonusTable.Cancel = &ApiRemoveSpawnHandler;
         g_bonusTable.GetPlacement = &ApiGetPlacement;
         g_bonusTable.RemovePlacement = &ApiRemovePlacement;
         g_bonusTable.PlacementCount = &ApiPlacementCount;

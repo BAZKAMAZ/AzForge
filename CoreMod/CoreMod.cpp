@@ -498,6 +498,12 @@ static void __cdecl DrawTile(AmodMenuItem, AmodElementPhase, void* user)
         return;
     }
 
+    if (tile.icon != nullptr && tile.icon->IsStale())
+    {
+        tile.icon.reset();
+        tile.iconTried = false;
+    }
+
     if (!tile.iconTried)
     {
         tile.iconTried = true;

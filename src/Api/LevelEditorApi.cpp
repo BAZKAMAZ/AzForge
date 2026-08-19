@@ -1732,11 +1732,6 @@ namespace Forge
 
             if (GameIsSuppressed())
             {
-                if (g_mode.keepGameCursor != 0 && g_editorCursor != nullptr)
-                {
-                    g_editorCursor(editor, nullptr);
-                }
-
                 return;
             }
 
@@ -1857,7 +1852,6 @@ namespace Forge
                 {
                     g_mode.stopInput = mode->stopInput;
                     g_mode.suppressGame = mode->suppressGame;
-                    g_mode.keepGameCursor = mode->keepGameCursor;
                 }
             }
         }

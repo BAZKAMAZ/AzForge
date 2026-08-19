@@ -976,6 +976,7 @@ namespace Forge
         g_inventoryTable.SwapItems = &ApiSwapInventoryItems;
         g_inventoryTable.AddSlotHandler = &ApiAddSlotHandler;
         g_inventoryTable.RemoveSlotHandler = &ApiRemoveSlotHandler;
+        g_inventoryTable.Cancel = &ApiRemoveSlotHandler;
         g_inventoryTable.AddChainHandler = &ApiAddChainHandler;
         g_inventoryTable.RemoveChainHandler = &ApiRemoveChainHandler;
         g_inventoryTable.SetTicking = &ApiSetTicking;

@@ -80,6 +80,12 @@ AMOD_LAST_FIELD(AmodMeshData, indices, 0x18);
 /* Place it by `matrix` rather than by `position`. Only a matrix can scale. */
 #define AMOD_DRAW_HAS_MATRIX                                        0x02
 
+/* Blend modes. */
+#define AMOD_DRAW_BLEND_NONE                                        0
+#define AMOD_DRAW_BLEND_BLEND                                       1 /* src_alpha, inv_src_alpha */
+#define AMOD_DRAW_BLEND_ADD                                         2
+#define AMOD_DRAW_BLEND_MUL                                         3
+
 /* One model put in front of the camera for one frame */
 typedef struct AmodModelDraw
 {
@@ -97,10 +103,11 @@ typedef struct AmodModelDraw
     uint32_t flags; /* AMOD_DRAW_* */
 
     float frame; /* animation position; 0 draws the model still */
+    int blend; /* AMOD_DRAW_BLEND_*; anything but NONE is what makes vertex alpha count */
 
 } AmodModelDraw;
 
-AMOD_LAST_FIELD(AmodModelDraw, frame, 0x78);
+AMOD_LAST_FIELD(AmodModelDraw, blend, 0x7C);
 
 /* An animation as long as it is loaded, checked the way a model is. */
 typedef uint32_t AmodAnimationId;
@@ -344,9 +351,13 @@ typedef struct AmodMmdApi
 
     int(__cdecl* RebuildNormals)(AmodMod mod, AmodModelId model, int frame);
 
+    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
+       spelling of the same call, kept for mods already built against it. */
+    void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodMmdApi;
 
-AMOD_LAST_FIELD(AmodMmdApi, RebuildNormals, 0xE4);
+AMOD_LAST_FIELD(AmodMmdApi, Cancel, 0xE8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -831,11 +842,11 @@ namespace Amod
                 : AMOD_INVALID_TOKEN;
         }
 
-        inline void                                                 RemoveOnDraw(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_mmd != nullptr && g_mmd->RemoveDrawHandler != nullptr)
+            if (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi) && g_mmd->Cancel != nullptr)
             {
-                g_mmd->RemoveDrawHandler(g_mmdSelf, token);
+                g_mmd->Cancel(g_mmdSelf, token);
             }
         }
 

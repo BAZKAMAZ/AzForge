@@ -155,6 +155,12 @@ namespace Forge
         constexpr uintptr_t kSceneViewOffset = 0x111A8; // both are 4x4 floats
         constexpr uintptr_t kSceneProjectionOffset = 0x111E8;
 
+        // Render_InitGui loads scripts/rs/*.txt and Scene_DrawModels selects one blend state for the queue; solid uses no blending.
+        constexpr uintptr_t kSceneStateSolidOffset = 0x11180;
+        constexpr uintptr_t kSceneStateBlendOffset = 0x11184;
+        constexpr uintptr_t kSceneStateAddOffset = 0x11188;
+        constexpr uintptr_t kSceneStateMulOffset = 0x1118C;
+
         constexpr uintptr_t kSceneAddModel = 0x0040CD50; // __cdecl (item)
         constexpr uintptr_t kSceneDrawModels = 0x0040A0A0; // __thiscall (scene)
 

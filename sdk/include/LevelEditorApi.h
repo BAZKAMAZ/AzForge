@@ -17,11 +17,10 @@ typedef struct AmodEditorMode
     int stopRender;         /* the 3D world is not drawn */
     int stopInput;          /* the game stops acting on keys; the mod still reads them through Input */
     int suppressGame;       /* the game's own editor neither draws nor takes keys */
-    int keepGameCursor;     /* its cursor sprite kept while the rest of it stays silent */
 
 } AmodEditorMode;
 
-AMOD_LAST_FIELD(AmodEditorMode, keepGameCursor, 0x14);
+AMOD_LAST_FIELD(AmodEditorMode, suppressGame, 0x10);
 
 /* Once a frame while the mod's editor is up, where the world would have updated. */
 typedef void(__cdecl* AmodEditorFrameHandler)(float seconds, void* user);
@@ -350,8 +349,8 @@ namespace Amod
             return g_editor != nullptr && g_editor->Enter(g_editorSelf, &mode) != 0;
         }
 
-        inline bool                                                 Enter(bool stopWorld = true, bool stopRender = true, bool stopInput = true, 
-                                                                        bool suppressGame = true, bool keepGameCursor = false)
+        inline bool                                                 Enter(bool stopWorld = true, bool stopRender = true, bool stopInput = true,
+                                                                        bool suppressGame = true)
         {
             AmodEditorMode mode = {};
             mode.structSize = sizeof(mode);
@@ -359,7 +358,6 @@ namespace Amod
             mode.stopRender = stopRender ? 1 : 0;
             mode.stopInput = stopInput ? 1 : 0;
             mode.suppressGame = suppressGame ? 1 : 0;
-            mode.keepGameCursor = keepGameCursor ? 1 : 0;
 
             return Enter(mode);
         }

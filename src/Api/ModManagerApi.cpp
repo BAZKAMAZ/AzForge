@@ -1,5 +1,6 @@
-#include "src/Api/ModManagerApi.h"
+#include <windows.h>
 
+#include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeBoot.h"
@@ -11,6 +12,7 @@
 #include "src/Mods/ModLoadScreen.h"
 #include "src/Mods/ModState.h"
 
+#include <filesystem>
 #include <fstream>
 #include <stdio.h>
 #include <map>
@@ -139,6 +141,14 @@ namespace Forge
 
             const std::filesystem::path path =
                 Paths::CacheDirectory() / (FromUtf8(record.manifest.id) + L".icon.bmp");
+
+            // Shared cache: reuse an existing icon file instead of overwriting it.
+            std::error_code existing;
+            if (std::filesystem::file_size(path, existing) == bytes.size() && !existing)
+            {
+                slot = PathToUtf8(path);
+                return slot.c_str();
+            }
 
             std::ofstream file(path, std::ios::binary | std::ios::trunc);
             if (!file.is_open())
@@ -302,17 +312,17 @@ namespace Forge
 
     void ModManagerApi::Clear()
     {
-        for (const auto& entry : g_iconPaths)
+        if (ModHost::CacheIsMineAlone())
         {
-            if (!entry.second.empty())
+            for (const auto& entry : g_iconPaths)
             {
-                std::error_code removal;
-                std::filesystem::remove(FromUtf8(entry.second), removal);
+                if (!entry.second.empty())
+                {
+                    std::error_code removal;
+                    std::filesystem::remove(FromUtf8(entry.second), removal);
+                }
             }
         }
-
-        std::error_code directory;
-        std::filesystem::remove(Paths::CacheDirectory(), directory);
 
         g_iconPaths.clear();
         g_pending.clear();

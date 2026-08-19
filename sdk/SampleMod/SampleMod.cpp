@@ -210,7 +210,7 @@ void __cdecl BrushCommand(int argc, const char** argv, void*)
 
         g_brushWall = LevelEditor::AddBrush(wall);
         g_brushCross = LevelEditor::AddBrush("Wall 3x3", 'W', '2', group, &PaintCross);
-        
+
         AmodBrushDesc pickup = {};
         pickup.structSize = sizeof(pickup);
         pickup.label = "Sample Pickup";

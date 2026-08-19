@@ -59,6 +59,11 @@ namespace Forge
         constexpr uintptr_t kMenuItemParse = 0x0045F550; // __thiscall (element, parser)
         constexpr uintptr_t kMenuFindItemById = 0x00451860; // __thiscall (menu, id)
 
+        // NEW GAME reads the hovered id without checking it exists.
+        constexpr uintptr_t kNewGameOnClick = 0x004582B0; // __thiscall (menu, x, y), RET 8
+        constexpr uintptr_t kMenuOnClick = 0x00452310; // __thiscall (menu, x, y)
+        constexpr uintptr_t kMenuHoveredInGroup = 0x00451920; // __thiscall (menu, group) -> element or null
+
         constexpr uintptr_t kMenuAddElement = 0x004525C0; // __thiscall (menu, element)
 
         // Constructors: __thiscall (block) -> block, each writes its own vftable.

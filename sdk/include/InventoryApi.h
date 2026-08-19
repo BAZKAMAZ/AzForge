@@ -159,9 +159,13 @@ typedef struct AmodInventoryApi
     int(__cdecl* IsTicking)(AmodMod mod, int slot);
 
     /* Fields added in later API versions go here, and nowhere else. */
+    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
+       spelling of the same call, kept for mods already built against it. */
+    void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
 } AmodInventoryApi;
 
-AMOD_LAST_FIELD(AmodInventoryApi, IsTicking, 0x70);
+AMOD_LAST_FIELD(AmodInventoryApi, Cancel, 0x74);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -346,19 +350,12 @@ namespace Amod
                        : AMOD_INVALID_TOKEN;
         }
 
-        inline void                                                 RemoveSlotHandler(AmodToken token)
+        inline void                                                 Cancel(AmodToken token)
         {
-            if (g_inventory != nullptr && g_inventory->RemoveSlotHandler != nullptr)
+            if (g_inventory != nullptr && g_inventory->structSize >= sizeof(AmodInventoryApi) &&
+                g_inventory->Cancel != nullptr)
             {
-                g_inventory->RemoveSlotHandler(g_self, token);
-            }
-        }
-
-        inline void                                                 RemoveChainHandler(AmodToken token)
-        {
-            if (g_inventory != nullptr && g_inventory->RemoveChainHandler != nullptr)
-            {
-                g_inventory->RemoveChainHandler(g_self, token);
+                g_inventory->Cancel(g_self, token);
             }
         }
 

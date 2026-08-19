@@ -552,7 +552,20 @@ namespace Amod
             Texture(const Texture&) = delete;
             Texture& operator=(const Texture&) = delete;
 
-            IDirect3DTexture8*                                      Get() const { return m_texture; }
+            /* Null once the device this was made on is gone - the game builds a new one when the
+               resolution changes, and a texture from the old one draws whatever memory it lands
+               on. Ask again rather than keeping what Get returned. */
+            IDirect3DTexture8*                                      Get() const
+            {
+                return IsStale() ? nullptr : m_texture;
+            }
+
+            /* Whether the texture outlived its device and has to be loaded again. */
+            bool                                                   IsStale() const
+            {
+                return m_texture != nullptr && m_device != Device();
+            }
+
             int                                                    Width() const { return m_width; }
             int                                                    Height() const { return m_height; }
 
@@ -693,6 +706,7 @@ namespace Amod
 
                 m_texture->UnlockRect(0);
                 delete[] file;
+                m_device = device;
                 m_width = width;
                 m_height = height;
                 return true;
@@ -703,8 +717,17 @@ namespace Amod
                 if (m_texture != nullptr)
                 {
                     m_texture->Release();
+                    // The old device took its textures with it; releasing through a dead pointer
+                    // is a crash, so a stale one is dropped rather than freed
+                    if (!IsStale())
+                    {
+                        m_texture->Release();
+                    }
+
                     m_texture = nullptr;
                 }
+
+                m_device = nullptr;
                 m_width = 0;
                 m_height = 0;
             }
@@ -773,6 +796,7 @@ namespace Amod
             }
 
             IDirect3DTexture8* m_texture = nullptr;
+            IDirect3DDevice8* m_device = nullptr;
             int m_width = 0;
             int m_height = 0;
         };

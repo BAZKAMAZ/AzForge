@@ -9,6 +9,8 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <string>
+#include <vector>
 
 namespace Forge
 {
@@ -57,6 +59,39 @@ namespace Forge
                 : nullptr;
 
             return text != nullptr ? text : "";
+        }
+
+        struct CvarWas
+        {
+            ModContext* owner;
+            std::string name;
+            std::string text;
+        };
+
+        std::vector<CvarWas> g_written;
+
+        void Remember(ModContext* owner, const char* name, const uint8_t* cvar)
+        {
+            for (const CvarWas& held : g_written)
+            {
+                if (held.name == name)
+                {
+                    return;
+                }
+            }
+
+            g_written.push_back(CvarWas{ owner, name, TextOf(cvar) });
+        }
+
+        void PutBack(const CvarWas& held)
+        {
+            uint8_t* const cvar = Find(held.name.c_str());
+            const SetStringRoutine set = Routine<SetStringRoutine>(GameAddress::kCvarSetString);
+
+            if (cvar != nullptr && set != nullptr)
+            {
+                set(cvar, nullptr, held.text.c_str());
+            }
         }
 
         int __cdecl ApiHas(AmodMod mod, const char* name)
@@ -119,6 +154,7 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no config key '%s' to set - Add it first", name != nullptr ? name : "");
             }
 
+            Remember(Caller(mod), name, cvar);
             set(cvar, nullptr, value != nullptr ? value : "");
             return 1;
         }
@@ -134,6 +170,7 @@ namespace Forge
                     name != nullptr ? name : "");
             }
 
+            Remember(Caller(mod), name, cvar);
             set(cvar, nullptr, value);
             return 1;
         }
@@ -234,11 +271,28 @@ namespace Forge
 
     void ConfigApi::Uninstall()
     {
+        for (const CvarWas& held : g_written)
+        {
+            PutBack(held);
+        }
+
+        g_written.clear();
         g_table = AmodConfigApi{};
     }
 
-    void ConfigApi::ForgetMod(ModContext*)
+    void ConfigApi::ForgetMod(ModContext* owner)
     {
+        for (auto it = g_written.begin(); it != g_written.end();)
+        {
+            if (it->owner != owner)
+            {
+                ++it;
+                continue;
+            }
+
+            PutBack(*it);
+            it = g_written.erase(it);
+        }
     }
 
     const AmodConfigApi* ConfigApi::Table()
