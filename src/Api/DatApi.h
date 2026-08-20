@@ -14,6 +14,8 @@ namespace Forge
 
         static void                                                 ForgetMod(ModContext* owner);
 
+        static void                                                 ReplayStore(ModContext* owner);
+
         static const AmodDatApi*                                    Table();
     };
 }

@@ -8,8 +8,11 @@
 #include "src/Game/GameFunctions.h"
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
+#include "src/Core/ForgePaths.h"
+#include "src/Core/ForgeText.h"
 #include "src/Hook/InlineHook.h"
 
+#include <wincodec.h>
 #include <ctype.h>
 #include <stddef.h>
 #include <string.h>
@@ -397,6 +400,45 @@ namespace Forge
             return 0;
         }
 
+        // Texture_FromPixels forces alpha to 0xFF; this restores the mod's alpha for level 0 textures.
+        void PutAlphaBack(uint8_t* texture, int width, int height, const uint8_t* pixels)
+        {
+            void* const surface = reinterpret_cast<void*>(
+                Read<uintptr_t>(texture, GameAddress::kTextureSurfaceOffset));
+
+            if (surface == nullptr)
+            {
+                return;
+            }
+
+            void** const vtable = *static_cast<void***>(surface);
+            const auto lock = reinterpret_cast<uint32_t(__stdcall*)(void*, uint32_t, void*, const void*, uint32_t)>(vtable[16]);
+            const auto unlock = reinterpret_cast<uint32_t(__stdcall*)(void*, uint32_t)>(vtable[17]);
+
+            struct LockedRect
+            {
+                int pitch;
+                uint8_t* bits;
+            } locked = {};
+
+            if (lock(surface, 0, &locked, nullptr, 0) != 0 || locked.bits == nullptr)
+            {
+                return;
+            }
+
+            for (int y = 0; y < height; ++y)
+            {
+                uint8_t* const row = locked.bits + static_cast<size_t>(locked.pitch) * y;
+
+                for (int x = 0; x < width; ++x)
+                {
+                    row[x * 4 + 3] = pixels[(static_cast<size_t>(y) * width + x) * 4 + 3];
+                }
+            }
+
+            unlock(surface, 0);
+        }
+
         AmodTextureId __cdecl ApiCreate(AmodMod mod, int width, int height, const void* pixels, int mipmapped, int hasAlpha)
         {
             ModContext* const context = Caller(mod);
@@ -435,6 +477,11 @@ namespace Forge
                 GameFunctions::Free(texture);
                 FORGE_LOG_ERROR("A %dx%d texture would not be made", width, height);
                 return AMOD_INVALID_TEXTURE;
+            }
+
+            if (hasAlpha != 0)
+            {
+                PutAlphaBack(texture, width, height, static_cast<const uint8_t*>(pixels));
             }
 
             LinkIntoList(texture);
@@ -506,7 +553,122 @@ namespace Forge
             return 1;
         }
 
-        // Game uses raw texture pointers; mods get AmodTextureId. IdFor rejects wild numbers.
+        GUID ContainerFor(const std::string& path)
+        {
+            const size_t dot = path.find_last_of('.');
+            const std::string suffix = dot == std::string::npos ? "" : ToLowerAscii(path.substr(dot));
+
+            if (suffix == ".bmp")
+            {
+                return GUID_ContainerFormatBmp;
+            }
+            if (suffix == ".jpg" || suffix == ".jpeg")
+            {
+                return GUID_ContainerFormatJpeg;
+            }
+            if (suffix == ".tif" || suffix == ".tiff")
+            {
+                return GUID_ContainerFormatTiff;
+            }
+            return GUID_ContainerFormatPng;
+        }
+
+        bool WriteImage(const std::wstring& path, const GUID& container, int width, int height,  const std::vector<uint8_t>& rows)
+        {
+            IWICImagingFactory* factory = nullptr;
+            IWICBitmapEncoder* encoder = nullptr;
+            IWICBitmapFrameEncode* frame = nullptr;
+            IWICStream* stream = nullptr;
+            GUID format = GUID_WICPixelFormat32bppBGRA;
+            bool written = false;
+
+            if (SUCCEEDED(CoCreateInstance(CLSID_WICImagingFactory, nullptr, CLSCTX_INPROC_SERVER,
+                                           IID_PPV_ARGS(&factory))) &&
+                SUCCEEDED(factory->CreateStream(&stream)) &&
+                SUCCEEDED(stream->InitializeFromFilename(path.c_str(), GENERIC_WRITE)) &&
+                SUCCEEDED(factory->CreateEncoder(container, nullptr, &encoder)) &&
+                SUCCEEDED(encoder->Initialize(stream, WICBitmapEncoderNoCache)) &&
+                SUCCEEDED(encoder->CreateNewFrame(&frame, nullptr)) &&
+                SUCCEEDED(frame->Initialize(nullptr)) &&
+                SUCCEEDED(frame->SetSize(static_cast<UINT>(width), static_cast<UINT>(height))) &&
+                SUCCEEDED(frame->SetPixelFormat(&format)) &&
+                SUCCEEDED(frame->WritePixels(static_cast<UINT>(height),
+                                             static_cast<UINT>(width) * 4,
+                                             static_cast<UINT>(rows.size()),
+                                             const_cast<BYTE*>(rows.data()))) &&
+                SUCCEEDED(frame->Commit()) &&
+                SUCCEEDED(encoder->Commit()))
+            {
+                written = true;
+            }
+
+            if (frame != nullptr) { frame->Release(); }
+            if (encoder != nullptr) { encoder->Release(); }
+            if (stream != nullptr) { stream->Release(); }
+            if (factory != nullptr) { factory->Release(); }
+            return written;
+        }
+
+        int __cdecl ApiSave(AmodMod mod, AmodTextureId id, const char* path)
+        {
+            const uint8_t* const texture = Caller(mod) != nullptr ? Resolve(id) : nullptr;
+
+            if (texture == nullptr || path == nullptr || path[0] == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Save wants a texture and a path");
+            }
+
+            const uint8_t* const pixels = reinterpret_cast<const uint8_t*>(Read<uintptr_t>(texture, GameAddress::kTexturePixelsOffset));
+            const int width = Read<int>(texture, GameAddress::kTextureWidthOffset);
+            const int height = Read<int>(texture, GameAddress::kTextureHeightOffset);
+
+            if (pixels == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "texture %u was read from a file, so its "
+                            "pixels are on the card and not here", id);
+            }
+            if (width <= 0 || height <= 0 || width > 4096 || height > 4096)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "texture %u is %dx%d", id, width, height);
+            }
+
+            const bool alpha = Read<int>(texture, GameAddress::kTextureAlphaOffset) != 0;
+            std::vector<uint8_t> rows(static_cast<size_t>(width) * height * 4);
+
+            for (size_t at = 0; at < rows.size(); at += 4)
+            {
+                rows[at + 0] = pixels[at + 2];
+                rows[at + 1] = pixels[at + 1];
+                rows[at + 2] = pixels[at + 0];
+                rows[at + 3] = alpha ? pixels[at + 3] : 0xFF;
+            }
+
+            std::filesystem::path file = FromUtf8(path);
+            if (file.is_relative())
+            {
+                file = Paths::GameDirectory() / file;
+            }
+
+            std::error_code failure;
+            std::filesystem::create_directories(file.parent_path(), failure);
+
+            const HRESULT started = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+            const bool written = WriteImage(file.wstring(), ContainerFor(path), width, height, rows);
+
+            if (started == S_OK || started == S_FALSE)
+            {
+                CoUninitialize();
+            }
+
+            if (!written)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "'%s' could not be written", path);
+            }
+
+            FORGE_LOG_INFO("texture %u written to '%s'", id, PathToUtf8(file).c_str());
+            return 1;
+        }
+
         AmodTextureId __cdecl ApiFromGame(AmodMod mod, uint32_t handle)
         {
             return Caller(mod) != nullptr
@@ -619,6 +781,7 @@ namespace Forge
         g_table.ReadPixels = &ApiReadPixels;
         g_table.FromGame = &ApiFromGame;
         g_table.ToGame = &ApiToGame;
+        g_table.Save = &ApiSave;
 
         void* const load = GameSymbols::Address(GameSymbol::LoadOrFindTexture);
         std::string error;

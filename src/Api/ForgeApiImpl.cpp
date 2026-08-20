@@ -20,6 +20,7 @@
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
+#include "src/Api/SpriteFontApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/LevelEditorApi.h"
@@ -162,6 +163,7 @@ namespace Forge
         context.table.monsters = MonstersApi::Table();
         context.table.mmd = MmdApi::Table();
         context.table.textures = TextureApi::Table();
+        context.table.spriteFont = SpriteFontApi::Table();
         context.table.sound = SoundApi::Table();
         context.table.player = PlayerApi::Table();
         context.table.ctrls = CtrlsApi::Table();

@@ -1,603 +1,863 @@
 #include <ForgeApi.h>
 
+#include <windows.h>
+
 #include <stdlib.h>
 #include <string.h>
 
 using namespace Amod;
 
-AmodToken g_demoToken = AMOD_INVALID_TOKEN;
-AmodToken g_moveToken = AMOD_INVALID_TOKEN;
-AmodToken g_inputToken = AMOD_INVALID_TOKEN;
-
-float g_driveJump = 0.0f;
-
-const char* EventName(AmodDemoEvent event)
+const char* BindName(int bind)
 {
-    switch (event)
+    switch (bind)
     {
-    case AMOD_DEMO_STARTED: return "started";
-    case AMOD_DEMO_ENDED:   return "ended";
-    case AMOD_DEMO_BROKEN:  return "broken";
+    case AMOD_KEY_CVAR:    return "cvar";
+    case AMOD_KEY_COMMAND: return "command";
     }
-    return "?";
+    return "nothing";
 }
 
-void __cdecl DemoHappened(AmodDemoEvent event, int script, void*)
+void ShowKey(int key)
 {
-    Console::Printf("demo: script %d %s\n", script, EventName(event));
-}
+    AmodKeyInfo info = {};
 
-void __cdecl MoveReached(int script, int move, void*)
-{
-    AmodDemoMove step = {};
-
-    if (!Demo::GetMove(script, move, &step))
+    if (!Input::GetKey(key, &info))
     {
-        Console::Printf("demo: script %d move %d\n", script, move);
+        Console::Printf("keys: there is no key %d\n", key);
         return;
     }
 
-    if (step.pause > 0.0f)
+    Console::Printf("keys: %d '%s'%s%s\n", key, info.name != nullptr ? info.name : "?",
+        info.isJoystick != 0 ? "  joystick" : "", Input::IsDown(key) ? "  down" : "");
+
+    if (info.bind == AMOD_KEY_UNBOUND)
     {
-        Console::Printf("demo: %d.%d pause %.2f\n", script, move, step.pause);
+        Console::Print("      bound to nothing\n");
         return;
     }
 
-    Console::Printf("demo: %d.%d horz %d vert %d jump %d to %.2f\n", script, move,
-        step.horizontal, step.vertical, step.jump, step.endCoord);
-}
+    Console::Printf("      %s '%s'%s\n", BindName(info.bind),
+        info.target != nullptr ? info.target : "?", info.held != 0 ? ", while held" : "");
 
-// Walks right and jumps twice a second, whatever the script was going to do.
-int __cdecl DriveInstead(const float position[3], int* horizontal, int* vertical, int* jump, float seconds, void*)
-{
-    (void)position;
-    (void)vertical;
-
-    g_driveJump += seconds;
-
-    *horizontal = 1;
-    *jump = 0;
-
-    if (g_driveJump >= 0.5f)
+    for (int i = 0; i < info.paramCount; ++i)
     {
-        g_driveJump = 0.0f;
-        *jump = 1;
-    }
-
-    return 1;
-}
-
-void ListScripts()
-{
-    const int count = Demo::Count();
-    const int current = Demo::Current();
-
-    if (count == 0)
-    {
-        Console::Print("demo: this level has no demo scripts\n");
-        return;
-    }
-
-    Console::Printf("demo: %d script(s), %s\n", count,
-        Demo::IsPlaying() ? "playing" : "idle");
-
-    for (int i = 0; i < count; ++i)
-    {
-        AmodDemoPlace place = {};
-        char where[64] = {};
-
-        if (Demo::GetPlace(i, &place))
-        {
-            snprintf(where, sizeof(where), "player %d,%d room %d,%d", place.playerX, place.playerY,
-                place.roomX, place.roomY);
-        }
-        else
-        {
-            snprintf(where, sizeof(where), "no $player_place");
-        }
-
-        Console::Printf("  %s %d  %d move(s)  break %.2f  %s\n", i == current ? "->" : "  ", i,
-            Demo::MoveCount(i), Demo::BreakTime(i), where);
-    }
-
-    if (current >= 0)
-    {
-        Console::Printf("demo: on move %d of script %d, %.2fs in\n", Demo::MoveIndex(), current,
-            Demo::Elapsed());
+        const char* const param = Input::KeyParam(key, i);
+        Console::Printf("      [%d] '%s'\n", i, param != nullptr ? param : "");
     }
 }
 
-void DumpScript(int script)
+void ListKeys(bool all)
 {
-    const int moves = Demo::MoveCount(script);
-    float position[3] = {};
-    float view[3] = {};
+    const int count = Input::KeyCount();
+    int named = 0;
+    int bound = 0;
 
-    if (moves == 0)
+    for (int key = 0; key < count; ++key)
     {
-        Console::Printf("demo: there is no script %d\n", script);
-        return;
-    }
+        AmodKeyInfo info = {};
 
-    if (Demo::GetCameraStart(script, position, view))
-    {
-        Console::Printf("demo: script %d starts the camera at %.2f %.2f %.2f looking %.2f %.2f %.2f\n",
-            script, position[0], position[1], position[2], view[0], view[1], view[2]);
-    }
-    else
-    {
-        Console::Printf("demo: script %d has no $camera_start\n", script);
-    }
-
-    for (int i = 0; i < moves; ++i)
-    {
-        AmodDemoMove step = {};
-
-        if (!Demo::GetMove(script, i, &step))
+        if (!Input::GetKey(key, &info) || info.name == nullptr)
         {
             continue;
         }
 
-        if (step.pause > 0.0f)
-        {
-            Console::Printf("  %2d  pause %.2f\n", i, step.pause);
-        }
-        else
-        {
-            Console::Printf("  %2d  horz %d vert %d jump %d to %.2f\n", i, step.horizontal,
-                step.vertical, step.jump, step.endCoord);
-        }
+        ++named;
 
-        for (int c = 0; c < step.camCount; ++c)
+        if (info.bind != AMOD_KEY_UNBOUND)
         {
-            AmodDemoCamera camera = {};
-            if (Demo::GetCamera(script, i, c, &camera))
-            {
-                Console::Printf("        cam  %.2f %.2f %.2f  %.2fs%s\n", camera.position[0],
-                    camera.position[1], camera.position[2], camera.time,
-                    camera.giveBack != 0 ? "  auto" : "");
-            }
+            ++bound;
+        }
+        else if (!all)
+        {
+            continue;
         }
 
-        for (int v = 0; v < step.viewCount; ++v)
-        {
-            AmodDemoCamera camera = {};
-            if (Demo::GetView(script, i, v, &camera))
-            {
-                Console::Printf("        view %.2f %.2f %.2f  %.2fs%s\n", camera.position[0],
-                    camera.position[1], camera.position[2], camera.time,
-                    camera.giveBack != 0 ? "  auto" : "");
-            }
-        }
-
-        for (int t = 0; t < step.timeCount; ++t)
-        {
-            AmodDemoTime slice = {};
-            if (Demo::GetTime(script, i, t, &slice))
-            {
-                Console::Printf("        time pause %.2f factor %.2f for %.2fs\n", slice.pause,
-                    slice.factor, slice.time);
-            }
-        }
+        Console::Printf("  %3d %-12s %-8s %s%s\n", key, info.name, BindName(info.bind),
+            info.target != nullptr ? info.target : "", info.held != 0 ? "  (held)" : "");
     }
+
+    Console::Printf("keys: %d of %d named, %d bound, joystick %s\n", named, count, bound,
+        Input::HasJoystick() ? "captured" : "absent");
 }
 
-void SetField(int argc, const char** argv)
-{
-    if (argc < 6)
-    {
-        Console::Print("demo set <script> <move> pause|horz|vert|jump|end <value>\n");
-        return;
-    }
-
-    const int script = atoi(argv[2]);
-    const int move = atoi(argv[3]);
-    const char* const field = argv[4];
-    const float value = static_cast<float>(atof(argv[5]));
-
-    AmodDemoMove step = {};
-    if (!Demo::GetMove(script, move, &step))
-    {
-        Console::Printf("demo: script %d has no move %d\n", script, move);
-        return;
-    }
-
-    if (strcmp(field, "pause") == 0) { step.pause = value; }
-    else if (strcmp(field, "horz") == 0) { step.horizontal = static_cast<int>(value); }
-    else if (strcmp(field, "vert") == 0) { step.vertical = static_cast<int>(value); }
-    else if (strcmp(field, "jump") == 0) { step.jump = static_cast<int>(value); }
-    else if (strcmp(field, "end") == 0) { step.endCoord = value; }
-    else
-    {
-        Console::Print("demo set: pause, horz, vert, jump or end\n");
-        return;
-    }
-
-    if (Demo::SetMove(script, move, step))
-    {
-        Console::Printf("demo: %d.%d %s is now %.2f\n", script, move, field, value);
-    }
-    else
-    {
-        Console::Printf("demo: %d.%d %s was refused\n", script, move, field);
-    }
-}
-
-void SetCameraCommand(int argc, const char** argv, bool view)
-{
-    if (argc < 8)
-    {
-        Console::Printf("demo %s <script> <move> <index> <x> <y> <z> [time] [auto]\n",
-            view ? "view" : "cam");
-        return;
-    }
-
-    const int script = atoi(argv[2]);
-    const int move = atoi(argv[3]);
-    const int index = atoi(argv[4]);
-
-    AmodDemoCamera camera = {};
-    const bool read = view ? Demo::GetView(script, move, index, &camera)
-                           : Demo::GetCamera(script, move, index, &camera);
-
-    if (!read)
-    {
-        AmodDemoMove step = {};
-        Demo::GetMove(script, move, &step);
-
-        Console::Printf("demo: %d.%d holds %d cam and %d view - 'demo add%s' makes one\n", script,
-            move, step.camCount, step.viewCount, view ? "view" : "cam");
-        return;
-    }
-
-    camera.position[0] = static_cast<float>(atof(argv[5]));
-    camera.position[1] = static_cast<float>(atof(argv[6]));
-    camera.position[2] = static_cast<float>(atof(argv[7]));
-
-    if (argc > 8)
-    {
-        camera.time = static_cast<float>(atof(argv[8]));
-    }
-    if (argc > 9)
-    {
-        camera.giveBack = atoi(argv[9]);
-    }
-
-    const bool written = view ? Demo::SetView(script, move, index, camera)
-                              : Demo::SetCamera(script, move, index, camera);
-
-    Console::Printf("demo: %s %d.%d.%d %s\n", view ? "view" : "cam", script, move, index,
-        written ? "written" : "refused");
-}
-
-void SetTimeCommand(int argc, const char** argv)
-{
-    if (argc < 8)
-    {
-        Console::Print("demo time <script> <move> <index> <pause> <factor> <seconds>\n");
-        return;
-    }
-
-    AmodDemoTime slice = {};
-    slice.structSize = sizeof(slice);
-    slice.pause = static_cast<float>(atof(argv[5]));
-    slice.factor = static_cast<float>(atof(argv[6]));
-    slice.time = static_cast<float>(atof(argv[7]));
-
-    const int script = atoi(argv[2]);
-    const int move = atoi(argv[3]);
-    const int index = atoi(argv[4]);
-
-    Console::Printf("demo: time %d.%d.%d %s\n", script, move, index,
-        Demo::SetTime(script, move, index, slice) ? "written" : "refused");
-}
-
-void StartCommand(int argc, const char** argv)
-{
-    if (argc < 9)
-    {
-        Console::Print("demo start <script> <x> <y> <z> <vx> <vy> <vz>\n");
-        return;
-    }
-
-    float position[3] = {};
-    float view[3] = {};
-
-    position[0] = static_cast<float>(atof(argv[3]));
-    position[1] = static_cast<float>(atof(argv[4]));
-    position[2] = static_cast<float>(atof(argv[5]));
-    view[0] = static_cast<float>(atof(argv[6]));
-    view[1] = static_cast<float>(atof(argv[7]));
-    view[2] = static_cast<float>(atof(argv[8]));
-
-    Console::Printf("demo: camera start %s\n",
-        Demo::SetCameraStart(atoi(argv[2]), position, view) ? "written" : "refused");
-}
-
-void MakeScript()
-{
-    AmodPlayer player = {};
-
-    if (!Player::Get(player))
-    {
-        Console::Print("demo: there is no player to build a demo around\n");
-        return;
-    }
-
-    const int script = Demo::Create();
-
-    if (script < 0)
-    {
-        Console::Print("demo: an empty script was refused\n");
-        return;
-    }
-
-    AmodDemoMove step = {};
-    step.structSize = sizeof(step);
-    step.pause = 2.0f;
-
-    const int wait = Demo::AddMove(script, step);
-
-    AmodDemoCamera camera = {};
-    camera.structSize = sizeof(camera);
-    camera.position[0] = player.position[0];
-    camera.position[1] = player.position[1] + 0.4f;
-    camera.position[2] = player.position[2] + 1.5f;
-    camera.time = 2.0f;
-    camera.giveBack = 1;
-
-    AmodDemoCamera look = camera;
-    look.position[0] = player.position[0];
-    look.position[1] = player.position[1];
-    look.position[2] = player.position[2];
-
-    AmodDemoTime slice = {};
-    slice.structSize = sizeof(slice);
-    slice.factor = 0.5f;
-    slice.time = 2.0f;
-
-    Demo::AddCamera(script, wait, camera);
-    Demo::AddView(script, wait, look);
-    Demo::AddTime(script, wait, slice);
-
-    // Then a third of a room to the right and back again, with a jump on the way
-    step.pause = 0.0f;
-    step.horizontal = 1;
-    step.endCoord = player.position[0] + 0.3f;
-    Demo::AddMove(script, step);
-
-    step.horizontal = -1;
-    step.jump = 1;
-    step.endCoord = player.position[0];
-    Demo::AddMove(script, step);
-
-    Console::Printf("demo: script %d built, %d move(s) - 'demo play %d' runs it\n", script,
-        Demo::MoveCount(script), script);
-}
-
-void AddMoveCommand(int argc, const char** argv)
+void BindCommandTo(int argc, const char** argv)
 {
     if (argc < 4)
     {
-        Console::Print("demo addmove <script> <pause> [horz] [vert] [jump] [end]\n");
+        Console::Print("keys bind <key> <command> [held] [parameters...]\n");
         return;
     }
 
-    AmodDemoMove step = {};
-    step.structSize = sizeof(step);
-    step.pause = static_cast<float>(atof(argv[3]));
-    step.horizontal = argc > 4 ? atoi(argv[4]) : 0;
-    step.vertical = argc > 5 ? atoi(argv[5]) : 0;
-    step.jump = argc > 6 ? atoi(argv[6]) : 0;
-    step.endCoord = argc > 7 ? static_cast<float>(atof(argv[7])) : 0.0f;
+    const int key = Input::FindKey(argv[2]);
 
-    const int script = atoi(argv[2]);
-    const int added = Demo::AddMove(script, step);
-
-    Console::Printf("demo: move %d %s, script %d now holds %d\n", added,
-        added >= 0 ? "added" : "refused", script, Demo::MoveCount(script));
-}
-
-void AddCameraCommand(int argc, const char** argv, bool view)
-{
-    if (argc < 7)
+    if (key < 0)
     {
-        Console::Printf("demo add%s <script> <move> <x> <y> <z> [time] [auto]\n",
-            view ? "view" : "cam");
+        Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
         return;
     }
 
-    AmodDemoCamera camera = {};
-    camera.structSize = sizeof(camera);
-    camera.position[0] = static_cast<float>(atof(argv[4]));
-    camera.position[1] = static_cast<float>(atof(argv[5]));
-    camera.position[2] = static_cast<float>(atof(argv[6]));
-    camera.time = argc > 7 ? static_cast<float>(atof(argv[7])) : 1.0f;
-    camera.giveBack = argc > 8 ? atoi(argv[8]) : 0;
+    const bool held = argc > 4 && atoi(argv[4]) != 0;
+    const int extra = argc > 5 ? argc - 5 : 0;
 
-    const int script = atoi(argv[2]);
-    const int move = atoi(argv[3]);
-    const int added = view ? Demo::AddView(script, move, camera)
-                           : Demo::AddCamera(script, move, camera);
-
-    AmodDemoMove step = {};
-    Demo::GetMove(script, move, &step);
-
-    Console::Printf("demo: %s %d %s, %d.%d now holds %d cam, %d view, %d time\n",
-        view ? "view" : "cam", added, added >= 0 ? "added" : "refused", script, move,
-        step.camCount, step.viewCount, step.timeCount);
-}
-
-void AddTimeCommand(int argc, const char** argv)
-{
-    if (argc < 7)
+    if (Input::BindCommand(key, argv[3], held, extra, extra != 0 ? argv + 5 : nullptr))
     {
-        Console::Print("demo addtime <script> <move> <pause> <factor> <seconds>\n");
-        return;
+        ShowKey(key);
     }
-
-    AmodDemoTime slice = {};
-    slice.structSize = sizeof(slice);
-    slice.pause = static_cast<float>(atof(argv[4]));
-    slice.factor = static_cast<float>(atof(argv[5]));
-    slice.time = static_cast<float>(atof(argv[6]));
-
-    const int script = atoi(argv[2]);
-    const int move = atoi(argv[3]);
-    const int added = Demo::AddTime(script, move, slice);
-
-    AmodDemoMove step = {};
-    Demo::GetMove(script, move, &step);
-
-    Console::Printf("demo: time %d %s, %d.%d now holds %d\n", added,
-        added >= 0 ? "added" : "refused", script, move, step.timeCount);
-}
-
-void WatchCommand()
-{
-    if (g_demoToken != AMOD_INVALID_TOKEN)
+    else
     {
-        Demo::Cancel(g_demoToken);
-        Demo::Cancel(g_moveToken);
-        g_demoToken = AMOD_INVALID_TOKEN;
-        g_moveToken = AMOD_INVALID_TOKEN;
-        Console::Print("demo: not watching\n");
-        return;
+        Console::Printf("keys: '%s' is no command of the game's\n", argv[3]);
     }
-
-    g_demoToken = Demo::OnDemo(&DemoHappened);
-    g_moveToken = Demo::OnMove(&MoveReached);
-
-    Console::Print("demo: watching starts, ends and every move\n");
 }
 
-void DriveCommand()
+void BindCvarTo(int argc, const char** argv)
 {
-    if (g_inputToken != AMOD_INVALID_TOKEN)
+    if (argc < 4)
     {
-        Demo::Cancel(g_inputToken);
-        g_inputToken = AMOD_INVALID_TOKEN;
-        Console::Print("demo: the script drives again\n");
+        Console::Print("keys cvar <key> <cvar> [held]\n");
         return;
     }
 
-    g_driveJump = 0.0f;
-    g_inputToken = Demo::OnInput(&DriveInstead);
+    const int key = Input::FindKey(argv[2]);
 
-    Console::Print("demo: the mod drives - right and a jump every half second\n");
+    if (key < 0)
+    {
+        Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
+        return;
+    }
+
+    if (Input::BindCvar(key, argv[3], argc > 4 && atoi(argv[4]) != 0))
+    {
+        ShowKey(key);
+    }
+    else
+    {
+        Console::Printf("keys: '%s' is no variable of the game's\n", argv[3]);
+    }
 }
 
-void __cdecl DemoCommand(int argc, const char** argv, void*)
+int g_holdKey = -1;
+int g_holdFrames = 0;
+
+void __cdecl KeysCommand(int argc, const char** argv, void*)
 {
     if (argc < 2)
     {
-        ListScripts();
+        ListKeys(false);
         return;
     }
 
     const char* const what = argv[1];
 
-    if (strcmp(what, "play") == 0 && argc > 2)
+    if (strcmp(what, "all") == 0)
     {
-        const int script = atoi(argv[2]);
-        Console::Printf("demo: script %d %s\n", script, Demo::Play(script) ? "playing" : "refused");
+        ListKeys(true);
     }
-    else if (strcmp(what, "stop") == 0)
+    else if (strcmp(what, "bind") == 0)
     {
-        Console::Printf("demo: %s\n", Demo::Stop() ? "stopped" : "nothing was playing");
+        BindCommandTo(argc, argv);
     }
-    else if (strcmp(what, "next") == 0)
+    else if (strcmp(what, "cvar") == 0)
     {
-        Console::Printf("demo: %s\n", Demo::Next() ? "on the next script" : "that was the last");
+        BindCvarTo(argc, argv);
     }
-    else if (strcmp(what, "add") == 0 && argc > 2)
+    else if (strcmp(what, "keep") == 0 && argc > 2)
     {
-        const int added = Demo::Add(argv[2]);
-        Console::Printf("demo: '%s' %s\n", argv[2], added >= 0 ? "added" : "refused");
+        const int key = Input::FindKey(argv[2]);
+
+        if (key < 0)
+        {
+            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
+            return;
+        }
+
+        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        const char* const how = !Input::Keep(key, keep, seal) ? "refused"
+                              : !keep ? "is not kept any more"
+                              : seal ? "is kept for next time, sealed"
+                              : "is kept for next time";
+
+        Console::Printf("keys: '%s' %s\n", argv[2], how);
     }
-    else if (strcmp(what, "remove") == 0 && argc > 2)
+    else if ((strcmp(what, "press") == 0 || strcmp(what, "hold") == 0) && argc > 2)
     {
-        const int script = atoi(argv[2]);
-        Console::Printf("demo: script %d %s\n", script,
-            Demo::Remove(script) ? "removed" : "refused");
+        const int key = Input::FindKey(argv[2]);
+
+        if (key < 0)
+        {
+            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
+            return;
+        }
+
+        if (strcmp(what, "press") == 0)
+        {
+            Console::Printf("keys: '%s' %s\n", argv[2],
+                Input::Press(key) ? "pressed once" : "refused");
+            return;
+        }
+
+        // Held for a while by default, so a hold cannot be left on by accident.
+        const int frames = argc > 3 ? atoi(argv[3]) : 60;
+        const bool alone = argc > 4 && atoi(argv[4]) != 0;
+
+        if (frames == 0)
+        {
+            g_holdKey = -1;
+            Console::Printf("keys: '%s' %s\n", argv[2],
+                Input::Hold(key, false) ? "let go" : "refused");
+            return;
+        }
+
+        if (!Input::Hold(key, true, alone))
+        {
+            Console::Printf("keys: '%s' refused\n", argv[2]);
+            return;
+        }
+
+        g_holdKey = key;
+        g_holdFrames = frames;
+        Console::Printf("keys: '%s' held down for %d frame(s)%s\n", argv[2], frames,
+            alone ? ", and the player's own keys are ignored" : "");
     }
-    else if (strcmp(what, "suppress") == 0)
+    else if (strcmp(what, "unbind") == 0 && argc > 2)
     {
-        const int on = argc > 2 ? atoi(argv[2]) : 1;
-        Demo::SuppressLevelDemos(on != 0);
-        Console::Printf("demo: the level's own scripts are %s from the next level\n",
-            on != 0 ? "dropped" : "kept");
-    }
-    else if (strcmp(what, "break") == 0 && argc > 3)
-    {
-        const int script = atoi(argv[2]);
-        const float seconds = static_cast<float>(atof(argv[3]));
-        Console::Printf("demo: break time %s\n",
-            Demo::SetBreakTime(script, seconds) ? "written" : "refused");
-    }
-    else if (strcmp(what, "set") == 0)
-    {
-        SetField(argc, argv);
-    }
-    else if (strcmp(what, "cam") == 0)
-    {
-        SetCameraCommand(argc, argv, false);
-    }
-    else if (strcmp(what, "view") == 0)
-    {
-        SetCameraCommand(argc, argv, true);
-    }
-    else if (strcmp(what, "time") == 0)
-    {
-        SetTimeCommand(argc, argv);
-    }
-    else if (strcmp(what, "make") == 0)
-    {
-        MakeScript();
-    }
-    else if (strcmp(what, "addmove") == 0)
-    {
-        AddMoveCommand(argc, argv);
-    }
-    else if (strcmp(what, "addcam") == 0)
-    {
-        AddCameraCommand(argc, argv, false);
-    }
-    else if (strcmp(what, "addview") == 0)
-    {
-        AddCameraCommand(argc, argv, true);
-    }
-    else if (strcmp(what, "addtime") == 0)
-    {
-        AddTimeCommand(argc, argv);
-    }
-    else if (strcmp(what, "start") == 0)
-    {
-        StartCommand(argc, argv);
-    }
-    else if (strcmp(what, "watch") == 0)
-    {
-        WatchCommand();
-    }
-    else if (strcmp(what, "drive") == 0)
-    {
-        DriveCommand();
-    }
-    else if (argv[1][0] >= '0' && argv[1][0] <= '9')
-    {
-        DumpScript(atoi(argv[1]));
+        const int key = Input::FindKey(argv[2]);
+
+        if (key < 0)
+        {
+            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
+            return;
+        }
+
+        Console::Printf("keys: '%s' %s\n", argv[2],
+            Input::Unbind(key) ? "bound to nothing now" : "refused");
     }
     else
     {
-        Console::Print("demo, demo <n>, 'demo play|remove <n>', 'demo stop|next|watch|drive',\n");
-        Console::Print("      'demo add <path>', 'demo suppress [0|1]', 'demo break <n> <secs>',\n");
-        Console::Print("      'demo set <n> <move> pause|horz|vert|jump|end <value>',\n");
-        Console::Print("      'demo cam|view <n> <move> <i> <x> <y> <z> [time] [auto]',\n");
-        Console::Print("      'demo time <n> <move> <i> <pause> <factor> <secs>',\n");
-        Console::Print("      'demo start <n> <x> <y> <z> <vx> <vy> <vz>', 'demo make',\n");
-        Console::Print("      'demo addmove <n> <pause> [horz] [vert] [jump] [end]',\n");
-        Console::Print("      'demo addcam|addview <n> <move> <x> <y> <z> [time] [auto]',\n");
-        Console::Print("      'demo addtime <n> <move> <pause> <factor> <secs>'\n");
+        const int key = Input::FindKey(what);
+
+        if (key >= 0)
+        {
+            ShowKey(key);
+            return;
+        }
+
+        Console::Print("keys, 'keys all', 'keys <name>', 'keys unbind <name>',\n");
+        Console::Print("      'keys keep <name> [0|1] [seal]',\n");
+        Console::Print("      'keys press <name>', 'keys hold <name> [frames] [alone]',\n");
+        Console::Print("      'keys bind <name> <command> [held] [parameters...]',\n");
+        Console::Print("      'keys cvar <name> <cvar> [held]'\n");
+    }
+}
+
+void __cdecl FreezeCommand(int argc, const char** argv, void*)
+{
+    const bool wanted = argc > 1 ? atoi(argv[1]) != 0 : !World::IsPaused();
+
+    if (!World::SetPaused(wanted))
+    {
+        Console::Print("freeze: refused\n");
+        return;
+    }
+
+    Console::Printf("freeze: the world is %s - a key press starts it again\n",
+        World::IsPaused() ? "stopped" : "running");
+}
+
+void ShowMaterials(AmodModelId model, const char* name)
+{
+    const int count = Mmd::MaterialCount(model);
+
+    if (count == 0)
+    {
+        Console::Printf("mtl: '%s' has no materials, so the game draws it whole\n", name);
+        return;
+    }
+
+    Console::Printf("mtl: '%s' has %d material(s)\n", name, count);
+
+    for (int i = 0; i < count; ++i)
+    {
+        AmodModelMaterial material = {};
+
+        if (Mmd::GetMaterial(model, i, &material))
+        {
+            AmodTexture texture = {};
+            const bool known = Textures::Get(material.texture, texture);
+
+            Console::Printf("  %d  from index %d, %d triangle(s), texture %s\n", i,
+                material.firstIndex, material.primitiveCount,
+                known && texture.name != nullptr ? texture.name : "(none)");
+        }
+    }
+}
+
+void ListModels()
+{
+    const int count = Mmd::Count();
+
+    if (count == 0)
+    {
+        Console::Print("mtl: no models are loaded - start a level first\n");
+        return;
+    }
+
+    Console::Printf("mtl: %d model(s) loaded\n", count);
+
+    for (int i = 0; i < count; ++i)
+    {
+        const AmodModelId model = Mmd::At(i);
+        AmodModel info = {};
+
+        if (!Mmd::Get(model, info))
+        {
+            continue;
+        }
+
+        Console::Printf("  %-28s %d frame(s)  %d verts  %d prims  %d material(s)\n",
+            info.name != nullptr ? info.name : "?", info.frameCount, info.vertexCount,
+            info.primitiveCount, Mmd::MaterialCount(model));
+    }
+
+    Console::Print("mtl: 'mtl split <model> <texture> [texture]' cuts one in two\n");
+}
+
+void SplitModel(int argc, const char** argv)
+{
+    if (argc < 4)
+    {
+        Console::Print("mtl split <model> <textureA> [textureB]\n");
+        return;
+    }
+
+    const AmodModelId model = Mmd::Find(argv[2]);
+    AmodModel info = {};
+
+    if (model == AMOD_INVALID_MODEL || !Mmd::Get(model, info))
+    {
+        Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
+        return;
+    }
+
+    const int primitives = info.primitiveCount > 0 ? info.primitiveCount : info.indexCount / 3;
+
+    if (primitives < 2)
+    {
+        Console::Printf("mtl: '%s' has %d triangle(s), too few to cut\n", argv[2], primitives);
+        return;
+    }
+
+    const uint32_t first = Mmd::Texture(argv[3]);
+    const uint32_t second = argc > 4 ? Mmd::Texture(argv[4]) : 0;
+
+    if (first == 0)
+    {
+        Console::Printf("mtl: the game has no texture called '%s'\n", argv[3]);
+        return;
+    }
+    if (argc > 4 && second == 0)
+    {
+        Console::Printf("mtl: the game has no texture called '%s'\n", argv[4]);
+        return;
+    }
+
+    const int half = primitives / 2;
+
+    Mmd::ClearMaterials(model);
+    Mmd::AddMaterial(model, 0, half, first);
+    Mmd::AddMaterial(model, half * 3, primitives - half, second != 0 ? second : first);
+
+    ShowMaterials(model, argv[2]);
+}
+
+void AddOneMaterial(int argc, const char** argv)
+{
+    if (argc < 6)
+    {
+        Console::Print("mtl add <model> <firstIndex> <triangles> <texture>\n");
+        return;
+    }
+
+    const AmodModelId model = Mmd::Find(argv[2]);
+
+    if (model == AMOD_INVALID_MODEL)
+    {
+        Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
+        return;
+    }
+
+    const uint32_t texture = Mmd::Texture(argv[5]);
+
+    if (texture == 0)
+    {
+        Console::Printf("mtl: the game has no texture called '%s'\n", argv[5]);
+        return;
+    }
+
+    const int added = Mmd::AddMaterial(model, atoi(argv[3]), atoi(argv[4]), texture);
+
+    Console::Printf("mtl: material %d %s\n", added, added >= 0 ? "added" : "refused");
+    ShowMaterials(model, argv[2]);
+}
+
+void __cdecl MaterialCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        ListModels();
+        return;
+    }
+
+    const char* const what = argv[1];
+
+    if (strcmp(what, "split") == 0)
+    {
+        SplitModel(argc, argv);
+    }
+    else if (strcmp(what, "add") == 0)
+    {
+        AddOneMaterial(argc, argv);
+    }
+    else if (strcmp(what, "clear") == 0 && argc > 2)
+    {
+        const AmodModelId model = Mmd::Find(argv[2]);
+
+        Console::Printf("mtl: '%s' %s\n", argv[2],
+            model != AMOD_INVALID_MODEL && Mmd::ClearMaterials(model)
+                ? "draws whole again" : "was not found");
+    }
+    else if (strcmp(what, "save") == 0 && argc > 3)
+    {
+        const AmodModelId model = Mmd::Find(argv[2]);
+
+        if (model == AMOD_INVALID_MODEL)
+        {
+            Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
+            return;
+        }
+
+        Console::Printf("mtl: '%s' -> '%s' %s, %d material(s) went with it\n", argv[2], argv[3],
+            Mmd::Save(model, argv[3]) ? "written" : "refused", Mmd::MaterialCount(model));
+    }
+    else if (strcmp(what, "load") == 0 && argc > 2)
+    {
+        const AmodModelId model = Mmd::Load(argv[2]);
+
+        if (model == AMOD_INVALID_MODEL)
+        {
+            Console::Printf("mtl: '%s' would not load\n", argv[2]);
+            return;
+        }
+
+        ShowMaterials(model, argv[2]);
+    }
+    else
+    {
+        const AmodModelId model = Mmd::Find(what);
+
+        if (model != AMOD_INVALID_MODEL)
+        {
+            ShowMaterials(model, what);
+            return;
+        }
+
+        Console::Print("mtl, 'mtl <model>', 'mtl split <model> <texA> [texB]',\n");
+        Console::Print("     'mtl add <model> <firstIndex> <triangles> <texture>',\n");
+        Console::Print("     'mtl clear <model>', 'mtl save <model> <path>', 'mtl load <path>'\n");
+    }
+}
+
+// An atlas with real letters on it, drawn by Windows: no art file, and any face on the machine.
+const char* const kFontChars =
+    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
+    "`abcdefghijklmnopqrstuvwxyz{|}~";
+
+AmodFontId g_blockFont = AMOD_FONT_NONE;
+AmodTextureId g_blockAtlas = AMOD_INVALID_TEXTURE;
+AmodToken g_fontDraw = 0;
+char g_fontText[64] = "AZFORGE 0123";
+
+// White letters, alpha carrying the shape - so the draw colour tints them and the paper is gone.
+bool MakeLetters(const char* face, int size)
+{
+    const int count = static_cast<int>(strlen(kFontChars));
+    const int columns = 16;
+    const int rows = (count + columns - 1) / columns;
+    const int cell = size + size / 2 + 4;
+    const int wide = columns * cell;
+    const int tall = rows * cell;
+
+    BITMAPINFO shape = {};
+    shape.bmiHeader.biSize = sizeof(shape.bmiHeader);
+    shape.bmiHeader.biWidth = wide;
+    shape.bmiHeader.biHeight = -tall;   // top down, the way a texture is read
+    shape.bmiHeader.biPlanes = 1;
+    shape.bmiHeader.biBitCount = 32;
+    shape.bmiHeader.biCompression = BI_RGB;
+
+    void* drawn = nullptr;
+    const HDC paper = CreateCompatibleDC(nullptr);
+    const HBITMAP bitmap = CreateDIBSection(paper, &shape, DIB_RGB_COLORS, &drawn, nullptr, 0);
+    const HFONT font = CreateFontA(-size, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
+        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, face);
+
+    if (paper == nullptr || bitmap == nullptr || font == nullptr || drawn == nullptr)
+    {
+        Console::Print("font: Windows would not make the bitmap\n");
+        return false;
+    }
+
+    SelectObject(paper, bitmap);
+    SelectObject(paper, font);
+    SetBkMode(paper, TRANSPARENT);
+    SetTextColor(paper, RGB(255, 255, 255));
+
+    unsigned char* const pixels = static_cast<unsigned char*>(malloc(static_cast<size_t>(wide) * tall * 4));
+
+    if (pixels == nullptr)
+    {
+        DeleteObject(bitmap);
+        DeleteObject(font);
+        DeleteDC(paper);
+        return false;
+    }
+
+    for (int i = 0; i < count; ++i)
+    {
+        TextOutA(paper, (i % columns) * cell, (i / columns) * cell, kFontChars + i, 1);
+    }
+
+    GdiFlush();
+
+    // GDI wrote grey on black; the texture wants R, G, B and the fourth byte as the alpha.
+    const unsigned char* const source = static_cast<const unsigned char*>(drawn);
+
+    for (int at = 0; at < wide * tall; ++at)
+    {
+        const unsigned char ink = source[at * 4 + 2];
+
+        pixels[at * 4 + 0] = 255;
+        pixels[at * 4 + 1] = 255;
+        pixels[at * 4 + 2] = 255;
+        pixels[at * 4 + 3] = ink;
+    }
+
+    g_blockAtlas = Textures::Create(wide, tall, pixels, false, true);
+    g_blockFont = SpriteFont::Create(face);
+
+    if (g_blockAtlas != AMOD_INVALID_TEXTURE && g_blockFont != AMOD_FONT_NONE)
+    {
+        // Each letter keeps the width the face gives it, so the text is not laid out on a grid.
+        for (int i = 0; i < count; ++i)
+        {
+            SIZE step = {};
+            GetTextExtentPoint32A(paper, kFontChars + i, 1, &step);
+
+            SpriteFont::SetGlyph(g_blockFont, static_cast<unsigned char>(kFontChars[i]), g_blockAtlas,
+                static_cast<float>((i % columns) * cell), static_cast<float>((i / columns) * cell),
+                static_cast<float>(step.cx), static_cast<float>(cell), 1.0f);
+        }
+    }
+
+    free(pixels);
+    DeleteObject(bitmap);
+    DeleteObject(font);
+    DeleteDC(paper);
+
+    if (g_blockAtlas == AMOD_INVALID_TEXTURE || g_blockFont == AMOD_FONT_NONE)
+    {
+        Console::Print("font: the atlas or the font was refused\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool MakeBlockFont()
+{
+    return g_blockFont != AMOD_FONT_NONE || MakeLetters("Trebuchet MS", 18);
+}
+
+void __cdecl DrawFontSample(const AmodFrame*, void*)
+{
+    SpriteFont::Draw(g_blockFont, AMOD_MENU_WIDE * 0.5f, 80.0f, g_fontText, 1.0f, 0xFFFFFFFF,
+        AMOD_FONT_CENTRE);
+}
+
+void __cdecl FontCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        const int count = SpriteFont::GameFontCount();
+
+        for (int i = 0; i < count; ++i)
+        {
+            Console::Printf("  %s\n", SpriteFont::GameFontName(i));
+        }
+
+        Console::Printf("font: %d font(s) the game draws with\n", count);
+        Console::Print("font, 'font show <text>', 'font hide', 'font measure <text>',\n");
+        Console::Print("      'font swap <gamefont>', 'font restore <gamefont>',\n");
+        Console::Print("      'font save <path.png>', 'font file <path> [cell]'\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "show") == 0 && argc > 2)
+    {
+        if (!MakeBlockFont())
+        {
+            return;
+        }
+
+        snprintf(g_fontText, sizeof(g_fontText), "%s", argv[2]);
+
+        if (g_fontDraw == 0)
+        {
+            g_fontDraw = Render::OnFrame(&DrawFontSample);
+        }
+
+        Console::Printf("font: '%s' is drawn at the top, %g wide\n", g_fontText,
+            SpriteFont::Measure(g_blockFont, g_fontText));
+    }
+    else if (strcmp(argv[1], "hide") == 0)
+    {
+        Render::Cancel(g_fontDraw);
+        g_fontDraw = 0;
+        Console::Print("font: not drawn any more\n");
+    }
+    else if (strcmp(argv[1], "measure") == 0 && argc > 2)
+    {
+        const AmodFontId game = SpriteFont::FromGame(argc > 3 ? argv[3] : "");
+
+        Console::Printf("font: '%s' is %g wide, the line is %g tall\n", argv[2],
+            SpriteFont::Measure(game, argv[2]), SpriteFont::LineHeight(game));
+    }
+    else if (strcmp(argv[1], "swap") == 0 && argc > 2)
+    {
+        if (!MakeBlockFont())
+        {
+            return;
+        }
+
+        Console::Printf("font: '%s' %s\n", argv[2],
+            SpriteFont::Replace(argv[2], g_blockFont) ? "is drawn in blocks now" : "was refused");
+    }
+    else if (strcmp(argv[1], "file") == 0 && argc > 2)
+    {
+        // Nothing about a font cares where its atlas came from: this one is read off the disk.
+        const float cell = argc > 3 ? static_cast<float>(atof(argv[3])) : 31.0f;
+        const AmodTextureId atlas = Textures::Load(argv[2], false, true);
+
+        if (atlas == AMOD_INVALID_TEXTURE)
+        {
+            Console::Printf("font: '%s' would not read\n", argv[2]);
+            return;
+        }
+
+        const AmodFontId read = SpriteFont::Create(argv[2]);
+        const int placed = SpriteFont::SetGrid(read, atlas, kFontChars, cell, cell, 1.0f);
+
+        if (placed <= 0)
+        {
+            Console::Printf("font: '%s' gave no glyphs at %g\n", argv[2], cell);
+            return;
+        }
+
+        g_blockFont = read;
+        Console::Printf("font: '%s' read, %d glyph(s) of %g\n", argv[2], placed, cell);
+    }
+    else if (strcmp(argv[1], "save") == 0 && argc > 2)
+    {
+        if (!MakeBlockFont())
+        {
+            return;
+        }
+
+        Console::Printf("font: the atlas %s '%s'\n",
+            Textures::Save(g_blockAtlas, argv[2]) ? "was written to" : "would not be written to",
+            argv[2]);
+    }
+    else if (strcmp(argv[1], "restore") == 0 && argc > 2)
+    {
+        Console::Printf("font: '%s' %s\n", argv[2],
+            SpriteFont::Restore(argv[2]) ? "is the game's own again" : "was refused");
+    }
+    else
+    {
+        Console::Print("font, 'font show <text>', 'font hide', 'font measure <text> [gamefont]',\n");
+        Console::Print("      'font swap <gamefont>', 'font restore <gamefont>',\n");
+        Console::Print("      'font save <path.png>', 'font file <path> [cell]'\n");
+    }
+}
+
+void __cdecl CvarCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        Console::Print("cfg <name> [value] [save] [seal], 'cfg keep <name> [0|1] [seal]'\n");
+        return;
+    }
+
+    if (strcmp(argv[1], "keep") == 0 && argc > 2)
+    {
+        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        const char* const how = !Config::Keep(argv[2], keep, seal) ? "refused"
+                              : !keep ? "is not kept any more"
+                              : seal ? "is kept for next time, sealed"
+                              : "is kept for next time";
+
+        Console::Printf("cfg: '%s' %s\n", argv[2], how);
+        return;
+    }
+
+    if (argc < 3)
+    {
+        Console::Printf("cfg: '%s' is %.4f\n", argv[1], Config::Number(argv[1]));
+        return;
+    }
+
+    const bool save = argc > 3 && atoi(argv[3]) != 0;
+    const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+    if (!Config::Set(argv[1], argv[2], save, seal))
+    {
+        Console::Printf("cfg: '%s' was refused\n", argv[1]);
+        return;
+    }
+
+    Console::Printf("cfg: '%s' is now '%s'%s\n", argv[1], argv[2],
+        !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
+}
+
+void ListScores()
+{
+    const int count = Scores::Count();
+
+    if (count == 0)
+    {
+        Console::Print("score: the table is empty\n");
+        return;
+    }
+
+    for (int i = 0; i < count; ++i)
+    {
+        AmodScoreEntry entry = {};
+
+        if (Scores::Get(i, entry))
+        {
+            Console::Printf("  %3d  %-16s %-28s %8.2f  %d\n", i,
+                entry.name != nullptr ? entry.name : "", entry.level != nullptr ? entry.level : "",
+                entry.time, entry.score);
+        }
+    }
+
+    Console::Printf("score: %d entr(ies) across %d castle(s)\n", count, Scores::CastleCount());
+}
+
+void __cdecl ScoreCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        ListScores();
+        return;
+    }
+
+    if (strcmp(argv[1], "add") == 0 && argc > 5)
+    {
+        const bool save = argc > 6 && atoi(argv[6]) != 0;
+        const bool seal = argc > 7 && atoi(argv[7]) != 0;
+
+        const int at = Scores::Add(argv[2], argv[3], static_cast<float>(atof(argv[4])),
+            atoi(argv[5]), save, seal);
+
+        if (at < 0)
+        {
+            Console::Printf("score: '%s' would not take it\n", argv[2]);
+            return;
+        }
+
+        Console::Printf("score: entry %d added%s\n", at,
+            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
+    }
+    else if (strcmp(argv[1], "keep") == 0 && argc > 2)
+    {
+        const int at = atoi(argv[2]);
+        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        const char* const how = !Scores::Keep(at, keep, seal) ? "was refused"
+                              : !keep ? "is not kept any more"
+                              : seal ? "is kept for next time, sealed"
+                              : "is kept for next time";
+
+        Console::Printf("score: entry %d %s\n", at, how);
+    }
+    else if (strcmp(argv[1], "remove") == 0 && argc > 2)
+    {
+        const int at = atoi(argv[2]);
+
+        Console::Printf("score: entry %d %s\n", at,
+            Scores::Remove(at) ? "removed" : "was refused");
+    }
+    else
+    {
+        Console::Print("score, 'score add <level> <name> <time> <points> [save] [seal]',\n");
+        Console::Print("       'score keep <index> [0|1] [seal]', 'score remove <index>'\n");
+    }
+}
+
+void __cdecl PackCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        const int count = Sav::Count();
+
+        for (int i = 0; i < count; ++i)
+        {
+            Console::Printf("  %s\n", Sav::NameAt(i));
+        }
+
+        Console::Printf("pack: %d level(s) open\n", count);
+        return;
+    }
+
+    if (strcmp(argv[1], "open") == 0 && argc > 2)
+    {
+        const bool save = argc > 3 && atoi(argv[3]) != 0;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        Console::Printf("pack: '%s' %s%s\n", argv[2],
+            Sav::Open(argv[2], save, seal) >= 0 ? "open" : "was refused",
+            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
+    }
+    else if (strcmp(argv[1], "close") == 0 && argc > 2)
+    {
+        const bool save = argc > 3 && atoi(argv[3]) != 0;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        Console::Printf("pack: '%s' %s%s\n", argv[2],
+            Sav::Close(argv[2], save, seal) ? "closed" : "was refused",
+            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
+    }
+    else if (strcmp(argv[1], "keep") == 0 && argc > 2)
+    {
+        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
+        const bool seal = argc > 4 && atoi(argv[4]) != 0;
+
+        const char* const how = !Sav::Keep(argv[2], keep, seal) ? "was refused"
+                              : !keep ? "is not kept any more"
+                              : seal ? "is kept for next time, sealed"
+                              : "is kept for next time";
+
+        Console::Printf("pack: '%s' %s\n", argv[2], how);
+    }
+    else
+    {
+        Console::Print("pack, 'pack open <level> [save] [seal]', 'pack close <level> [save] [seal]',\n");
+        Console::Print("      'pack keep <level> [0|1] [seal]'\n");
     }
 }
 
@@ -608,12 +868,23 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("demo", &DemoCommand);
+    Console::AddCommand("keys", &KeysCommand);
+    Console::AddCommand("freeze", &FreezeCommand);
+    Console::AddCommand("mtl", &MaterialCommand);
+    Console::AddCommand("cfg", &CvarCommand);
+    Console::AddCommand("score", &ScoreCommand);
+    Console::AddCommand("pack", &PackCommand);
+    Console::AddCommand("font", &FontCommand);
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
+    if (g_holdFrames > 0 && --g_holdFrames == 0 && g_holdKey >= 0)
+    {
+        Input::Hold(g_holdKey, false);
+        g_holdKey = -1;
+    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

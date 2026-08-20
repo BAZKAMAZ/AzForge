@@ -1,107 +1,145 @@
-# Demo level
+# Commands
 
-A level plays itself from the scripts it names with `$demo`: `data/levels/<castle>/demo_NNN.txt`.
-Each one is a list of `$move_cmd` blocks that drive the player, with `$cam_cmd` and `$view_cmd`
-blocks driving the camera and `$time_cmd` bending game time.
+Type a command with no arguments to see its forms
+and the state it reports on.
 
-One command, `demo`, reads all of that, writes to it, drives it and watches it.
+Key names are the game's own: `space`, `escape`, `numpad0`, `f1`, `a`, `d`, and `joy_left`,
+`joy_right`, `joy_down`, `joy_up`, `joy1`..`joy4`.
+
+---
+
+## keys
 
 | Type this | And you get |
 | --- | --- |
-| `demo` | every script of this level, the running one arrowed |
-| `demo <n>` | one script written out whole — every move and every list on it |
-| `demo play <n>` | that script from its first command |
-| `demo stop` | the demo ended, whatever `$break_time` says |
-| `demo next` | on to the level's next script |
-| `demo watch` | starts, ends, breaks and every move as it is reached |
-| `demo drive` | the mod drives the player instead of the script |
-| `demo add <path>` | a script of the mod's own, read by the game's own parser |
-| `demo remove <n>` | one the mod added, taken out |
-| `demo suppress [0\|1]` | the level's own scripts dropped as the level loads |
-| `demo break <n> <secs>` | `$break_time` |
-| `demo set <n> <move> pause\|horz\|vert\|jump\|end <value>` | one field of one `$move_cmd` |
-| `demo cam\|view <n> <move> <i> <x> <y> <z> [time] [auto]` | one `$cam_cmd` or `$view_cmd` |
-| `demo time <n> <move> <i> <pause> <factor> <secs>` | one `$time_cmd` |
-| `demo start <n> <x> <y> <z> <vx> <vy> <vz>` | `$camera_start` |
-| `demo make` | a whole script built out of nothing, around where the player stands |
-| `demo addmove <n> <pause> [horz] [vert] [jump] [end]` | a `$move_cmd` appended |
-| `demo addcam\|addview <n> <move> <x> <y> <z> [time] [auto]` | a `$cam_cmd` or `$view_cmd` appended |
-| `demo addtime <n> <move> <pause> <factor> <secs>` | a `$time_cmd` appended |
+| `keys` | every bound key, and the totals |
+| `keys all` | every key the game has a name for |
+| `keys <name>` | one key: its binding, held flag and parameters |
+| `keys bind <name> <command> [held] [parameters...]` | that key runs a console command |
+| `keys cvar <name> <cvar> [held]` | that key sets a variable |
+| `keys unbind <name>` | the key does nothing |
+| `keys keep <name> [0\|1] [seal]` | the binding comes back next run |
+| `keys press <name>` | one press, as though the player made it |
+| `keys hold <name> [frames] [alone]` | held for `frames` (60 by default) |
 
----
+`held` and the trailing flags are `0` or `1`.
 
-## Reading
+**Nothing happens while the console is open.** The game ignores the keyboard then, and a forced key
+is ignored with it — press or hold, then close the console and watch.
 
 ```
-demo
-    demo: 1 script(s), playing
-      -> 0  22 move(s)  break 0.02  no $player_place
-    demo: on move 7 of script 0, 18.34s in
-
-demo 0
-    demo: script 0 starts the camera at -1.40 -0.40 1.10 looking -1.60 -0.60 0.00
-       0  pause 8.00
-            cam  -1.40 -0.40 1.10  0.01s
-            cam  -0.30 -0.40 1.10  3.00s
-            cam  -1.35 -0.30 2.80  3.00s  auto
-            view -1.60 -0.60 0.00  0.01s
-       1  horz 1 vert 0 jump 0 to -0.95
-       2  horz 1 vert 0 jump 1 to -0.30
+keys hold d 200        close the console: the player runs right for 200 frames
+keys hold d 200 1      and `a` cannot push back
+keys hold d 0          let go now
+keys press space       one jump
 ```
 
-A move is a pause **or** a move, never both: the game reads `$pause` first and a non-zero one is
-the whole command. A move runs until `$end_coord` passes the player's own coordinate.
+## freeze
 
-## Driving
-
-`demo drive` registers an input handler and returns non-zero from it, so what the script wanted is
-thrown away and the player walks right and jumps twice a second instead. `demo drive` again gives
-the script its player back.
-
-That handler is the whole seam between a demo and a mod: it is handed the player's position and
-hands back horizontal, vertical and jump — the same three the keyboard produces.
-
-## Building one
-
-`set`, `cam`, `view` and `time` write over a record that is already there, and a move the level
-never gave a `$cam_cmd` has nothing to write over — `demo 0` says how many each move holds. The
-`add` half makes them:
-
-```
-demo make               a script of three moves, a camera, a view and a time slice
-demo addmove 1 0 1 0 1 0.5    walk right, jumping, until x passes 0.5
-demo addcam 1 0 0 -1 3 2 1    a camera on move 0, two seconds, handed back at the end
-```
-
-A `$cam_cmd` with a time of zero is what the game's own parser throws away, so `addcam` refuses one
-too.
-
-Scripts and records made this way live until the level changes — nothing recreates them, because
-there is no file to read them back from. A script from `demo add` does come back, being a file.
-
-## A script of the mod's own
-
-`demo add rooms/mine.txt` parses one with the game's own parser and appends it to the level's list.
-It comes back for every level after that, so a mod that wants one level's demo removes it again on
-the next. `demo suppress` drops what the level named, and the two together replace a level's demos
-outright.
-
----
-
-## Every call it demonstrates
-
-| The call | Where to see it |
+| Type this | And you get |
 | --- | --- |
-| `IsPlaying`, `Count`, `Current`, `Elapsed`, `MoveIndex`, `MoveCount` | `demo` |
-| `GetMove`, `GetCamera`, `GetView`, `GetTime` | `demo <n>` |
-| `GetCameraStart`, `GetPlace`, `GetBreakTime` | `demo`, `demo <n>` |
-| `SetMove` | `demo set` |
-| `SetCamera`, `SetView` | `demo cam`, `demo view` |
-| `SetTime` | `demo time` |
-| `SetCameraStart`, `SetBreakTime` | `demo start`, `demo break` |
-| `Play`, `Stop`, `Next` | `demo play`, `demo stop`, `demo next` |
-| `Add`, `Remove`, `SuppressLevelDemos` | `demo add`, `demo remove`, `demo suppress` |
-| `OnDemo`, `OnMove` | `demo watch` |
-| `OnInput` | `demo drive` |
-| `Cancel` | both of those, switched off again |
-| `Create`, `AddMove`, `AddCamera`, `AddView`, `AddTime` | `demo make`, and `demo addmove`, `addcam`, `addview`, `addtime` one at a time |
+| `freeze` | the world stops, or starts again |
+| `freeze 0\|1` | stopped, or running |
+
+The game starts the world again on the next key press — that is its own rule, not the mod's.
+
+## cfg
+
+| Type this | And you get |
+| --- | --- |
+| `cfg <name>` | the value, as a number |
+| `cfg <name> <value> [save] [seal]` | the variable is set |
+| `cfg keep <name> [0\|1] [seal]` | the value comes back next run |
+
+```
+cfg r_wireframe 1
+cfg s_volume 0.5 1        kept for next time
+cfg s_volume 0.5 1 1      kept, and sealed
+```
+
+## score
+
+| Type this | And you get |
+| --- | --- |
+| `score` | the whole table, and how many castles it spans |
+| `score add <level> <name> <time> <points> [save] [seal]` | one entry added |
+| `score keep <index> [0\|1] [seal]` | that entry comes back next run |
+| `score remove <index>` | the entry goes |
+
+## pack
+
+| Type this | And you get |
+| --- | --- |
+| `pack` | which levels are open |
+| `pack open <level> [save] [seal]` | the level opens |
+| `pack close <level> [save] [seal]` | the level closes |
+| `pack keep <level> [0\|1] [seal]` | its state comes back next run |
+
+## mtl
+
+Materials cut one model into parts, each with its own texture. **A level has to be loaded** — with
+no models in memory every form answers with nothing.
+
+| Type this | And you get |
+| --- | --- |
+| `mtl` | how many models are loaded |
+| `mtl <model>` | that model's materials |
+| `mtl split <model> <texA> [texB]` | the triangles cut in two, a texture each |
+| `mtl add <model> <firstIndex> <triangles> <texture>` | one material by hand |
+| `mtl clear <model>` | the game draws it whole again |
+| `mtl save <model> <path>` | written as .mmd, materials and all |
+| `mtl load <path>` | read one back |
+
+```
+mtl door
+mtl split door metall dver
+mtl save door mods/door.mmd
+```
+
+## font
+
+The mod builds its own font: Windows draws the letters, so there is no art file anywhere.
+
+| Type this | And you get |
+| --- | --- |
+| `font` | every font the game draws with |
+| `font show <text>` | that line drawn at the top, in the mod's font |
+| `font hide` | it stops being drawn |
+| `font measure <text> [gamefont]` | how wide it is, and the line height |
+| `font swap <gamefont>` | the game draws that font in the mod's instead |
+| `font restore <gamefont>` | the game's own font is back |
+| `font save <path.png>` | the atlas is written to a file |
+| `font file <path> [cell]` | a font built from an atlas on disk |
+
+```
+font show AZFORGE
+font swap bigitem        the menu changes with it
+font restore bigitem
+font save fonts/sample.png
+font file fonts/sample.png 31
+```
+
+`font swap` changes what the whole game draws, menu items included. It goes back on `restore`, and
+on unloading the mod.
+
+---
+
+## seal, save and keep
+
+`keep` writes a setting into `mods/state/<mod id>.forge` so it comes back next run — never into
+the game's own files. `save` on a form that changes something does the same in one step.
+
+The last flag, `seal`, hides that record's values and ties them to this machine. Every record is
+tagged either way: one edited by hand is refused on the way back in, with a line in `forge.log`.
+
+## What each command shows off
+
+| The interface | Where to see it |
+| --- | --- |
+| Input | `keys` |
+| World | `freeze` |
+| Config | `cfg` |
+| Scores | `score` |
+| Sav | `pack` |
+| Mmd, Textures | `mtl`, `font save` |
+| SpriteFont, Render | `font` |

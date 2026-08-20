@@ -78,6 +78,9 @@ namespace Forge
     // Game_FrameTick: SUB ESP,0x50 / PUSH ESI / PUSH EDI → 5
     constexpr uint8_t kGameFrameTickPrologue[] = { 0x83, 0xEC, 0x50, 0x56, 0x57 };
 
+    // EventText_Render: SUB ESP,0x6C / PUSH ESI / MOV ESI,ECX → 6
+    constexpr uint8_t kEventTextRenderPrologue[] = { 0x83, 0xEC, 0x6C, 0x56, 0x8B, 0xF1 };
+
     // Render_Begin: PUSH ESI / MOV ESI,ECX / CMP dword [ESI+0x0C],0 → 7
     constexpr uint8_t kRenderBeginPrologue[] = { 0x56, 0x8B, 0xF1, 0x83, 0x7E, 0x0C, 0x00 };
 
@@ -222,6 +225,16 @@ namespace Forge
 
     // Demo_LoadList: SUB ESP,0x58 / PUSH EBP / PUSH ESI / MOV ESI,[ESP+0x64] -> 9
     constexpr uint8_t kDemoLoadListPrologue[] = { 0x83, 0xEC, 0x58, 0x55, 0x56, 0x8B, 0x74, 0x24, 0x64 };
+
+    // Vertices_Render: PUSH EBX / MOV EBX,ECX / CMP byte ptr [EBX+0x31],0 -> 7
+    constexpr uint8_t kVerticesRenderPrologue[] = { 0x53, 0x8B, 0xD9, 0x80, 0x7B, 0x31, 0x00 };
+
+    // Config_Write: PUSH EBX / PUSH ESI / PUSH EDI / MOV EBX,ECX -> 5
+    constexpr uint8_t kConfigWritePrologue[] = { 0x53, 0x56, 0x57, 0x8B, 0xD9 };
+
+    // ScoreSaver_Save and GamePacks_Write both open with PUSH EBP / MOV EBP,ESP / PUSH -1 -> 5
+    constexpr uint8_t kScoreSaverSavePrologue[] = { 0x55, 0x8B, 0xEC, 0x6A, 0xFF };
+    constexpr uint8_t kGamePacksWritePrologue[] = { 0x55, 0x8B, 0xEC, 0x6A, 0xFF };
 
     struct MonsterTouchSite
     {

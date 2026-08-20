@@ -1,6 +1,9 @@
 #include <windows.h>
 
 #include "src/Api/ConfigApi.h"
+#include "src/Api/InputApi.h"
+#include "src/Mods/ModStore.h"
+#include "src/Hook/InlineHook.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
@@ -69,6 +72,10 @@ namespace Forge
         };
 
         std::vector<CvarWas> g_written;
+        std::vector<CvarWas> g_whileWriting;
+
+        InlineHook g_writeHook;
+        WriteRoutine g_originalWrite = nullptr;
 
         void Remember(ModContext* owner, const char* name, const uint8_t* cvar)
         {
@@ -92,6 +99,55 @@ namespace Forge
             {
                 set(cvar, nullptr, held.text.c_str());
             }
+        }
+
+        void __fastcall WriteDetour(void* config, void* unused, const char* path, char force)
+        {
+            g_whileWriting.clear();
+
+            for (const CvarWas& held : g_written)
+            {
+                g_whileWriting.push_back(CvarWas{ held.owner, held.name, TextOf(Find(held.name.c_str())) });
+                PutBack(held);
+            }
+
+            InputApi::BeforeConfigWrite();
+
+            g_originalWrite(config, unused, path, force);
+
+            InputApi::AfterConfigWrite();
+
+            for (const CvarWas& held : g_whileWriting)
+            {
+                PutBack(held);
+            }
+            g_whileWriting.clear();
+        }
+
+        // What a mod keeps lives beside the mod, so Azangara.cfg stays the player's own.
+        int __cdecl ApiKeep(AmodMod mod, const char* name, int keep, int protect)
+        {
+            ModContext* const context = Caller(mod);
+            const uint8_t* const cvar = context != nullptr ? Find(name) : nullptr;
+
+            if (context == nullptr || cvar == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no variable called '%s'", name);
+            }
+
+            if (keep == 0)
+            {
+                ModStore::Remove(context, "config", name);
+                return 1;
+            }
+
+            StoreRecord record;
+            record.kind = "config";
+            record.key = name;
+            record.values.push_back(TextOf(cvar));
+            ModStore::Put(context, record);
+            ModStore::Protect(context, "config", name, protect != 0);
+            return 1;
         }
 
         int __cdecl ApiHas(AmodMod mod, const char* name)
@@ -253,6 +309,21 @@ namespace Forge
             return false;
         }
 
+        std::string error;
+        std::string mismatch;
+        void* const write = GameModule::Resolve(GameAddress::kConfigWrite);
+
+        if (write != nullptr && GameModule::VerifyBytes(write, kConfigWritePrologue, sizeof(kConfigWritePrologue), mismatch) &&
+            g_writeHook.Install(write, reinterpret_cast<void*>(&WriteDetour), kConfigWritePrologue, sizeof(kConfigWritePrologue), error))
+        {
+            g_originalWrite = reinterpret_cast<WriteRoutine>(g_writeHook.Trampoline());
+        }
+        else
+        {
+            FORGE_LOG_WARN("Config_Write is not hooked, so a mod's cvars and key bindings are "
+                "saved into Azangara.cfg as the player's own");
+        }
+
         g_table.structSize = sizeof(AmodConfigApi);
         g_table.Has = &ApiHas;
         g_table.Get = &ApiGet;
@@ -264,6 +335,7 @@ namespace Forge
         g_table.Count = &ApiCount;
         g_table.NameAt = &ApiNameAt;
         g_table.Save = &ApiSave;
+        g_table.Keep = &ApiKeep;
 
         FORGE_LOG_INFO("Config interface installed");
         return true;
@@ -277,11 +349,44 @@ namespace Forge
         }
 
         g_written.clear();
+        g_whileWriting.clear();
+        g_writeHook.Uninstall();
+        g_originalWrite = nullptr;
         g_table = AmodConfigApi{};
+    }
+
+    void ConfigApi::ReplayStore(ModContext* owner)
+    {
+        const SetStringRoutine set = Routine<SetStringRoutine>(GameAddress::kCvarSetString);
+
+        for (const StoreRecord& kept : ModStore::Records(owner, "config"))
+        {
+            uint8_t* const cvar = Find(kept.key.c_str());
+            if (cvar == nullptr || set == nullptr || kept.values.empty())
+            {
+                continue;
+            }
+
+            Remember(owner, kept.key.c_str(), cvar);
+            set(cvar, nullptr, kept.values[0].c_str());
+        }
     }
 
     void ConfigApi::ForgetMod(ModContext* owner)
     {
+        for (const StoreRecord& kept : ModStore::Records(owner, "config"))
+        {
+            const uint8_t* const cvar = Find(kept.key.c_str());
+            if (cvar == nullptr)
+            {
+                continue;
+            }
+
+            StoreRecord record = kept;
+            record.values.assign(1, TextOf(cvar));
+            ModStore::Put(owner, record);
+        }
+
         for (auto it = g_written.begin(); it != g_written.end();)
         {
             if (it->owner != owner)

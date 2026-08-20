@@ -9,6 +9,39 @@ namespace Forge
         constexpr uintptr_t kSystemFont = 0x00503598;
         constexpr uintptr_t kMenuFindFont = 0x00444380; // __cdecl (const char* name) -> font
 
+        // 2D event text phase.
+        constexpr uintptr_t kEventTextRender = 0x004284D0; // __fastcall (), 2D phase
+
+        // Sprite font drawing and measuring.
+        constexpr uintptr_t kFontDrawText = 0x004253F0; // __thiscall (font, text, pos[2], scale[2], colour[4], length, fixedWidth), RET 0x18
+        constexpr uintptr_t kFontMeasure = 0x00425760; // __thiscall (font, text, out[2], length)
+
+        constexpr uint32_t kFontMagic = 0x5555; // +0x00
+        constexpr uintptr_t kFontTexturesOffset = 0x104;
+        constexpr uintptr_t kFontTextureCountOffset = 0x108;
+        constexpr uintptr_t kFontLineHeightOffset = 0x10C;
+        constexpr uintptr_t kFontGlyphsOffset = 0x110;
+        constexpr size_t kFontGlyphStride = 0x24;
+        constexpr size_t kFontGlyphCount = 0x100;
+        constexpr size_t kFontSize = 0x2600;
+
+        // Glyph data.
+        constexpr uintptr_t kGlyphTextureOffset = 0x00;
+        constexpr uintptr_t kGlyphUOffset = 0x04;
+        constexpr uintptr_t kGlyphVOffset = 0x08;
+        constexpr uintptr_t kGlyphUWideOffset = 0x0C;
+        constexpr uintptr_t kGlyphVTallOffset = 0x10;
+        constexpr uintptr_t kGlyphWideOffset = 0x14;
+        constexpr uintptr_t kGlyphTallOffset = 0x18;
+        constexpr uintptr_t kGlyphOffsetXOffset = 0x1C;
+        constexpr uintptr_t kGlyphOffsetYOffset = 0x20;
+
+        // Menu font table.
+        constexpr uintptr_t kMenuFontTable = 0x00693908;
+        constexpr uintptr_t kMenuFontCount = 0x0069390C;
+        constexpr size_t kMenuFontStride = 0x44;
+        constexpr uintptr_t kMenuFontOffset = 0x40;
+
         // Sound facade @ kSound; Load = vtable+0x18 (0x00402C20)
         // NOT +0x1C (0x00402C40): that RELEASES — passing a name destructs the caller's string.
         constexpr uintptr_t kSound = 0x0067A5F0;
@@ -67,6 +100,25 @@ namespace Forge
         constexpr uintptr_t kModelManager = 0x00503520;
         constexpr uintptr_t kModelListHead = 0x00503524;
         constexpr uintptr_t kMeshManager = 0x00503528;
+
+        // Model geometry buffer pair.
+        constexpr uintptr_t kVerticesRender = 0x0047D640; // __thiscall (record, device)
+
+        // Shared by Model_Render and Model_RenderAnimated.
+        constexpr uintptr_t kVerticesCreate = 0x0047B7C0; // __thiscall (manager, ...)
+
+        // Uploads modified vertex data.
+        constexpr uintptr_t kVerticesUpload = 0x0047D480; // __fastcall (record) -> bool
+        constexpr size_t kVertexRecordSize = 0x38;
+        constexpr uintptr_t kVertexRecordBufferOffset = 0x0C; // IDirect3DVertexBuffer8*
+        constexpr uintptr_t kVertexRecordIndicesOffset = 0x10; // IDirect3DIndexBuffer8*
+        constexpr uintptr_t kVertexRecordVertexCountOffset = 0x1C;
+        constexpr uintptr_t kVertexRecordIndexCountOffset = 0x20;
+        constexpr uintptr_t kVertexRecordKindOffset = 0x34; // 0 triangles, 1 strip, 2 lines
+
+        // D3DFVF_XYZ | NORMAL | DIFFUSE | TEX1: position, normal, colour, uv - 0x24 bytes.
+        constexpr uint32_t kModelVertexFvf = 0x152;
+        constexpr uint32_t kModelVertexStride = 0x24;
 
         // The renderer, a pointer
         constexpr uintptr_t kRenderDevice = 0x00503590;

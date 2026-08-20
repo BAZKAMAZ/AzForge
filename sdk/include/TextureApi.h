@@ -40,27 +40,28 @@ typedef struct AmodTextureApi
     AmodTextureId(__cdecl* Load)(AmodMod mod, const char* path, int mipmapped, int hasAlpha);
     int(__cdecl* Release)(AmodMod mod, AmodTextureId texture);
 
-    /* Out of pixels, with no file anywhere */
-    AmodTextureId(__cdecl* Create)(AmodMod mod, int width, int height, const void* pixels,
-        int mipmapped, int hasAlpha);
+    /* Creates a texture from pixels. */
+    AmodTextureId(__cdecl* Create)(AmodMod mod, int width, int height, const void* pixels, int mipmapped, int hasAlpha);
 
-    /* New pixels into a texture that already exists, whether it was made or read from a file */
+    /* Replaces existing texture pixels. */
     int(__cdecl* Replace)(AmodMod mod, AmodTextureId texture, int width, int height, const void* pixels);
 
-    /* Every request for that path is answered with this texture instead, whoever asks */
+    /* Redirects requests for a texture path. */
     int(__cdecl* Override)(AmodMod mod, const char* path, AmodTextureId texture);
     int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
 
-
     int(__cdecl* ReadPixels)(AmodMod mod, AmodTextureId texture, void* buffer, int capacity);
 
-    /* AmodTextureId <-> game handle (draw path / ResolveTexture). */
+    /* Converts between AmodTextureId and game handles. */
     AmodTextureId(__cdecl* FromGame)(AmodMod mod, uint32_t handle);
     uint32_t(__cdecl* ToGame)(AmodMod mod, AmodTextureId texture);
 
+    /* Saves a texture to a file. */
+    int(__cdecl* Save)(AmodMod mod, AmodTextureId texture, const char* path);
+
 } AmodTextureApi;
 
-AMOD_LAST_FIELD(AmodTextureApi, ToGame, 0x38);
+AMOD_LAST_FIELD(AmodTextureApi, Save, 0x3C);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -167,6 +168,12 @@ namespace Amod
             return (g_textures != nullptr && g_textures->structSize >= sizeof(AmodTextureApi) && g_textures->ToGame != nullptr)
                 ? g_textures->ToGame(g_textureSelf, texture)
                 : 0;
+        }
+
+        inline bool                                                 Save(AmodTextureId texture, const char* path)
+        {
+            return g_textures != nullptr && g_textures->structSize >= sizeof(AmodTextureApi) &&
+                g_textures->Save != nullptr && g_textures->Save(g_textureSelf, texture, path) != 0;
         }
 
         inline bool                                                 Override(const char* path, AmodTextureId texture)

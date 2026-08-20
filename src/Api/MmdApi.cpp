@@ -4,6 +4,7 @@
 #include "src/Api/ApiProperty.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/ModContext.h"
+#include "src/Api/TextureApi.h"
 #include "src/Api/WorldApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
@@ -35,6 +36,10 @@ namespace Forge
 
         typedef uint8_t* (__cdecl* LoadOrFindRoutine)(const char* path);
         typedef void(__cdecl* ReleaseModelRoutine)(uint8_t* model);
+        typedef uint8_t* (__cdecl* PackageOpenRoutine)(const char* path);
+        typedef void(__cdecl* PackageFreeRoutine)(uint8_t* handle);
+        typedef void(__fastcall* VerticesRenderRoutine)(uint8_t* record, void* unused, void* device);
+        typedef char(__fastcall* VerticesUploadRoutine)(uint8_t* record);
         typedef uint8_t* (__cdecl* CreateFromMeshRoutine)(int unused, const void* mesh);
         typedef char(__stdcall* BuildFromMeshRoutine)(uint8_t* model);
         typedef void(__cdecl* RenderRoutine)(uint8_t* model);
@@ -71,6 +76,8 @@ namespace Forge
 
         RenderAnimatedRoutine g_originalRenderAnimated = nullptr;
         InlineHook g_renderAnimHook;
+        InlineHook g_verticesHook;
+        VerticesRenderRoutine g_originalVerticesRender = nullptr;
 
         void WriteInt(uint8_t* record, uintptr_t offset, int value)
         {
@@ -405,11 +412,23 @@ namespace Forge
             return true;
         }
 
+        constexpr uint32_t kMaterialTag = 0x4C544D41; // 'AMTL', little end first
+
+        struct Material
+        {
+            int firstIndex = 0;
+            int primitiveCount = 0;
+            uint32_t texture = 0;
+        };
+
         struct Tracked
         {
             uint32_t id = 0;
             uint8_t* model = nullptr;
-            ModContext* creator = nullptr;      // null when the game built it
+
+            std::vector<Material> materials;
+            ModContext* materialsOwner = nullptr;
+            ModContext* creator = nullptr;
 
             std::string name;
             bool resident = true;
@@ -425,6 +444,8 @@ namespace Forge
             bool fromFile = false;
             Geometry snapshot;
         };
+
+        void ReadMaterialsFromFile(const char* path, Tracked& tracked);
 
         struct Held
         {
@@ -1189,6 +1210,12 @@ namespace Forge
                 return AMOD_INVALID_MODEL;
             }
 
+            Tracked* const tracked = TrackedById(id);
+            if (tracked != nullptr && tracked->materials.empty())
+            {
+                ReadMaterialsFromFile(path, *tracked);
+            }
+
             Held held;
             held.owner = context;
             held.id = id;
@@ -1525,6 +1552,34 @@ namespace Forge
                     static_cast<size_t>(frame) * geometry.indexCount), static_cast<std::streamsize>(geometry.indexCount) * 2);
             }
 
+            // After the frames, where the game's parser never looks.
+            if (!tracked->materials.empty())
+            {
+                const uint32_t tag = kMaterialTag;
+                const uint32_t count = static_cast<uint32_t>(tracked->materials.size());
+
+                out.write(reinterpret_cast<const char*>(&tag), sizeof(tag));
+                out.write(reinterpret_cast<const char*>(&count), sizeof(count));
+
+                for (const Material& material : tracked->materials)
+                {
+                    const uint8_t* const object =
+                        static_cast<const uint8_t*>(TextureApi::TextureFor(material.texture));
+                    const char* const name = object != nullptr
+                        ? reinterpret_cast<const char*>(object + GameAddress::kTextureNameOffset)
+                        : "";
+
+                    const uint32_t first = static_cast<uint32_t>(material.firstIndex);
+                    const uint32_t primitives = static_cast<uint32_t>(material.primitiveCount);
+                    const uint32_t length = static_cast<uint32_t>(strlen(name));
+
+                    out.write(reinterpret_cast<const char*>(&first), sizeof(first));
+                    out.write(reinterpret_cast<const char*>(&primitives), sizeof(primitives));
+                    out.write(reinterpret_cast<const char*>(&length), sizeof(length));
+                    out.write(name, static_cast<std::streamsize>(length));
+                }
+            }
+
             out.close();
             if (!out)
             {
@@ -1532,8 +1587,9 @@ namespace Forge
                 return 0;
             }
 
-            FORGE_LOG_INFO("Wrote '%s': %d frame(s), %d verts, %d indices",
-                PathToUtf8(file).c_str(), geometry.frameCount, geometry.vertexCount, geometry.indexCount);
+            FORGE_LOG_INFO("Wrote '%s': %d frame(s), %d verts, %d indices, %zu material(s)",
+                PathToUtf8(file).c_str(), geometry.frameCount, geometry.vertexCount,
+                geometry.indexCount, tracked->materials.size());
             return 1;
         }
 
@@ -1841,6 +1897,182 @@ namespace Forge
                 g_textures.push_back(known);
             }
             return id;
+        }
+
+        uint32_t TextureIdByName(const char* name)
+        {
+            for (const ResolvedTexture& known : g_textures)
+            {
+                if (known.name == name)
+                {
+                    return known.id;
+                }
+            }
+
+            void** const at = static_cast<void**>(GameModule::Resolve(GameAddress::kResolveTextureSlot));
+            const ResolveRoutine resolve = at != nullptr ? reinterpret_cast<ResolveRoutine>(*at) : nullptr;
+            const uint32_t id = resolve != nullptr ? resolve(name) : 0;
+
+            if (id != 0)
+            {
+                ResolvedTexture known;
+                known.name = name;
+                known.id = id;
+                g_textures.push_back(known);
+            }
+            return id;
+        }
+
+        bool ReadU32(const uint8_t* bytes, size_t size, size_t& at, uint32_t& value)
+        {
+            if (at + sizeof(uint32_t) > size)
+            {
+                return false;
+            }
+            memcpy(&value, bytes + at, sizeof(uint32_t));
+            at += sizeof(uint32_t);
+            return true;
+        }
+
+        void ReadMaterialsFromFile(const char* path, Tracked& tracked)
+        {
+            const PackageOpenRoutine open = Routine<PackageOpenRoutine>(GameAddress::kPackageOpenFile);
+            const PackageFreeRoutine free = Routine<PackageFreeRoutine>(GameAddress::kPackageFree);
+
+            if (open == nullptr || free == nullptr || path == nullptr)
+            {
+                return;
+            }
+
+            uint8_t* const handle = open(path);
+            if (handle == nullptr)
+            {
+                return;
+            }
+
+            const uint8_t* const bytes = Read<const uint8_t*>(handle, 0x108);
+            const size_t size = static_cast<size_t>(Read<uint32_t>(handle, 0x104));
+
+            if (bytes != nullptr && size >= 0x14)
+            {
+                const int frames = Read<int>(bytes, 0x04);
+                const int vertices = Read<int>(bytes, 0x08);
+                const int indices = Read<int>(bytes, 0x10);
+
+                size_t at = 0x14 + static_cast<size_t>(frames) *
+                    (static_cast<size_t>(vertices) * GameAddress::kMeshVertexSize +
+                     static_cast<size_t>(indices) * 2);
+
+                uint32_t tag = 0;
+                uint32_t count = 0;
+
+                if (frames > 0 && vertices > 0 && indices > 0 && ReadU32(bytes, size, at, tag) &&
+                    tag == kMaterialTag && ReadU32(bytes, size, at, count) && count < 0x1000)
+                {
+                    for (uint32_t i = 0; i < count; ++i)
+                    {
+                        uint32_t first = 0;
+                        uint32_t primitives = 0;
+                        uint32_t length = 0;
+
+                        if (!ReadU32(bytes, size, at, first) ||
+                            !ReadU32(bytes, size, at, primitives) ||
+                            !ReadU32(bytes, size, at, length) || length > 0x100 ||
+                            at + length > size)
+                        {
+                            break;
+                        }
+
+                        const std::string name(reinterpret_cast<const char*>(bytes + at), length);
+                        at += length;
+
+                        Material material;
+                        material.firstIndex = static_cast<int>(first);
+                        material.primitiveCount = static_cast<int>(primitives);
+                        material.texture = TextureIdByName(name.c_str());
+                        tracked.materials.push_back(material);
+                    }
+
+                    if (!tracked.materials.empty())
+                    {
+                        FORGE_LOG_INFO("'%s' carries %zu material(s)", path, tracked.materials.size());
+                    }
+                }
+            }
+
+            free(handle);
+        }
+
+        int __cdecl ApiAddMaterial(AmodMod mod, AmodModelId model, int firstIndex,
+                                   int primitiveCount, uint32_t texture)
+        {
+            ModContext* const context = Caller(mod);
+            Tracked* const tracked = context != nullptr ? TrackedById(model) : nullptr;
+
+            if (tracked == nullptr)
+            {
+                Fail(mod, AMOD_FAIL_NO_SUCH, "there is no such model");
+                return -1;
+            }
+            if (firstIndex < 0 || primitiveCount <= 0)
+            {
+                Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "a material covers at least one triangle");
+                return -1;
+            }
+
+            Material material;
+            material.firstIndex = firstIndex;
+            material.primitiveCount = primitiveCount;
+            material.texture = texture;
+
+            tracked->materials.push_back(material);
+            tracked->materialsOwner = context;
+            return static_cast<int>(tracked->materials.size()) - 1;
+        }
+
+        int __cdecl ApiMaterialCount(AmodMod mod, AmodModelId model)
+        {
+            const Tracked* const tracked = Caller(mod) != nullptr ? TrackedById(model) : nullptr;
+            return tracked != nullptr ? static_cast<int>(tracked->materials.size()) : 0;
+        }
+
+        int __cdecl ApiGetMaterial(AmodMod mod, AmodModelId model, int index, AmodModelMaterial* out)
+        {
+            const Tracked* const tracked = Caller(mod) != nullptr ? TrackedById(model) : nullptr;
+
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetMaterial was given nowhere to put it");
+            }
+            if (tracked == nullptr || index < 0 ||
+                index >= static_cast<int>(tracked->materials.size()))
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "that model has no material %d", index);
+            }
+
+            const Material& material = tracked->materials[static_cast<size_t>(index)];
+
+            AmodModelMaterial filled = {};
+            filled.structSize = sizeof(filled);
+            filled.firstIndex = material.firstIndex;
+            filled.primitiveCount = material.primitiveCount;
+            filled.texture = material.texture;
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
+        int __cdecl ApiClearMaterials(AmodMod mod, AmodModelId model)
+        {
+            Tracked* const tracked = Caller(mod) != nullptr ? TrackedById(model) : nullptr;
+
+            if (tracked == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no such model");
+            }
+
+            tracked->materials.clear();
+            tracked->materialsOwner = nullptr;
+            return 1;
         }
 
         int ReadMatrix(AmodMod mod, uintptr_t offset, float* out)
@@ -2802,6 +3034,117 @@ namespace Forge
             return nullptr;
         }
 
+        // The device methods the game's own draw uses, by their place in IDirect3DDevice8.
+        typedef long(__stdcall* DeviceSetShaderRoutine)(void* device, uint32_t handle);
+        typedef long(__stdcall* DeviceSetStreamRoutine)(void* device, uint32_t stream, void* buffer, uint32_t stride);
+        typedef long(__stdcall* DeviceSetIndicesRoutine)(void* device, void* buffer, uint32_t baseVertex);
+        typedef long(__stdcall* DeviceDrawIndexedRoutine)(void* device, uint32_t type, uint32_t minIndex, uint32_t vertexCount, uint32_t startIndex, uint32_t primitives);
+        typedef long(__stdcall* DeviceSetTextureRoutine)(void* device, uint32_t stage, void* texture);
+        typedef long(__stdcall* DeviceGetTextureRoutine)(void* device, uint32_t stage, void** texture);
+        typedef unsigned long(__stdcall* DeviceReleaseRoutine)(void* object);
+
+        constexpr size_t kDeviceRelease = 0x008;
+        constexpr size_t kDeviceGetTexture = 0x0F0;
+        constexpr size_t kDeviceSetTexture = 0x0F4;
+        constexpr size_t kDeviceDrawIndexed = 0x11C;
+        constexpr size_t kDeviceSetShader = 0x130;
+        constexpr size_t kDeviceSetStream = 0x14C;
+        constexpr size_t kDeviceSetIndices = 0x154;
+
+        constexpr uint32_t kTriangleList = 4;
+
+        template <typename T>
+        T DeviceCall(void* device, size_t offset)
+        {
+            void** const vtable = *static_cast<void***>(device);
+            return reinterpret_cast<T>(vtable[offset / sizeof(void*)]);
+        }
+
+        Tracked* TrackedByRecord(const uint8_t* record)
+        {
+            for (Tracked& entry : g_tracked)
+            {
+                if (entry.materials.empty() || entry.model == nullptr || !entry.resident)
+                {
+                    continue;
+                }
+                if (Read<uint8_t*>(entry.model, GameAddress::kModelVertexBufferOffset) == record)
+                {
+                    return &entry;
+                }
+            }
+            return nullptr;
+        }
+
+        void* SurfaceOf(uint32_t texture)
+        {
+            const uint8_t* const object = static_cast<const uint8_t*>(TextureApi::TextureFor(texture));
+            return object != nullptr
+                ? Read<void*>(object, GameAddress::kTextureSurfaceOffset)
+                : nullptr;
+        }
+
+        void __fastcall VerticesRenderDetour(uint8_t* record, void* unused, void* device)
+        {
+            Tracked* const tracked = record != nullptr ? TrackedByRecord(record) : nullptr;
+
+            if (tracked == nullptr || device == nullptr ||
+                Read<int>(record, GameAddress::kVertexRecordKindOffset) != 0)
+            {
+                g_originalVerticesRender(record, unused, device);
+                return;
+            }
+
+            if (record[0x30] != 0 || record[0x31] != 0)
+            {
+                const VerticesUploadRoutine upload = Routine<VerticesUploadRoutine>(GameAddress::kVerticesUpload);
+
+                if (upload == nullptr || upload(record) == 0)
+                {
+                    g_originalVerticesRender(record, unused, device);
+                    return;
+                }
+            }
+
+            void* const vertices = Read<void*>(record, GameAddress::kVertexRecordBufferOffset);
+            void* const indices = Read<void*>(record, GameAddress::kVertexRecordIndicesOffset);
+            const uint32_t vertexCount = Read<uint32_t>(record, GameAddress::kVertexRecordVertexCountOffset);
+
+            if (vertices == nullptr || indices == nullptr)
+            {
+                g_originalVerticesRender(record, unused, device);
+                return;
+            }
+
+            void* was = nullptr;
+            DeviceCall<DeviceGetTextureRoutine>(device, kDeviceGetTexture)(device, 0, &was);
+
+            DeviceCall<DeviceSetShaderRoutine>(device, kDeviceSetShader)(device, GameAddress::kModelVertexFvf);
+            DeviceCall<DeviceSetStreamRoutine>(device, kDeviceSetStream)(device, 0, vertices, GameAddress::kModelVertexStride);
+            DeviceCall<DeviceSetIndicesRoutine>(device, kDeviceSetIndices)(device, indices, 0);
+
+            const DeviceSetTextureRoutine setTexture = DeviceCall<DeviceSetTextureRoutine>(device, kDeviceSetTexture);
+            const DeviceDrawIndexedRoutine draw = DeviceCall<DeviceDrawIndexedRoutine>(device, kDeviceDrawIndexed);
+
+            for (const Material& material : tracked->materials)
+            {
+                if (material.primitiveCount <= 0)
+                {
+                    continue;
+                }
+
+                setTexture(device, 0, SurfaceOf(material.texture));
+                draw(device, kTriangleList, 0, vertexCount, static_cast<uint32_t>(material.firstIndex), static_cast<uint32_t>(material.primitiveCount));
+            }
+
+            // Whatever Model_DrawNode bound is put back; the game draws on assuming it is there.
+            setTexture(device, 0, was);
+            if (was != nullptr)
+            {
+                DeviceCall<DeviceReleaseRoutine>(was, kDeviceRelease)(was);
+            }
+        }
+
         void __cdecl RenderAnimatedDetour(uint8_t* model, int from, int to, float blend)
         {
             const Painted* const painted = IsModel(model) ? PaintedOf(model) : nullptr;
@@ -3387,9 +3730,8 @@ namespace Forge
             g_originalDrawNode = reinterpret_cast<DrawNodeRoutine>(g_drawNodeHook.Trampoline());
 
             void* const animated = GameSymbols::Address(GameSymbol::ModelRenderAnimated);
-            if (animated != nullptr &&
-                g_renderAnimHook.Install(animated, reinterpret_cast<void*>(&RenderAnimatedDetour),
-                    kModelRenderAnimatedPrologue, sizeof(kModelRenderAnimatedPrologue), error))
+            if (animated != nullptr && g_renderAnimHook.Install(animated, reinterpret_cast<void*>(&RenderAnimatedDetour), kModelRenderAnimatedPrologue, 
+                sizeof(kModelRenderAnimatedPrologue), error))
             {
                 g_originalRenderAnimated = reinterpret_cast<RenderAnimatedRoutine>(g_renderAnimHook.Trampoline());
             }
@@ -3397,6 +3739,19 @@ namespace Forge
             {
                 FORGE_LOG_WARN("Model_RenderAnimated is not hooked, so an animated model cannot be "
                     "coloured: %s", error.c_str());
+            }
+
+            std::string mismatch;
+            void* const vertices = GameModule::Resolve(GameAddress::kVerticesRender);
+            if (vertices != nullptr && GameModule::VerifyBytes(vertices, kVerticesRenderPrologue, sizeof(kVerticesRenderPrologue), mismatch) &&
+                g_verticesHook.Install(vertices, reinterpret_cast<void*>(&VerticesRenderDetour), kVerticesRenderPrologue, sizeof(kVerticesRenderPrologue), error))
+            {
+                g_originalVerticesRender = reinterpret_cast<VerticesRenderRoutine>(g_verticesHook.Trampoline());
+            }
+            else
+            {
+                FORGE_LOG_WARN("Vertices_Render is not hooked, so a model wears one texture: %s",
+                    error.c_str());
             }
             return true;
         }
@@ -3466,6 +3821,10 @@ namespace Forge
             g_table.AddDrawHandler = &ApiAddDrawHandler;
             g_table.RemoveDrawHandler = &ApiRemoveDrawHandler;
             g_table.Cancel = &ApiRemoveDrawHandler;
+            g_table.AddMaterial = &ApiAddMaterial;
+            g_table.MaterialCount = &ApiMaterialCount;
+            g_table.GetMaterial = &ApiGetMaterial;
+            g_table.ClearMaterials = &ApiClearMaterials;
             g_table.DrawWith = &ApiDrawWith;
         }
 
@@ -3489,6 +3848,8 @@ namespace Forge
         g_loadAnimHook.Uninstall();
         g_drawNodeHook.Uninstall();
         g_renderAnimHook.Uninstall();
+        g_verticesHook.Uninstall();
+        g_originalVerticesRender = nullptr;
         g_originalDrawNode = nullptr;
         g_originalRenderAnimated = nullptr;
         ForgetFileGeometry(nullptr);
@@ -3569,6 +3930,16 @@ namespace Forge
 
     void MmdApi::ForgetMod(ModContext* owner)
     {
+        // A model the mod cut into materials goes back to being drawn whole.
+        for (Tracked& tracked : g_tracked)
+        {
+            if (tracked.materialsOwner == owner)
+            {
+                tracked.materials.clear();
+                tracked.materialsOwner = nullptr;
+            }
+        }
+
         for (auto it = g_substitutes.begin(); it != g_substitutes.end();)
         {
             it = it->owner == owner ? g_substitutes.erase(it) : ++it;
@@ -3610,8 +3981,8 @@ namespace Forge
                 continue;
             }
 
-            if (it->room != nullptr && Readable(it->room + RoomModelOffset(it->slot), sizeof(uintptr_t)) &&
-                Read<uintptr_t>(it->room, RoomModelOffset(it->slot)) == it->applied)
+            if (it->room != nullptr && Readable(it->room + RoomModelOffset(it->slot), sizeof(uintptr_t)) && Read<uintptr_t>(it->room, 
+                RoomModelOffset(it->slot)) == it->applied)
             {
                 WritePointer(it->room, RoomModelOffset(it->slot), reinterpret_cast<const void*>(it->was));
                 GiveBackRoomModel(it->applied);

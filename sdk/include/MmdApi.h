@@ -215,6 +215,19 @@ AMOD_LAST_FIELD(AmodModelDrawInfo, position, 0x5C);
 
 typedef void(__cdecl* AmodModelDrawHandler)(const AmodModelDrawInfo* info, void* user);
 
+/* Model index range with its own texture. */
+typedef struct AmodModelMaterial
+{
+    uint32_t structSize;
+
+    int firstIndex;         /* where in the index buffer this one starts */
+    int primitiveCount;     /* triangles, not indices */
+    uint32_t texture;       /* from ResolveTexture */
+
+} AmodModelMaterial;
+
+AMOD_LAST_FIELD(AmodModelMaterial, texture, 0x0C);
+
 typedef struct AmodMmdApi
 {
     uint32_t structSize;
@@ -355,9 +368,15 @@ typedef struct AmodMmdApi
        spelling of the same call, kept for mods already built against it. */
     void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
 
+    /* Model materials define indexed stretches and their textures. */
+    int(__cdecl* AddMaterial)(AmodMod mod, AmodModelId model, int firstIndex, int primitiveCount, uint32_t texture);
+    int(__cdecl* MaterialCount)(AmodMod mod, AmodModelId model);
+    int(__cdecl* GetMaterial)(AmodMod mod, AmodModelId model, int index, AmodModelMaterial* out);
+    int(__cdecl* ClearMaterials)(AmodMod mod, AmodModelId model);
+
 } AmodMmdApi;
 
-AMOD_LAST_FIELD(AmodMmdApi, Cancel, 0xE8);
+AMOD_LAST_FIELD(AmodMmdApi, ClearMaterials, 0xF8);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -848,6 +867,36 @@ namespace Amod
             {
                 g_mmd->Cancel(g_mmdSelf, token);
             }
+        }
+
+        inline int                                                  AddMaterial(AmodModelId model, int firstIndex, int primitiveCount, uint32_t texture)
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+                ? g_mmd->AddMaterial(g_mmdSelf, model, firstIndex, primitiveCount, texture)
+                : -1;
+        }
+
+        inline int                                                  MaterialCount(AmodModelId model)
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+                ? g_mmd->MaterialCount(g_mmdSelf, model)
+                : 0;
+        }
+
+        inline bool                                                 GetMaterial(AmodModelId model, int index, AmodModelMaterial* out)
+        {
+            if (g_mmd == nullptr || g_mmd->structSize < sizeof(AmodMmdApi) || out == nullptr)
+            {
+                return false;
+            }
+            out->structSize = sizeof(AmodModelMaterial);
+            return g_mmd->GetMaterial(g_mmdSelf, model, index, out) != 0;
+        }
+
+        inline bool                                                 ClearMaterials(AmodModelId model)
+        {
+            return g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi) &&
+                   g_mmd->ClearMaterials(g_mmdSelf, model) != 0;
         }
 
         inline bool                                                 DrawWith(AmodModelId model, uint32_t texture,

@@ -126,8 +126,6 @@ namespace Forge
 
         constexpr uintptr_t kEditorDrawText = 0x0040CDC0; // __cdecl (x, y, colour, format, ...); hardcodes the scale
 
-        // __thiscall (font, text, pos[2], scale[2], colour[4], length, fixedWidth), RET 0x18.
-        constexpr uintptr_t kEditorTextDraw = 0x004253F0;
         constexpr float kEditorTextScaleX = 0.5f; // the y half of the pair is 1.0
 
         constexpr float kEditorStatusX = 5.0f;

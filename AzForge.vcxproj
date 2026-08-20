@@ -60,6 +60,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>bcrypt.lib;windowscodecs.lib;ole32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -79,6 +80,7 @@
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
+      <AdditionalDependencies>bcrypt.lib;windowscodecs.lib;ole32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <!-- So an address out of a crash report can be turned back into a function. -->
@@ -104,6 +106,7 @@
     <ClInclude Include="sdk\include\ObjectsMenuApi.h" />
     <ClInclude Include="sdk\include\RenderApi.h" />
     <ClInclude Include="sdk\include\WorldApi.h" />
+    <ClInclude Include="sdk\include\SpriteFontApi.h" />
     <ClInclude Include="sdk\include\InteropApi.h" />
     <ClInclude Include="sdk\include\HudApi.h" />
     <ClInclude Include="sdk\include\InventoryApi.h" />
@@ -115,6 +118,7 @@
     <ClInclude Include="src\Api\ObjectsMenuApi.h" />
     <ClInclude Include="src\Api\Placement.h" />
     <ClInclude Include="src\Api\RenderApi.h" />
+    <ClInclude Include="src\Api\SpriteFontApi.h" />
     <ClInclude Include="src\Api\ApiProperty.h" />
     <ClInclude Include="src\Api\ApiRead.h" />
     <ClInclude Include="src\Api\BonusesApi.h" />
@@ -155,8 +159,11 @@
     <ClInclude Include="src\Core\ForgeCrash.h" />
     <ClInclude Include="src\Core\ForgeLog.h" />
     <ClInclude Include="src\Core\ForgePaths.h" />
+    <ClInclude Include="src\Core\ForgeSeal.h" />
     <ClInclude Include="src\Core\ForgeSubsystems.h" />
     <ClInclude Include="src\Mods\ModScan.h" />
+    <ClInclude Include="src\Mods\ModStore.h" />
+    <ClInclude Include="src\Mods\ModUndo.h" />
     <ClInclude Include="src\Mods\ModLoadScreen.h" />
     <ClInclude Include="src\Mods\ModState.h" />
     <ClInclude Include="src\Core\ForgeText.h" />
@@ -201,6 +208,7 @@
     <ClCompile Include="src\Core\ForgeCrash.cpp" />
     <ClCompile Include="src\Core\ForgeLog.cpp" />
     <ClCompile Include="src\Core\ForgePaths.cpp" />
+    <ClCompile Include="src\Core\ForgeSeal.cpp" />
     <ClCompile Include="src\Core\ForgeSubsystems.cpp" />
     <ClCompile Include="src\Core\ForgeText.cpp" />
     <ClCompile Include="src\Game\GameFunctions.cpp" />
@@ -235,6 +243,7 @@
     <ClCompile Include="src\Api\CtrlsApi.cpp" />
     <ClCompile Include="src\Api\PlayerApi.cpp" />
     <ClCompile Include="src\Api\SoundApi.cpp" />
+    <ClCompile Include="src\Api\SpriteFontApi.cpp" />
     <ClCompile Include="src\Api\TextureApi.cpp" />
     <ClCompile Include="src\Api\InventoryApi.cpp" />
     <ClCompile Include="src\Api\WorldApi.cpp" />
@@ -245,6 +254,7 @@
     <ClCompile Include="src\Api\DemoApi.cpp" />
     <ClCompile Include="src\Api\ModOwnership.cpp" />
     <ClCompile Include="src\Mods\ModFileSystem.cpp" />
+    <ClCompile Include="src\Mods\ModStore.cpp" />
     <ClCompile Include="src\Mods\ModHost.cpp" />
     <ClCompile Include="src\Mods\ModScan.cpp" />
     <ClCompile Include="src\Mods\ModLoadScreen.cpp" />

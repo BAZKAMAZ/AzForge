@@ -29,6 +29,7 @@
 #include "InputApi.h"
 #include "LevelEditorApi.h"
 #include "DemoApi.h"
+#include "SpriteFontApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -127,9 +128,12 @@ typedef struct AmodApi
     /* The scripts a level plays itself with: read them, change them, or drive one. */
     const AmodDemoApi* demo;
 
+    /* The sprite fonts the game draws every line of text with, and fonts of the mod's own. */
+    const AmodSpriteFontApi* spriteFont;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, demo, 0x98);
+AMOD_LAST_FIELD(AmodApi, spriteFont, 0x9C);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -190,6 +194,7 @@ namespace Amod
         Input::Attach(api->input, api->self);
         LevelEditor::Attach(api->levelEditor, api->self);
         Demo::Attach(api->demo, api->self);
+        SpriteFont::Attach(api->spriteFont, api->self);
         return true;
     }
 

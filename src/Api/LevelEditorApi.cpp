@@ -2988,7 +2988,7 @@ namespace Forge
         g_fclose = reinterpret_cast<GameFcloseRoutine>(GameModule::Resolve(GameAddress::kGameFclose));
         g_fprintf = reinterpret_cast<GameFprintfRoutine>(GameModule::Resolve(GameAddress::kGameFprintf));
         g_drawGrid = reinterpret_cast<DrawGridRoutine>(GameModule::Resolve(GameAddress::kRoomEditDrawGrid));
-        g_editorText = reinterpret_cast<EditorTextRoutine>(GameModule::Resolve(GameAddress::kEditorTextDraw));
+        g_editorText = reinterpret_cast<EditorTextRoutine>(GameModule::Resolve(GameAddress::kFontDrawText));
         g_brushCurrent = reinterpret_cast<CollectorPickRoutine>(GameModule::Resolve(GameAddress::kBrushCurrent));
         g_groupCurrent = reinterpret_cast<CollectorPickRoutine>(GameModule::Resolve(GameAddress::kBrushGroupCurrentName));
 

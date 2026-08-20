@@ -2516,6 +2516,29 @@ namespace Forge
             }
         }
 
+        typedef int(__cdecl* IsPausedRoutine)();
+        typedef void(__cdecl* SetPausedRoutine)(int paused);
+
+        int __cdecl ApiIsPaused(AmodMod mod)
+        {
+            const IsPausedRoutine paused = reinterpret_cast<IsPausedRoutine>(GameModule::Resolve(GameAddress::kGameIsPaused));
+
+            return (Resolve(mod) != nullptr && paused != nullptr && (paused() & 0xFF) != 0) ? 1 : 0;
+        }
+
+        int __cdecl ApiSetPaused(AmodMod mod, int paused)
+        {
+            const SetPausedRoutine set = reinterpret_cast<SetPausedRoutine>(GameModule::Resolve(GameAddress::kGameSetPaused));
+
+            if (Resolve(mod) == nullptr || set == nullptr)
+            {
+                return 0;
+            }
+
+            set(paused != 0 ? 1 : 0);
+            return 1;
+        }
+
         // All three hooks must succeed or the interface is not offered.
         bool InstallHook(InlineHook& hook, GameSymbol symbol, void* detour,
             const uint8_t* prologue, size_t prologueLength, const char* name)
@@ -2584,6 +2607,8 @@ namespace Forge
         g_table.AddEventHandler = &ApiAddEventHandler;
         g_table.RemoveEventHandler = &ApiRemoveEventHandler;
         g_table.Cancel = &ApiRemoveEventHandler;
+        g_table.IsPaused = &ApiIsPaused;
+        g_table.SetPaused = &ApiSetPaused;
         g_table.GetEntityCount = &ApiGetEntityCount;
         g_table.GetEntity = &ApiGetEntity;
         g_table.GetRoomCellRecord = &ApiGetRoomCellRecord;

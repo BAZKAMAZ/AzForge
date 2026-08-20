@@ -56,9 +56,12 @@ typedef struct AmodConfigApi
     /* Write the file now rather than waiting for the game to do it on the way out. A null path means the one the game itself uses. */
     int(__cdecl* Save)(AmodMod mod, const char* path);
 
+    /* Keeps the value between runs in the mod's own store; removed values revert when the mod goes. */
+    int(__cdecl* Keep)(AmodMod mod, const char* name, int keep, int protect);
+
 } AmodConfigApi;
 
-AMOD_LAST_FIELD(AmodConfigApi, Save, 0x28);
+AMOD_LAST_FIELD(AmodConfigApi, Keep, 0x2C);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -106,24 +109,38 @@ namespace Amod
             return g_config != nullptr ? g_config->GetNumber(g_configSelf, name, fallback) : fallback;
         }
 
-        inline bool                                                 Set(const char* name, const char* value)
+        inline bool                                                 Keep(const char* name, bool keep = true, bool protect = false)
         {
-            return g_config != nullptr && g_config->SetText(g_configSelf, name, value) != 0;
+            return g_config != nullptr && g_config->structSize >= sizeof(AmodConfigApi) &&
+                   g_config->Keep(g_configSelf, name, keep ? 1 : 0, protect ? 1 : 0) != 0;
         }
 
-        inline bool                                                 Set(const char* name, float value)
+        inline bool                                                 Set(const char* name, const char* value, bool save = false, bool protect = false)
         {
-            return g_config != nullptr && g_config->SetNumber(g_configSelf, name, value) != 0;
+            if (g_config == nullptr || g_config->SetText(g_configSelf, name, value) == 0)
+            {
+                return false;
+            }
+            return !save || Keep(name, true, protect);
         }
 
-        inline bool                                                 Set(const char* name, int value)
+        inline bool                                                 Set(const char* name, float value, bool save = false, bool protect = false)
         {
-            return Set(name, static_cast<float>(value));
+            if (g_config == nullptr || g_config->SetNumber(g_configSelf, name, static_cast<float>(value)) == 0)
+            {
+                return false;
+            }
+            return !save || Keep(name, true, protect);
         }
 
-        inline bool                                                 Set(const char* name, bool value)
+        inline bool                                                 Set(const char* name, int value, bool save = false, bool protect = false)
         {
-            return Set(name, value ? 1.0f : 0.0f);
+            return Set(name, static_cast<float>(value), save, protect);
+        }
+
+        inline bool                                                 Set(const char* name, bool value, bool save = false, bool protect = false)
+        {
+            return Set(name, value ? 1.0f : 0.0f, save, protect);
         }
 
         inline bool                                                 Add(const char* name, const char* value, uint32_t flags = AMOD_CONFIG_SAVED)

@@ -22,6 +22,7 @@
 #include "src/Api/InputApi.h"
 #include "src/Api/LevelEditorApi.h"
 #include "src/Api/DemoApi.h"
+#include "src/Api/SpriteFontApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
@@ -45,6 +46,7 @@
 #include "src/Mods/ModHost.h"
 #include "src/Mods/ModLoadScreen.h"
 #include "src/Mods/ModScan.h"
+#include "src/Mods/ModStore.h"
 #include "src/Mods/ModState.h"
 
 namespace Forge
@@ -191,6 +193,9 @@ namespace Forge
         Install("objects_menu", &ObjectsMenuApi::Install);
         Install("box_menu", &BoxMenuApi::Install);
         Install("frame", &FrameApi::Install);
+
+        FrameApi::AddInternalTick(&ModStore::Tick, true);
+
         Install("console", &ConsoleApi::Install);
         Install("render", &RenderApi::Install);
         Install("world", &WorldApi::Install);
@@ -213,6 +218,7 @@ namespace Forge
         Install("input", &InputApi::Install);
         Install("level_editor", &LevelEditorApi::Install);
         Install("demo", &DemoApi::Install);
+        Install("sprite_font", &SpriteFontApi::Install);
 
         ModManagerApi::Install();
         Subsystems::Record("block_expression", true);
@@ -260,6 +266,7 @@ namespace Forge
         InputApi::Uninstall();
         LevelEditorApi::Uninstall();
         DemoApi::Uninstall();
+        SpriteFontApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
         ModState::Clear();

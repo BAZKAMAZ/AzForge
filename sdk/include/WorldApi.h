@@ -435,13 +435,16 @@ typedef struct AmodWorldApi
     /* Bytes this room takes in a save, things and line together. */
     int(__cdecl* GetRoomSavedSize)(AmodMod mod, int roomIndex);
 
-    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
-       spelling of the same call, kept for mods already built against it. */
+    /* Handler tokens; Remove* is a legacy alias. */
     void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
+
+    /* Gets or sets the game's pause state. */
+    int(__cdecl* IsPaused)(AmodMod mod);
+    int(__cdecl* SetPaused)(AmodMod mod, int paused);
 
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, Cancel, 0xFC);
+AMOD_LAST_FIELD(AmodWorldApi, SetPaused, 0x104);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -880,6 +883,18 @@ namespace Amod
             {
                 g_world->Cancel(g_self, token);
             }
+        }
+
+        inline bool                                                 IsPaused()
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                   g_world->IsPaused(g_self) != 0;
+        }
+
+        inline bool                                                 SetPaused(bool paused)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                   g_world->SetPaused(g_self, paused ? 1 : 0) != 0;
         }
 
         inline int                                                  EntityCount(int roomIndex)

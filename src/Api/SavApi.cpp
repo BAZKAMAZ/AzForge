@@ -4,6 +4,8 @@
 #include "src/Api/ApiRead.h"
 #include "src/Api/WorldApi.h"
 #include "src/Api/ModContext.h"
+#include "src/Mods/ModStore.h"
+#include "src/Mods/ModUndo.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Core/ForgePaths.h"
 #include "src/Game/GameAddresses.h"
@@ -164,6 +166,123 @@ namespace Forge
             return (list != nullptr && index >= 0 && index < OpenCount(packs)) ? IdAt(list, index) : "";
         }
 
+        struct PackWas
+        {
+            ModContext* owner;
+            std::string level;
+            bool wasOpen;
+        };
+
+        std::vector<PackWas> g_touchedPacks;
+
+        bool g_undoingPacks = false;
+
+        typedef void(__fastcall* PacksWriteRoutine)(void* packs, void* unused, const char* path);
+
+        InlineHook g_packsHook;
+        PacksWriteRoutine g_originalPacksWrite = nullptr;
+
+        bool IsKept(ModContext* owner, const char* level)
+        {
+            for (const StoreRecord& kept : ModStore::Records(owner, "packs"))
+            {
+                if (kept.key == level)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        void RememberPack(ModContext* owner, const char* levelId)
+        {
+            if (g_undoingPacks || owner == nullptr || levelId == nullptr || levelId[0] == '\0')
+            {
+                return;
+            }
+
+            for (const PackWas& held : g_touchedPacks)
+            {
+                if (held.owner == owner && held.level == levelId)
+                {
+                    return;
+                }
+            }
+
+            g_touchedPacks.push_back(PackWas{ owner, levelId, IndexOf(Packs(), levelId) >= 0 });
+        }
+
+        int __cdecl ApiOpen(AmodMod mod, const char* levelId);
+        int __cdecl ApiClose(AmodMod mod, const char* levelId);
+
+        void __fastcall PacksWriteDetour(void* packs, void* unused, const char* path)
+        {
+            std::vector<PackWas> standing;
+
+            const UndoGuard undoing(g_undoingPacks);
+
+            for (const PackWas& held : g_touchedPacks)
+            {
+                const bool openNow = IndexOf(Packs(), held.level.c_str()) >= 0;
+
+                standing.push_back(PackWas{ held.owner, held.level, openNow });
+
+                if (openNow != held.wasOpen)
+                {
+                    AmodMod const mod = static_cast<AmodMod>(held.owner);
+
+                    if (held.wasOpen)
+                    {
+                        ApiOpen(mod, held.level.c_str());
+                    }
+                    else
+                    {
+                        ApiClose(mod, held.level.c_str());
+                    }
+                }
+            }
+
+            g_originalPacksWrite(packs, unused, path);
+
+            for (auto it = standing.rbegin(); it != standing.rend(); ++it)
+            {
+                AmodMod const mod = static_cast<AmodMod>(it->owner);
+
+                if (it->wasOpen)
+                {
+                    ApiOpen(mod, it->level.c_str());
+                }
+                else
+                {
+                    ApiClose(mod, it->level.c_str());
+                }
+            }
+        }
+
+        int __cdecl ApiKeep(AmodMod mod, const char* levelId, int keep, int protect)
+        {
+            ModContext* const context = Caller(mod);
+
+            if (context == nullptr || levelId == nullptr || levelId[0] == 0)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Keep wants a level id");
+            }
+
+            if (keep == 0)
+            {
+                ModStore::Remove(context, "packs", levelId);
+                return 1;
+            }
+
+            StoreRecord record;
+            record.kind = "packs";
+            record.key = levelId;
+            record.values.push_back(IndexOf(Packs(), levelId) >= 0 ? "open" : "closed");
+            ModStore::Put(context, record);
+            ModStore::Protect(context, "packs", levelId, protect != 0);
+            return 1;
+        }
+
         int __cdecl ApiIsOpen(AmodMod mod, const char* levelId)
         {
             return (Caller(mod) != nullptr && IndexOf(Packs(), levelId) >= 0) ? 1 : 0;
@@ -178,6 +297,8 @@ namespace Forge
             {
                 return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Open wants a level id");
             }
+
+            RememberPack(Caller(mod), levelId);
 
             // Opening lifts the block, or the detour would refuse the very call made here
             ApiBlock(mod, levelId, 0);
@@ -234,6 +355,7 @@ namespace Forge
             const int at = packs != nullptr ? IndexOf(packs, levelId) : -1;
             uint8_t* const list = OpenList(packs);
 
+            RememberPack(Caller(mod), levelId);
             ApiBlock(mod, levelId, 1);
 
             if (at < 0 || list == nullptr)
@@ -265,8 +387,6 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no open level %d", index);
             }
 
-            // Blocked as well, or the CASTLES screen puts it straight back - it reopens everything
-            // its $enabled_castles list names, every time it is built
             ApiBlock(mod, IdAt(list, index), 1);
 
             for (int at = index; at + 1 < count; ++at)
@@ -1336,6 +1456,27 @@ namespace Forge
         g_table.SetSlotRoomThing = &ApiSetSlotRoomThing;
         g_table.GetSlotRoomMemory = &ApiGetSlotRoomMemory;
         g_table.SetSlotRoomMemory = &ApiSetSlotRoomMemory;
+        {
+            std::string error;
+            std::string mismatch;
+            void* const write = GameModule::Resolve(GameAddress::kGamePacksWrite);
+
+            if (write != nullptr &&
+                GameModule::VerifyBytes(write, kGamePacksWritePrologue,
+                    sizeof(kGamePacksWritePrologue), mismatch) &&
+                g_packsHook.Install(write, reinterpret_cast<void*>(&PacksWriteDetour),
+                    kGamePacksWritePrologue, sizeof(kGamePacksWritePrologue), error))
+            {
+                g_originalPacksWrite = reinterpret_cast<PacksWriteRoutine>(g_packsHook.Trampoline());
+            }
+            else
+            {
+                FORGE_LOG_WARN("GamePacks_Write is not hooked, so a level a mod opened is saved "
+                    "into packs.sav as the player's own");
+            }
+        }
+
+        g_table.Keep = &ApiKeep;
 
         void* const target = GameModule::Resolve(GameAddress::kGamePacksOpenLevel);
         std::string error;
@@ -1405,10 +1546,64 @@ namespace Forge
         g_table = AmodSavApi{};
     }
 
+    // What the mod kept from its last run, put back before it starts.
+    void SavApi::ReplayStore(ModContext* owner)
+    {
+        AmodMod const mod = static_cast<AmodMod>(owner);
+
+        for (const StoreRecord& kept : ModStore::Records(owner, "packs"))
+        {
+            if (kept.values.empty())
+            {
+                continue;
+            }
+
+            if (kept.values[0] == "open")
+            {
+                ApiOpen(mod, kept.key.c_str());
+            }
+            else
+            {
+                ApiClose(mod, kept.key.c_str());
+            }
+        }
+    }
+
     void SavApi::ForgetMod(ModContext* owner)
     {
-        // A level a mod opened stays open - that is the player's progress. A block does not: it is
-        // the mod's own refusal, and it goes when the mod does.
+        AmodMod const mod = static_cast<AmodMod>(owner);
+
+        const std::vector<PackWas> mine = TakeOwned(g_touchedPacks, [owner](const PackWas& held) 
+            { return held.owner == owner; });
+
+        const UndoGuard undoing(g_undoingPacks);
+
+        for (const PackWas& held : mine)
+        {
+            if (IsKept(owner, held.level.c_str()))
+            {
+                StoreRecord record;
+                record.kind = "packs";
+                record.key = held.level;
+                record.values.push_back(IndexOf(Packs(), held.level.c_str()) >= 0 ? "open" : "closed");
+                ModStore::Put(owner, record);
+            }
+
+            const bool openNow = IndexOf(Packs(), held.level.c_str()) >= 0;
+            if (openNow != held.wasOpen)
+            {
+                if (held.wasOpen)
+                {
+                    ApiOpen(mod, held.level.c_str());
+                }
+                else
+                {
+                    ApiClose(mod, held.level.c_str());
+                }
+            }
+        }
+
+        // A block is the mod's own refusal, and it goes when the mod does.
         for (auto it = g_blocked.begin(); it != g_blocked.end();)
         {
             it = it->owner == owner ? g_blocked.erase(it) : ++it;

@@ -351,6 +351,18 @@
     <ClInclude Include="sdk\include\DemoApi.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="src\Mods\ModStore.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Core\ForgeSeal.h">
+      <Filter>Core</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\SpriteFontApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\SpriteFontApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -529,6 +541,15 @@
       <Filter>Game</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\DemoApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Mods\ModStore.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Core\ForgeSeal.cpp">
+      <Filter>Core</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\SpriteFontApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

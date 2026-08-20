@@ -102,9 +102,12 @@ typedef struct AmodSavApi
     int(__cdecl* GetSlotRoomMemory)(AmodMod mod, int slot, int roomIndex, AmodRoomMemory* out);
     int(__cdecl* SetSlotRoomMemory)(AmodMod mod, int slot, int roomIndex, const AmodRoomMemory* memory);
 
+    /* Keeps the level state between runs in the mod's own store. */
+    int(__cdecl* Keep)(AmodMod mod, const char* levelId, int keep, int protect);
+
 } AmodSavApi;
 
-AMOD_LAST_FIELD(AmodSavApi, SetSlotRoomMemory, 0x84);
+AMOD_LAST_FIELD(AmodSavApi, Keep, 0x88);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -145,14 +148,31 @@ namespace Amod
             return g_sav != nullptr && g_sav->IsOpen(g_savSelf, levelId) != 0;
         }
 
-        inline int                                                  Open(const char* levelId)
+        inline bool                                                 Keep(const char* levelId, bool keep = true, bool protect = false)
         {
-            return g_sav != nullptr ? g_sav->Open(g_savSelf, levelId) : -1;
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) &&
+                   g_sav->Keep(g_savSelf, levelId, keep ? 1 : 0, protect ? 1 : 0) != 0;
         }
 
-        inline bool                                                 Close(const char* levelId)
+        // `save` keeps what the call just did, so a mod never has to reach for Keep itself.
+        inline int                                                  Open(const char* levelId, bool save = false, bool protect = false)
         {
-            return g_sav != nullptr && g_sav->Close(g_savSelf, levelId) != 0;
+            const int at = g_sav != nullptr ? g_sav->Open(g_savSelf, levelId) : -1;
+
+            if (at < 0)
+            {
+                return at;
+            }
+            return (!save || Keep(levelId, true, protect)) ? at : -1;
+        }
+
+        inline bool                                                 Close(const char* levelId, bool save = false, bool protect = false)
+        {
+            if (g_sav == nullptr || g_sav->Close(g_savSelf, levelId) == 0)
+            {
+                return false;
+            }
+            return !save || Keep(levelId, true, protect);
         }
 
         inline bool                                                 Block(const char* levelId, bool blocked = true)

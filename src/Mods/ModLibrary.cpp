@@ -16,12 +16,15 @@
 #include "src/Api/SavApi.h"
 #include "src/Api/LevelEditorApi.h"
 #include "src/Api/DemoApi.h"
+#include "src/Api/InputApi.h"
+#include "src/Mods/ModStore.h"
 #include "src/Api/CtrlsApi.h"
 #include "src/Api/HudApi.h"
 #include "src/Api/MonstersApi.h"
 #include "src/Api/MmdApi.h"
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
+#include "src/Api/SpriteFontApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/WorldApi.h"
@@ -238,6 +241,12 @@ namespace Forge
             FORGE_LOG_INFO("[%s] declares '%s'", m_context.id.c_str(), capability.c_str());
         }
 
+        ModStore::Load(&m_context, m_context.id);
+        ConfigApi::ReplayStore(&m_context);
+        InputApi::ReplayStore(&m_context);
+        DatApi::ReplayStore(&m_context);
+        SavApi::ReplayStore(&m_context);
+
         const int result = init(&m_context.table);
         if (result != AMOD_OK)
         {
@@ -270,6 +279,7 @@ namespace Forge
         HudApi::ForgetMod(&m_context);
         MonstersApi::ForgetMod(&m_context);
         MmdApi::ForgetMod(&m_context);
+        SpriteFontApi::ForgetMod(&m_context);
         TextureApi::ForgetMod(&m_context);
         SoundApi::ForgetMod(&m_context);
         PlayerApi::ForgetMod(&m_context);
@@ -281,6 +291,10 @@ namespace Forge
         SavApi::ForgetMod(&m_context);
         LevelEditorApi::ForgetMod(&m_context);
         DemoApi::ForgetMod(&m_context);
+        InputApi::ForgetMod(&m_context);
+
+        ModStore::Save(&m_context);
+        ModStore::Drop(&m_context);
 
         // Detours last — they point into the DLL about to go.
         InteropApi::ForgetMod(&m_context);

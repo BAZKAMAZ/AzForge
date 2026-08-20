@@ -23,5 +23,6 @@ render
 sav
 scores
 sound
+sprite_font
 textures
 world

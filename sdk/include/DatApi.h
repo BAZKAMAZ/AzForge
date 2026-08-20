@@ -59,9 +59,12 @@ typedef struct AmodDatApi
     /* Drop one; the rest of its castle closes up. */
     int(__cdecl* Remove)(AmodMod mod, int index);
 
+    /* Keeps the score between runs in the mod's own store; removed entries revert when the mod goes. */
+    int(__cdecl* Keep)(AmodMod mod, int index, int keep, int protect);
+
 } AmodDatApi;
 
-AMOD_LAST_FIELD(AmodDatApi, Remove, 0x34);
+AMOD_LAST_FIELD(AmodDatApi, Keep, 0x38);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -99,15 +102,32 @@ namespace Amod
             return g_dat != nullptr && g_dat->Get(g_datSelf, index, &out) != 0;
         }
 
-        inline bool                                                 Set(int index, const char* name, float time, int score)
+        inline bool                                                 Keep(int index, bool keep = true, bool protect = false)
         {
-            return g_dat != nullptr && g_dat->Set(g_datSelf, index, name, time, score) != 0;
+            return g_dat != nullptr && g_dat->structSize >= sizeof(AmodDatApi) &&
+                   g_dat->Keep(g_datSelf, index, keep ? 1 : 0, protect ? 1 : 0) != 0;
+        }
+
+        // `save` keeps what the call just did, so a mod never has to reach for Keep itself.
+        inline bool                                                 Set(int index, const char* name, float time, int score, bool save = false, bool protect = false)
+        {
+            if (g_dat == nullptr || g_dat->Set(g_datSelf, index, name, time, score) == 0)
+            {
+                return false;
+            }
+            return !save || Keep(index, true, protect);
         }
 
         inline int                                                  Add(const char* level, const char* name,
-            float time, int score)
+            float time, int score, bool save = false, bool protect = false)
         {
-            return g_dat != nullptr ? g_dat->Add(g_datSelf, level, name, time, score) : -1;
+            const int at = g_dat != nullptr ? g_dat->Add(g_datSelf, level, name, time, score) : -1;
+
+            if (at < 0)
+            {
+                return at;
+            }
+            return (!save || Keep(at, true, protect)) ? at : -1;
         }
 
         inline int                                                  CastleCount()

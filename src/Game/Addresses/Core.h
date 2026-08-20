@@ -137,6 +137,38 @@ namespace Forge
         constexpr uintptr_t kInputSwallowingOffset = 0x3AD1;
         constexpr uintptr_t kInputAnyPressedOffset = 0x3AD2;
 
+        // One record per key and eight joystick records.
+        constexpr uintptr_t kInputKeyRecordsOffset = 0x004;
+        constexpr size_t kInputKeyRecordStride = 0x38;
+        constexpr size_t kInputKeyRecordCount = 0x100;
+        constexpr uintptr_t kInputJoyRecordsOffset = 0x3908;
+        constexpr size_t kInputJoyRecordCount = 8; // joy_left/right/down/up, joy1..joy4
+        constexpr uintptr_t kInputJoyStateOffset = 0x3AC8;
+        constexpr uintptr_t kInputJoyCapturedOffset = 0x3AD0; // joySetCapture
+
+        constexpr uintptr_t kKeyNameOffset = 0x00;
+        constexpr uintptr_t kKeyBindKindOffset = 0x24; // 0 none, 1 cvar, 2 command
+        constexpr uintptr_t kKeyBindTargetOffset = 0x28;
+        constexpr uintptr_t kKeyCvarHeldOffset = 0x2C;
+        constexpr uintptr_t kKeyParamCountOffset = 0x2C;
+        constexpr uintptr_t kKeyParamsOffset = 0x30;
+        constexpr uintptr_t kKeyCommandHeldOffset = 0x34;
+
+        constexpr int kKeyBindNone = 0;
+        constexpr int kKeyBindCvar = 1;
+        constexpr int kKeyBindCommand = 2;
+
+        constexpr uintptr_t kInputFindKey = 0x00426DC0; // __thiscall (input, name) -> record
+        constexpr uintptr_t kInputUnbindKey = 0x00426D00; // __stdcall (record), frees parameters
+        constexpr uintptr_t kInputBindCvar = 0x00427580; // __stdcall (record, cvar, held), RET 0xC
+        constexpr uintptr_t kInputBindCommand = 0x004274C0; // __stdcall (record, command, argc, argv, held), RET 0x14
+        // Input_Update polls GetAsyncKeyState each frame; this slot lets a mod inject key presses.
+        constexpr uintptr_t kGetAsyncKeyStateSlot = 0x004C7228;
+        constexpr uintptr_t kInputUpdate = 0x004271A0; // __fastcall (input)
+
+        constexpr uintptr_t kGameIsPaused = 0x00426750; // __cdecl () -> bool
+        constexpr uintptr_t kGameSetPaused = 0x00426760; // __cdecl (bool)
+
         // Both RET 8 → __stdcall
         constexpr uintptr_t kInputGetCursor = 0x00426940; // (float* x, float* y)
         constexpr uintptr_t kInputSetCursor = 0x004268B0; // (float x, float y)
