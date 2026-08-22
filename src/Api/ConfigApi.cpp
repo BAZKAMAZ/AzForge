@@ -90,6 +90,19 @@ namespace Forge
             g_written.push_back(CvarWas{ owner, name, TextOf(cvar) });
         }
 
+        bool Written(ModContext* owner, const char* name)
+        {
+            for (const CvarWas& held : g_written)
+            {
+                if (held.owner == owner && held.name == name)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         void PutBack(const CvarWas& held)
         {
             uint8_t* const cvar = Find(held.name.c_str());
@@ -124,11 +137,10 @@ namespace Forge
             g_whileWriting.clear();
         }
 
-        // What a mod keeps lives beside the mod, so Azangara.cfg stays the player's own.
         int __cdecl ApiKeep(AmodMod mod, const char* name, int keep, int protect)
         {
             ModContext* const context = Caller(mod);
-            const uint8_t* const cvar = context != nullptr ? Find(name) : nullptr;
+            uint8_t* const cvar = context != nullptr ? Find(name) : nullptr;
 
             if (context == nullptr || cvar == nullptr)
             {
@@ -139,6 +151,24 @@ namespace Forge
             {
                 ModStore::Remove(context, "config", name);
                 return 1;
+            }
+
+            const SetStringRoutine put = Routine<SetStringRoutine>(GameAddress::kCvarSetString);
+
+            if (!Written(context, name) && put != nullptr)
+            {
+                for (const StoreRecord& kept : ModStore::Records(context, "config"))
+                {
+                    if (kept.key != name || kept.values.empty())
+                    {
+                        continue;
+                    }
+
+                    Remember(context, name, cvar);
+                    put(cvar, nullptr, kept.values[0].c_str());
+                    ModStore::Protect(context, "config", name, protect != 0);
+                    return 1;
+                }
             }
 
             StoreRecord record;
@@ -233,7 +263,8 @@ namespace Forge
 
         int __cdecl ApiAdd(AmodMod mod, const char* name, const char* value, uint32_t flags)
         {
-            uint8_t* const config = Caller(mod) != nullptr ? Config() : nullptr;
+            ModContext* const context = Caller(mod);
+            uint8_t* const config = context != nullptr ? Config() : nullptr;
             const RegisterCvarRoutine add = Routine<RegisterCvarRoutine>(GameAddress::kConfigRegisterCvar);
 
             if (config == nullptr || add == nullptr || name == nullptr || name[0] == '\0')
@@ -241,7 +272,18 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Add wants a name");
             }
 
-            return add(config, nullptr, name, value != nullptr ? value : "", flags) != nullptr ? 1 : 0;
+            std::string start = value != nullptr ? value : "";
+
+            for (const StoreRecord& kept : ModStore::Records(context, "config"))
+            {
+                if (kept.key == name && !kept.values.empty())
+                {
+                    start = kept.values[0];
+                    break;
+                }
+            }
+
+            return add(config, nullptr, name, start.c_str(), flags) != nullptr ? 1 : 0;
         }
 
         int __cdecl ApiCount(AmodMod mod)

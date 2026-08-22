@@ -58,31 +58,6 @@ namespace Forge
         return true;
     }
 
-    bool ModRegistry::AddPrivileged(const std::filesystem::path& archivePath)
-    {
-        std::error_code status;
-        if (!std::filesystem::is_regular_file(archivePath, status))
-        {
-            return false;
-        }
-
-        // Read the same way as any other mod, then marked
-        std::vector<ModRecord> records;
-        LoadArchive(archivePath, records);
-        if (records.empty())
-        {
-            return false;
-        }
-
-        records.front().privileged = true;
-
-        // First in the order, because whatever manages the others should be there before
-        m_loadOrder.insert(m_loadOrder.begin(), std::move(records.front()));
-
-        FORGE_LOG_INFO("'%s' loaded from beside the loader and is the mod manager", m_loadOrder.front().manifest.id.c_str());
-        return true;
-    }
-
     void ModRegistry::Clear()
     {
         m_loadOrder.clear();

@@ -24,11 +24,31 @@ namespace Forge
         constexpr uintptr_t kDialogRunModal = 0x00424520;
         constexpr uintptr_t kLauncherHideOptionalButtons = 0x0040C3B0;
         constexpr uintptr_t kLauncherDialogTemplate = 101;
-
+        // Launcher dialog and frame.
+        constexpr uintptr_t kLauncherRun = 0x00408BA0; // __cdecl () -> bool
         constexpr uintptr_t kGameFrameTick = 0x00425000; // __cdecl (void)
-        constexpr uintptr_t kFrameDelta = 0x0067A5F8; // float
 
-        // Render_Present: __thiscall (manager), vtable +0x44; device @ +0x0C, lost @ +0x20, viewport @ +0xA8
+        // Game_Init order and state slots.
+        constexpr uintptr_t kGameInit = 0x00424D80; // __cdecl () -> bool
+        constexpr uintptr_t kAppInitTables = 0x0041D360; // state vtable +0x00
+        constexpr uintptr_t kMainLoadDataPak = 0x0041D390; // state vtable +0x04
+
+        // Engine initialization used by MainLoadDataPak.
+        constexpr uintptr_t kMusicInit = 0x00402B70; // __cdecl () -> bool
+        constexpr uintptr_t kRenderInitGui = 0x004085B0; // __fastcall (scene) -> bool
+        constexpr uintptr_t kAppStateInitSlot = 0x00;
+        constexpr uintptr_t kAppStateLoadSlot = 0x04;
+
+        // Game frame state.
+        constexpr uintptr_t kGameStateCurrent = 0x0041D7B0; // __cdecl () -> singleton
+        constexpr uintptr_t kAppState = 0x005177B0;
+        constexpr uintptr_t kAppStateVtable = 0x004CBBAC;
+        constexpr uintptr_t kAppRenderFrame = 0x0041D440; // __cdecl (), world draw
+        constexpr uintptr_t kAppStateRenderSlot = 0x0C;
+        constexpr uintptr_t kAppStateUpdateSlot = 0x10;
+        constexpr uintptr_t kAppStateShellSlot = 0x20;
+        constexpr uintptr_t kAppShellFrame = 0x0041D540; // LevelEditor_FrameGate
+        constexpr uintptr_t kFrameDelta = 0x0067A5F8; // float
 
         // g_pfnDrawStyledText __cdecl (font, text, 0, centre[2], scale[2], colour[4], align, 0)
         constexpr uintptr_t kDrawStyledTextPtr = 0x00691308;
@@ -166,14 +186,20 @@ namespace Forge
         constexpr uintptr_t kGetAsyncKeyStateSlot = 0x004C7228;
         constexpr uintptr_t kInputUpdate = 0x004271A0; // __fastcall (input)
 
+        // Console open flag.
+        constexpr uintptr_t kInputConsoleOpenOffset = 0x8124;
+
         constexpr uintptr_t kGameIsPaused = 0x00426750; // __cdecl () -> bool
         constexpr uintptr_t kGameSetPaused = 0x00426760; // __cdecl (bool)
 
-        // Both RET 8 → __stdcall
+        // Cursor functions, __stdcall.
         constexpr uintptr_t kInputGetCursor = 0x00426940; // (float* x, float* y)
         constexpr uintptr_t kInputSetCursor = 0x004268B0; // (float x, float y)
 
         constexpr uintptr_t kGameWindow = 0x0067CB9C; // HWND*
+
+        // Shows or hides the system cursor.
+        constexpr uintptr_t kInputShowCursor = 0x00426870; // __thiscall (input, show)
 
         constexpr uintptr_t kParserFindKey = 0x00421560;
         constexpr uintptr_t kParserReadFloat4 = 0x00421740;

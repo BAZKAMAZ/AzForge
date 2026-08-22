@@ -397,6 +397,26 @@ namespace Forge
         }
     }
 
+    InlineHook g_runHook;
+    int(__cdecl* g_originalRun)() = nullptr;
+    bool g_skipLauncher = false;
+
+    int __cdecl RunDetour()
+    {
+        return g_skipLauncher ? 1 : g_originalRun();
+    }
+
+    int __cdecl ApiSkip(AmodMod mod, int skip)
+    {
+        if (Resolve(mod) == nullptr || g_originalRun == nullptr)
+        {
+            return 0;
+        }
+
+        g_skipLauncher = skip != 0;
+        return 1;
+    }
+
     bool LauncherApi::Install()
     {
         if (g_initHook.IsInstalled())
@@ -441,6 +461,23 @@ namespace Forge
         g_table.SetBounds = &ApiSetBounds;
         g_table.SetLogo = &ApiSetLogo;
         g_table.GetWindow = &ApiGetWindow;
+        g_table.Skip = &ApiSkip;
+
+        void* const run = GameModule::Resolve(GameAddress::kLauncherRun);
+        std::string runMismatch;
+        std::string runError;
+
+        if (run != nullptr &&
+            GameModule::VerifyBytes(run, kLauncherRunPrologue, sizeof(kLauncherRunPrologue), runMismatch) &&
+            g_runHook.Install(run, reinterpret_cast<void*>(&RunDetour), kLauncherRunPrologue,
+                              sizeof(kLauncherRunPrologue), runError))
+        {
+            g_originalRun = reinterpret_cast<int(__cdecl*)()>(g_runHook.Trampoline());
+        }
+        else
+        {
+            FORGE_LOG_WARN("The launcher's own run was not taken, so a mod cannot skip it");
+        }
 
         FORGE_LOG_INFO("Launcher interface installed");
         return true;
@@ -449,6 +486,9 @@ namespace Forge
     void LauncherApi::Uninstall()
     {
         g_initHook.Uninstall();
+        g_runHook.Uninstall();
+        g_originalRun = nullptr;
+        g_skipLauncher = false;
         g_commandHook.Uninstall();
         g_modalHook.Uninstall();
         g_hideHook.Uninstall();

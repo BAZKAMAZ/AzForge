@@ -15,15 +15,12 @@ namespace Forge
         ModManifest manifest;
         std::filesystem::path archivePath;
         std::unique_ptr<ZipArchive> archive;
-
-        bool privileged = false;
     };
 
     class ModRegistry
     {
     public:
         bool                                                        Scan(const std::filesystem::path& modsDirectory);
-        bool                                                        AddPrivileged(const std::filesystem::path& archivePath);
 
         void                                                        Clear();
 

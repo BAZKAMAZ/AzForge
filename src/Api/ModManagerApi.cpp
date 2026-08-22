@@ -242,12 +242,6 @@ namespace Forge
                 return 0;
             }
 
-            if (record->privileged)
-            {
-                FORGE_LOG_WARN("The mod manager cannot be switched off from its own screen");
-                return 0;
-            }
-
             return ModState::SetEnabled(record->manifest.id, enabled != 0) ? 1 : 0;
         }
 
@@ -291,6 +285,45 @@ namespace Forge
     bool ModManagerApi::Install()
     {
         FrameApi::AddInternalTick(&ApplyPending);
+        return true;
+    }
+
+    int ModManagerApi::Find(const char* id)
+    {
+        const std::vector<ModRecord>& records = Records();
+
+        for (size_t at = 0; id != nullptr && at < records.size(); ++at)
+        {
+            if (records[at].manifest.id == id)
+            {
+                return static_cast<int>(at);
+            }
+        }
+
+        return -1;
+    }
+
+    bool ModManagerApi::SetEnabled(int index, bool enabled, std::string& error)
+    {
+        const ModRecord* const record = At(index);
+
+        if (record == nullptr)
+        {
+            error = "there is no mod there";
+            return false;
+        }
+
+        if (!ModState::SetEnabled(record->manifest.id, enabled))
+        {
+            error = enabled ? "it is on already" : "it is off already";
+            return false;
+        }
+
+        if (record->manifest.entry.empty() || !record->manifest.Declares("launcher"))
+        {
+            g_pending.push_back(index);
+        }
+
         return true;
     }
 

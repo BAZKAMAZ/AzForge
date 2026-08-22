@@ -103,9 +103,12 @@ typedef struct AmodInputApi
     int(__cdecl* PressKey)(AmodMod mod, int key);
     int(__cdecl* HoldKey)(AmodMod mod, int key, int down, int exclusive);
     int(__cdecl* IsKeyForced)(AmodMod mod, int key);
+
+    /* Windows cursor. */
+    int(__cdecl* ShowSystemCursor)(AmodMod mod, int show);
 } AmodInputApi;
 
-AMOD_LAST_FIELD(AmodInputApi, IsKeyForced, 0x50);
+AMOD_LAST_FIELD(AmodInputApi, ShowSystemCursor, 0x54);
 
 #ifdef __cplusplus
 }
@@ -263,6 +266,13 @@ namespace Amod
         {
             return g_input != nullptr && g_input->structSize >= sizeof(AmodInputApi) &&
                    g_input->HoldKey(g_self, key, down ? 1 : 0, exclusive ? 1 : 0) != 0;
+        }
+
+        /* 1 shown, 0 hidden, -1 the game's own again. */
+        inline bool                                                 ShowSystemCursor(int show)
+        {
+            return g_input != nullptr && g_input->structSize >= sizeof(AmodInputApi) &&
+                   g_input->ShowSystemCursor(g_self, show) != 0;
         }
 
         inline bool                                                 IsForced(int key)

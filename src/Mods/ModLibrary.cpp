@@ -25,6 +25,8 @@
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
 #include "src/Api/SpriteFontApi.h"
+#include "src/Api/AzmApi.h"
+#include "src/Api/StageApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/WorldApi.h"
@@ -233,7 +235,6 @@ namespace Forge
         m_context.id = record.manifest.id;
         m_context.version = record.manifest.version;
         m_context.capabilities = record.manifest.capabilities;
-        m_context.privileged = record.privileged;
         BuildApiTable(m_context);
 
         for (const std::string& capability : m_context.capabilities)
@@ -279,6 +280,8 @@ namespace Forge
         HudApi::ForgetMod(&m_context);
         MonstersApi::ForgetMod(&m_context);
         MmdApi::ForgetMod(&m_context);
+        StageApi::ForgetMod(&m_context);
+        AzmApi::ForgetMod(&m_context);
         SpriteFontApi::ForgetMod(&m_context);
         TextureApi::ForgetMod(&m_context);
         SoundApi::ForgetMod(&m_context);

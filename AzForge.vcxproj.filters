@@ -159,6 +159,9 @@
     <ClInclude Include="src\Mods\ModScan.h">
       <Filter>Mods</Filter>
     </ClInclude>
+    <ClInclude Include="src\Mods\ModScreen.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
     <ClInclude Include="src\Mods\ModLoadScreen.h">
       <Filter>Mods</Filter>
     </ClInclude>
@@ -363,6 +366,24 @@
     <ClInclude Include="src\Api\SpriteFontApi.h">
       <Filter>Api</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\StageApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\StageApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Mods\ModUndo.h">
+      <Filter>Mods</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\AzmApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\AzmFile.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="sdk\include\AzmApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -471,6 +492,9 @@
     <ClCompile Include="src\Mods\ModScan.cpp">
       <Filter>Mods</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mods\ModScreen.cpp">
+      <Filter>Mods</Filter>
+    </ClCompile>
     <ClCompile Include="src\Mods\ModLoadScreen.cpp">
       <Filter>Mods</Filter>
     </ClCompile>
@@ -550,6 +574,12 @@
       <Filter>Core</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\SpriteFontApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\StageApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\AzmApi.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

@@ -78,6 +78,12 @@ namespace Forge
     // Game_FrameTick: SUB ESP,0x50 / PUSH ESI / PUSH EDI → 5
     constexpr uint8_t kGameFrameTickPrologue[] = { 0x83, 0xEC, 0x50, 0x56, 0x57 };
 
+    // Input_ShowCursor: PUSH EBX / MOV BL,[ESP+8] / PUSH ESI → 6
+    constexpr uint8_t kInputShowCursorPrologue[] = { 0x53, 0x8A, 0x5C, 0x24, 0x08, 0x56 };
+
+    // Launcher_Run: PUSH -1 / PUSH 0x4C5518 → 7
+    constexpr uint8_t kLauncherRunPrologue[] = { 0x6A, 0xFF, 0x68, 0x18, 0x55, 0x4C, 0x00 };
+
     // EventText_Render: SUB ESP,0x6C / PUSH ESI / MOV ESI,ECX → 6
     constexpr uint8_t kEventTextRenderPrologue[] = { 0x83, 0xEC, 0x6C, 0x56, 0x8B, 0xF1 };
 

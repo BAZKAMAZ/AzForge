@@ -41,7 +41,25 @@ typedef void (__cdecl* AmodDeviceCallback)(AmodDeviceEvent event, void* device, 
 /* Menu font from GetFont; null = default system font. */
 typedef void* AmodFont;
 
-/* 2D layout space is always 640x480 (not window pixels). GetViewport for real pixels. */
+/* One quad of a batch: a rectangle in menu space, turned about its own middle, showing the part
+   of the texture between its uv corners. colour multiplies; 0xFFFFFFFF leaves it as it is. */
+typedef struct AmodQuad
+{
+    float x;
+    float y;
+    float w;
+    float h;
+    float angle;        /* radians, clockwise; 0 stands upright */
+    float u0;
+    float v0;
+    float u1;
+    float v1;
+    uint32_t colour;
+} AmodQuad;
+
+/* 2D layout space is always 640x480 (not window pixels), x from the left and y DOWN from the top.
+   Sprites, rects and text all speak it. GetViewport for real pixels; the Detail:: primitives
+   further down draw in those pixels instead, counted the same way. */
 #define AMOD_MENU_WIDE                                              640.0f
 #define AMOD_MENU_TALL                                              480.0f
 
@@ -95,13 +113,22 @@ typedef struct AmodRenderApi
     /* Drops any token this subsystem handed out. */
     void (__cdecl* Cancel)(AmodMod mod, AmodToken token);
 
-    /* Counts device incarnations: a resource made under an older one is dead even when the new
-       device landed on the same address. */
-    uint32_t (__cdecl* DeviceGeneration)(AmodMod mod);
+    /* Counts device generations; old resources are invalid after recreation. */
+    uint32_t(__cdecl* DeviceGeneration)(AmodMod mod);
+
+    /* Draws a texture region by UV coordinates. */
+    void(__cdecl* DrawSpritePart)(AmodMod mod, AmodTextureId texture, float x, float y, float w,
+        float h, float u0, float v0, float u1, float v1, uint32_t color);
+
+    /* Returns the game's window handle. */
+    void* (__cdecl* GetWindow)(AmodMod mod);
+
+    /* Draws multiple quads from one texture in one call. */
+    int(__cdecl* DrawQuads)(AmodMod mod, AmodTextureId texture, const AmodQuad* quads, int count);
 
 } AmodRenderApi;
 
-AMOD_LAST_FIELD(AmodRenderApi, DeviceGeneration, 0x4C);
+AMOD_LAST_FIELD(AmodRenderApi, DrawQuads, 0x58);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -129,6 +156,14 @@ namespace Amod
         inline bool                                                 IsAvailable()
         {
             return g_render != nullptr;
+        }
+
+        inline void*                                                Window()
+        {
+            return (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) &&
+                    g_render->GetWindow != nullptr)
+                       ? g_render->GetWindow(g_self)
+                       : nullptr;
         }
 
         inline IDirect3DDevice8*                                    Device()
@@ -305,6 +340,27 @@ namespace Amod
             {
                 g_render->DrawSprite(g_self, texture, x, y, w, h, static_cast<uint32_t>(color));
             }
+        }
+
+        /* One frame off a sheet: the uv corners are fractions of the whole texture. */
+        inline void                                                 SpritePart(AmodTextureId texture, float x, float y, float w, float h, float u0, float v0, 
+            float u1, float v1, unsigned long color = 0xFFFFFFFF)
+        {
+            if (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) &&
+                g_render->DrawSpritePart != nullptr)
+            {
+                g_render->DrawSpritePart(g_self, texture, x, y, w, h, u0, v0, u1, v1,
+                    static_cast<uint32_t>(color));
+            }
+        }
+
+        /* Every quad in one call. Returns how many were drawn. */
+        inline int                                                  Quads(AmodTextureId texture, const AmodQuad* quads, int count)
+        {
+            return (g_render != nullptr && g_render->structSize >= sizeof(AmodRenderApi) &&
+                    g_render->DrawQuads != nullptr)
+                       ? g_render->DrawQuads(g_self, texture, quads, count)
+                       : 0;
         }
 
         inline void                                                 Rect(float x, float y, float w, float h, unsigned long color)

@@ -25,6 +25,25 @@ namespace Forge
         {
             return sizeof(kModFilesPrefix) - 1;
         }
+
+        std::string IconEntryName(const ModRecord& record)
+        {
+            return ToLowerAscii(NormalizeSlashes(
+                record.manifest.icon.empty() ? "icon.bmp" : record.manifest.icon));
+        }
+    }
+
+    std::string ModFileSystem::IconResource(const ModRecord& record)
+    {
+        const std::string name = IconEntryName(record);
+        const size_t dot = name.find_last_of('.');
+
+        if (record.archive == nullptr || record.archive->Find(name) == nullptr)
+        {
+            return std::string();
+        }
+
+        return "forge/icons/" + record.manifest.id + (dot == std::string::npos ? std::string() : name.substr(dot));
     }
 
     void ModFileSystem::Build(const std::vector<ModRecord>& loadOrder)
@@ -35,7 +54,24 @@ namespace Forge
 
         for (const ModRecord& record : loadOrder)
         {
-            if (record.archive == nullptr || !ModState::IsEnabled(record.manifest.id))
+            if (record.archive == nullptr)
+            {
+                continue;
+            }
+
+            const std::string icon = IconResource(record);
+
+            if (!icon.empty())
+            {
+                Provider provider;
+                provider.modId = record.manifest.id;
+                provider.archive = record.archive.get();
+                provider.entry = record.archive->Find(IconEntryName(record));
+
+                g_index[icon] = provider;
+            }
+
+            if (!ModState::IsEnabled(record.manifest.id))
             {
                 continue;
             }

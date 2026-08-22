@@ -277,8 +277,32 @@ namespace Forge
         return g_table.structSize != 0 ? &g_table : nullptr;
     }
 
+    void ConsoleApi::AddInternalCommand(const char* name, AmodConsoleCommand handler, void* user)
+    {
+        if (name == nullptr || name[0] == '\0' || handler == nullptr)
+        {
+            return;
+        }
+
+        g_commands[name] = Command{ nullptr, handler, user };
+        EnsureGameRegistered(name); // or later, on a frame, if the console is not up yet
+    }
+
+    void ConsoleApi::Print(const char* text)
+    {
+        if (g_write != nullptr && text != nullptr)
+        {
+            g_write(0, "%s\n", text);
+        }
+    }
+
     void ConsoleApi::ForgetMod(ModContext* owner)
     {
+        if (owner == nullptr)
+        {
+            return;
+        }
+
         for (auto it = g_commands.begin(); it != g_commands.end();)
         {
             if (it->second.owner != owner)

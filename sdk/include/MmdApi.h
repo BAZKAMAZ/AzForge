@@ -105,9 +105,19 @@ typedef struct AmodModelDraw
     float frame; /* animation position; 0 draws the model still */
     int blend; /* AMOD_DRAW_BLEND_*; anything but NONE is what makes vertex alpha count */
 
+    /* Multiplies everything the model is drawn in, 0xAARRGGBB, for this draw only. 0 and
+       0xFFFFFFFF both mean "as it is".
+
+       This is what a colour belongs in. A model's own colours live in its vertex buffer, so
+       painting them is painting every copy of that model at once - twenty cars sharing one mesh
+       cannot be twenty colours that way, and the alternative is twenty meshes. A tint costs one
+       render state, applies to this draw alone, and leaves the baked shading underneath it
+       intact: it is multiplied over the top rather than replacing anything. */
+    uint32_t tint;
+
 } AmodModelDraw;
 
-AMOD_LAST_FIELD(AmodModelDraw, blend, 0x7C);
+AMOD_LAST_FIELD(AmodModelDraw, tint, 0x80);
 
 /* An animation as long as it is loaded, checked the way a model is. */
 typedef uint32_t AmodAnimationId;
@@ -215,14 +225,47 @@ AMOD_LAST_FIELD(AmodModelDrawInfo, position, 0x5C);
 
 typedef void(__cdecl* AmodModelDrawHandler)(const AmodModelDrawInfo* info, void* user);
 
+/* A real light, of the kind the device works out for itself.
+
+   The engine ships with lighting switched off - Scene_DrawModels calls SetRenderState(LIGHTING,
+   false) before it draws anything, and the vertex diffuse is forced white - which is why every
+   mod so far has had to bake its shading in. But the vertex format is XYZ|NORMAL|DIFFUSE|TEX1:
+   the NORMALS ARE THERE, in every vertex, and nothing but that one call stands between a mod and
+   the fixed-function lighting the hardware has always done.
+
+   Two things to know before using them:
+
+     THE DEVICE COUNTS EIGHT AT ONCE, sometimes fewer. LightRoom says how many. A city has
+     hundreds, so what is handed over each frame is the handful that matter here.
+
+     IT IS WORKED OUT PER VERTEX, not per pixel. A road quad with four corners sixteen metres
+     apart cannot show a pool of light in its middle - there is no vertex there to light. Any
+     surface meant to be lit has to be a mesh, not a slab. */
+typedef struct AmodLight
+{
+    uint32_t structSize;
+
+    float position[3];
+    uint32_t colour;        /* 0xAARRGGBB */
+    float brightness;       /* colour multiplier */
+    float range;            /* light range */
+
+    /* Directional light; position and range are ignored. */
+    int fromEverywhere;
+    float direction[3];     /* light direction */
+
+} AmodLight;
+
+AMOD_LAST_FIELD(AmodLight, direction, 0x20);
+
 /* Model index range with its own texture. */
 typedef struct AmodModelMaterial
 {
     uint32_t structSize;
 
-    int firstIndex;         /* where in the index buffer this one starts */
-    int primitiveCount;     /* triangles, not indices */
-    uint32_t texture;       /* from ResolveTexture */
+    int firstIndex;         /* first index */
+    int primitiveCount;     /* primitive count */
+    uint32_t texture;       /* ResolveTexture result */
 
 } AmodModelMaterial;
 
@@ -232,151 +275,122 @@ typedef struct AmodMmdApi
 {
     uint32_t structSize;
 
-    /* what the game has in memory */
-
+    /* Game models. */
     int(__cdecl* GetCount)(AmodMod mod);
     AmodModelId(__cdecl* GetAt)(AmodMod mod, int index);
     AmodModelId(__cdecl* Find)(AmodMod mod, const char* name);
     int(__cdecl* Get)(AmodMod mod, AmodModelId model, AmodModel* out);
     int(__cdecl* IsValid)(AmodMod mod, AmodModelId model);
 
-    /* getting hold of one */
-
-    /* Through the game's own door: a model already loaded is shared rather than read again. */
+    /* Loading models. */
     AmodModelId(__cdecl* Load)(AmodMod mod, const char* path);
-
-    /* Gives back what Load took */
     int(__cdecl* Release)(AmodMod mod, AmodModelId model);
 
-    /* the triangles */
-
-    /* Fills up to max and returns how many there are, whether they fitted or not */
+    /* Model geometry. */
     int(__cdecl* ReadVertices)(AmodMod mod, AmodModelId model, int frame, AmodVertex* out, int max);
     int(__cdecl* ReadIndices)(AmodMod mod, AmodModelId model, int frame, uint16_t* out, int max);
-
-    /* Writes them back and rebuilds what is drawn */
     int(__cdecl* WriteVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertex* vertices, int count);
     int(__cdecl* WriteIndices)(AmodMod mod, AmodModelId model, int frame, const uint16_t* indices, int count);
-
-    /* Builds one out of vertices */
     AmodModelId(__cdecl* Create)(AmodMod mod, const char* name, const AmodMeshData* mesh);
-
-    /* Swaps the geometry of a model whole, counts and all. Snapshotted like a write. */
     int(__cdecl* Replace)(AmodMod mod, AmodModelId model, const AmodMeshData* mesh);
-
-    /* Puts back what the model was before this mod first wrote to it. */
     int(__cdecl* Restore)(AmodMod mod, AmodModelId model);
-
-    /* Writes the model out as a .mmd the game itself can load */
     int(__cdecl* Save)(AmodMod mod, AmodModelId model, const char* path);
 
-    /* standing in for a file */
-
+    /* Model file overrides. */
     int(__cdecl* Override)(AmodMod mod, const char* path, AmodModelId model);
     int(__cdecl* ClearOverride)(AmodMod mod, const char* path);
 
-    /* putting one in the world */
-
-    /* The three models a room is drawn from, AMOD_ROOM_MODEL_* */
+    /* Room models. */
     AmodModelId(__cdecl* GetRoomModel)(AmodMod mod, int roomIndex, int slot);
     int(__cdecl* SetRoomModel)(AmodMod mod, int roomIndex, int slot, AmodModelId model);
 
-    /* drawing */
-
+    /* Drawing. */
     int(__cdecl* Draw)(AmodMod mod, AmodModelId model);
     int(__cdecl* DrawFrames)(AmodMod mod, AmodModelId model, int from, int to, float blend);
 
-    /* being asked */
-
+    /* Model properties. */
     int(__cdecl* GetProperty)(AmodMod mod, AmodModelId model, const char* key, AmodValue* value);
     int(__cdecl* SetProperty)(AmodMod mod, AmodModelId model, const char* key, const AmodValue* value);
     int(__cdecl* HasProperty)(AmodMod mod, const char* key);
     int(__cdecl* PropertyCount)(AmodMod mod);
     const char* (__cdecl* PropertyNameAt)(AmodMod mod, int index);
 
-    /* the frame's own draw list */
-
+    /* Frame draw queue. */
     int(__cdecl* Enqueue)(AmodMod mod, const AmodModelDraw* draw);
     int(__cdecl* QueueRoom)(AmodMod mod);
 
-    /* A texture by name, resolved once and remembered */
+    /* Resolves a texture by name. */
     uint32_t(__cdecl* ResolveTexture)(AmodMod mod, const char* name);
 
-    /* The camera the world is being drawn with, sixteen floats each */
+    /* Current camera matrices. */
     int(__cdecl* GetViewMatrix)(AmodMod mod, float* out);
     int(__cdecl* GetProjectionMatrix)(AmodMod mod, float* out);
 
-    /* animations */
-
+    /* Animations. */
     int(__cdecl* GetAnimationCount)(AmodMod mod);
     AmodAnimationId(__cdecl* GetAnimationAt)(AmodMod mod, int index);
     AmodAnimationId(__cdecl* FindAnimation)(AmodMod mod, const char* name);
     int(__cdecl* GetAnimation)(AmodMod mod, AmodAnimationId animation, AmodAnimation* out);
     int(__cdecl* GetFrameset)(AmodMod mod, AmodAnimationId animation, int index, AmodFrameset* out);
-
     AmodAnimationId(__cdecl* LoadAnimation)(AmodMod mod, const char* path);
     int(__cdecl* ReleaseAnimation)(AmodMod mod, AmodAnimationId animation);
-
-    /* Every request for that .anm is answered with this animation instead. */
     int(__cdecl* OverrideAnimation)(AmodMod mod, const char* path, AmodAnimationId animation);
     int(__cdecl* ClearAnimationOverride)(AmodMod mod, const char* path);
 
-    /* moving what a model is made of */
-
-    /* One vertex, without a buffer for the whole model */
+    /* Vertex operations. */
     int(__cdecl* GetVertex)(AmodMod mod, AmodModelId model, int frame, int index, AmodVertex* out);
-
-    /* Which vertices the filter picks. Fills up to max and returns how many there are. */
     int(__cdecl* SelectVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertexFilter* filter, uint16_t* out, int max);
     int(__cdecl* TransformVertices)(AmodMod mod, AmodModelId model, int frame, const AmodVertexFilter* filter, const float* matrix);
 
-    /* colour without a texture */
-
-    /* One colour per vertex, 0xAARRGGBB, as many as the model has */
+    /* Vertex colours. */
     int(__cdecl* SetColours)(AmodMod mod, AmodModelId model, const uint32_t* colours, int count);
     int(__cdecl* ClearColours)(AmodMod mod, AmodModelId model);
 
-    /* what an entity is playing */
-
+    /* Entity animation. */
     int(__cdecl* GetEntityAnim)(AmodMod mod, int roomIndex, int index, AmodAnimState* out);
-
-    /* Starts a frameset of whatever animation that entity already has. */
     int(__cdecl* PlayEntityAnim)(AmodMod mod, int roomIndex, int index, const char* frameset);
     int(__cdecl* StopEntityAnim)(AmodMod mod, int roomIndex, int index);
 
-    /* hanging one model off another */
-
+    /* Model draw handlers. */
     AmodToken(__cdecl* AddDrawHandler)(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user);
     void(__cdecl* RemoveDrawHandler)(AmodMod mod, AmodToken token);
-
-    /* Only meaningful inside such a handler */
     int(__cdecl* DrawWith)(AmodMod mod, AmodModelId model, uint32_t texture, const float* matrix);
 
     int(__cdecl* GetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, AmodBox* out);
     int(__cdecl* SetAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frame, const AmodBox* box);
-
-    // Room for how many frames, which is the highest $frame it was given plus one.
     int(__cdecl* GetAnimBoxFrames)(AmodMod mod, AmodAnimationId animation, int which);
-
     int(__cdecl* EnsureAnimBox)(AmodMod mod, AmodAnimationId animation, int which, int frames);
 
     AmodToken(__cdecl* AddPreDrawHandler)(AmodMod mod, AmodModelId model, AmodModelDrawHandler handler, void* user);
-
     int(__cdecl* RebuildNormals)(AmodMod mod, AmodModelId model, int frame);
 
-    /* Every handler this subsystem hands a token for. The Remove* entry above it is the older
-       spelling of the same call, kept for mods already built against it. */
+    /* Handler tokens; Remove* is a legacy alias. */
     void(__cdecl* Cancel)(AmodMod mod, AmodToken token);
 
-    /* Model materials define indexed stretches and their textures. */
+    /* Model materials. */
     int(__cdecl* AddMaterial)(AmodMod mod, AmodModelId model, int firstIndex, int primitiveCount, uint32_t texture);
     int(__cdecl* MaterialCount)(AmodMod mod, AmodModelId model);
     int(__cdecl* GetMaterial)(AmodMod mod, AmodModelId model, int index, AmodModelMaterial* out);
     int(__cdecl* ClearMaterials)(AmodMod mod, AmodModelId model);
 
+    /* Draws a list without queue limits. */
+    int(__cdecl* DrawMany)(AmodMod mod, const AmodModelDraw* draws, int count);
+
+    /* Global draw tint. */
+    void(__cdecl* SetWorldTint)(AmodMod mod, uint32_t colour);
+    uint32_t(__cdecl* WorldTint)(AmodMod mod);
+
+    /* Dynamic lights. */
+    int(__cdecl* LightRoom)(AmodMod mod);
+    int(__cdecl* SetLight)(AmodMod mod, int index, const AmodLight* light);
+
+    /* Ambient light colour. */
+    void(__cdecl* SetAmbient)(AmodMod mod, uint32_t colour);
+    uint32_t(__cdecl* Ambient)(AmodMod mod);
+
 } AmodMmdApi;
 
-AMOD_LAST_FIELD(AmodMmdApi, ClearMaterials, 0xF8);
+AMOD_LAST_FIELD(AmodMmdApi, Ambient, 0x114);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -904,6 +918,65 @@ namespace Amod
         {
             return g_mmd != nullptr && g_mmd->DrawWith != nullptr &&
                 g_mmd->DrawWith(g_mmdSelf, model, texture, matrix.m) != 0;
+        }
+
+        inline void                                                 SetWorldTint(uint32_t colour)
+        {
+            if (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+            {
+                g_mmd->SetWorldTint(g_mmdSelf, colour);
+            }
+        }
+
+        inline int                                                  LightRoom()
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+                ? g_mmd->LightRoom(g_mmdSelf)
+                : 0;
+        }
+
+        inline bool                                                 SetLight(int index, const AmodLight& light)
+        {
+            AmodLight one = light;
+            one.structSize = sizeof(one);
+
+            return g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi) &&
+                   g_mmd->SetLight(g_mmdSelf, index, &one) != 0;
+        }
+
+        inline bool                                                 ClearLight(int index)
+        {
+            return g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi) &&
+                   g_mmd->SetLight(g_mmdSelf, index, nullptr) != 0;
+        }
+
+        inline void                                                 SetAmbient(uint32_t colour)
+        {
+            if (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+            {
+                g_mmd->SetAmbient(g_mmdSelf, colour);
+            }
+        }
+
+        inline uint32_t                                             Ambient()
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+                ? g_mmd->Ambient(g_mmdSelf)
+                : 0xFF000000u;
+        }
+
+        inline uint32_t                                             WorldTint()
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi))
+                ? g_mmd->WorldTint(g_mmdSelf)
+                : 0xFFFFFFFFu;
+        }
+
+        inline int                                                  DrawMany(const AmodModelDraw* draws, int count)
+        {
+            return (g_mmd != nullptr && g_mmd->structSize >= sizeof(AmodMmdApi) && g_mmd->DrawMany != nullptr)
+                ? g_mmd->DrawMany(g_mmdSelf, draws, count)
+                : 0;
         }
 
         class Property

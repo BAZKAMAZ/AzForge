@@ -61,6 +61,21 @@
     </ClCompile>
   </ItemDefinitionGroup>
 
+  <!-- Anything but Debug is what gets shipped, so it is built to be shipped: optimised, folded,
+       and without the unreferenced parts. A mod project that wants otherwise says so itself -
+       these are defaults, and the project is read after this file. -->
+  <ItemDefinitionGroup Condition="'$(Configuration)' != 'Debug'">
+    <ClCompile>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+    </ClCompile>
+    <Link>
+      <OptimizeReferences>true</OptimizeReferences>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+    </Link>
+  </ItemDefinitionGroup>
+
   <!-- F5 runs the game, and the breakpoints bind as soon as it loads the mod -->
   <PropertyGroup Condition="'$(AzForgeGameDir)' != ''">
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>

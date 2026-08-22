@@ -15,6 +15,7 @@
 #include "src/Game/GameSymbols.h"
 #include "src/Hook/InlineHook.h"
 
+#include <algorithm>
 #include <ctype.h>
 #include <filesystem>
 #include <fstream>
@@ -810,6 +811,120 @@ namespace Forge
             entry.animation = animation;
             g_animations.push_back(entry);
             return entry.id;
+        }
+
+        // out = a * b, the game's own order and layout: row vectors, translation in 12, 13, 14.
+        void MultiplyMatrix(const float* a, const float* b, float* out)
+        {
+            for (int row = 0; row < 4; ++row)
+            {
+                for (int column = 0; column < 4; ++column)
+                {
+                    float sum = 0.0f;
+
+                    for (int at = 0; at < 4; ++at)
+                    {
+                        sum += a[row * 4 + at] * b[at * 4 + column];
+                    }
+
+                    out[row * 4 + column] = sum;
+                }
+            }
+        }
+
+        // Matrix_RotationX/Y/Z 0x00407aa0/0x004079a0/0x00407a20, read out of the game.
+        void RotationMatrix(int axis, float angle, float* out)
+        {
+            const float turn = cosf(angle);
+            const float lean = sinf(angle);
+
+            memset(out, 0, sizeof(float) * 16);
+            out[15] = 1.0f;
+
+            if (axis == 0)
+            {
+                out[0] = 1.0f;
+                out[5] = turn;
+                out[6] = lean;
+                out[9] = -lean;
+                out[10] = turn;
+            }
+            else if (axis == 1)
+            {
+                out[5] = 1.0f;
+                out[0] = turn;
+                out[2] = lean;
+                out[8] = -lean;
+                out[10] = turn;
+            }
+            else
+            {
+                out[10] = 1.0f;
+                out[0] = turn;
+                out[1] = lean;
+                out[4] = -lean;
+                out[5] = turn;
+            }
+        }
+
+        // Matrix_AxisAngle 0x00407b20; the axis is expected unit length, as the game expects it.
+        void AxisAngleMatrix(const float* axis, float angle, float* out)
+        {
+            const float turn = cosf(angle);
+            const float lean = sinf(angle);
+            const float rest = 1.0f - turn;
+
+            memset(out, 0, sizeof(float) * 16);
+            out[15] = 1.0f;
+
+            out[0] = turn * (1.0f - axis[0] * axis[0]) + axis[0] * axis[0];
+            out[1] = axis[1] * axis[0] * rest + lean * axis[2];
+            out[2] = axis[2] * axis[0] * rest - axis[1] * lean;
+            out[4] = axis[1] * axis[0] * rest - axis[2] * lean;
+            out[5] = turn * (1.0f - axis[1] * axis[1]) + axis[1] * axis[1];
+            out[6] = axis[0] * lean + axis[2] * axis[1] * rest;
+            out[8] = axis[1] * lean + axis[2] * axis[0] * rest;
+            out[9] = axis[2] * axis[1] * rest - lean * axis[0];
+            out[10] = turn * (1.0f - axis[2] * axis[2]) + axis[2] * axis[2];
+        }
+
+        void WorldMatrixFor(const AmodModelDraw& draw, float* out)
+        {
+            if ((draw.flags & AMOD_DRAW_HAS_MATRIX) != 0)
+            {
+                memcpy(out, draw.matrix, sizeof(float) * 16);
+            }
+            else
+            {
+                memset(out, 0, sizeof(float) * 16);
+                out[0] = out[5] = out[10] = out[15] = 1.0f;
+                out[12] = draw.position[0];
+                out[13] = draw.position[1];
+                out[14] = draw.position[2];
+            }
+
+            float turn[16];
+            float product[16];
+
+            if ((draw.flags & AMOD_DRAW_TURNS_ABOUT_AXIS) != 0)
+            {
+                AxisAngleMatrix(draw.axis, draw.angle, turn);
+                MultiplyMatrix(turn, out, product);
+                memcpy(out, product, sizeof(product));
+                return;
+            }
+
+            const int order[3] = { 2, 1, 0 };
+
+            for (const int axis : order)
+            {
+                if (draw.rotation[axis] != 0.0f)
+                {
+                    RotationMatrix(axis, draw.rotation[axis], turn);
+                    MultiplyMatrix(turn, out, product);
+                    memcpy(out, product, sizeof(product));
+                }
+            }
         }
 
         uint8_t* AnimSubstituteFor(const char* path)
@@ -1840,22 +1955,18 @@ namespace Forge
                 ? draw->blend
                 : AMOD_DRAW_BLEND_NONE;
 
+            // Scene_DrawModels uses the previous item's matrix; placement and rotation are baked into this one.
             uint8_t* const item = queued.item;
-            item[GameAddress::kDrawItemFlagsOffset] = static_cast<uint8_t>(
-                ((draw->flags & AMOD_DRAW_HAS_MATRIX) != 0 ? GameAddress::kDrawItemHasMatrix : 0) | ((draw->flags & AMOD_DRAW_TURNS_ABOUT_AXIS) != 0
-                    ? GameAddress::kDrawItemTurnsAboutAxis
-                    : 0));
+            float world[16];
 
+            WorldMatrixFor(*draw, world);
+
+            item[GameAddress::kDrawItemFlagsOffset] = GameAddress::kDrawItemHasMatrix;
             WritePointer(item, GameAddress::kDrawItemModelOffset, tracked->model);
             WriteInt(item, GameAddress::kDrawItemTextureOffset, static_cast<int>(draw->texture));
 
             memcpy(item + GameAddress::kDrawItemPositionOffset, draw->position, sizeof(draw->position));
-            memcpy(item + GameAddress::kDrawItemMatrixOffset, draw->matrix, sizeof(draw->matrix));
-            memcpy(item + GameAddress::kDrawItemAngleXOffset, &draw->rotation[0], sizeof(float));
-            memcpy(item + GameAddress::kDrawItemAngleYOffset, &draw->rotation[1], sizeof(float));
-            memcpy(item + GameAddress::kDrawItemAngleZOffset, &draw->rotation[2], sizeof(float));
-            memcpy(item + GameAddress::kDrawItemAxisOffset, draw->axis, sizeof(draw->axis));
-            memcpy(item + GameAddress::kDrawItemAxisAngleOffset, &draw->angle, sizeof(float));
+            memcpy(item + GameAddress::kDrawItemMatrixOffset, world, sizeof(world));
             memcpy(item + GameAddress::kDrawItemFrameOffset, &draw->frame, sizeof(float));
 
             g_queued.push_back(queued);
@@ -3631,6 +3742,492 @@ namespace Forge
             return 1;
         }
 
+        typedef void(__thiscall* SetWorldRoutine)(void* device, const float* matrix);
+        typedef void(__thiscall* ApplyStatesRoutine)(void* device, void* states);
+        typedef void(__thiscall* SetLightingRoutine)(void* device, char lit);
+        typedef long(__stdcall* DeviceStateRoutine)(void* device, uint32_t state, uint32_t value);
+        typedef long(__stdcall* DeviceStageRoutine)(void* device, uint32_t stage, uint32_t state, uint32_t value);
+
+        uint32_t g_worldTint = 0xFFFFFFFFu;
+
+        struct Lamp
+        {
+            AmodLight light = {};
+            bool lit = false;
+        };
+
+        Lamp g_lamps[GameAddress::kLightsAtOnce];
+        uint32_t g_ambient = 0xFF000000u;
+        bool g_anyLight = false;
+
+        struct DeviceLight
+        {
+            uint32_t kind;
+            float diffuse[4];
+            float specular[4];
+            float ambient[4];
+            float position[3];
+            float direction[3];
+            float range;
+            float falloff;
+            float constantFade;
+            float linearFade;
+            float squareFade;
+            float theta;
+            float phi;
+        };
+
+        struct DeviceMaterial
+        {
+            float diffuse[4];
+            float ambient[4];
+            float specular[4];
+            float emissive[4];
+            float power;
+        };
+
+        void Unpack(uint32_t colour, float brightness, float* out)
+        {
+            out[0] = ((colour >> 16) & 0xFF) / 255.0f * brightness;
+            out[1] = ((colour >> 8) & 0xFF) / 255.0f * brightness;
+            out[2] = (colour & 0xFF) / 255.0f * brightness;
+            out[3] = 1.0f;
+        }
+
+        // Two colours multiplied channel by channel, which is what the device would do to them.
+        uint32_t Blended(uint32_t over, uint32_t under)
+        {
+            const bool plainOver = over == 0 || over == 0xFFFFFFFFu;
+            const bool plainUnder = under == 0 || under == 0xFFFFFFFFu;
+
+            if (plainOver)
+            {
+                return plainUnder ? 0xFFFFFFFFu : under;
+            }
+
+            if (plainUnder)
+            {
+                return over;
+            }
+
+            uint32_t out = 0;
+
+            for (int shift = 0; shift <= 24; shift += 8)
+            {
+                const uint32_t left = (over >> shift) & 0xFF;
+                const uint32_t right = (under >> shift) & 0xFF;
+                out |= ((left * right) / 255) << shift;
+            }
+            return out;
+        }
+
+        void* Direct3DDevice()
+        {
+            void** const slot = static_cast<void**>(GameModule::Resolve(GameAddress::kRenderManagerPtr));
+            void* const manager = slot != nullptr ? *slot : nullptr;
+
+            return manager != nullptr
+                ? *reinterpret_cast<void**>(static_cast<uint8_t*>(manager) + GameAddress::kRenderDeviceOffset)
+                : nullptr;
+        }
+
+        void TintDraw(uint32_t tint, bool textured)
+        {
+            void* const device = Direct3DDevice();
+
+            if (device == nullptr)
+            {
+                return;
+            }
+
+            void** const vtable = *static_cast<void***>(device);
+            const auto setState = reinterpret_cast<DeviceStateRoutine>(vtable[GameAddress::kDeviceSetRenderState / sizeof(void*)]);
+            const auto setStage = reinterpret_cast<DeviceStageRoutine>(vtable[GameAddress::kDeviceSetStageState / sizeof(void*)]);
+
+            if (setState == nullptr || setStage == nullptr)
+            {
+                return;
+            }
+
+            const bool plain = tint == 0 || tint == 0xFFFFFFFFu;
+
+            if (plain)
+            {
+                setStage(device, 0, GameAddress::kStageColourArg1, GameAddress::kArgTexture);
+                setStage(device, 1, GameAddress::kStageColourOp, GameAddress::kOpDisable);
+                setStage(device, 1, GameAddress::kStageAlphaOp, GameAddress::kOpDisable);
+                return;
+            }
+
+            setState(device, GameAddress::kStateTextureFactor, tint);
+
+            if (!textured)
+            {
+                setStage(device, 0, GameAddress::kStageColourArg1, GameAddress::kArgTextureFactor);
+                setStage(device, 1, GameAddress::kStageColourOp, GameAddress::kOpDisable);
+                return;
+            }
+
+            setStage(device, 0, GameAddress::kStageColourArg1, GameAddress::kArgTexture);
+            setStage(device, 1, GameAddress::kStageColourArg1, GameAddress::kArgCurrent);
+            setStage(device, 1, GameAddress::kStageColourArg2, GameAddress::kArgTextureFactor);
+            setStage(device, 1, GameAddress::kStageColourOp, GameAddress::kOpModulate);
+
+            setStage(device, 1, GameAddress::kStageAlphaArg1, GameAddress::kArgCurrent);
+            setStage(device, 1, GameAddress::kStageAlphaOp, GameAddress::kOpSelectArg1);
+        }
+
+        typedef void(__cdecl* RenderAnimatedRoutine)(uint8_t* model, int from, int to, float blend);
+        typedef long(__stdcall* DeviceLightRoutine)(void* device, uint32_t index, const void* light);
+        typedef long(__stdcall* DeviceLightEnableRoutine)(void* device, uint32_t index, int on);
+        typedef long(__stdcall* DeviceMaterialRoutine)(void* device, const void* material);
+
+        void ApplyLights(bool on)
+        {
+            void* const device = Direct3DDevice();
+
+            if (device == nullptr)
+            {
+                return;
+            }
+
+            void** const vtable = *static_cast<void***>(device);
+            const auto setState = reinterpret_cast<DeviceStateRoutine>(vtable[GameAddress::kDeviceSetRenderState / sizeof(void*)]);
+            const auto setLight = reinterpret_cast<DeviceLightRoutine>(vtable[GameAddress::kDeviceSetLight / sizeof(void*)]);
+            const auto enable = reinterpret_cast<DeviceLightEnableRoutine>(vtable[GameAddress::kDeviceLightEnable / sizeof(void*)]);
+            const auto setMaterial = reinterpret_cast<DeviceMaterialRoutine>(vtable[GameAddress::kDeviceSetMaterial / sizeof(void*)]);
+
+            if (!on)
+            {
+                for (int at = 0; at < GameAddress::kLightsAtOnce; ++at)
+                {
+                    enable(device, static_cast<uint32_t>(at), 0);
+                }
+
+                setState(device, GameAddress::kStateLighting, 0);
+                return;
+            }
+
+            DeviceMaterial material = {};
+
+            for (int at = 0; at < 4; ++at)
+            {
+                material.diffuse[at] = 1.0f;
+                material.ambient[at] = 0.30f;
+            }
+
+            setMaterial(device, &material);
+            setState(device, GameAddress::kStateColourVertex, 1);
+            setState(device, GameAddress::kStateDiffuseSource, GameAddress::kSourceVertexColour);
+            setState(device, GameAddress::kStateAmbientSource, GameAddress::kSourceVertexColour);
+
+            static bool told = false;
+
+            if (!told)
+            {
+                told = true;
+
+                typedef long(__stdcall* GetStateRoutine)(void* device, uint32_t state, uint32_t* value);
+                const auto getState = reinterpret_cast<GetStateRoutine>(vtable[GameAddress::kDeviceGetRenderState / sizeof(void*)]);
+
+                uint32_t vertexColour = 0;
+                uint32_t diffuse = 0;
+                uint32_t ambient = 0;
+
+                getState(device, GameAddress::kStateColourVertex, &vertexColour);
+                getState(device, GameAddress::kStateDiffuseSource, &diffuse);
+                getState(device, GameAddress::kStateAmbientSource, &ambient);
+
+                FORGE_LOG_INFO("light: colourvertex %u, diffuse source %u, ambient source %u, ambient %08X",
+                    vertexColour, diffuse, ambient, g_ambient);
+            }
+            setState(device, GameAddress::kStateSpecular, 0);
+            setState(device, GameAddress::kStateAmbient, g_ambient);
+            setState(device, GameAddress::kStateLighting, 1);
+
+            for (int at = 0; at < GameAddress::kLightsAtOnce; ++at)
+            {
+                if (!g_lamps[at].lit)
+                {
+                    enable(device, static_cast<uint32_t>(at), 0);
+                    continue;
+                }
+
+                const AmodLight& want = g_lamps[at].light;
+
+                const bool sun = want.structSize > offsetof(AmodLight, fromEverywhere) &&
+                                 want.fromEverywhere != 0;
+
+                DeviceLight light = {};
+                light.kind = sun ? GameAddress::kLightDirectional : GameAddress::kLightPoint;
+
+                Unpack(want.colour, want.brightness, light.diffuse);
+                memcpy(light.position, want.position, sizeof(light.position));
+
+                if (sun)
+                {
+                    memcpy(light.direction, want.direction, sizeof(light.direction));
+
+                    // A sun has no position and no falloff to speak of; it simply arrives.
+                    light.range = 100000.0f;
+                    light.falloff = 1.0f;
+                    light.constantFade = 1.0f;
+
+                    setLight(device, static_cast<uint32_t>(at), &light);
+                    enable(device, static_cast<uint32_t>(at), 1);
+                    continue;
+                }
+
+                light.range = want.range > 0.0f ? want.range : 1.0f;
+                light.falloff = 1.0f;
+
+                // Quadratic falloff with a little linear term to soften the source.
+                light.constantFade = 1.0f;
+                light.linearFade = 2.0f / light.range;
+                light.squareFade = 3.0f / (light.range * light.range);
+
+                setLight(device, static_cast<uint32_t>(at), &light);
+                enable(device, static_cast<uint32_t>(at), 1);
+            }
+        }
+
+        int __cdecl ApiLightRoom(AmodMod mod)
+        {
+            return Caller(mod) != nullptr ? GameAddress::kLightsAtOnce : 0;
+        }
+
+        int __cdecl ApiSetLight(AmodMod mod, int index, const AmodLight* light)
+        {
+            if (Caller(mod) == nullptr || index < 0 || index >= GameAddress::kLightsAtOnce)
+            {
+                return 0;
+            }
+
+            if (light == nullptr || light->structSize < sizeof(AmodLight))
+            {
+                g_lamps[index].lit = false;
+            }
+            else
+            {
+                g_lamps[index].light = *light;
+                g_lamps[index].lit = true;
+            }
+
+            g_anyLight = false;
+
+            for (const Lamp& lamp : g_lamps)
+            {
+                g_anyLight = g_anyLight || lamp.lit;
+            }
+            return 1;
+        }
+
+        void __cdecl ApiSetAmbient(AmodMod mod, uint32_t colour)
+        {
+            if (Caller(mod) != nullptr)
+            {
+                g_ambient = colour;
+            }
+        }
+
+        uint32_t __cdecl ApiAmbient(AmodMod mod)
+        {
+            return Caller(mod) != nullptr ? g_ambient : 0xFF000000u;
+        }
+
+        void __cdecl ApiSetWorldTint(AmodMod mod, uint32_t colour)
+        {
+            if (Caller(mod) != nullptr)
+            {
+                g_worldTint = colour;
+            }
+        }
+
+        uint32_t __cdecl ApiWorldTint(AmodMod mod)
+        {
+            return Caller(mod) != nullptr ? g_worldTint : 0xFFFFFFFFu;
+        }
+
+        int __cdecl ApiDrawMany(AmodMod mod, const AmodModelDraw* draws, int count)
+        {
+            void* const device = RenderDevice();
+            const RenderRoutine render = Routine<RenderRoutine>(GameAddress::kModelRender);
+            const RenderAnimatedRoutine animated = Routine<RenderAnimatedRoutine>(GameAddress::kModelRenderAnimated);
+
+            if (Caller(mod) == nullptr || draws == nullptr || count <= 0 || g_drawDepth == 0 ||
+                device == nullptr || render == nullptr || animated == nullptr)
+            {
+                return 0;
+            }
+
+            WatchTexture();
+
+            void** const vtable = *static_cast<void***>(device);
+            const auto setWorld = reinterpret_cast<SetWorldRoutine>(vtable[GameAddress::kRenderSetWorld / sizeof(void*)]);
+            const auto setTexture = reinterpret_cast<SetTextureRoutine>(vtable[kSetTextureSlot]);
+            const auto apply = reinterpret_cast<ApplyStatesRoutine>(vtable[GameAddress::kRenderApplyStates / sizeof(void*)]);
+            const auto setLighting = reinterpret_cast<SetLightingRoutine>(vtable[GameAddress::kRenderSetLighting / sizeof(void*)]);
+
+            // Scene_DrawModels clears lighting unless a mod enabled it, leaving the device to apply it normally.
+            setLighting(device, 0);
+            ApplyLights(g_anyLight);
+
+            std::vector<int> order;
+            order.reserve(static_cast<size_t>(count));
+
+            for (int at = 0; at < count; ++at)
+            {
+                if (draws[at].structSize >= sizeof(AmodModelDraw) && TrackedById(draws[at].model) != nullptr)
+                {
+                    order.push_back(at);
+                }
+            }
+
+            // Sorted by what costs a state change, not by what the mod happened to fill in.
+            std::stable_sort(order.begin(), order.end(), [draws](int a, int b)
+            {
+                if (draws[a].blend != draws[b].blend)
+                {
+                    return draws[a].blend < draws[b].blend;
+                }
+                return draws[a].texture != draws[b].texture
+                    ? draws[a].texture < draws[b].texture
+                    : draws[a].tint < draws[b].tint;
+            });
+
+            const uint8_t* const scene = Scene();
+            const bool watched = g_textureSeen;
+            const uint32_t was = g_currentTexture;
+
+            int blend = -1;
+            uint32_t bound = 0;
+            uint32_t tinted = 0xFFFFFFFFu;
+            bool everBound = false;
+            int drawn = 0;
+
+            for (const int at : order)
+            {
+                const AmodModelDraw& draw = draws[at];
+                const Tracked* const tracked = TrackedById(draw.model);
+                const int wanted = (draw.blend >= AMOD_DRAW_BLEND_NONE && draw.blend <= AMOD_DRAW_BLEND_MUL)
+                    ? draw.blend
+                    : AMOD_DRAW_BLEND_NONE;
+
+                if (tracked == nullptr)
+                {
+                    continue;
+                }
+
+                if (wanted != blend)
+                {
+                    void* const states = reinterpret_cast<void*>(StateFor(scene, wanted));
+
+                    if (states != nullptr)
+                    {
+                        apply(device, states);
+                    }
+
+                    if (g_anyLight)
+                    {
+                        ApplyLights(true);
+                    }
+
+                    void* const real = Direct3DDevice();
+
+                    if (real != nullptr)
+                    {
+                        void** const table = *static_cast<void***>(real);
+                        const auto setState = reinterpret_cast<DeviceStateRoutine>(table[GameAddress::kDeviceSetRenderState / sizeof(void*)]);
+
+                        setState(real, GameAddress::kStateDepthWrite, wanted == AMOD_DRAW_BLEND_ADD ? 0 : 1);
+                    }
+
+                    blend = wanted;
+                }
+
+                if (!everBound || draw.texture != bound)
+                {
+                    setTexture(device, draw.texture);
+                    bound = draw.texture;
+                    everBound = true;
+                }
+
+                const uint32_t own = draw.structSize > offsetof(AmodModelDraw, tint) ? draw.tint : 0;
+                const uint32_t wantTint = Blended(own, g_worldTint);
+
+                if (wantTint != tinted)
+                {
+                    TintDraw(wantTint, draw.texture != 0);
+                    tinted = wantTint;
+                }
+
+                float world[16];
+                WorldMatrixFor(draw, world);
+                setWorld(device, world);
+
+                if (draw.frame == 0.0f)
+                {
+                    render(tracked->model);
+                }
+                else
+                {
+                    const int from = static_cast<int>(draw.frame);
+                    animated(tracked->model, from, from + 1, draw.frame - static_cast<float>(from));
+                }
+                ++drawn;
+            }
+
+            if (drawn > 0)
+            {
+                static const float identity[16] =
+                {
+                    1.0f, 0.0f, 0.0f, 0.0f,
+                    0.0f, 1.0f, 0.0f, 0.0f,
+                    0.0f, 0.0f, 1.0f, 0.0f,
+                    0.0f, 0.0f, 0.0f, 1.0f,
+                };
+
+                setWorld(device, identity);
+
+                // Stage 1 goes back off, or the next thing the frame draws wears the last tint.
+                if (tinted != 0 && tinted != 0xFFFFFFFFu)
+                {
+                    TintDraw(0, false);
+                }
+
+                if (blend != AMOD_DRAW_BLEND_NONE)
+                {
+                    void* const solid = reinterpret_cast<void*>(StateFor(scene, AMOD_DRAW_BLEND_NONE));
+
+                    if (solid != nullptr)
+                    {
+                        apply(device, solid);
+                    }
+
+                    void* const real = Direct3DDevice();
+
+                    if (real != nullptr)
+                    {
+                        void** const table = *static_cast<void***>(real);
+                        const auto setState = reinterpret_cast<DeviceStateRoutine>(table[GameAddress::kDeviceSetRenderState / sizeof(void*)]);
+
+                        setState(real, GameAddress::kStateDepthWrite, 1);
+                    }
+                }
+
+                if (watched)
+                {
+                    setTexture(device, was);
+                }
+
+                if (g_anyLight)
+                {
+                    ApplyLights(false);
+                }
+            }
+            return drawn;
+        }
+
         void ReleaseDrawHandler(void* payload)
         {
             const uint32_t id = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(payload));
@@ -3826,6 +4423,13 @@ namespace Forge
             g_table.GetMaterial = &ApiGetMaterial;
             g_table.ClearMaterials = &ApiClearMaterials;
             g_table.DrawWith = &ApiDrawWith;
+            g_table.DrawMany = &ApiDrawMany;
+            g_table.LightRoom = &ApiLightRoom;
+            g_table.SetLight = &ApiSetLight;
+            g_table.SetAmbient = &ApiSetAmbient;
+            g_table.Ambient = &ApiAmbient;
+            g_table.SetWorldTint = &ApiSetWorldTint;
+            g_table.WorldTint = &ApiWorldTint;
         }
 
         if (InstallDrawHooks())
@@ -3861,6 +4465,14 @@ namespace Forge
         g_originalLoadAnim = nullptr;
         g_drawHandlers.clear();
         g_drawDepth = 0;
+        g_worldTint = 0xFFFFFFFFu;
+        g_ambient = 0xFF000000u;
+        g_anyLight = false;
+
+        for (Lamp& lamp : g_lamps)
+        {
+            lamp.lit = false;
+        }
 
         g_tracked.clear();
         g_held.clear();
@@ -3926,6 +4538,16 @@ namespace Forge
     {
         TrackedAnim* const tracked = AnimById(id);
         return tracked != nullptr ? tracked->animation : nullptr;
+    }
+
+    void MmdApi::EnterDraw()
+    {
+        ++g_drawDepth;
+    }
+
+    void MmdApi::LeaveDraw()
+    {
+        g_drawDepth -= g_drawDepth > 0 ? 1 : 0;
     }
 
     void MmdApi::ForgetMod(ModContext* owner)

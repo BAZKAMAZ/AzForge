@@ -30,6 +30,8 @@
 #include "LevelEditorApi.h"
 #include "DemoApi.h"
 #include "SpriteFontApi.h"
+#include "StageApi.h"
+#include "AzmApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -131,9 +133,15 @@ typedef struct AmodApi
     /* The sprite fonts the game draws every line of text with, and fonts of the mod's own. */
     const AmodSpriteFontApi* spriteFont;
 
+    /* The world's own update and draw, for a mod that means to stand in for the game. */
+    const AmodStageApi* stage;
+
+    /* Models with parts, materials and colour in the vertex, read out of .azm files. */
+    const AmodAzmApi* azm;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, spriteFont, 0x9C);
+AMOD_LAST_FIELD(AmodApi, azm, 0xA4);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -195,6 +203,8 @@ namespace Amod
         LevelEditor::Attach(api->levelEditor, api->self);
         Demo::Attach(api->demo, api->self);
         SpriteFont::Attach(api->spriteFont, api->self);
+        Stage::Attach(api->stage, api->self);
+        Azm::Attach(api->azm, api->self);
         return true;
     }
 

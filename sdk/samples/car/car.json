@@ -1,0 +1,17 @@
+{
+  "parts": {
+    "bonnet":   { "parent": "body" },
+    "glass":    { "parent": "body" },
+    "lamp_l":   { "parent": "body" },
+    "lamp_r":   { "parent": "body" },
+    "wheel_fl": { "parent": "body", "pivot": [-0.93, 0.34, 1.35] },
+    "wheel_fr": { "parent": "body", "pivot": [0.93, 0.34, 1.35] },
+    "wheel_rl": { "parent": "body", "pivot": [-0.93, 0.34, -1.35] },
+    "wheel_rr": { "parent": "body", "pivot": [0.93, 0.34, -1.35] }
+  },
+  "paintable": ["paint"],
+  "two_sided": ["glass"],
+  "points": {
+    "driver": { "position": [-0.35, 1.05, 0.10], "part": "body" }
+  }
+}

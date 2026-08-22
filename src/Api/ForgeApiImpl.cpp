@@ -14,6 +14,7 @@
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
+#include "src/Api/AzmApi.h"
 #include "src/Api/ConfigApi.h"
 #include "src/Api/DatApi.h"
 #include "src/Api/SavApi.h"
@@ -21,6 +22,7 @@
 #include "src/Api/PlayerApi.h"
 #include "src/Api/SoundApi.h"
 #include "src/Api/SpriteFontApi.h"
+#include "src/Api/StageApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/InputApi.h"
 #include "src/Api/LevelEditorApi.h"
@@ -164,6 +166,8 @@ namespace Forge
         context.table.mmd = MmdApi::Table();
         context.table.textures = TextureApi::Table();
         context.table.spriteFont = SpriteFontApi::Table();
+        context.table.stage = StageApi::Table();
+        context.table.azm = AzmApi::Table();
         context.table.sound = SoundApi::Table();
         context.table.player = PlayerApi::Table();
         context.table.ctrls = CtrlsApi::Table();
@@ -177,7 +181,7 @@ namespace Forge
         context.table.levelEditor = LevelEditorApi::Table();
         context.table.demo = DemoApi::Table();
 
-        context.table.modManager = context.privileged ? ModManagerApi::Table() : nullptr;
+        context.table.modManager = ModManagerApi::Table();
 
         if (context.Declares("interop"))
         {

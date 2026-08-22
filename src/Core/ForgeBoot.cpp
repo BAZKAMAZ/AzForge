@@ -12,6 +12,7 @@
 #include "src/Api/CameraApi.h"
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
+#include "src/Api/AzmApi.h"
 #include "src/Api/ConfigApi.h"
 #include "src/Api/DatApi.h"
 #include "src/Api/SavApi.h"
@@ -23,6 +24,7 @@
 #include "src/Api/LevelEditorApi.h"
 #include "src/Api/DemoApi.h"
 #include "src/Api/SpriteFontApi.h"
+#include "src/Api/StageApi.h"
 #include "src/Api/InventoryApi.h"
 #include "src/Api/ModManagerApi.h"
 #include "src/Api/FrameApi.h"
@@ -46,6 +48,7 @@
 #include "src/Mods/ModHost.h"
 #include "src/Mods/ModLoadScreen.h"
 #include "src/Mods/ModScan.h"
+#include "src/Mods/ModScreen.h"
 #include "src/Mods/ModStore.h"
 #include "src/Mods/ModState.h"
 
@@ -169,9 +172,6 @@ namespace Forge
             g_registry.Clear();
         }
 
-        // core.amod lives beside the loader; added after scan so it leads the order.
-        g_registry.AddPrivileged(Paths::ForgeModuleFile().parent_path() / "core.amod");
-
         WriteLoadOrder();
 
         if (!GameModule::Initialize() || !GameSymbols::Resolve() || !GameFunctions::Bind())
@@ -219,8 +219,11 @@ namespace Forge
         Install("level_editor", &LevelEditorApi::Install);
         Install("demo", &DemoApi::Install);
         Install("sprite_font", &SpriteFontApi::Install);
+        Install("stage", &StageApi::Install);
+        Install("azm", &AzmApi::Install);
 
         ModManagerApi::Install();
+        Install("mod_screen", &ModScreen::Install);
         Subsystems::Record("block_expression", true);
         Subsystems::WriteSummary();
 
@@ -243,6 +246,7 @@ namespace Forge
         FORGE_LOG_INFO("AzForge shutting down");
 
         ModHost::UnloadAll();
+        ModScreen::Uninstall();
         ModLoadScreen::Uninstall();
         PackageHook::Uninstall();
         D3d8Hook::Detach();
@@ -254,6 +258,7 @@ namespace Forge
         ConsoleApi::Uninstall();
         HudApi::Uninstall();
         MonstersApi::Uninstall();
+        AzmApi::Uninstall();
         MmdApi::Uninstall();
         TextureApi::Uninstall();
         SoundApi::Uninstall();
@@ -267,6 +272,7 @@ namespace Forge
         LevelEditorApi::Uninstall();
         DemoApi::Uninstall();
         SpriteFontApi::Uninstall();
+        StageApi::Uninstall();
         ModFileSystem::Clear();
         ModScan::Shutdown();
         ModState::Clear();

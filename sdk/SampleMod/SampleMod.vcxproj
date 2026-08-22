@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <!-- Template for a mod project.
        A mod is loaded into game.exe, so Win32 and a static runtime are not options: an x64
@@ -24,7 +24,7 @@
     <AzForgeModName>Test API</AzForgeModName>
     <AzForgeModVersion>1.0.0</AzForgeModVersion>
     <AzForgeModAuthor>AzForge</AzForgeModAuthor>
-    <AzForgeModCapabilities>interop</AzForgeModCapabilities>
+    <AzForgeModCapabilities>interop;launcher</AzForgeModCapabilities>
     <AzForgeModDescription>
     </AzForgeModDescription>
     <AzForgeModRequires>

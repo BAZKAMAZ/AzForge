@@ -6,6 +6,7 @@
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
+#include "src/Hook/InlineHook.h"
 #include "src/Mods/ModStore.h"
 
 #include <string.h>
@@ -53,6 +54,7 @@ namespace Forge
         uint8_t g_previous[kKeyTotal] = {};
 
         typedef SHORT(WINAPI* AsyncKeyRoutine)(int key);
+        typedef void(__fastcall* ShowCursorRoutine)(void* input, void* unused, char show);
 
         struct Forced
         {
@@ -68,10 +70,14 @@ namespace Forge
         Forced g_forced[kInputKeyCount] = {};
         int g_exclusive = 0;
 
+        int g_cursorHeld = -1;
+        InlineHook g_cursorHook;
+        ShowCursorRoutine g_originalShowCursor = nullptr;
+        ModContext* g_keyboardOwner = nullptr;
+
         bool IsForced(int key)
         {
-            return key >= 0 && key < static_cast<int>(kInputKeyCount) &&
-                   g_forced[key].owner != nullptr;
+            return key >= 0 && key < static_cast<int>(kInputKeyCount) && g_forced[key].owner != nullptr;
         }
 
         // One counter rather than a walk of 255 entries: this is asked for every key every frame.
@@ -89,6 +95,13 @@ namespace Forge
 
         SHORT WINAPI AsyncKeyDetour(int key)
         {
+            const bool button = key == AMOD_KEY_LBUTTON || key == AMOD_KEY_RBUTTON;
+
+            if (g_exclusive != 0 && button)
+            {
+                return 0;
+            }
+
             if (Swallowing())
             {
                 return g_originalAsync != nullptr ? g_originalAsync(key) : 0;
@@ -101,6 +114,16 @@ namespace Forge
             }
 
             return (g_exclusive == 0 && g_originalAsync != nullptr) ? g_originalAsync(key) : 0;
+        }
+
+        void __fastcall ShowCursorDetour(void* input, void* unused, char show)
+        {
+            if (g_cursorHeld >= 0)
+            {
+                return;
+            }
+
+            g_originalShowCursor(input, unused, show);
         }
 
         bool SwapAsyncKey(AsyncKeyRoutine routine)
@@ -129,12 +152,26 @@ namespace Forge
         int g_wheel = 0;
         int g_wheelFrame = 0;
 
+        bool IsMouseButtonMessage(UINT message)
+        {
+            return message == WM_LBUTTONDOWN || message == WM_LBUTTONUP ||
+                   message == WM_LBUTTONDBLCLK || message == WM_RBUTTONDOWN ||
+                   message == WM_RBUTTONUP || message == WM_RBUTTONDBLCLK ||
+                   message == WM_MBUTTONDOWN || message == WM_MBUTTONUP;
+        }
+
         LRESULT CALLBACK WindowProc(HWND window, UINT message, WPARAM wparam, LPARAM lparam)
         {
             if (message == WM_MOUSEWHEEL)
             {
                 g_wheel += GET_WHEEL_DELTA_WPARAM(wparam) / WHEEL_DELTA;
             }
+
+            if (g_exclusive != 0 && IsMouseButtonMessage(message))
+            {
+                return 0;
+            }
+
             return CallWindowProcA(g_originalProc, window, message, wparam, lparam);
         }
 
@@ -157,8 +194,7 @@ namespace Forge
                 return;
             }
 
-            const LONG_PTR previous = SetWindowLongPtrA(window, GWLP_WNDPROC,
-                                                        reinterpret_cast<LONG_PTR>(&WindowProc));
+            const LONG_PTR previous = SetWindowLongPtrA(window, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(&WindowProc));
             if (previous == 0)
             {
                 return;
@@ -743,6 +779,23 @@ namespace Forge
             return (Resolve(mod) != nullptr && IsForced(key)) ? 1 : 0;
         }
 
+        int __cdecl ApiShowSystemCursor(AmodMod mod, int show)
+        {
+            if (Resolve(mod) == nullptr || g_originalShowCursor == nullptr)
+            {
+                return 0;
+            }
+
+            g_cursorHeld = show < 0 ? -1 : (show != 0 ? 1 : 0);
+
+            if (g_cursorHeld >= 0)
+            {
+                ShowCursor(g_cursorHeld != 0 ? TRUE : FALSE);
+            }
+
+            return 1;
+        }
+
         int __cdecl ApiHasJoystick(AmodMod mod)
         {
             return (Resolve(mod) != nullptr && g_input != nullptr &&
@@ -795,6 +848,24 @@ namespace Forge
         g_table.PressKey = &ApiPressKey;
         g_table.HoldKey = &ApiHoldKey;
         g_table.IsKeyForced = &ApiIsKeyForced;
+        g_table.ShowSystemCursor = &ApiShowSystemCursor;
+
+        void* const cursor = GameModule::Resolve(kInputShowCursor);
+        std::string cursorMismatch;
+        std::string cursorError;
+
+        if (cursor != nullptr &&
+            GameModule::VerifyBytes(cursor, kInputShowCursorPrologue, sizeof(kInputShowCursorPrologue), cursorMismatch) &&
+            g_cursorHook.Install(cursor, reinterpret_cast<void*>(&ShowCursorDetour),
+                                 kInputShowCursorPrologue, sizeof(kInputShowCursorPrologue), cursorError))
+        {
+            g_originalShowCursor = reinterpret_cast<ShowCursorRoutine>(g_cursorHook.Trampoline());
+        }
+        else
+        {
+            FORGE_LOG_WARN("The game's cursor hiding was not taken, so a mod cannot keep the "
+                           "system cursor up");
+        }
 
         FORGE_LOG_INFO("Input interface installed");
         return true;
@@ -804,6 +875,10 @@ namespace Forge
     {
         DetachFromWindow();
 
+        g_cursorHook.Uninstall();
+        g_originalShowCursor = nullptr;
+        g_cursorHeld = -1;
+
         if (g_originalAsync != nullptr)
         {
             SwapAsyncKey(g_originalAsync);
@@ -812,6 +887,7 @@ namespace Forge
         g_originalAsync = nullptr;
         memset(g_forced, 0, sizeof(g_forced));
         g_exclusive = 0;
+        g_keyboardOwner = nullptr;
 
         g_wheel = 0;
         g_wheelFrame = 0;
@@ -839,8 +915,70 @@ namespace Forge
         }
     }
 
+    bool InputApi::HoldKeyboard(ModContext* owner, bool hold)
+    {
+        if (owner == nullptr || g_originalAsync == nullptr || hold == (g_keyboardOwner == owner))
+        {
+            return false;
+        }
+        if (hold && g_keyboardOwner != nullptr)
+        {
+            return false;
+        }
+
+        g_keyboardOwner = hold ? owner : nullptr;
+        g_exclusive += hold ? 1 : -1;
+        return true;
+    }
+
+    void InputApi::FillKeysIfStalled()
+    {
+        if (g_input == nullptr || !Swallowing() || g_input[GameAddress::kInputConsoleOpenOffset] != 0)
+        {
+            return;
+        }
+
+        for (int key = 0; key < static_cast<int>(GameAddress::kInputKeyCount); ++key)
+        {
+            const bool forced = IsForced(key);
+            const SHORT state = (g_originalAsync != nullptr && !forced) ? g_originalAsync(key) : 0;
+
+            g_input[GameAddress::kInputKeyStateOffset + key] =
+                (forced || (state & 0x8000) != 0) ? 1 : 0;
+        }
+    }
+
+    void InputApi::HoldSystemCursor(bool hold)
+    {
+        static int was = -2;
+
+        if (g_originalShowCursor == nullptr || hold == (was != -2))
+        {
+            return;
+        }
+
+        if (hold)
+        {
+            was = g_cursorHeld;
+            g_cursorHeld = 1;
+            ShowCursor(TRUE);
+            return;
+        }
+
+        g_cursorHeld = was;
+        was = -2;
+        ShowCursor(FALSE);
+    }
+
+    int InputApi::WheelDelta()
+    {
+        return g_wheelFrame;
+    }
+
     void InputApi::ForgetMod(ModContext* owner)
     {
+        HoldKeyboard(owner, false);
+
         for (int key = 0; key < static_cast<int>(kInputKeyCount); ++key)
         {
             if (g_forced[key].owner == owner)

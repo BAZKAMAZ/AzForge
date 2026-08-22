@@ -15,5 +15,7 @@ namespace Forge
         static const AmodRenderApi*                                 Table();
 
         static void                                                 ForgetMod(ModContext* owner);
+
+        static void                                                 AddInternalPresent(void(__cdecl* draw)());
     };
 }

@@ -1,4 +1,5 @@
-﻿block_expression
+﻿azm
+block_expression
 bonuses
 box_menu
 camera
@@ -15,6 +16,7 @@ inventory
 launcher
 level_editor
 mmd
+mod_screen
 monsters
 objects_menu
 particles
@@ -24,5 +26,6 @@ sav
 scores
 sound
 sprite_font
+stage
 textures
 world

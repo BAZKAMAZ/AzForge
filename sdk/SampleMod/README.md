@@ -1,145 +1,138 @@
-# Commands
+# SampleMod
 
-Type a command with no arguments to see its forms
-and the state it reports on.
+Five console commands. Open the console and type one with no arguments to see its forms and what
+it currently reports.
 
-Key names are the game's own: `space`, `escape`, `numpad0`, `f1`, `a`, `d`, and `joy_left`,
-`joy_right`, `joy_down`, `joy_up`, `joy1`..`joy4`.
-
----
-
-## keys
-
-| Type this | And you get |
-| --- | --- |
-| `keys` | every bound key, and the totals |
-| `keys all` | every key the game has a name for |
-| `keys <name>` | one key: its binding, held flag and parameters |
-| `keys bind <name> <command> [held] [parameters...]` | that key runs a console command |
-| `keys cvar <name> <cvar> [held]` | that key sets a variable |
-| `keys unbind <name>` | the key does nothing |
-| `keys keep <name> [0\|1] [seal]` | the binding comes back next run |
-| `keys press <name>` | one press, as though the player made it |
-| `keys hold <name> [frames] [alone]` | held for `frames` (60 by default) |
-
-`held` and the trailing flags are `0` or `1`.
-
-**Nothing happens while the console is open.** The game ignores the keyboard then, and a forced key
-is ignored with it — press or hold, then close the console and watch.
-
-```
-keys hold d 200        close the console: the player runs right for 200 frames
-keys hold d 200 1      and `a` cannot push back
-keys hold d 0          let go now
-keys press space       one jump
-```
-
-## freeze
-
-| Type this | And you get |
-| --- | --- |
-| `freeze` | the world stops, or starts again |
-| `freeze 0\|1` | stopped, or running |
-
-The game starts the world again on the next key press — that is its own rule, not the mod's.
-
-## cfg
-
-| Type this | And you get |
-| --- | --- |
-| `cfg <name>` | the value, as a number |
-| `cfg <name> <value> [save] [seal]` | the variable is set |
-| `cfg keep <name> [0\|1] [seal]` | the value comes back next run |
-
-```
-cfg r_wireframe 1
-cfg s_volume 0.5 1        kept for next time
-cfg s_volume 0.5 1 1      kept, and sealed
-```
-
-## score
-
-| Type this | And you get |
-| --- | --- |
-| `score` | the whole table, and how many castles it spans |
-| `score add <level> <name> <time> <points> [save] [seal]` | one entry added |
-| `score keep <index> [0\|1] [seal]` | that entry comes back next run |
-| `score remove <index>` | the entry goes |
-
-## pack
-
-| Type this | And you get |
-| --- | --- |
-| `pack` | which levels are open |
-| `pack open <level> [save] [seal]` | the level opens |
-| `pack close <level> [save] [seal]` | the level closes |
-| `pack keep <level> [0\|1] [seal]` | its state comes back next run |
-
-## mtl
-
-Materials cut one model into parts, each with its own texture. **A level has to be loaded** — with
-no models in memory every form answers with nothing.
-
-| Type this | And you get |
-| --- | --- |
-| `mtl` | how many models are loaded |
-| `mtl <model>` | that model's materials |
-| `mtl split <model> <texA> [texB]` | the triangles cut in two, a texture each |
-| `mtl add <model> <firstIndex> <triangles> <texture>` | one material by hand |
-| `mtl clear <model>` | the game draws it whole again |
-| `mtl save <model> <path>` | written as .mmd, materials and all |
-| `mtl load <path>` | read one back |
-
-```
-mtl door
-mtl split door metall dver
-mtl save door mods/door.mmd
-```
-
-## font
-
-The mod builds its own font: Windows draws the letters, so there is no art file anywhere.
-
-| Type this | And you get |
-| --- | --- |
-| `font` | every font the game draws with |
-| `font show <text>` | that line drawn at the top, in the mod's font |
-| `font hide` | it stops being drawn |
-| `font measure <text> [gamefont]` | how wide it is, and the line height |
-| `font swap <gamefont>` | the game draws that font in the mod's instead |
-| `font restore <gamefont>` | the game's own font is back |
-| `font save <path.png>` | the atlas is written to a file |
-| `font file <path> [cell]` | a font built from an atlas on disk |
-
-```
-font show AZFORGE
-font swap bigitem        the menu changes with it
-font restore bigitem
-font save fonts/sample.png
-font file fonts/sample.png 31
-```
-
-`font swap` changes what the whole game draws, menu items included. It goes back on `restore`, and
-on unloading the mod.
+**The game boots as itself. Nothing is taken over until you ask for it** — `stage take` is the
+asking, and `stage give` hands everything back. Start there: `quads`, `models` and `azm` need the
+mod to be holding the frame before they have anywhere to draw.
 
 ---
 
-## seal, save and keep
+## stage
 
-`keep` writes a setting into `mods/state/<mod id>.forge` so it comes back next run — never into
-the game's own files. `save` on a form that changes something does the same in one step.
+Who runs the frame.
 
-The last flag, `seal`, hides that record's values and ties them to this machine. Every record is
-tagged either way: one edited by hand is refused on the way back in, with a line in `forge.log`.
+| Type this | And you get |
+| --- | --- |
+| `stage` | who holds the frame, the input and the boot step, and what is being drawn |
+| `stage take` | the mod runs the world and draws its own: one cube, one texture, both of its own making |
+| `stage over` | the mod holds the frame and runs the game's world under it |
+| `stage all` | the shell as well: no menus, no game states, nothing of the game per frame but the keyboard poll and Present |
+| `stage give` | the game has its frame back |
+
+```
+stage take          a cube on a dark blue field
+stage               how many frames the mod has run
+stage give          back to whatever was there before
+```
+
+## window
+
+The game's window, once a mod has it.
+
+| Type this | And you get |
+| --- | --- |
+| `window` | how big it is and where |
+| `window full` | borderless over the whole screen |
+| `window windowed [w] [h]` | a frame again, at that size (800x600 by default) |
+| `window cursor [1\|0\|-1]` | the system cursor shown, hidden, or the game's own again |
+| `window sound <path.wav>` | that file loaded and played |
+
+```
+window full
+window windowed 1280 720
+window cursor 1
+window sound sounds/hit.wav
+```
+
+The backbuffer keeps its size, so the picture stretches rather than being redrawn larger.
+
+## quads
+
+Many 2D quads in one draw.
+
+| Type this | And you get |
+| --- | --- |
+| `quads` | how many the batch draws, and off which texture |
+| `quads <count>` | that many turning quads, drawn in ONE call |
+| `quads off` | none |
+
+```
+stage take
+quads 2000          drawn as one call, off the mod's own texture
+quads off
+```
+
+Without `stage take` there is no texture yet and they come out in plain colour.
+
+## models
+
+The same measurement in 3D.
+
+| Type this | And you get |
+| --- | --- |
+| `models` | how many were drawn, and what a frame costs |
+| `models <count>` | that many turning cubes, drawn as ONE sorted list |
+| `models off` | none |
+
+```
+stage take
+models 900          the count, the average frame and the worst one
+models              read it again after it has settled
+models off
+```
+
+The list is sorted, so a texture and a blend state are set once per run rather than once per model.
+Every eighth cube is added rather than solid, to give the sort something to gather. Run
+`stage take` first or the reading counts frames the mod never ran.
+
+## azm
+
+A model with parts, materials and colour in the vertex.
+
+| Type this | And you get |
+| --- | --- |
+| `azm <path.azm>` | that model loaded, drawn, and everything it holds printed |
+| `azm` | the same listing again |
+| `azm tint <rrggbb>` | a colour multiplied over this draw of it |
+| `azm tint` | and that taken off again |
+| `azm paint <rrggbb>` | every paintable material recoloured, in the model itself |
+| `azm off` | the model put down |
+
+```
+stage take
+azm models/car.azm      parts, materials, points, boxes and bounds are printed
+azm tint ff4020         red; whatever the file baked shows through it
+azm tint                back to its own colours
+azm paint 2060ff        the model's own vertices are rewritten
+azm off
+```
+
+Anything the file calls a `wheel` turns on its own pivot. A tint belongs to one draw; paint belongs
+to the model, so every copy of it wears the new colour.
+
+Build a `.azm` with the tool beside the loader:
+
+```
+AzmPack.exe pack car.obj -o car.azm --sidecar car.json
+AzmPack.exe dump car.azm
+```
+
+`sdk/samples/car` holds a car to try it on — a body, glass, four wheels, two lamps, a collision box
+and two named points.
+
+---
 
 ## What each command shows off
 
 | The interface | Where to see it |
 | --- | --- |
-| Input | `keys` |
-| World | `freeze` |
-| Config | `cfg` |
-| Scores | `score` |
-| Sav | `pack` |
-| Mmd, Textures | `mtl`, `font save` |
-| SpriteFont, Render | `font` |
+| Stage | `stage` |
+| Render, the window | `window` |
+| Render, batched | `quads` |
+| Mmd, batched | `models` |
+| Azm | `azm` |
+| Textures, Mmd | `stage take` builds both by hand |
+| Sound | `window sound` |
+| Input | `window cursor` |

@@ -2,863 +2,605 @@
 
 #include <windows.h>
 
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 using namespace Amod;
 
-const char* BindName(int bind)
+float g_seconds = 0.0f;
+int g_frames = 0;
+bool g_withWorld = false;
+AmodToken g_overlay = 0;
+
+AmodModelId g_model = AMOD_INVALID_MODEL;
+AmodTextureId g_sheet = AMOD_INVALID_TEXTURE;   // the same checks, before they were handed over
+int g_quads = 0;                                // how many the batch draws, 0 for none
+AmodToken g_quadsToken = 0;
+AmodAzmId g_car = AMOD_INVALID_AZM;             // a model with parts, out of a .azm
+int g_wheels[8] = {};
+int g_wheelCount = 0;
+int g_models = 0;                               // how many the 3D batch draws
+int g_drawn = 0;
+float g_spent = 0.0f;                           // seconds counted since the count was last set
+int g_counted = 0;
+float g_slowest = 0.0f;
+float g_reach = 0.5f;   // how far back the camera sits, from the model's own extents
+uint32_t g_texture = 0;
+bool g_holdsInput = false;
+bool g_holdsShell = false;
+bool g_holdsLoad = false;
+
+void __cdecl StageUpdate(float seconds, void*)
 {
-    switch (bind)
+    g_seconds += seconds;
+    ++g_frames;
+
+    g_spent += seconds;
+    ++g_counted;
+    g_slowest = seconds > g_slowest ? seconds : g_slowest;
+
+    if (g_withWorld)
     {
-    case AMOD_KEY_CVAR:    return "cvar";
-    case AMOD_KEY_COMMAND: return "command";
+        Stage::RunGameUpdate(seconds);
+        return;
     }
-    return "nothing";
+
+    Stage::RunMusic();
 }
 
-void ShowKey(int key)
+void MakeAWorld()
 {
-    AmodKeyInfo info = {};
-
-    if (!Input::GetKey(key, &info))
+    if (g_model != AMOD_INVALID_MODEL)
     {
-        Console::Printf("keys: there is no key %d\n", key);
         return;
     }
 
-    Console::Printf("keys: %d '%s'%s%s\n", key, info.name != nullptr ? info.name : "?",
-        info.isJoystick != 0 ? "  joystick" : "", Input::IsDown(key) ? "  down" : "");
+    static unsigned int checks[64 * 64];
 
-    if (info.bind == AMOD_KEY_UNBOUND)
+    for (int y = 0; y < 64; ++y)
     {
-        Console::Print("      bound to nothing\n");
-        return;
+        for (int x = 0; x < 64; ++x)
+        {
+            const bool light = ((x >> 3) + (y >> 3)) % 2 == 0;
+            checks[y * 64 + x] = light ? Textures::Pixel(0x44, 0x88, 0xCC) : Textures::Pixel(0x22, 0x33, 0x44);
+        }
     }
 
-    Console::Printf("      %s '%s'%s\n", BindName(info.bind),
-        info.target != nullptr ? info.target : "?", info.held != 0 ? ", while held" : "");
+    g_sheet = Textures::Create(64, 64, checks, false, false);
+    g_texture = Textures::ToGame(g_sheet);
 
-    for (int i = 0; i < info.paramCount; ++i)
+    const float half = 0.5f;
+    AmodVertex corners[24] = {};
+    uint16_t faces[36] = {};
+
+    const float normals[6][3] =
     {
-        const char* const param = Input::KeyParam(key, i);
-        Console::Printf("      [%d] '%s'\n", i, param != nullptr ? param : "");
+        {  0.0f,  0.0f,  1.0f }, {  0.0f,  0.0f, -1.0f },
+        {  1.0f,  0.0f,  0.0f }, { -1.0f,  0.0f,  0.0f },
+        {  0.0f,  1.0f,  0.0f }, {  0.0f, -1.0f,  0.0f },
+    };
+
+    for (int face = 0; face < 6; ++face)
+    {
+        const float* const normal = normals[face];
+
+        float across[3] = { normal[1], normal[2], normal[0] };
+        float down[3] =
+        {
+            normal[1] * across[2] - normal[2] * across[1],
+            normal[2] * across[0] - normal[0] * across[2],
+            normal[0] * across[1] - normal[1] * across[0],
+        };
+
+        for (int corner = 0; corner < 4; ++corner)
+        {
+            const float u = (corner == 1 || corner == 2) ? 1.0f : 0.0f;
+            const float v = (corner >= 2) ? 1.0f : 0.0f;
+            AmodVertex& vertex = corners[face * 4 + corner];
+
+            for (int axis = 0; axis < 3; ++axis)
+            {
+                vertex.position[axis] = (normal[axis] + across[axis] * (u * 2.0f - 1.0f) +
+                                         down[axis] * (v * 2.0f - 1.0f)) * half;
+                vertex.normal[axis] = normal[axis];
+            }
+
+            vertex.uv[0] = u;
+            vertex.uv[1] = v;
+        }
+
+        const uint16_t first = static_cast<uint16_t>(face * 4);
+        const uint16_t order[6] = { 0, 1, 2, 0, 2, 3 };
+
+        for (int at = 0; at < 6; ++at)
+        {
+            faces[face * 6 + at] = static_cast<uint16_t>(first + order[at]);
+        }
     }
+
+    AmodMeshData mesh = {};
+    mesh.structSize = sizeof(mesh);
+    mesh.frameCount = 1;
+    mesh.vertexCount = 24;
+    mesh.indexCount = 36;
+    mesh.primitiveCount = 12;
+    mesh.vertices = corners;
+    mesh.indices = faces;
+
+    g_model = Mmd::Create("sample/cube", mesh);
+    g_reach = 2.0f;
+
+    Console::Printf("stage: a world of its own - model %u, texture %u\n", g_model, g_texture);
 }
 
-void ListKeys(bool all)
+void DrawField()
 {
-    const int count = Input::KeyCount();
-    int named = 0;
-    int bound = 0;
+    static AmodModelDraw* field = nullptr;
+    static int held = 0;
 
-    for (int key = 0; key < count; ++key)
+    if (held < g_models)
     {
-        AmodKeyInfo info = {};
-
-        if (!Input::GetKey(key, &info) || info.name == nullptr)
-        {
-            continue;
-        }
-
-        ++named;
-
-        if (info.bind != AMOD_KEY_UNBOUND)
-        {
-            ++bound;
-        }
-        else if (!all)
-        {
-            continue;
-        }
-
-        Console::Printf("  %3d %-12s %-8s %s%s\n", key, info.name, BindName(info.bind),
-            info.target != nullptr ? info.target : "", info.held != 0 ? "  (held)" : "");
+        free(field);
+        field = static_cast<AmodModelDraw*>(malloc(sizeof(AmodModelDraw) * g_models));
+        held = field != nullptr ? g_models : 0;
     }
 
-    Console::Printf("keys: %d of %d named, %d bound, joystick %s\n", named, count, bound,
-        Input::HasJoystick() ? "captured" : "absent");
+    if (field == nullptr)
+    {
+        return;
+    }
+
+    int side = 1;
+
+    while (side * side < g_models)
+    {
+        ++side;
+    }
+
+    for (int at = 0; at < g_models; ++at)
+    {
+        const float across = static_cast<float>(at % side) - (side - 1) * 0.5f;
+        const float along = static_cast<float>(at / side) - (side - 1) * 0.5f;
+
+        field[at] = Mmd::Placement(g_model, across * 1.6f, sinf(g_seconds + at * 0.3f) * 0.3f,
+            along * 1.6f);
+        field[at].texture = g_texture;
+        field[at].rotation[1] = g_seconds * 0.7f + at;
+
+        field[at].blend = (at % 8) == 7 ? AMOD_DRAW_BLEND_ADD : AMOD_DRAW_BLEND_NONE;
+    }
+
+    g_drawn = Mmd::DrawMany(field, g_models);
 }
 
-void BindCommandTo(int argc, const char** argv)
+void __cdecl StageRender(void*)
 {
-    if (argc < 4)
+    if (g_withWorld)
     {
-        Console::Print("keys bind <key> <command> [held] [parameters...]\n");
+        Stage::RunGameRender();
         return;
     }
 
-    const int key = Input::FindKey(argv[2]);
+    Stage::Clear(0xFF101828);
 
-    if (key < 0)
+    MakeAWorld();
+
+    if (g_model == AMOD_INVALID_MODEL)
     {
-        Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
         return;
     }
 
-    const bool held = argc > 4 && atoi(argv[4]) != 0;
-    const int extra = argc > 5 ? argc - 5 : 0;
+    const float eye[3] = { 0.0f, g_reach * 0.4f, g_reach };
+    const float at[3] = { 0.0f, g_reach * 0.15f, 0.0f };
+    const float up[3] = { 0.0f, 1.0f, 0.0f };
 
-    if (Input::BindCommand(key, argv[3], held, extra, extra != 0 ? argv + 5 : nullptr))
+    Stage::SetCamera(eye, at, up, 60.0f, g_reach * 0.05f, g_reach * 20.0f);
+
+    if (g_car != AMOD_INVALID_AZM)
     {
-        ShowKey(key);
+        for (int at = 0; at < g_wheelCount; ++at)
+        {
+            Azm::Turn(g_car, g_wheels[at], 1.0f, 0.0f, 0.0f, g_seconds * 4.0f);
+        }
+
+        Mmd::Matrix stand = Mmd::Matrix::Identity();
+        const float turn = cosf(g_seconds * 0.4f);
+        const float lean = sinf(g_seconds * 0.4f);
+
+        stand.m[0] = turn;
+        stand.m[2] = -lean;
+        stand.m[8] = lean;
+        stand.m[10] = turn;
+        stand.m[13] = -0.7f;
+
+        Azm::Draw(g_car, stand.m);
+        return;
+    }
+
+    if (g_models > 0)
+    {
+        DrawField();
+        return;
+    }
+
+    // Turned about y on the mod's own seconds. Row vectors, like the game's own matrices.
+    const float turn = cosf(g_seconds);
+    const float lean = sinf(g_seconds);
+
+    Mmd::Matrix spin = Mmd::Matrix::Identity();
+    spin.m[0] = turn;
+    spin.m[2] = -lean;
+    spin.m[8] = lean;
+    spin.m[10] = turn;
+
+    Mmd::DrawWith(g_model, g_texture, spin);
+}
+
+int __cdecl StageShell(void*);
+void __cdecl StageOverlay(const AmodFrame*, void*);
+
+// The boot step is held to show that it can be, and handed straight on: the game loads as itself.
+// Nothing is taken over until it is asked for, and 'stage take' is the asking.
+int __cdecl StageLoad(void*)
+{
+    return Stage::RunGameLoad();
+}
+
+int __cdecl StageShell(void*)
+{
+    return 0;
+}
+
+void __cdecl StageOverlay(const AmodFrame*, void*)
+{
+    const float across = g_seconds * 120.0f;
+    const float x = across - AMOD_MENU_WIDE * (int)(across / AMOD_MENU_WIDE);
+
+    Render::Rect(0.0f, 40.0f, AMOD_MENU_WIDE, 24.0f, 0x80000000);
+    Render::Rect(x, 40.0f, 40.0f, 24.0f, 0xFFFFC800);
+}
+
+void __cdecl WindowCommand(int argc, const char** argv, void*)
+{
+    HWND const window = static_cast<HWND>(Render::Window());
+    const char* const what = argc > 1 ? argv[1] : "";
+
+    if (window == nullptr)
+    {
+        Console::Print("window: the game has no window yet\n");
+        return;
+    }
+
+    if (strcmp(what, "full") == 0)
+    {
+        const int wide = GetSystemMetrics(SM_CXSCREEN);
+        const int tall = GetSystemMetrics(SM_CYSCREEN);
+
+        SetWindowLongPtrA(window, GWL_STYLE, WS_POPUP | WS_VISIBLE);
+        SetWindowPos(window, HWND_TOP, 0, 0, wide, tall, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+        Console::Printf("window: borderless over %dx%d\n", wide, tall);
+    }
+    else if (strcmp(what, "windowed") == 0)
+    {
+        const int wide = argc > 2 ? atoi(argv[2]) : 800;
+        const int tall = argc > 3 ? atoi(argv[3]) : 600;
+
+        SetWindowLongPtrA(window, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+        SetWindowPos(window, HWND_TOP, 60, 60, wide, tall, SWP_FRAMECHANGED | SWP_SHOWWINDOW);
+        Console::Printf("window: %dx%d with a frame, and it can be dragged by its edges\n",
+            wide, tall);
+    }
+    else if (strcmp(what, "cursor") == 0)
+    {
+        const int show = argc > 2 ? atoi(argv[2]) : 1;
+
+        Console::Printf("window: the system cursor is %s\n", !Input::ShowSystemCursor(show)
+            ? "refused" : show < 0 ? "the game's again" : show != 0 ? "shown" : "hidden");
+    }
+    else if (strcmp(what, "sound") == 0 && argc > 2)
+    {
+        const AmodSoundId sound = Sound::Load(argv[2]);
+
+        Console::Printf("window: '%s' %s\n", argv[2],
+            sound == AMOD_INVALID_SOUND ? "would not load"
+                : Sound::Play(sound) ? "is playing" : "loaded but would not play");
     }
     else
     {
-        Console::Printf("keys: '%s' is no command of the game's\n", argv[3]);
+        RECT box = {};
+        GetWindowRect(window, &box);
+
+        Console::Printf("window: %ld x %ld at %ld,%ld\n", box.right - box.left,
+            box.bottom - box.top, box.left, box.top);
+        Console::Print("window, 'window full', 'window windowed [w] [h]',\n");
+        Console::Print("        'window cursor [1|0|-1]', 'window sound <path.wav>'\n");
     }
 }
 
-void BindCvarTo(int argc, const char** argv)
+void __cdecl StageCommand(int argc, const char** argv, void*)
 {
-    if (argc < 4)
+    const char* const what = argc > 1 ? argv[1] : "";
+
+    if (strcmp(what, "give") == 0)
     {
-        Console::Print("keys cvar <key> <cvar> [held]\n");
+        Stage::GiveBack(AMOD_STAGE_ALL);
+        Stage::TakeInput(false);
+        g_holdsShell = false;
+        Render::CancelFrame(g_overlay);
+        g_overlay = 0;
+
+        Console::Printf("stage: the game has its frame back after %.1fs and %d frame(s)\n",
+            g_seconds, g_frames);
         return;
     }
 
-    const int key = Input::FindKey(argv[2]);
-
-    if (key < 0)
+    if (strcmp(what, "take") == 0 || strcmp(what, "over") == 0 || strcmp(what, "all") == 0)
     {
-        Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
+        g_withWorld = strcmp(what, "over") == 0;
+        g_seconds = 0.0f;
+        g_frames = 0;
+
+        if (!Stage::TakeUpdate(&StageUpdate) || !Stage::TakeRender(&StageRender))
+        {
+            Console::Print("stage: refused - something else holds the frame\n");
+            Stage::GiveBack();
+            return;
+        }
+
+        if (g_overlay == 0)
+        {
+            g_overlay = Render::OnFrame(&StageOverlay);
+        }
+
+        g_holdsInput = Stage::TakeInput(!g_withWorld);
+
+        g_holdsShell = strcmp(what, "all") == 0 && Stage::TakeShell(&StageShell);
+
+        Console::Printf("stage: the mod runs the world%s%s\n",
+            g_withWorld ? ", and the game runs under it" : " and draws its own",
+            g_holdsShell ? ", and the shell with it" : "");
         return;
     }
 
-    if (Input::BindCvar(key, argv[3], argc > 4 && atoi(argv[4]) != 0))
-    {
-        ShowKey(key);
-    }
-    else
-    {
-        Console::Printf("keys: '%s' is no variable of the game's\n", argv[3]);
-    }
-}
-
-int g_holdKey = -1;
-int g_holdFrames = 0;
-
-void __cdecl KeysCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        ListKeys(false);
-        return;
-    }
-
-    const char* const what = argv[1];
-
-    if (strcmp(what, "all") == 0)
-    {
-        ListKeys(true);
-    }
-    else if (strcmp(what, "bind") == 0)
-    {
-        BindCommandTo(argc, argv);
-    }
-    else if (strcmp(what, "cvar") == 0)
-    {
-        BindCvarTo(argc, argv);
-    }
-    else if (strcmp(what, "keep") == 0 && argc > 2)
-    {
-        const int key = Input::FindKey(argv[2]);
-
-        if (key < 0)
-        {
-            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
-            return;
-        }
-
-        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        const char* const how = !Input::Keep(key, keep, seal) ? "refused"
-                              : !keep ? "is not kept any more"
-                              : seal ? "is kept for next time, sealed"
-                              : "is kept for next time";
-
-        Console::Printf("keys: '%s' %s\n", argv[2], how);
-    }
-    else if ((strcmp(what, "press") == 0 || strcmp(what, "hold") == 0) && argc > 2)
-    {
-        const int key = Input::FindKey(argv[2]);
-
-        if (key < 0)
-        {
-            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
-            return;
-        }
-
-        if (strcmp(what, "press") == 0)
-        {
-            Console::Printf("keys: '%s' %s\n", argv[2],
-                Input::Press(key) ? "pressed once" : "refused");
-            return;
-        }
-
-        // Held for a while by default, so a hold cannot be left on by accident.
-        const int frames = argc > 3 ? atoi(argv[3]) : 60;
-        const bool alone = argc > 4 && atoi(argv[4]) != 0;
-
-        if (frames == 0)
-        {
-            g_holdKey = -1;
-            Console::Printf("keys: '%s' %s\n", argv[2],
-                Input::Hold(key, false) ? "let go" : "refused");
-            return;
-        }
-
-        if (!Input::Hold(key, true, alone))
-        {
-            Console::Printf("keys: '%s' refused\n", argv[2]);
-            return;
-        }
-
-        g_holdKey = key;
-        g_holdFrames = frames;
-        Console::Printf("keys: '%s' held down for %d frame(s)%s\n", argv[2], frames,
-            alone ? ", and the player's own keys are ignored" : "");
-    }
-    else if (strcmp(what, "unbind") == 0 && argc > 2)
-    {
-        const int key = Input::FindKey(argv[2]);
-
-        if (key < 0)
-        {
-            Console::Printf("keys: the game knows no key called '%s'\n", argv[2]);
-            return;
-        }
-
-        Console::Printf("keys: '%s' %s\n", argv[2],
-            Input::Unbind(key) ? "bound to nothing now" : "refused");
-    }
-    else
-    {
-        const int key = Input::FindKey(what);
-
-        if (key >= 0)
-        {
-            ShowKey(key);
-            return;
-        }
-
-        Console::Print("keys, 'keys all', 'keys <name>', 'keys unbind <name>',\n");
-        Console::Print("      'keys keep <name> [0|1] [seal]',\n");
-        Console::Print("      'keys press <name>', 'keys hold <name> [frames] [alone]',\n");
-        Console::Print("      'keys bind <name> <command> [held] [parameters...]',\n");
-        Console::Print("      'keys cvar <name> <cvar> [held]'\n");
-    }
-}
-
-void __cdecl FreezeCommand(int argc, const char** argv, void*)
-{
-    const bool wanted = argc > 1 ? atoi(argv[1]) != 0 : !World::IsPaused();
-
-    if (!World::SetPaused(wanted))
-    {
-        Console::Print("freeze: refused\n");
-        return;
-    }
-
-    Console::Printf("freeze: the world is %s - a key press starts it again\n",
-        World::IsPaused() ? "stopped" : "running");
-}
-
-void ShowMaterials(AmodModelId model, const char* name)
-{
-    const int count = Mmd::MaterialCount(model);
-
-    if (count == 0)
-    {
-        Console::Printf("mtl: '%s' has no materials, so the game draws it whole\n", name);
-        return;
-    }
-
-    Console::Printf("mtl: '%s' has %d material(s)\n", name, count);
-
-    for (int i = 0; i < count; ++i)
-    {
-        AmodModelMaterial material = {};
-
-        if (Mmd::GetMaterial(model, i, &material))
-        {
-            AmodTexture texture = {};
-            const bool known = Textures::Get(material.texture, texture);
-
-            Console::Printf("  %d  from index %d, %d triangle(s), texture %s\n", i,
-                material.firstIndex, material.primitiveCount,
-                known && texture.name != nullptr ? texture.name : "(none)");
-        }
-    }
-}
-
-void ListModels()
-{
-    const int count = Mmd::Count();
-
-    if (count == 0)
-    {
-        Console::Print("mtl: no models are loaded - start a level first\n");
-        return;
-    }
-
-    Console::Printf("mtl: %d model(s) loaded\n", count);
-
-    for (int i = 0; i < count; ++i)
-    {
-        const AmodModelId model = Mmd::At(i);
-        AmodModel info = {};
-
-        if (!Mmd::Get(model, info))
-        {
-            continue;
-        }
-
-        Console::Printf("  %-28s %d frame(s)  %d verts  %d prims  %d material(s)\n",
-            info.name != nullptr ? info.name : "?", info.frameCount, info.vertexCount,
-            info.primitiveCount, Mmd::MaterialCount(model));
-    }
-
-    Console::Print("mtl: 'mtl split <model> <texture> [texture]' cuts one in two\n");
-}
-
-void SplitModel(int argc, const char** argv)
-{
-    if (argc < 4)
-    {
-        Console::Print("mtl split <model> <textureA> [textureB]\n");
-        return;
-    }
-
-    const AmodModelId model = Mmd::Find(argv[2]);
     AmodModel info = {};
+    const bool known = g_model != AMOD_INVALID_MODEL && Mmd::Get(g_model, info);
 
-    if (model == AMOD_INVALID_MODEL || !Mmd::Get(model, info))
-    {
-        Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
-        return;
-    }
-
-    const int primitives = info.primitiveCount > 0 ? info.primitiveCount : info.indexCount / 3;
-
-    if (primitives < 2)
-    {
-        Console::Printf("mtl: '%s' has %d triangle(s), too few to cut\n", argv[2], primitives);
-        return;
-    }
-
-    const uint32_t first = Mmd::Texture(argv[3]);
-    const uint32_t second = argc > 4 ? Mmd::Texture(argv[4]) : 0;
-
-    if (first == 0)
-    {
-        Console::Printf("mtl: the game has no texture called '%s'\n", argv[3]);
-        return;
-    }
-    if (argc > 4 && second == 0)
-    {
-        Console::Printf("mtl: the game has no texture called '%s'\n", argv[4]);
-        return;
-    }
-
-    const int half = primitives / 2;
-
-    Mmd::ClearMaterials(model);
-    Mmd::AddMaterial(model, 0, half, first);
-    Mmd::AddMaterial(model, half * 3, primitives - half, second != 0 ? second : first);
-
-    ShowMaterials(model, argv[2]);
+    Console::Printf("stage: the frame is %s, %.1fs and %d frame(s) counted\n",
+        Stage::IsTaken() ? "held by a mod" : "the game's", g_seconds, g_frames);
+    Console::Printf("       input %s, shell %s\n",
+        g_holdsInput ? "held by the mod" : "the game's",
+        g_holdsShell ? "held by the mod" : "the game's");
+    Console::Printf("       boot step %s\n",
+        g_holdsLoad ? "held by the mod" : "the game's");
+    Console::Printf("       drawing '%s' of %d model(s), texture %u of %d\n",
+        known && info.name != nullptr ? info.name : "nothing yet", Mmd::Count(),
+        g_texture, Textures::Count());
+    Console::Print("stage, 'stage take' the mod's own world, 'stage over' the game under it,\n");
+    Console::Print("       'stage all' the shell too - no menus and no game states,\n");
+    Console::Print("       'stage give' hands the frame back\n");
+    Console::Print("stage: the game boots as itself - nothing is taken over until it is\n");
+    Console::Print("       asked for, and nothing stays taken after 'stage give'\n");
 }
 
-void AddOneMaterial(int argc, const char** argv)
+void __cdecl QuadField(const AmodFrame*, void*)
 {
-    if (argc < 6)
+    static AmodQuad* field = nullptr;
+    static int held = 0;
+
+    if (g_quads <= 0)
     {
-        Console::Print("mtl add <model> <firstIndex> <triangles> <texture>\n");
         return;
     }
 
-    const AmodModelId model = Mmd::Find(argv[2]);
-
-    if (model == AMOD_INVALID_MODEL)
+    if (held < g_quads)
     {
-        Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
+        free(field);
+        field = static_cast<AmodQuad*>(malloc(sizeof(AmodQuad) * g_quads));
+        held = field != nullptr ? g_quads : 0;
+    }
+
+    if (field == nullptr)
+    {
         return;
     }
 
-    const uint32_t texture = Mmd::Texture(argv[5]);
-
-    if (texture == 0)
+    for (int at = 0; at < g_quads; ++at)
     {
-        Console::Printf("mtl: the game has no texture called '%s'\n", argv[5]);
-        return;
+        const float drift = g_seconds * (20.0f + (at % 5) * 9.0f) + at * 37.0f;
+
+        field[at].x = fmodf(drift, AMOD_MENU_WIDE);
+        field[at].y = fmodf(at * 53.0f + g_seconds * 8.0f, AMOD_MENU_TALL);
+        field[at].w = 18.0f;
+        field[at].h = 18.0f;
+        field[at].angle = g_seconds * (0.6f + (at % 7) * 0.2f) + at;
+        field[at].u0 = 0.0f;
+        field[at].v0 = 0.0f;
+        field[at].u1 = 1.0f;
+        field[at].v1 = 1.0f;
+        field[at].colour = 0xC0FFFFFF - static_cast<uint32_t>((at % 5) * 0x00201008);
     }
 
-    const int added = Mmd::AddMaterial(model, atoi(argv[3]), atoi(argv[4]), texture);
-
-    Console::Printf("mtl: material %d %s\n", added, added >= 0 ? "added" : "refused");
-    ShowMaterials(model, argv[2]);
+    Render::Quads(g_sheet, field, g_quads);
 }
 
-void __cdecl MaterialCommand(int argc, const char** argv, void*)
+void __cdecl QuadsCommand(int argc, const char** argv, void*)
 {
-    if (argc < 2)
+    if (argc > 1)
     {
-        ListModels();
-        return;
+        g_quads = strcmp(argv[1], "off") == 0 ? 0 : atoi(argv[1]);
+        g_quads = g_quads < 0 ? 0 : g_quads;
     }
 
-    const char* const what = argv[1];
-
-    if (strcmp(what, "split") == 0)
+    if (g_quads > 0 && g_quadsToken == 0)
     {
-        SplitModel(argc, argv);
+        g_quadsToken = Render::OnFrame(&QuadField);
     }
-    else if (strcmp(what, "add") == 0)
-    {
-        AddOneMaterial(argc, argv);
-    }
-    else if (strcmp(what, "clear") == 0 && argc > 2)
-    {
-        const AmodModelId model = Mmd::Find(argv[2]);
 
-        Console::Printf("mtl: '%s' %s\n", argv[2],
-            model != AMOD_INVALID_MODEL && Mmd::ClearMaterials(model)
-                ? "draws whole again" : "was not found");
-    }
-    else if (strcmp(what, "save") == 0 && argc > 3)
-    {
-        const AmodModelId model = Mmd::Find(argv[2]);
+    Console::Printf("quads: %d a frame, in one draw, off texture %u\n", g_quads, g_sheet);
+    Console::Print("quads: 'quads <count>' to ask for that many, 'quads off' to stop\n");
 
-        if (model == AMOD_INVALID_MODEL)
+    if (g_sheet == AMOD_INVALID_TEXTURE)
+    {
+        Console::Print("quads: no texture yet - they are drawn in plain colour until 'stage take'\n");
+    }
+}
+
+void __cdecl ModelsCommand(int argc, const char** argv, void*)
+{
+    if (argc > 1)
+    {
+        int side = 1;
+
+        g_models = strcmp(argv[1], "off") == 0 ? 0 : atoi(argv[1]);
+        g_models = g_models < 0 ? 0 : g_models;
+
+        while (side * side < g_models)
         {
-            Console::Printf("mtl: no model called '%s' is loaded\n", argv[2]);
+            ++side;
+        }
+
+        // Far enough back that the whole field is in front of the camera.
+        g_reach = side * 2.0f + 2.0f;
+        g_spent = 0.0f;
+        g_counted = 0;
+        g_slowest = 0.0f;
+        g_drawn = 0;
+    }
+
+    const float average = g_counted > 0 ? g_spent / g_counted : 0.0f;
+
+    Console::Printf("models: %d asked for, %d drawn in one list\n", g_models, g_drawn);
+    Console::Printf("        %.2f ms a frame over %d frame(s), worst %.2f ms\n",
+        average * 1000.0f, g_counted, g_slowest * 1000.0f);
+    Console::Print("models: 'models <count>' draws that many cubes, 'models off' stops.\n");
+    Console::Print("        The frame has to be the mod's: 'stage take' first, or nothing counts\n");
+}
+
+void __cdecl AzmCommand(int argc, const char** argv, void*)
+{
+    const char* const what = argc > 1 ? argv[1] : "";
+
+    if (strcmp(what, "off") == 0)
+    {
+        Azm::Release(g_car);
+        g_car = AMOD_INVALID_AZM;
+        g_wheelCount = 0;
+        Console::Print("azm: put down\n");
+        return;
+    }
+
+    if (strcmp(what, "tint") == 0)
+    {
+        const uint32_t colour = argc > 2 ? (0xFF000000u | strtoul(argv[2], nullptr, 16))
+                                         : 0xFFFFFFFFu;
+
+        if (!Azm::SetTint(g_car, colour))
+        {
+            Console::Print("azm: nothing loaded to tint\n");
             return;
         }
 
-        Console::Printf("mtl: '%s' -> '%s' %s, %d material(s) went with it\n", argv[2], argv[3],
-            Mmd::Save(model, argv[3]) ? "written" : "refused", Mmd::MaterialCount(model));
-    }
-    else if (strcmp(what, "load") == 0 && argc > 2)
-    {
-        const AmodModelId model = Mmd::Load(argv[2]);
-
-        if (model == AMOD_INVALID_MODEL)
-        {
-            Console::Printf("mtl: '%s' would not load\n", argv[2]);
-            return;
-        }
-
-        ShowMaterials(model, argv[2]);
-    }
-    else
-    {
-        const AmodModelId model = Mmd::Find(what);
-
-        if (model != AMOD_INVALID_MODEL)
-        {
-            ShowMaterials(model, what);
-            return;
-        }
-
-        Console::Print("mtl, 'mtl <model>', 'mtl split <model> <texA> [texB]',\n");
-        Console::Print("     'mtl add <model> <firstIndex> <triangles> <texture>',\n");
-        Console::Print("     'mtl clear <model>', 'mtl save <model> <path>', 'mtl load <path>'\n");
-    }
-}
-
-// An atlas with real letters on it, drawn by Windows: no art file, and any face on the machine.
-const char* const kFontChars =
-    " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_"
-    "`abcdefghijklmnopqrstuvwxyz{|}~";
-
-AmodFontId g_blockFont = AMOD_FONT_NONE;
-AmodTextureId g_blockAtlas = AMOD_INVALID_TEXTURE;
-AmodToken g_fontDraw = 0;
-char g_fontText[64] = "AZFORGE 0123";
-
-// White letters, alpha carrying the shape - so the draw colour tints them and the paper is gone.
-bool MakeLetters(const char* face, int size)
-{
-    const int count = static_cast<int>(strlen(kFontChars));
-    const int columns = 16;
-    const int rows = (count + columns - 1) / columns;
-    const int cell = size + size / 2 + 4;
-    const int wide = columns * cell;
-    const int tall = rows * cell;
-
-    BITMAPINFO shape = {};
-    shape.bmiHeader.biSize = sizeof(shape.bmiHeader);
-    shape.bmiHeader.biWidth = wide;
-    shape.bmiHeader.biHeight = -tall;   // top down, the way a texture is read
-    shape.bmiHeader.biPlanes = 1;
-    shape.bmiHeader.biBitCount = 32;
-    shape.bmiHeader.biCompression = BI_RGB;
-
-    void* drawn = nullptr;
-    const HDC paper = CreateCompatibleDC(nullptr);
-    const HBITMAP bitmap = CreateDIBSection(paper, &shape, DIB_RGB_COLORS, &drawn, nullptr, 0);
-    const HFONT font = CreateFontA(-size, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET,
-        OUT_DEFAULT_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, DEFAULT_PITCH, face);
-
-    if (paper == nullptr || bitmap == nullptr || font == nullptr || drawn == nullptr)
-    {
-        Console::Print("font: Windows would not make the bitmap\n");
-        return false;
-    }
-
-    SelectObject(paper, bitmap);
-    SelectObject(paper, font);
-    SetBkMode(paper, TRANSPARENT);
-    SetTextColor(paper, RGB(255, 255, 255));
-
-    unsigned char* const pixels = static_cast<unsigned char*>(malloc(static_cast<size_t>(wide) * tall * 4));
-
-    if (pixels == nullptr)
-    {
-        DeleteObject(bitmap);
-        DeleteObject(font);
-        DeleteDC(paper);
-        return false;
-    }
-
-    for (int i = 0; i < count; ++i)
-    {
-        TextOutA(paper, (i % columns) * cell, (i / columns) * cell, kFontChars + i, 1);
-    }
-
-    GdiFlush();
-
-    // GDI wrote grey on black; the texture wants R, G, B and the fourth byte as the alpha.
-    const unsigned char* const source = static_cast<const unsigned char*>(drawn);
-
-    for (int at = 0; at < wide * tall; ++at)
-    {
-        const unsigned char ink = source[at * 4 + 2];
-
-        pixels[at * 4 + 0] = 255;
-        pixels[at * 4 + 1] = 255;
-        pixels[at * 4 + 2] = 255;
-        pixels[at * 4 + 3] = ink;
-    }
-
-    g_blockAtlas = Textures::Create(wide, tall, pixels, false, true);
-    g_blockFont = SpriteFont::Create(face);
-
-    if (g_blockAtlas != AMOD_INVALID_TEXTURE && g_blockFont != AMOD_FONT_NONE)
-    {
-        // Each letter keeps the width the face gives it, so the text is not laid out on a grid.
-        for (int i = 0; i < count; ++i)
-        {
-            SIZE step = {};
-            GetTextExtentPoint32A(paper, kFontChars + i, 1, &step);
-
-            SpriteFont::SetGlyph(g_blockFont, static_cast<unsigned char>(kFontChars[i]), g_blockAtlas,
-                static_cast<float>((i % columns) * cell), static_cast<float>((i / columns) * cell),
-                static_cast<float>(step.cx), static_cast<float>(cell), 1.0f);
-        }
-    }
-
-    free(pixels);
-    DeleteObject(bitmap);
-    DeleteObject(font);
-    DeleteDC(paper);
-
-    if (g_blockAtlas == AMOD_INVALID_TEXTURE || g_blockFont == AMOD_FONT_NONE)
-    {
-        Console::Print("font: the atlas or the font was refused\n");
-        return false;
-    }
-
-    return true;
-}
-
-bool MakeBlockFont()
-{
-    return g_blockFont != AMOD_FONT_NONE || MakeLetters("Trebuchet MS", 18);
-}
-
-void __cdecl DrawFontSample(const AmodFrame*, void*)
-{
-    SpriteFont::Draw(g_blockFont, AMOD_MENU_WIDE * 0.5f, 80.0f, g_fontText, 1.0f, 0xFFFFFFFF,
-        AMOD_FONT_CENTRE);
-}
-
-void __cdecl FontCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        const int count = SpriteFont::GameFontCount();
-
-        for (int i = 0; i < count; ++i)
-        {
-            Console::Printf("  %s\n", SpriteFont::GameFontName(i));
-        }
-
-        Console::Printf("font: %d font(s) the game draws with\n", count);
-        Console::Print("font, 'font show <text>', 'font hide', 'font measure <text>',\n");
-        Console::Print("      'font swap <gamefont>', 'font restore <gamefont>',\n");
-        Console::Print("      'font save <path.png>', 'font file <path> [cell]'\n");
+        Console::Printf("azm: tinted %06X - the model's own colours show through it\n",
+            colour & 0xFFFFFF);
+        Console::Print("azm: 'azm tint' with no colour puts it back\n");
         return;
     }
 
-    if (strcmp(argv[1], "show") == 0 && argc > 2)
+    if (strcmp(what, "paint") == 0 && argc > 2)
     {
-        if (!MakeBlockFont())
+        AmodAzmModel model = {};
+
+        if (!Azm::Get(g_car, model))
         {
+            Console::Print("azm: nothing loaded to paint\n");
             return;
         }
 
-        snprintf(g_fontText, sizeof(g_fontText), "%s", argv[2]);
+        const uint32_t colour = 0xFF000000 | strtoul(argv[2], nullptr, 16);
 
-        if (g_fontDraw == 0)
+        for (int at = 0; at < model.materialCount; ++at)
         {
-            g_fontDraw = Render::OnFrame(&DrawFontSample);
+            AmodAzmMaterial material = {};
+
+            if (Azm::GetMaterial(g_car, at, material) && (material.flags & AZM_MATERIAL_PAINTABLE))
+            {
+                Console::Printf("azm: '%s' repainted %06X\n", material.name, colour & 0xFFFFFF);
+                Azm::Paint(g_car, at, colour);
+            }
         }
+        return;
+    }
 
-        Console::Printf("font: '%s' is drawn at the top, %g wide\n", g_fontText,
-            SpriteFont::Measure(g_blockFont, g_fontText));
-    }
-    else if (strcmp(argv[1], "hide") == 0)
+    if (what[0] != '\0' && strcmp(what, "info") != 0)
     {
-        Render::Cancel(g_fontDraw);
-        g_fontDraw = 0;
-        Console::Print("font: not drawn any more\n");
-    }
-    else if (strcmp(argv[1], "measure") == 0 && argc > 2)
-    {
-        const AmodFontId game = SpriteFont::FromGame(argc > 3 ? argv[3] : "");
+        Azm::Release(g_car);
+        g_wheelCount = 0;
+        g_car = Azm::Load(what);
 
-        Console::Printf("font: '%s' is %g wide, the line is %g tall\n", argv[2],
-            SpriteFont::Measure(game, argv[2]), SpriteFont::LineHeight(game));
-    }
-    else if (strcmp(argv[1], "swap") == 0 && argc > 2)
-    {
-        if (!MakeBlockFont())
+        if (g_car == AMOD_INVALID_AZM)
         {
+            Console::Printf("azm: '%s' would not load - forge.log says why\n", what);
             return;
         }
 
-        Console::Printf("font: '%s' %s\n", argv[2],
-            SpriteFont::Replace(argv[2], g_blockFont) ? "is drawn in blocks now" : "was refused");
-    }
-    else if (strcmp(argv[1], "file") == 0 && argc > 2)
-    {
-        // Nothing about a font cares where its atlas came from: this one is read off the disk.
-        const float cell = argc > 3 ? static_cast<float>(atof(argv[3])) : 31.0f;
-        const AmodTextureId atlas = Textures::Load(argv[2], false, true);
+        AmodAzmModel model = {};
+        Azm::Get(g_car, model);
 
-        if (atlas == AMOD_INVALID_TEXTURE)
+        // Whatever the file calls a wheel turns; nothing else does.
+        for (int at = 0; at < model.partCount && g_wheelCount < 8; ++at)
         {
-            Console::Printf("font: '%s' would not read\n", argv[2]);
-            return;
+            AmodAzmPart part = {};
+
+            if (Azm::GetPart(g_car, at, part) && strncmp(part.name, "wheel", 5) == 0)
+            {
+                g_wheels[g_wheelCount++] = at;
+            }
         }
 
-        const AmodFontId read = SpriteFont::Create(argv[2]);
-        const int placed = SpriteFont::SetGrid(read, atlas, kFontChars, cell, cell, 1.0f);
+        // The camera has to stand back far enough to see the whole of it.
+        const float across = model.boundsMax[0] - model.boundsMin[0];
+        const float tall = model.boundsMax[1] - model.boundsMin[1];
+        const float along = model.boundsMax[2] - model.boundsMin[2];
+        const float widest = across > tall ? (across > along ? across : along) : (tall > along ? tall : along);
 
-        if (placed <= 0)
+        g_reach = widest * 1.8f + 1.0f;
+        g_models = 0;
+    }
+
+    AmodAzmModel model = {};
+
+    if (!Azm::Get(g_car, model))
+    {
+        Console::Print("azm: nothing loaded\n");
+        Console::Print("azm: 'azm <path.azm>' loads and draws one, 'azm off' puts it down,\n");
+        Console::Print("     'azm paint <rrggbb>' recolours every paintable material.\n");
+        Console::Print("     The frame has to be the mod's: 'stage take' first\n");
+        return;
+    }
+
+    Console::Printf("azm: '%s' from %s\n", model.name, model.path);
+    Console::Printf("     %d part(s) in %d mesh(es), %d material(s), %d triangle(s)\n",
+        model.partCount, model.meshCount, model.materialCount, model.triangleCount);
+    Console::Printf("     %d point(s), %d box(es), %g unit(s) a metre\n", model.pointCount,
+        model.boxCount, model.unitsPerMetre);
+    Console::Printf("     bounds %.2f %.2f %.2f .. %.2f %.2f %.2f\n", model.boundsMin[0],
+        model.boundsMin[1], model.boundsMin[2], model.boundsMax[0], model.boundsMax[1],
+        model.boundsMax[2]);
+
+    for (int at = 0; at < model.partCount; ++at)
+    {
+        AmodAzmPart part = {};
+
+        if (Azm::GetPart(g_car, at, part))
         {
-            Console::Printf("font: '%s' gave no glyphs at %g\n", argv[2], cell);
-            return;
-        }
-
-        g_blockFont = read;
-        Console::Printf("font: '%s' read, %d glyph(s) of %g\n", argv[2], placed, cell);
-    }
-    else if (strcmp(argv[1], "save") == 0 && argc > 2)
-    {
-        if (!MakeBlockFont())
-        {
-            return;
-        }
-
-        Console::Printf("font: the atlas %s '%s'\n",
-            Textures::Save(g_blockAtlas, argv[2]) ? "was written to" : "would not be written to",
-            argv[2]);
-    }
-    else if (strcmp(argv[1], "restore") == 0 && argc > 2)
-    {
-        Console::Printf("font: '%s' %s\n", argv[2],
-            SpriteFont::Restore(argv[2]) ? "is the game's own again" : "was refused");
-    }
-    else
-    {
-        Console::Print("font, 'font show <text>', 'font hide', 'font measure <text> [gamefont]',\n");
-        Console::Print("      'font swap <gamefont>', 'font restore <gamefont>',\n");
-        Console::Print("      'font save <path.png>', 'font file <path> [cell]'\n");
-    }
-}
-
-void __cdecl CvarCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        Console::Print("cfg <name> [value] [save] [seal], 'cfg keep <name> [0|1] [seal]'\n");
-        return;
-    }
-
-    if (strcmp(argv[1], "keep") == 0 && argc > 2)
-    {
-        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        const char* const how = !Config::Keep(argv[2], keep, seal) ? "refused"
-                              : !keep ? "is not kept any more"
-                              : seal ? "is kept for next time, sealed"
-                              : "is kept for next time";
-
-        Console::Printf("cfg: '%s' %s\n", argv[2], how);
-        return;
-    }
-
-    if (argc < 3)
-    {
-        Console::Printf("cfg: '%s' is %.4f\n", argv[1], Config::Number(argv[1]));
-        return;
-    }
-
-    const bool save = argc > 3 && atoi(argv[3]) != 0;
-    const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-    if (!Config::Set(argv[1], argv[2], save, seal))
-    {
-        Console::Printf("cfg: '%s' was refused\n", argv[1]);
-        return;
-    }
-
-    Console::Printf("cfg: '%s' is now '%s'%s\n", argv[1], argv[2],
-        !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
-}
-
-void ListScores()
-{
-    const int count = Scores::Count();
-
-    if (count == 0)
-    {
-        Console::Print("score: the table is empty\n");
-        return;
-    }
-
-    for (int i = 0; i < count; ++i)
-    {
-        AmodScoreEntry entry = {};
-
-        if (Scores::Get(i, entry))
-        {
-            Console::Printf("  %3d  %-16s %-28s %8.2f  %d\n", i,
-                entry.name != nullptr ? entry.name : "", entry.level != nullptr ? entry.level : "",
-                entry.time, entry.score);
+            Console::Printf("     part %d '%s' parent %d pivot %.2f %.2f %.2f\n", at, part.name,
+                part.parent, part.pivot[0], part.pivot[1], part.pivot[2]);
         }
     }
 
-    Console::Printf("score: %d entr(ies) across %d castle(s)\n", count, Scores::CastleCount());
-}
-
-void __cdecl ScoreCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        ListScores();
-        return;
-    }
-
-    if (strcmp(argv[1], "add") == 0 && argc > 5)
-    {
-        const bool save = argc > 6 && atoi(argv[6]) != 0;
-        const bool seal = argc > 7 && atoi(argv[7]) != 0;
-
-        const int at = Scores::Add(argv[2], argv[3], static_cast<float>(atof(argv[4])),
-            atoi(argv[5]), save, seal);
-
-        if (at < 0)
-        {
-            Console::Printf("score: '%s' would not take it\n", argv[2]);
-            return;
-        }
-
-        Console::Printf("score: entry %d added%s\n", at,
-            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
-    }
-    else if (strcmp(argv[1], "keep") == 0 && argc > 2)
-    {
-        const int at = atoi(argv[2]);
-        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        const char* const how = !Scores::Keep(at, keep, seal) ? "was refused"
-                              : !keep ? "is not kept any more"
-                              : seal ? "is kept for next time, sealed"
-                              : "is kept for next time";
-
-        Console::Printf("score: entry %d %s\n", at, how);
-    }
-    else if (strcmp(argv[1], "remove") == 0 && argc > 2)
-    {
-        const int at = atoi(argv[2]);
-
-        Console::Printf("score: entry %d %s\n", at,
-            Scores::Remove(at) ? "removed" : "was refused");
-    }
-    else
-    {
-        Console::Print("score, 'score add <level> <name> <time> <points> [save] [seal]',\n");
-        Console::Print("       'score keep <index> [0|1] [seal]', 'score remove <index>'\n");
-    }
-}
-
-void __cdecl PackCommand(int argc, const char** argv, void*)
-{
-    if (argc < 2)
-    {
-        const int count = Sav::Count();
-
-        for (int i = 0; i < count; ++i)
-        {
-            Console::Printf("  %s\n", Sav::NameAt(i));
-        }
-
-        Console::Printf("pack: %d level(s) open\n", count);
-        return;
-    }
-
-    if (strcmp(argv[1], "open") == 0 && argc > 2)
-    {
-        const bool save = argc > 3 && atoi(argv[3]) != 0;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        Console::Printf("pack: '%s' %s%s\n", argv[2],
-            Sav::Open(argv[2], save, seal) >= 0 ? "open" : "was refused",
-            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
-    }
-    else if (strcmp(argv[1], "close") == 0 && argc > 2)
-    {
-        const bool save = argc > 3 && atoi(argv[3]) != 0;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        Console::Printf("pack: '%s' %s%s\n", argv[2],
-            Sav::Close(argv[2], save, seal) ? "closed" : "was refused",
-            !save ? "" : seal ? ", and kept sealed for next time" : ", and kept for next time");
-    }
-    else if (strcmp(argv[1], "keep") == 0 && argc > 2)
-    {
-        const bool keep = argc > 3 ? atoi(argv[3]) != 0 : true;
-        const bool seal = argc > 4 && atoi(argv[4]) != 0;
-
-        const char* const how = !Sav::Keep(argv[2], keep, seal) ? "was refused"
-                              : !keep ? "is not kept any more"
-                              : seal ? "is kept for next time, sealed"
-                              : "is kept for next time";
-
-        Console::Printf("pack: '%s' %s\n", argv[2], how);
-    }
-    else
-    {
-        Console::Print("pack, 'pack open <level> [save] [seal]', 'pack close <level> [save] [seal]',\n");
-        Console::Print("      'pack keep <level> [0|1] [seal]'\n");
-    }
+    Console::Printf("     %d wheel(s) turning\n", g_wheelCount);
 }
 
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
@@ -868,23 +610,20 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
         return AMOD_ERROR_API_VERSION;
     }
 
-    Console::AddCommand("keys", &KeysCommand);
-    Console::AddCommand("freeze", &FreezeCommand);
-    Console::AddCommand("mtl", &MaterialCommand);
-    Console::AddCommand("cfg", &CvarCommand);
-    Console::AddCommand("score", &ScoreCommand);
-    Console::AddCommand("pack", &PackCommand);
-    Console::AddCommand("font", &FontCommand);
+    Console::AddCommand("stage", &StageCommand);
+    Console::AddCommand("window", &WindowCommand);
+    Console::AddCommand("quads", &QuadsCommand);
+    Console::AddCommand("models", &ModelsCommand);
+    Console::AddCommand("azm", &AzmCommand);
+
+    Launcher::Skip(true);
+    g_holdsLoad = Stage::TakeLoad(&StageLoad);
+
     return AMOD_OK;
 }
 
 AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame*)
 {
-    if (g_holdFrames > 0 && --g_holdFrames == 0 && g_holdKey >= 0)
-    {
-        Input::Hold(g_holdKey, false);
-        g_holdKey = -1;
-    }
 }
 
 AMOD_EXPORT void __cdecl AmodShutdown(void)

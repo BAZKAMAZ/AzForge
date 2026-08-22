@@ -6,6 +6,65 @@ namespace Forge
 {
     namespace GameAddress
     {
+        // Render matrices and device state slots.
+        constexpr uintptr_t kRenderSetProjection = 0x48; // D3DTS_PROJECTION
+        constexpr uintptr_t kRenderSetView = 0x4C; // D3DTS_VIEW
+        constexpr uintptr_t kRenderSetWorld = 0x50; // D3DTS_WORLD
+        constexpr uintptr_t kDeviceClear = 0x90; // IDirect3DDevice8::Clear, slot 36
+        constexpr uintptr_t kDeviceSetRenderState = 0xC8; // slot 50
+        constexpr uintptr_t kDeviceGetRenderState = 0xCC; // slot 51
+        constexpr uintptr_t kDeviceSetTexture = 0xF4; // slot 61
+        constexpr uintptr_t kDeviceGetStageState = 0xF8; // slot 62
+        constexpr uintptr_t kDeviceSetStageState = 0xFC; // slot 63
+
+        // Texture tinting.
+        constexpr uint32_t kStateTextureFactor = 60; // D3DRS_TEXTUREFACTOR
+        constexpr uint32_t kStateDepthWrite = 14; // D3DRS_ZWRITEENABLE
+
+        // Fixed-function lighting.
+        constexpr uintptr_t kDeviceSetMaterial = 0xA8; // slot 42
+        constexpr uintptr_t kDeviceSetLight = 0xB0; // slot 44
+        constexpr uintptr_t kDeviceLightEnable = 0xB8; // slot 46
+        constexpr uint32_t kStateLighting = 137; // D3DRS_LIGHTING
+        constexpr uint32_t kStateAmbient = 139; // D3DRS_AMBIENT
+        constexpr uint32_t kStateColourVertex = 141; // D3DRS_COLORVERTEX
+        constexpr uint32_t kStateDiffuseSource = 145; // D3DRS_DIFFUSEMATERIALSOURCE
+        constexpr uint32_t kStateAmbientSource = 148; // D3DRS_AMBIENTMATERIALSOURCE
+        constexpr uint32_t kStateSpecular = 29; // D3DRS_SPECULARENABLE
+        constexpr uint32_t kSourceVertexColour = 1; // D3DMCS_COLOR1
+        constexpr uint32_t kLightPoint = 1; // D3DLIGHT_POINT
+        constexpr uint32_t kLightDirectional = 3; // D3DLIGHT_DIRECTIONAL
+        constexpr int kLightsAtOnce = 8;
+        constexpr uint32_t kStageColourOp = 1; // D3DTSS_COLOROP
+        constexpr uint32_t kStageColourArg1 = 2;
+        constexpr uint32_t kStageColourArg2 = 3;
+        constexpr uint32_t kStageAlphaOp = 4;
+        constexpr uint32_t kStageAlphaArg1 = 5;
+        constexpr uint32_t kOpDisable = 1; // D3DTOP_DISABLE
+        constexpr uint32_t kOpSelectArg1 = 2;
+        constexpr uint32_t kOpModulate = 4;
+        constexpr uint32_t kArgCurrent = 1; // D3DTA_CURRENT
+        constexpr uint32_t kArgTexture = 2; // D3DTA_TEXTURE
+        constexpr uint32_t kArgTextureFactor = 3; // D3DTA_TFACTOR
+        constexpr uintptr_t kDeviceDrawPrimitiveUP = 0x120; // slot 72
+        constexpr uintptr_t kDeviceSetVertexShader = 0x130; // slot 76
+
+        // Render manager state.
+        constexpr uintptr_t kRenderManagerVtable = 0x004D9DBC;
+        constexpr uintptr_t kRenderDrawQuad = 0x6C;
+
+        // Scene sprite state block.
+        constexpr uintptr_t kSceneSpriteStatesOffset = 0x11198;
+
+        // Render state blocks.
+        constexpr uintptr_t kRenderDrawSprite2D = 0x5C; // x, y, w, h, u0, v0, u1, v1
+        constexpr uintptr_t kRenderSetColour = 0x18;
+        constexpr uintptr_t kRenderSetTexture = 0x28;
+        constexpr uintptr_t kRenderApplyStates = 0x38; // manager vtable
+        constexpr uintptr_t kRenderSetLighting = 0x8C; // D3DRS_LIGHTING
+        constexpr uintptr_t kSceneModelStatesOffset = 0x11180;
+
+        // Game fonts.
         constexpr uintptr_t kSystemFont = 0x00503598;
         constexpr uintptr_t kMenuFindFont = 0x00444380; // __cdecl (const char* name) -> font
 
@@ -56,6 +115,9 @@ namespace Forge
         constexpr uintptr_t kMusic = 0x005028A8;
         constexpr uintptr_t kMusicPlayFile = 0x004028C0;    // __thiscall (music, path, fade, loop)
         constexpr uintptr_t kMusicStopAll = 0x00402620;     // __cdecl ()
+
+        // App_UpdateFrame ends with this, so a mod that took the update owes the music its tick.
+        constexpr uintptr_t kMusicTick = 0x004028A0;        // __fastcall (music)
         constexpr uintptr_t kMusicSlotStride = 0x114;
         constexpr uintptr_t kMusicNameOffset = 0x0D;
         constexpr uintptr_t kMusicStreamOffset = 0x110;
@@ -116,7 +178,7 @@ namespace Forge
         constexpr uintptr_t kVertexRecordIndexCountOffset = 0x20;
         constexpr uintptr_t kVertexRecordKindOffset = 0x34; // 0 triangles, 1 strip, 2 lines
 
-        // D3DFVF_XYZ | NORMAL | DIFFUSE | TEX1: position, normal, colour, uv - 0x24 bytes.
+        /* Model vertex format: position, normal, colour and UV. */
         constexpr uint32_t kModelVertexFvf = 0x152;
         constexpr uint32_t kModelVertexStride = 0x24;
 
@@ -203,6 +265,8 @@ namespace Forge
         constexpr uintptr_t kScene = 0x00505AA8;
         constexpr uintptr_t kSceneDrawListOffset = 0x00004; // items, stride 0x7C
         constexpr uintptr_t kSceneDrawCountOffset = 0x00F84;
+
+        // Scene_QueueModel 0x0040a330 drops the thirty-third item without a word, and
         constexpr size_t kSceneDrawCapacity = 0x20;
         constexpr uintptr_t kSceneViewOffset = 0x111A8; // both are 4x4 floats
         constexpr uintptr_t kSceneProjectionOffset = 0x111E8;

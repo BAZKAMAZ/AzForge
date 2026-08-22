@@ -23,6 +23,9 @@ namespace Forge
 
         static void*                                                AnimationFor(AmodAnimationId id);
 
+        static void                                                 EnterDraw();
+        static void                                                 LeaveDraw();
+
         static void                                                 ForgetMod(ModContext* owner);
     };
 }

@@ -88,6 +88,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="sdk\include\AzmApi.h" />
+    <ClInclude Include="sdk\include\AzmFile.h" />
     <ClInclude Include="sdk\include\BlockExpressionApi.h" />
     <ClInclude Include="sdk\include\BonusesApi.h" />
     <ClInclude Include="sdk\include\BoxMenuApi.h" />
@@ -107,6 +109,7 @@
     <ClInclude Include="sdk\include\RenderApi.h" />
     <ClInclude Include="sdk\include\WorldApi.h" />
     <ClInclude Include="sdk\include\SpriteFontApi.h" />
+    <ClInclude Include="sdk\include\StageApi.h" />
     <ClInclude Include="sdk\include\InteropApi.h" />
     <ClInclude Include="sdk\include\HudApi.h" />
     <ClInclude Include="sdk\include\InventoryApi.h" />
@@ -119,8 +122,10 @@
     <ClInclude Include="src\Api\Placement.h" />
     <ClInclude Include="src\Api\RenderApi.h" />
     <ClInclude Include="src\Api\SpriteFontApi.h" />
+    <ClInclude Include="src\Api\StageApi.h" />
     <ClInclude Include="src\Api\ApiProperty.h" />
     <ClInclude Include="src\Api\ApiRead.h" />
+    <ClInclude Include="src\Api\AzmApi.h" />
     <ClInclude Include="src\Api\BonusesApi.h" />
     <ClInclude Include="src\Api\HudApi.h" />
     <ClInclude Include="src\Api\MonstersApi.h" />
@@ -162,6 +167,7 @@
     <ClInclude Include="src\Core\ForgeSeal.h" />
     <ClInclude Include="src\Core\ForgeSubsystems.h" />
     <ClInclude Include="src\Mods\ModScan.h" />
+    <ClInclude Include="src\Mods\ModScreen.h" />
     <ClInclude Include="src\Mods\ModStore.h" />
     <ClInclude Include="src\Mods\ModUndo.h" />
     <ClInclude Include="src\Mods\ModLoadScreen.h" />
@@ -230,6 +236,7 @@
     <ClCompile Include="src\Api\RenderApi.cpp" />
     <ClCompile Include="src\Api\ApiProperty.cpp" />
     <ClCompile Include="src\Api\ApiRead.cpp" />
+    <ClCompile Include="src\Api\AzmApi.cpp" />
     <ClCompile Include="src\Api\BonusesApi.cpp" />
     <ClCompile Include="src\Api\HudApi.cpp" />
     <ClCompile Include="src\Api\MonstersApi.cpp" />
@@ -244,6 +251,7 @@
     <ClCompile Include="src\Api\PlayerApi.cpp" />
     <ClCompile Include="src\Api\SoundApi.cpp" />
     <ClCompile Include="src\Api\SpriteFontApi.cpp" />
+    <ClCompile Include="src\Api\StageApi.cpp" />
     <ClCompile Include="src\Api\TextureApi.cpp" />
     <ClCompile Include="src\Api\InventoryApi.cpp" />
     <ClCompile Include="src\Api\WorldApi.cpp" />
@@ -257,6 +265,7 @@
     <ClCompile Include="src\Mods\ModStore.cpp" />
     <ClCompile Include="src\Mods\ModHost.cpp" />
     <ClCompile Include="src\Mods\ModScan.cpp" />
+    <ClCompile Include="src\Mods\ModScreen.cpp" />
     <ClCompile Include="src\Mods\ModLoadScreen.cpp" />
     <ClCompile Include="src\Mods\ModState.cpp" />
     <ClCompile Include="src\Mods\ModLibrary.cpp" />

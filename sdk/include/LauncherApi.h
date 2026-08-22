@@ -65,9 +65,12 @@ typedef struct AmodLauncherApi
 
     /* Dialog HWND; null unless expectedGameBuild matches. */
     void* (__cdecl* GetWindow)(AmodMod mod, uint32_t expectedGameBuild);
+
+    /* Launcher: skip the dialog and continue as if Play was pressed. */
+    int(__cdecl* Skip)(AmodMod mod, int skip);
 } AmodLauncherApi;
 
-AMOD_LAST_FIELD(AmodLauncherApi, GetWindow, 0x30);
+AMOD_LAST_FIELD(AmodLauncherApi, Skip, 0x34);
 
 #ifdef __cplusplus
 }
@@ -150,6 +153,12 @@ namespace Amod
         inline bool                                                 SetLogo(const void* bitmapFile, uint32_t size)
         {
             return g_launcher != nullptr && g_launcher->SetLogo(g_self, bitmapFile, size) != 0;
+        }
+
+        inline bool                                                 Skip(bool skip = true)
+        {
+            return g_launcher != nullptr && g_launcher->structSize >= sizeof(AmodLauncherApi) &&
+                g_launcher->Skip != nullptr && g_launcher->Skip(g_self, skip ? 1 : 0) != 0;
         }
 
         inline void*                                                Window(uint32_t expectedGameBuild = AMOD_GAME_BUILD_AZANGARA_10)

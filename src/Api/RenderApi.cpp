@@ -10,6 +10,7 @@
 #include "src/Game/D3d8Hook.h"
 #include "src/Hook/InlineHook.h"
 
+#include <math.h>
 #include <string>
 #include <vector>
 
@@ -22,11 +23,18 @@ namespace Forge
         typedef char(__fastcall* BeginRoutine)(void* manager, void* unused);
         typedef void(__fastcall* ElementRenderRoutine)(void* element, void* unused);
         typedef void(__fastcall* DecorationsRoutine)(void* menu, void* unused);
+        typedef void(__cdecl* InternalDrawRoutine)();
 
         // g_pfnDrawStyledText (kDrawStyledTextPtr).
         typedef void(__cdecl* DrawStyledTextRoutine)(void* font, const char* text, int zero, const float* centre, float* scale, float* color, int align, int zero2);
 
         typedef void(__cdecl* DrawSpriteRoutine)(int sprite, float x, float y, float w, float h, int zero, float* color, int a7, int a8);
+
+        // Eight floats on the stack, the manager in ECX: Sprite_Draw's own last call.
+        typedef void(__fastcall* DrawSpritePartRoutine)(void* manager, void* unused, float x, float y, float w, float h, float u0, float v0, float u1, float v1);
+        typedef void(__fastcall* SetColourRoutine)(void* manager, void* unused, const float* rgba);
+        typedef void(__fastcall* SetSpriteTextureRoutine)(void* manager, void* unused, void* texture);
+        typedef void(__fastcall* ApplyStatesRoutine)(void* manager, void* unused, void* states);
         typedef void(__cdecl* DrawStaticTextRoutine)(void* a1, void* a2, int a3, void* a4, void* a5, float* color, int a7);
         typedef void*(__cdecl* FindFontRoutine)(const char* name);
 
@@ -101,6 +109,7 @@ namespace Forge
         std::vector<StyleSub> g_styleSubs;
         std::vector<BgSub> g_bgSubs;
         std::vector<DeviceSub> g_deviceSubs;
+        std::vector<InternalDrawRoutine> g_internalPresent;
         AmodToken g_nextToken = 1;
 
         void** g_drawSlot = nullptr;
@@ -166,6 +175,235 @@ namespace Forge
             {
                 *height = *reinterpret_cast<int*>(info + GameAddress::kRenderViewportHeightOffset);
             }
+        }
+
+        void Unpack(uint32_t color, float* rgba);
+
+        // Converts viewport 2D space to 640x480 menu space with Y inverted.
+        void ToViewport(float& x, float& y, float& w, float& h)
+        {
+            void* const manager = Manager();
+
+            if (manager == nullptr)
+            {
+                return;
+            }
+
+            const uint8_t* const info = static_cast<const uint8_t*>(manager) + GameAddress::kRenderViewportInfoOffset;
+            const int wide = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportWidthOffset);
+            const int tall = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportHeightOffset);
+
+            if (wide <= 0 || tall <= 0)
+            {
+                return;
+            }
+
+            const float across = static_cast<float>(wide) / AMOD_MENU_WIDE;
+            const float down = static_cast<float>(tall) / AMOD_MENU_TALL;
+
+            x *= across;
+            w *= across;
+            h *= down;
+
+            // Both spaces name the top edge; they differ only in which way they count.
+            y = static_cast<float>(tall) - y * down;
+        }
+
+        void __cdecl ApiDrawSpritePart(AmodMod mod, AmodTextureId texture, float x, float y, float w, float h, float u0, float v0, float u1, float v1, uint32_t color)
+        {
+            void* const manager = Manager();
+            void* const skin = Resolve(mod) != nullptr ? TextureApi::TextureFor(texture) : nullptr;
+
+            if (manager == nullptr || skin == nullptr)
+            {
+                return;
+            }
+
+            ToViewport(x, y, w, h);
+
+            void** const vtable = *static_cast<void***>(manager);
+            const auto setColour = reinterpret_cast<SetColourRoutine>(vtable[GameAddress::kRenderSetColour / sizeof(void*)]);
+            const auto setTexture = reinterpret_cast<SetSpriteTextureRoutine>(vtable[GameAddress::kRenderSetTexture / sizeof(void*)]);
+            const auto apply = reinterpret_cast<ApplyStatesRoutine>(vtable[GameAddress::kRenderApplyStates / sizeof(void*)]);
+            const auto draw = reinterpret_cast<DrawSpritePartRoutine>(vtable[GameAddress::kRenderDrawSprite2D / sizeof(void*)]);
+
+            const uint8_t* const scene = static_cast<const uint8_t*>(GameModule::Resolve(GameAddress::kScene));
+
+            if (scene != nullptr)
+            {
+                void* states = nullptr;
+                memcpy(&states, scene + GameAddress::kSceneSpriteStatesOffset, sizeof(states));
+
+                if (states != nullptr)
+                {
+                    apply(manager, nullptr, states);
+                }
+            }
+
+            float rgba[4] = {};
+            Unpack(color, rgba);
+
+            setColour(manager, nullptr, rgba);
+            setTexture(manager, nullptr, skin);
+            draw(manager, nullptr, x, y, w, h, u0, v0, u1, v1);
+        }
+
+        // Device calls: COM, so __stdcall with the interface first.
+        typedef long(__stdcall* SetRenderStateRoutine)(void* device, uint32_t state, uint32_t value);
+        typedef long(__stdcall* GetRenderStateRoutine)(void* device, uint32_t state, uint32_t* value);
+        typedef long(__stdcall* SetStageStateRoutine)(void* device, uint32_t stage, uint32_t type, uint32_t value);
+        typedef long(__stdcall* GetStageStateRoutine)(void* device, uint32_t stage, uint32_t type, uint32_t* value);
+        typedef long(__stdcall* SetVertexShaderRoutine)(void* device, uint32_t handle);
+        typedef long(__stdcall* DrawPrimitiveUpRoutine)(void* device, uint32_t primitive, uint32_t count, const void* data, uint32_t stride);
+
+        struct BatchVertex
+        {
+            float x;
+            float y;
+            float z;
+            float rhw;
+            uint32_t colour;
+            float u;
+            float v;
+        };
+
+        const uint32_t kBatchStates[] = { 7, 14, 15, 19, 20, 22, 27, 28, 137 };
+        const uint32_t kBatchStages[] = { 1, 2, 3, 4, 5, 6 };
+
+        std::vector<BatchVertex> g_batch;
+
+        template <typename T>
+        T DeviceSlot(void* device, uintptr_t offset)
+        {
+            void** const vtable = *static_cast<void***>(device);
+            return reinterpret_cast<T>(vtable[offset / sizeof(void*)]);
+        }
+
+        int __cdecl ApiDrawQuads(AmodMod mod, AmodTextureId texture, const AmodQuad* quads, int count)
+        {
+            void* const manager = Manager();
+            void* const device = Device();
+            void* const skin = Resolve(mod) != nullptr ? TextureApi::TextureFor(texture) : nullptr;
+
+            if (manager == nullptr || device == nullptr || quads == nullptr || count <= 0)
+            {
+                return 0;
+            }
+
+            const uint8_t* const info =
+                static_cast<const uint8_t*>(manager) + GameAddress::kRenderViewportInfoOffset;
+            const int wide = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportWidthOffset);
+            const int tall = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportHeightOffset);
+            const float across = wide > 0 ? wide / AMOD_MENU_WIDE : 1.0f;
+            const float down = tall > 0 ? tall / AMOD_MENU_TALL : 1.0f;
+
+            g_batch.clear();
+            g_batch.reserve(static_cast<size_t>(count) * 6);
+
+            for (int at = 0; at < count; ++at)
+            {
+                const AmodQuad& quad = quads[at];
+                const float middleX = (quad.x + quad.w * 0.5f) * across;
+                const float middleY = (quad.y + quad.h * 0.5f) * down;
+                const float halfW = quad.w * 0.5f * across;
+                const float halfH = quad.h * 0.5f * down;
+                const float turn = cosf(quad.angle);
+                const float lean = sinf(quad.angle);
+
+                const float offsetX[4] = { -halfW, halfW, halfW, -halfW };
+                const float offsetY[4] = { -halfH, -halfH, halfH, halfH };
+                const float u[4] = { quad.u0, quad.u1, quad.u1, quad.u0 };
+                const float v[4] = { quad.v0, quad.v0, quad.v1, quad.v1 };
+                const int order[6] = { 0, 1, 2, 0, 2, 3 };
+                BatchVertex corner[4] = {};
+
+                for (int which = 0; which < 4; ++which)
+                {
+                    corner[which].x = middleX + offsetX[which] * turn - offsetY[which] * lean;
+                    corner[which].y = middleY + offsetX[which] * lean + offsetY[which] * turn;
+                    corner[which].rhw = 1.0f;
+                    corner[which].colour = quad.colour;
+                    corner[which].u = u[which];
+                    corner[which].v = v[which];
+                }
+
+                // Two triangles rather than a fan, so the whole batch is one list.
+                for (int which = 0; which < 6; ++which)
+                {
+                    g_batch.push_back(corner[order[which]]);
+                }
+            }
+
+            const SetRenderStateRoutine set = DeviceSlot<SetRenderStateRoutine>(device, GameAddress::kDeviceSetRenderState);
+            const GetRenderStateRoutine get = DeviceSlot<GetRenderStateRoutine>(device, GameAddress::kDeviceGetRenderState);
+            const SetStageStateRoutine setStage = DeviceSlot<SetStageStateRoutine>(device, GameAddress::kDeviceSetStageState);
+            const GetStageStateRoutine getStage = DeviceSlot<GetStageStateRoutine>(device, GameAddress::kDeviceGetStageState);
+
+            uint32_t wasState[sizeof(kBatchStates) / sizeof(kBatchStates[0])] = {};
+            uint32_t wasStage[sizeof(kBatchStages) / sizeof(kBatchStages[0])] = {};
+
+            for (size_t which = 0; which < sizeof(kBatchStates) / sizeof(kBatchStates[0]); ++which)
+            {
+                get(device, kBatchStates[which], &wasState[which]);
+            }
+            for (size_t which = 0; which < sizeof(kBatchStages) / sizeof(kBatchStages[0]); ++which)
+            {
+                getStage(device, 0, kBatchStages[which], &wasStage[which]);
+            }
+
+            set(device, 7, 0);      // no depth: this is a flat pass over a finished picture
+            set(device, 14, 0);
+            set(device, 15, 0);
+            set(device, 22, 1);     // no culling, so a mirrored quad still shows
+            set(device, 28, 0);
+            set(device, 137, 0);
+            set(device, 27, 1);     // blended
+            set(device, 19, 5);
+            set(device, 20, 6);
+
+            const auto bind = reinterpret_cast<SetSpriteTextureRoutine>(
+                (*static_cast<void***>(manager))[GameAddress::kRenderSetTexture / sizeof(void*)]);
+
+            bind(manager, nullptr, skin);
+
+            // With a texture the colour multiplies it; without one the colour is all there is.
+            setStage(device, 0, 1, skin != nullptr ? 4u : 2u);
+            setStage(device, 0, 2, skin != nullptr ? 2u : 0u);
+            setStage(device, 0, 3, 0);
+            setStage(device, 0, 4, skin != nullptr ? 4u : 2u);
+            setStage(device, 0, 5, skin != nullptr ? 2u : 0u);
+            setStage(device, 0, 6, 0);
+
+            DeviceSlot<SetVertexShaderRoutine>(device, GameAddress::kDeviceSetVertexShader)(device, 0x144);
+
+            const DrawPrimitiveUpRoutine draw = DeviceSlot<DrawPrimitiveUpRoutine>(device, GameAddress::kDeviceDrawPrimitiveUP);
+            const size_t kMostAtOnce = 8190;    // a multiple of six, so no quad is cut in half
+
+            for (size_t from = 0; from < g_batch.size(); from += kMostAtOnce)
+            {
+                const size_t here = g_batch.size() - from < kMostAtOnce ? g_batch.size() - from : kMostAtOnce;
+                draw(device, 4, static_cast<uint32_t>(here / 3), &g_batch[from], sizeof(BatchVertex));
+            }
+
+            for (size_t which = 0; which < sizeof(kBatchStates) / sizeof(kBatchStates[0]); ++which)
+            {
+                set(device, kBatchStates[which], wasState[which]);
+            }
+            for (size_t which = 0; which < sizeof(kBatchStages) / sizeof(kBatchStages[0]); ++which)
+            {
+                setStage(device, 0, kBatchStages[which], wasStage[which]);
+            }
+
+            return count;
+        }
+
+        void* __cdecl ApiGetWindow(AmodMod mod)
+        {
+            HWND* const slot = Resolve(mod) != nullptr
+                                   ? static_cast<HWND*>(GameModule::Resolve(GameAddress::kGameWindow))
+                                   : nullptr;
+
+            return slot != nullptr ? *slot : nullptr;
         }
 
         AmodToken __cdecl ApiSubscribe(AmodMod mod, AmodRenderCallback callback, void* user)
@@ -372,8 +610,7 @@ namespace Forge
             return g_findFont(name);   // a null name resolves to the default font
         }
 
-        void __cdecl ApiDrawText(AmodMod mod, void* font, float x, float y, const char* text,
-                                 float scale, uint32_t color)
+        void __cdecl ApiDrawText(AmodMod mod, void* font, float x, float y, const char* text, float scale, uint32_t color)
         {
             if (Resolve(mod) == nullptr || text == nullptr)
             {
@@ -389,7 +626,7 @@ namespace Forge
                 return;
             }
 
-            float position[2] = { x, y };
+            float position[2] = { x, AMOD_MENU_TALL - y };
             float scaling[2] = { scale, scale };
             float rgba[4] =
             {
@@ -409,8 +646,7 @@ namespace Forge
             rgba[3] = ((color >> 24) & 0xFF) / 255.0f;
         }
 
-        void __cdecl ApiDrawTextAligned(AmodMod mod, void* font, float x, float y, const char* text,
-                                        float scale, uint32_t color, int align)
+        void __cdecl ApiDrawTextAligned(AmodMod mod, void* font, float x, float y, const char* text, float scale, uint32_t color, int align)
         {
             if (Resolve(mod) == nullptr || text == nullptr)
             {
@@ -426,7 +662,7 @@ namespace Forge
                 return;
             }
 
-            float position[2] = { x, y };
+            float position[2] = { x, AMOD_MENU_TALL - y };
             float scaling[2] = { scale, scale };
             float rgba[4] = {};
             Unpack(color, rgba);
@@ -440,19 +676,34 @@ namespace Forge
             return g_spriteSlot != nullptr ? reinterpret_cast<DrawSpriteRoutine>(*g_spriteSlot) : nullptr;
         }
 
-        void __cdecl ApiDrawSprite(AmodMod mod, AmodTextureId texture, float x, float y, float w,
-            float h, uint32_t color)
+        bool SceneReady()
+        {
+            const uint8_t* const scene = static_cast<const uint8_t*>(
+                GameModule::Resolve(GameAddress::kScene));
+
+            if (scene == nullptr)
+            {
+                return false;
+            }
+
+            void* states = nullptr;
+            memcpy(&states, scene + GameAddress::kSceneSpriteStatesOffset, sizeof(states));
+            return states != nullptr;
+        }
+
+        void __cdecl ApiDrawSprite(AmodMod mod, AmodTextureId texture, float x, float y, float w, float h, uint32_t color)
         {
             const DrawSpriteRoutine draw = ActiveSpriteDraw();
             void* const skin = Resolve(mod) != nullptr ? TextureApi::TextureFor(texture) : nullptr;
 
-            if (draw == nullptr || skin == nullptr)
+            if (draw == nullptr || skin == nullptr || !SceneReady())
             {
                 return;
             }
 
             float rgba[4] = {};
             Unpack(color, rgba);
+            ToViewport(x, y, w, h);
 
             draw(static_cast<int>(reinterpret_cast<uintptr_t>(skin)), x, y, w, h, 0, rgba, 0, 0);
         }
@@ -755,6 +1006,15 @@ namespace Forge
                 }
             }
 
+            // The loader's own screen draws over the mods, and without one subscribed.
+            if (manager != nullptr && *(static_cast<char*>(manager) + GameAddress::kRenderDeviceLostOffset) == 0)
+            {
+                for (const InternalDrawRoutine draw : g_internalPresent)
+                {
+                    draw();
+                }
+            }
+
             g_originalPresent(manager, unused);
         }
 
@@ -899,6 +1159,9 @@ namespace Forge
         g_table.structSize = sizeof(AmodRenderApi);
         g_table.GetDevice = &ApiGetDevice;
         g_table.GetViewport = &ApiGetViewport;
+        g_table.GetWindow = &ApiGetWindow;
+        g_table.DrawQuads = &ApiDrawQuads;
+        g_table.DrawSpritePart = &ApiDrawSpritePart;
         g_table.Subscribe = &ApiSubscribe;
         g_table.Unsubscribe = &ApiUnsubscribe;
         g_table.SubscribeFrameBegin = &ApiSubscribeFrameBegin;
@@ -970,6 +1233,7 @@ namespace Forge
         g_elementSubs.clear();
         g_styleSubs.clear();
         g_bgSubs.clear();
+        g_internalPresent.clear();
         g_deviceSubs.clear();
         g_drawSlot = nullptr;
         g_originalDraw = nullptr;
@@ -986,6 +1250,14 @@ namespace Forge
     const AmodRenderApi* RenderApi::Table()
     {
         return g_table.structSize != 0 ? &g_table : nullptr;
+    }
+
+    void RenderApi::AddInternalPresent(void(__cdecl* draw)())
+    {
+        if (draw != nullptr)
+        {
+            g_internalPresent.push_back(draw);
+        }
     }
 
     void RenderApi::ForgetMod(ModContext* owner)

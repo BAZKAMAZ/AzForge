@@ -20,8 +20,6 @@ namespace Forge
 
         std::vector<std::string> capabilities;
 
-        bool privileged = false;
-
         // Everything this mod registered, released in reverse when it is unloaded.
         ModOwnership owned;
 

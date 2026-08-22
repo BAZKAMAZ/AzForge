@@ -40,10 +40,10 @@ typedef struct AmodTextureApi
     AmodTextureId(__cdecl* Load)(AmodMod mod, const char* path, int mipmapped, int hasAlpha);
     int(__cdecl* Release)(AmodMod mod, AmodTextureId texture);
 
-    /* Creates a texture from pixels. */
+    /* Creates a texture from RGBA pixels. */
     AmodTextureId(__cdecl* Create)(AmodMod mod, int width, int height, const void* pixels, int mipmapped, int hasAlpha);
 
-    /* Replaces existing texture pixels. */
+    /* Replaces existing texture pixels, in the same order. */
     int(__cdecl* Replace)(AmodMod mod, AmodTextureId texture, int width, int height, const void* pixels);
 
     /* Redirects requests for a texture path. */
@@ -127,6 +127,20 @@ namespace Amod
         inline bool                                                 Release(AmodTextureId texture)
         {
             return g_textures != nullptr && g_textures->Release(g_textureSelf, texture) != 0;
+        }
+
+        /* One pixel for Create and Replace, whose buffer is bytes R, G, B, A. */
+        inline uint32_t                                             Pixel(int red, int green, int blue, int alpha = 255)
+        {
+            return static_cast<uint32_t>(red & 0xFF) | (static_cast<uint32_t>(green & 0xFF) << 8) |
+                   (static_cast<uint32_t>(blue & 0xFF) << 16) | (static_cast<uint32_t>(alpha & 0xFF) << 24);
+        }
+
+        /* The same, out of a colour written the way the rest of the interface writes one. */
+        inline uint32_t                                             PixelOf(uint32_t argb)
+        {
+            return Pixel(static_cast<int>((argb >> 16) & 0xFF), static_cast<int>((argb >> 8) & 0xFF),
+                static_cast<int>(argb & 0xFF), static_cast<int>((argb >> 24) & 0xFF));
         }
 
         inline AmodTextureId                                        Create(int width, int height, const void* pixels,

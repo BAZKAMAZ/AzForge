@@ -1,5 +1,5 @@
 #include "src/Api/SpriteFontApi.h"
-
+#include "src/Api/RenderApi.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/ModContext.h"
 #include "src/Api/TextureApi.h"
@@ -9,9 +9,7 @@
 #include "src/Hook/InlineHook.h"
 
 #include <RenderApi.h>
-
 #include <string.h>
-
 #include <memory>
 #include <string>
 #include <vector>
@@ -222,10 +220,8 @@ namespace Forge
             tall = pixelsTall > 0 ? static_cast<float>(pixelsTall) : AMOD_MENU_TALL;
         }
 
-        void __fastcall PhaseDetour(void* self)
+        void Flush()
         {
-            g_originalPhase(self);
-
             float wide = 0.0f;
             float tall = 0.0f;
             Viewport(wide, tall);
@@ -245,6 +241,23 @@ namespace Forge
             }
 
             g_queued.clear();
+        }
+
+        bool g_flushAtPresent = false;
+
+        void __fastcall PhaseDetour(void* self)
+        {
+            g_originalPhase(self);
+
+            if (!g_flushAtPresent)
+            {
+                Flush();
+            }
+        }
+
+        void __cdecl FlushAtPresent()
+        {
+            Flush();
         }
 
         AmodFontId __cdecl ApiCreate(AmodMod mod, const char* name)
@@ -629,6 +642,13 @@ namespace Forge
         g_table.GameFontName = &ApiGameFontName;
         g_table.Replace = &ApiReplace;
         g_table.Restore = &ApiRestore;
+
+        g_flushAtPresent = RenderApi::Table() != nullptr;
+
+        if (g_flushAtPresent)
+        {
+            RenderApi::AddInternalPresent(&FlushAtPresent);
+        }
 
         FORGE_LOG_INFO("Sprite font interface installed");
         return true;

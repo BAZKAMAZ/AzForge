@@ -2,6 +2,8 @@
 
 #include <ModManagerApi.h>
 
+#include <string>
+
 namespace Forge
 {
     struct ModContext;
@@ -13,5 +15,8 @@ namespace Forge
 
         static const AmodModManagerApi*                             Table();
         static void                                                 Clear();
+
+        static int                                                  Find(const char* id);
+        static bool                                                 SetEnabled(int index, bool enabled, std::string& error);
     };
 }
