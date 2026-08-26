@@ -89,6 +89,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="sdk\include\AzmApi.h" />
+    <ClInclude Include="sdk\include\ShaderApi.h" />
     <ClInclude Include="sdk\include\AzmFile.h" />
     <ClInclude Include="sdk\include\BlockExpressionApi.h" />
     <ClInclude Include="sdk\include\BonusesApi.h" />
@@ -126,6 +127,8 @@
     <ClInclude Include="src\Api\ApiProperty.h" />
     <ClInclude Include="src\Api\ApiRead.h" />
     <ClInclude Include="src\Api\AzmApi.h" />
+    <ClInclude Include="src\Api\ShaderApi.h" />
+    <ClInclude Include="src\Api\ShaderAsm.h" />
     <ClInclude Include="src\Api\BonusesApi.h" />
     <ClInclude Include="src\Api\HudApi.h" />
     <ClInclude Include="src\Api\MonstersApi.h" />
@@ -237,6 +240,8 @@
     <ClCompile Include="src\Api\ApiProperty.cpp" />
     <ClCompile Include="src\Api\ApiRead.cpp" />
     <ClCompile Include="src\Api\AzmApi.cpp" />
+    <ClCompile Include="src\Api\ShaderApi.cpp" />
+    <ClCompile Include="src\Api\ShaderAsm.cpp" />
     <ClCompile Include="src\Api\BonusesApi.cpp" />
     <ClCompile Include="src\Api\HudApi.cpp" />
     <ClCompile Include="src\Api\MonstersApi.cpp" />

@@ -384,6 +384,15 @@
     <ClInclude Include="sdk\include\AzmApi.h">
       <Filter>SDK</Filter>
     </ClInclude>
+    <ClInclude Include="sdk\include\ShaderApi.h">
+      <Filter>SDK</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ShaderApi.h">
+      <Filter>Api</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Api\ShaderAsm.h">
+      <Filter>Api</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -580,6 +589,12 @@
       <Filter>Api</Filter>
     </ClCompile>
     <ClCompile Include="src\Api\AzmApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ShaderApi.cpp">
+      <Filter>Api</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Api\ShaderAsm.cpp">
       <Filter>Api</Filter>
     </ClCompile>
   </ItemGroup>

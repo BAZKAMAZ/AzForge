@@ -1,5 +1,7 @@
 #include <windows.h>
 
+#include <RenderApi.h>
+
 #include "src/Api/InputApi.h"
 #include "src/Api/FrameApi.h"
 #include "src/Api/ModContext.h"
@@ -586,7 +588,7 @@ namespace Forge
             }
             if (y != nullptr)
             {
-                *y = cursorY;
+                *y = AMOD_MENU_TALL - cursorY;
             }
         }
 
@@ -594,7 +596,7 @@ namespace Forge
         {
             if (Resolve(mod) != nullptr && g_setCursor != nullptr)
             {
-                g_setCursor(x, y);
+                g_setCursor(x, AMOD_MENU_TALL - y);
             }
         }
 

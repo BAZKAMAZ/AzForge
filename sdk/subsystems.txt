@@ -24,6 +24,7 @@ player
 render
 sav
 scores
+shader
 sound
 sprite_font
 stage

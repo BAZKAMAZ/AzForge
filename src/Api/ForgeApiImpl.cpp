@@ -15,6 +15,7 @@
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
 #include "src/Api/AzmApi.h"
+#include "src/Api/ShaderApi.h"
 #include "src/Api/ConfigApi.h"
 #include "src/Api/DatApi.h"
 #include "src/Api/SavApi.h"
@@ -34,6 +35,7 @@
 #include "src/Core/ForgePaths.h"
 #include "src/Core/ForgeText.h"
 #include "src/Core/ForgeVersion.h"
+#include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
 
 namespace Forge
@@ -106,6 +108,30 @@ namespace Forge
             return AMOD_GAME_BUILD_AZANGARA_10;
         }
 
+        void __cdecl ApiFatal(AmodMod mod, const char* text)
+        {
+            ModContext* const context = Resolve(mod);
+
+            if (context == nullptr || text == nullptr)
+            {
+                FORGE_LOG_ERROR("A mod called Fatal with an invalid handle or message");
+                return;
+            }
+
+            FORGE_LOG_ERROR("[%s] FATAL: %s", context->id.c_str(), text);
+
+            typedef void(__cdecl* FatalRoutine)(const char* format, ...);
+            const FatalRoutine fatal = reinterpret_cast<FatalRoutine>(
+                GameModule::Resolve(GameAddress::kMsgBoxFatalError));
+
+            if (fatal == nullptr)
+            {
+                return;
+            }
+
+            fatal("%s", text);
+        }
+
         const char* __cdecl ApiLastError(AmodMod mod)
         {
             const ModContext* const context = Resolve(mod);
@@ -150,6 +176,7 @@ namespace Forge
         context.table.GetGameDirectory = &ApiGetGameDirectory;
         context.table.GetGameModuleBase = &ApiGetGameModuleBase;
         context.table.GetGameBuild = &ApiGetGameBuild;
+        context.table.Fatal = &ApiFatal;
         context.table.LastError = &ApiLastError;
         context.table.LastErrorCode = &ApiLastErrorCode;
         context.table.launcher = LauncherApi::Table();
@@ -168,6 +195,7 @@ namespace Forge
         context.table.spriteFont = SpriteFontApi::Table();
         context.table.stage = StageApi::Table();
         context.table.azm = AzmApi::Table();
+        context.table.shader = ShaderApi::Table();
         context.table.sound = SoundApi::Table();
         context.table.player = PlayerApi::Table();
         context.table.ctrls = CtrlsApi::Table();

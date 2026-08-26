@@ -1,7 +1,7 @@
 # SampleMod
 
-Five console commands. Open the console and type one with no arguments to see its forms and what
-it currently reports.
+Console commands. Open the console and type one with no arguments to see its forms and what it
+currently reports.
 
 **The game boots as itself. Nothing is taken over until you ask for it** — `stage take` is the
 asking, and `stage give` hands everything back. Start there: `quads`, `models` and `azm` need the
@@ -87,6 +87,20 @@ The list is sorted, so a texture and a blend state are set once per run rather t
 Every eighth cube is added rather than solid, to give the sort something to gather. Run
 `stage take` first or the reading counts frames the mod never ran.
 
+## fatal
+
+| Type this | And you get |
+| --- | --- |
+| `fatal <text>` | that line as the game's own fatal error |
+
+```
+fatal the map has no start marker
+```
+
+A line in the console, a message box with the game's name on it, and the game is asked to close.
+It is the game's own, not a box of the mod's making - and it RETURNS, so the
+frame that called it finishes.
+
 ## azm
 
 A model with parts, materials and colour in the vertex.
@@ -98,6 +112,7 @@ A model with parts, materials and colour in the vertex.
 | `azm tint <rrggbb>` | a colour multiplied over this draw of it |
 | `azm tint` | and that taken off again |
 | `azm paint <rrggbb>` | every paintable material recoloured, in the model itself |
+| `azm many <n>` | that many copies of it, in one sorted batch, with the frame time so far |
 | `azm off` | the model put down |
 
 ```
@@ -105,6 +120,7 @@ stage take
 azm models/car.azm      parts, materials, points, boxes and bounds are printed
 azm tint ff4020         red; whatever the file baked shows through it
 azm tint                back to its own colours
+azm many 200            two hundred of it in one batch; read the frame in the corner
 azm paint 2060ff        the model's own vertices are rewritten
 azm off
 ```
@@ -122,6 +138,41 @@ AzmPack.exe dump car.azm
 `sdk/samples/car` holds a car to try it on — a body, glass, four wheels, two lamps, a collision box
 and two named points.
 
+## shader
+
+vs/ps 1.1 shaders. Needs `stage take` first.
+
+| Type this | And you get |
+| --- | --- |
+| `shader` | a quad lit by ten lamps in one vertex shader, on or off |
+
+```
+stage take
+shader              a soft ten-colour square, the lamps turning
+shader              off
+```
+
+The shader is assembled from text — through `d3dx8.dll` if the machine has it, the loader's own
+assembler otherwise; `forge.log` says which. Ten lamps summed in one shader: eight is the
+fixed-function cap, not the shader's.
+
+## skin
+
+Bone deformation in a shader. Needs `stage take` first.
+
+| Type this | And you get |
+| --- | --- |
+| `skin` | a bar bent by two bones, on or off |
+
+```
+stage take
+skin                a bar that bends, its foot still and its tip swinging
+skin                off
+```
+
+Every vertex carries a weight and blends two bone matrices in the vertex shader, so the bar bends
+like a limb. Fixed function cannot deform a mesh by bones at all.
+
 ---
 
 ## What each command shows off
@@ -133,6 +184,8 @@ and two named points.
 | Render, batched | `quads` |
 | Mmd, batched | `models` |
 | Azm | `azm` |
+| Fatal | `fatal` |
+| Shader | `shader`, `skin` |
 | Textures, Mmd | `stage take` builds both by hand |
 | Sound | `window sound` |
 | Input | `window cursor` |

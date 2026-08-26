@@ -13,6 +13,7 @@
 #include "src/Api/ParticlesApi.h"
 #include "src/Api/FilesApi.h"
 #include "src/Api/AzmApi.h"
+#include "src/Api/ShaderApi.h"
 #include "src/Api/ConfigApi.h"
 #include "src/Api/DatApi.h"
 #include "src/Api/SavApi.h"
@@ -221,6 +222,7 @@ namespace Forge
         Install("sprite_font", &SpriteFontApi::Install);
         Install("stage", &StageApi::Install);
         Install("azm", &AzmApi::Install);
+        Install("shader", &ShaderApi::Install);
 
         ModManagerApi::Install();
         Install("mod_screen", &ModScreen::Install);
@@ -259,6 +261,7 @@ namespace Forge
         HudApi::Uninstall();
         MonstersApi::Uninstall();
         AzmApi::Uninstall();
+        ShaderApi::Uninstall();
         MmdApi::Uninstall();
         TextureApi::Uninstall();
         SoundApi::Uninstall();

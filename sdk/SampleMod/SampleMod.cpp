@@ -1,7 +1,6 @@
 #include <ForgeApi.h>
 
 #include <windows.h>
-
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -22,6 +21,9 @@ AmodAzmId g_car = AMOD_INVALID_AZM;             // a model with parts, out of a 
 int g_wheels[8] = {};
 int g_wheelCount = 0;
 int g_models = 0;                               // how many the 3D batch draws
+int g_azmMany = 0;                              // and how many copies of the loaded .azm
+bool g_shaderQuad = false;                      // draw the shader test quad this frame
+bool g_skin = false;                            // draw the skinning test bar this frame
 int g_drawn = 0;
 float g_spent = 0.0f;                           // seconds counted since the count was last set
 int g_counted = 0;
@@ -198,6 +200,191 @@ void __cdecl StageRender(void*)
 
     Stage::SetCamera(eye, at, up, 60.0f, g_reach * 0.05f, g_reach * 20.0f);
 
+    if (g_skin && Shader::IsAvailable())
+    {
+        struct S { float pos[3]; float normal[3]; unsigned int colour; float uv[2]; float weight; };
+
+        // v4 is the new one: a single float weight, on top of the game layout.
+        static const unsigned int decl[] =
+        {
+            0x20000000u, 0x40020000u, 0x40020001u, 0x40040002u, 0x40010003u, 0x40000004u, 0xFFFFFFFFu,
+        };
+
+        static AmodVertexShader vs = AMOD_INVALID_SHADER;
+        static AmodPixelShader ps = AMOD_INVALID_SHADER;
+        static bool tried = false;
+
+        if (!tried)
+        {
+            tried = true;
+            // pos through bone0 (c4..7) and bone1 (c8..11), blended by the weight in v4.x, then
+            // by the WVP in c0..3.
+            vs = Shader::CreateVertexSource(
+                "vs.1.1\n"
+                "dp4 r0.x, v0, c4\n"
+                "dp4 r0.y, v0, c5\n"
+                "dp4 r0.z, v0, c6\n"
+                "dp4 r0.w, v0, c7\n"
+                "dp4 r1.x, v0, c8\n"
+                "dp4 r1.y, v0, c9\n"
+                "dp4 r1.z, v0, c10\n"
+                "dp4 r1.w, v0, c11\n"
+                "add r3, r1, -r0\n"
+                "mad r2, r3, v4.x, r0\n"
+                "dp4 oPos.x, r2, c0\n"
+                "dp4 oPos.y, r2, c1\n"
+                "dp4 oPos.z, r2, c2\n"
+                "dp4 oPos.w, r2, c3\n"
+                "mov oD0, v2\n"
+                "mov oT0, v3\n", decl);
+            ps = Shader::CreatePixelSource("ps.1.1\nmov r0, v0\n");
+        }
+
+        if (vs == AMOD_INVALID_SHADER || ps == AMOD_INVALID_SHADER)
+        {
+            return;
+        }
+
+        // The bar: segments up the screen, two vertices a level, weight rising with height.
+        const int levels = 13;
+        S bar[(13 - 1) * 6] = {};
+        int wrote = 0;
+
+        for (int at = 0; at + 1 < levels; ++at)
+        {
+            const float y0 = -0.8f + 1.6f * at / (levels - 1);
+            const float y1 = -0.8f + 1.6f * (at + 1) / (levels - 1);
+            const float w0 = static_cast<float>(at) / (levels - 1);
+            const float w1 = static_cast<float>(at + 1) / (levels - 1);
+            const unsigned int c0 = 0xFF000000u | (static_cast<unsigned int>(w0 * 255) << 16) | 0x40u | (static_cast<unsigned int>((1 - w0) * 255));
+            const unsigned int c1 = 0xFF000000u | (static_cast<unsigned int>(w1 * 255) << 16) | 0x40u | (static_cast<unsigned int>((1 - w1) * 255));
+
+            const S bl = { { -0.09f, y0, 0.3f }, { 0, 0, 1 }, c0, { 0, 0 }, w0 };
+            const S br = { {  0.09f, y0, 0.3f }, { 0, 0, 1 }, c0, { 1, 0 }, w0 };
+            const S tl = { { -0.09f, y1, 0.3f }, { 0, 0, 1 }, c1, { 0, 1 }, w1 };
+            const S tr = { {  0.09f, y1, 0.3f }, { 0, 0, 1 }, c1, { 1, 1 }, w1 };
+
+            bar[wrote++] = bl; bar[wrote++] = br; bar[wrote++] = tr;
+            bar[wrote++] = bl; bar[wrote++] = tr; bar[wrote++] = tl;
+        }
+
+        const float wave = sinf(g_seconds * 1.6f) * 0.9f;
+        const float cs = cosf(wave);
+        const float sn = sinf(wave);
+        const float px = 0.0f;
+        const float py = -0.8f;
+
+        float k[12 * 4] = {};
+
+        k[0] = k[5] = k[10] = k[15] = 1.0f;                 // c0..3 WVP identity
+        k[16] = k[21] = k[26] = k[31] = 1.0f;               // c4..7 bone0 identity
+
+        // c8..11 bone1: rotation about (px, py).
+        k[32] = cs;  k[33] = -sn; k[34] = 0; k[35] = px - cs * px + sn * py;
+        k[36] = sn;  k[37] = cs;  k[38] = 0; k[39] = py - sn * px - cs * py;
+        k[40] = 0;   k[41] = 0;   k[42] = 1; k[43] = 0;
+        k[44] = 0;   k[45] = 0;   k[46] = 0; k[47] = 1;
+
+        Shader::Set(vs, ps);
+        Shader::SetVertexConstant(0, k, 12);
+        Shader::DrawTriangles(bar, wrote, sizeof(S));
+        Shader::Clear();
+        return;
+    }
+
+    if (g_shaderQuad && Shader::IsAvailable())
+    {
+        struct V { float pos[3]; float normal[3]; unsigned int colour; float uv[2]; };
+
+        const V quad[6] =
+        {
+            { { -0.7f, -0.7f, 0.3f }, { -0.6f, -0.6f, 0.5f }, 0xFFFFFFFF, { 0, 1 } },
+            { {  0.7f, -0.7f, 0.3f }, {  0.6f, -0.6f, 0.5f }, 0xFFFFFFFF, { 1, 1 } },
+            { {  0.7f,  0.7f, 0.3f }, {  0.6f,  0.6f, 0.5f }, 0xFFFFFFFF, { 1, 0 } },
+            { { -0.7f, -0.7f, 0.3f }, { -0.6f, -0.6f, 0.5f }, 0xFFFFFFFF, { 0, 1 } },
+            { {  0.7f,  0.7f, 0.3f }, {  0.6f,  0.6f, 0.5f }, 0xFFFFFFFF, { 1, 0 } },
+            { { -0.7f,  0.7f, 0.3f }, { -0.6f,  0.6f, 0.5f }, 0xFFFFFFFF, { 0, 0 } },
+        };
+
+        const float identity[16] =
+        {
+            1, 0, 0, 0,
+            0, 1, 0, 0,
+            0, 0, 1, 0,
+            0, 0, 0, 1,
+        };
+
+        static AmodVertexShader vs = AMOD_INVALID_SHADER;
+        static AmodPixelShader ps = AMOD_INVALID_SHADER;
+
+        if (vs == AMOD_INVALID_SHADER)
+        {
+            char src[2048] = {};
+
+            strcat_s(src,
+                "vs.1.1\n"
+                "dp4 oPos.x, v0, c0\n"
+                "dp4 oPos.y, v0, c1\n"
+                "dp4 oPos.z, v0, c2\n"
+                "dp4 oPos.w, v0, c3\n"
+                "mov r0, c4\n");
+
+            for (int at = 0; at < 10; ++at)
+            {
+                char step[128] = {};
+
+                sprintf_s(step,
+                    "dp3 r1, v1, c%d\n"
+                    "max r1, r1, c4.w\n"
+                    "mad r0, r1, c%d, r0\n",
+                    5 + at * 2, 6 + at * 2);
+                strcat_s(src, step);
+            }
+
+            strcat_s(src, "mov oD0, r0\nmov oT0, v3\n");
+
+            vs = Shader::CreateVertexSource(src);
+            ps = Shader::CreatePixelSource("ps.1.1\nmov r0, v0\n");
+        }
+
+        if (vs == AMOD_INVALID_SHADER || ps == AMOD_INVALID_SHADER)
+        {
+            g_shaderQuad = false;
+            return;
+        }
+
+        float constants[4 * 25] = {};
+
+        constants[0] = constants[5] = constants[10] = constants[15] = 1.0f;   // identity in c0..c3
+
+        constants[16] = constants[17] = constants[18] = 0.12f;                // c4 ambient
+        constants[19] = 0.0f;                                                 // c4.w = the clamp zero
+
+        for (int at = 0; at < 10; ++at)
+        {
+            const float turn = g_seconds * 0.4f + at * 0.6283f;
+            const int dir = 20 + at * 8;
+            const int col = dir + 4;
+
+            constants[dir + 0] = cosf(turn);
+            constants[dir + 1] = sinf(turn);
+            constants[dir + 2] = 0.5f;
+            constants[dir + 3] = 0.0f;
+
+            // A hue a lamp, so ten of them read as ten and not as one bright light.
+            constants[col + 0] = 0.5f + 0.5f * cosf(at * 0.628f);
+            constants[col + 1] = 0.5f + 0.5f * cosf(at * 0.628f + 2.09f);
+            constants[col + 2] = 0.5f + 0.5f * cosf(at * 0.628f + 4.19f);
+            constants[col + 3] = 0.0f;
+        }
+
+        Shader::Set(vs, ps);
+        Shader::SetVertexConstant(0, constants, 25);
+        Shader::DrawTriangles(quad, 6, sizeof(V));
+        Shader::Clear();
+        return;
+    }
+
     if (g_car != AMOD_INVALID_AZM)
     {
         for (int at = 0; at < g_wheelCount; ++at)
@@ -205,17 +392,38 @@ void __cdecl StageRender(void*)
             Azm::Turn(g_car, g_wheels[at], 1.0f, 0.0f, 0.0f, g_seconds * 4.0f);
         }
 
-        Mmd::Matrix stand = Mmd::Matrix::Identity();
-        const float turn = cosf(g_seconds * 0.4f);
-        const float lean = sinf(g_seconds * 0.4f);
+        // Many copies, or one. Queue and one Flush, so the whole field is one sorted batch and
+        // the frame time reads the model itself rather than the calls around it.
+        const int many = g_azmMany > 0 ? g_azmMany : 1;
+        int side = 1;
 
-        stand.m[0] = turn;
-        stand.m[2] = -lean;
-        stand.m[8] = lean;
-        stand.m[10] = turn;
-        stand.m[13] = -0.7f;
+        while (side * side < many)
+        {
+            ++side;
+        }
 
-        Azm::Draw(g_car, stand.m);
+        for (int at = 0; at < many; ++at)
+        {
+            const float across = static_cast<float>(at % side) - (side - 1) * 0.5f;
+            const float along = static_cast<float>(at / side) - (side - 1) * 0.5f;
+            const float gap = g_reach * 0.5f;
+
+            Mmd::Matrix stand = Mmd::Matrix::Identity();
+            const float turn = cosf(g_seconds * 0.4f);
+            const float lean = sinf(g_seconds * 0.4f);
+
+            stand.m[0] = turn;
+            stand.m[2] = -lean;
+            stand.m[8] = lean;
+            stand.m[10] = turn;
+            stand.m[12] = across * gap;
+            stand.m[13] = -0.7f;
+            stand.m[14] = along * gap;
+
+            Azm::Queue(g_car, stand.m);
+        }
+
+        g_drawn = Azm::Flush();
         return;
     }
 
@@ -225,7 +433,6 @@ void __cdecl StageRender(void*)
         return;
     }
 
-    // Turned about y on the mod's own seconds. Row vectors, like the game's own matrices.
     const float turn = cosf(g_seconds);
     const float lean = sinf(g_seconds);
 
@@ -241,8 +448,6 @@ void __cdecl StageRender(void*)
 int __cdecl StageShell(void*);
 void __cdecl StageOverlay(const AmodFrame*, void*);
 
-// The boot step is held to show that it can be, and handed straight on: the game loads as itself.
-// Nothing is taken over until it is asked for, and 'stage take' is the asking.
 int __cdecl StageLoad(void*)
 {
     return Stage::RunGameLoad();
@@ -487,7 +692,26 @@ void __cdecl AzmCommand(int argc, const char** argv, void*)
         Azm::Release(g_car);
         g_car = AMOD_INVALID_AZM;
         g_wheelCount = 0;
+        g_azmMany = 0;
         Console::Print("azm: put down\n");
+        return;
+    }
+
+    if (strcmp(what, "many") == 0)
+    {
+        g_azmMany = argc > 2 ? atoi(argv[2]) : 1;
+        g_azmMany = g_azmMany < 0 ? 0 : g_azmMany;
+        const float average = g_counted > 0 ? g_spent / g_counted : 0.0f;
+
+        g_spent = 0.0f;
+        g_counted = 0;
+        g_slowest = 0.0f;
+
+        Console::Printf("azm: %d copies, %d drawn last frame\n", g_azmMany, g_drawn);
+        Console::Printf("     %.2f ms average so far, worst %.2f ms\n", average * 1000.0f,
+            g_slowest * 1000.0f);
+        Console::Print("azm: 'azm many <n>' draws that many of the loaded model in one batch;\n");
+        Console::Print("     load one with 'azm <path>' first, 'stage take' to hold the frame\n");
         return;
     }
 
@@ -603,6 +827,67 @@ void __cdecl AzmCommand(int argc, const char** argv, void*)
     Console::Printf("     %d wheel(s) turning\n", g_wheelCount);
 }
 
+void __cdecl FatalCommand(int argc, const char** argv, void*)
+{
+    if (argc < 2)
+    {
+        Console::Print("fatal: 'fatal <text>' says it the way the game says it - a line in the\n");
+        Console::Print("       console, a message box, and the game is asked to close\n");
+        return;
+    }
+
+    // Everything after the command, as one line.
+    char line[512] = {};
+
+    for (int at = 1; at < argc; ++at)
+    {
+        strcat_s(line, argv[at]);
+        strcat_s(line, at + 1 < argc ? " " : "");
+    }
+
+    Fatal("%s", line);
+}
+
+void __cdecl ShaderCommand(int argc, const char** argv, void*)
+{
+    if (!Shader::IsAvailable())
+    {
+        Console::Print("shader: no device yet - 'stage take' first, then try again\n");
+        return;
+    }
+
+    const AmodVertexShader vs = Shader::BuiltinVertex(AMOD_SHADER_BASIC_VS);
+    const AmodPixelShader ps = Shader::BuiltinPixel(AMOD_SHADER_BASIC_PS);
+
+    g_shaderQuad = !g_shaderQuad;
+
+    Console::Printf("shader: built-in vertex %u, pixel %u\n", vs, ps);
+    Console::Printf("shader: %s\n", (vs != 0 && ps != 0)
+        ? "both accepted - the device speaks vs/ps 1.1"
+        : "REFUSED - the tokens or the card; forge.log has the HRESULT");
+
+    if (vs != 0 && ps != 0)
+    {
+        Console::Printf("shader: the lit quad is %s - ten lamps summed in one vertex shader\n",
+            g_shaderQuad ? "ON" : "off");
+        Console::Print("shader: eight is the fixed-function cap, not the shader's - this draws ten\n");
+    }
+}
+
+void __cdecl SkinCommand(int argc, const char** argv, void*)
+{
+    if (!Shader::IsAvailable())
+    {
+        Console::Print("skin: no device yet - 'stage take' first\n");
+        return;
+    }
+
+    g_skin = !g_skin;
+    Console::Printf("skin: the bending bar is %s - two bones, blended per vertex in the shader\n",
+        g_skin ? "ON" : "off");
+    Console::Print("skin: fixed function cannot deform a mesh by bones at all; this does\n");
+}
+
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
 {
     if (!Attach(api))
@@ -615,6 +900,9 @@ AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api)
     Console::AddCommand("quads", &QuadsCommand);
     Console::AddCommand("models", &ModelsCommand);
     Console::AddCommand("azm", &AzmCommand);
+    Console::AddCommand("fatal", &FatalCommand);
+    Console::AddCommand("shader", &ShaderCommand);
+    Console::AddCommand("skin", &SkinCommand);
 
     Launcher::Skip(true);
     g_holdsLoad = Stage::TakeLoad(&StageLoad);

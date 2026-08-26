@@ -65,7 +65,7 @@ typedef struct AmodInputApi
     int (__cdecl* WasKeyPressed)(AmodMod mod, int key);
     int (__cdecl* WasKeyReleased)(AmodMod mod, int key);
 
-    /* Cursor in 640x480 menu space. Either pointer may be null. */
+    /* Cursor in 640x480 menu space, y from the top. */
     void (__cdecl* GetCursor)(AmodMod mod, float* x, float* y);
     void (__cdecl* SetCursor)(AmodMod mod, float x, float y);
 

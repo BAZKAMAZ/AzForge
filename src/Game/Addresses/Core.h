@@ -85,6 +85,9 @@ namespace Forge
         constexpr uint32_t kCvarArchiveFlag = 0x01;
         constexpr uint32_t kCvarNeverWriteFlag = 0x04;
         constexpr uintptr_t kGameConsoleWrite = 0x004220C0;
+
+        // Fatal error
+        constexpr uintptr_t kMsgBoxFatalError = 0x00424140;
         constexpr uintptr_t kCmdRegister = 0x00423990;
         constexpr uintptr_t kConsoleExecute = 0x004237B0;
 

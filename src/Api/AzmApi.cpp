@@ -384,6 +384,18 @@ namespace Forge
             std::vector<Range> ranges;
         };
 
+        std::string TextureBeside(const std::string& modelPath, const std::string& texture)
+        {
+            const size_t slash = modelPath.find_last_of("/\\");
+
+            if (slash == std::string::npos)
+            {
+                return texture;
+            }
+
+            return modelPath.substr(0, slash + 1) + texture;
+        }
+
         bool BuildMesh(AmodMod mod, Loaded& loaded, Building& building, const std::string& name)
         {
             const AmodMmdApi* const mmd = MmdApi::Table();
@@ -425,7 +437,14 @@ namespace Forge
 
                 if (material.handle == 0 && !material.texture.empty() && mmd->ResolveTexture != nullptr)
                 {
-                    material.handle = mmd->ResolveTexture(mod, material.texture.c_str());
+                    const std::string here = TextureBeside(loaded.path, material.texture);
+
+                    material.handle = mmd->ResolveTexture(mod, here.c_str());
+
+                    if (material.handle == 0)
+                    {
+                        material.handle = mmd->ResolveTexture(mod, material.texture.c_str());
+                    }
                 }
 
                 if (mmd->AddMaterial != nullptr)

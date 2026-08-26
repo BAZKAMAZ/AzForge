@@ -8,6 +8,7 @@
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
 #include "src/Game/D3d8Hook.h"
+#include "src/Api/ShaderApi.h"
 #include "src/Hook/InlineHook.h"
 
 #include <math.h>
@@ -589,6 +590,8 @@ namespace Forge
         // What the d3d8 hook reports, passed on to the mods that asked.
         void OnDeviceEvent(DeviceEvent event, void* device)
         {
+            ShaderApi::OnDeviceEvent(event, device);
+
             const std::vector<DeviceSub> snapshot = g_deviceSubs;
             for (const DeviceSub& subscriber : snapshot)
             {

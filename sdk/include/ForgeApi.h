@@ -32,6 +32,7 @@
 #include "SpriteFontApi.h"
 #include "StageApi.h"
 #include "AzmApi.h"
+#include "ShaderApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -139,9 +140,15 @@ typedef struct AmodApi
     /* Models with parts, materials and colour in the vertex, read out of .azm files. */
     const AmodAzmApi* azm;
 
+    /* Game fatal error: logs, shows a message box and requests exit. */
+    void(__cdecl* Fatal)(AmodMod mod, const char* text);
+
+    /* Vertex and pixel shaders (vs/ps 1.1). */
+    const AmodShaderApi* shader;
+
 } AmodApi;
 
-AMOD_LAST_FIELD(AmodApi, azm, 0xA4);
+AMOD_LAST_FIELD(AmodApi, shader, 0xAC);
 
 /* Called once, before the game starts */
 AMOD_EXPORT int __cdecl AmodInit(const AmodApi* api);
@@ -205,6 +212,7 @@ namespace Amod
         SpriteFont::Attach(api->spriteFont, api->self);
         Stage::Attach(api->stage, api->self);
         Azm::Attach(api->azm, api->self);
+        Shader::Attach(api->shader, api->self);
         return true;
     }
 
@@ -268,6 +276,25 @@ namespace Amod
     inline uint32_t                                                 GameBuild()
     {
         return g_api != nullptr ? g_api->GetGameBuild() : AMOD_GAME_BUILD_UNKNOWN;
+    }
+
+    inline void                                                     Fatal(const char* format, ...)
+    {
+        if (g_api == nullptr || g_api->Fatal == nullptr)
+        {
+            return;
+        }
+
+        char message[1024];
+        va_list arguments;
+        va_start(arguments, format);
+        const int produced = vsnprintf(message, sizeof(message), format, arguments);
+        va_end(arguments);
+
+        if (produced >= 0)
+        {
+            g_api->Fatal(g_api->self, message);
+        }
     }
 
     inline const char*                                              LastError()
