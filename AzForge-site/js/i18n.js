@@ -2,14 +2,14 @@
   "use strict";
 
   var LANGS = [
-    { id: "ru", label: "Русский" },
-    { id: "en", label: "English" }
+    { id: "en", label: "English" },
+    { id: "ru", label: "Русский" }
   ];
 
   function savedLang() {
     try { var v = localStorage.getItem("af-lang"); } catch (e) { v = null; }
     for (var i = 0; i < LANGS.length; i++) if (LANGS[i].id === v) return v;
-    return "ru";
+    return "en";
   }
 
   var AF = window.AF = {

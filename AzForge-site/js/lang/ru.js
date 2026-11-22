@@ -54,7 +54,7 @@ window.AF_LANG_RU = {
   "inst.sub": "Установщик содержит всё необходимое и настраивает игру автоматически.",
 
   "s1.t": "Скачай установщик",
-  "s1.p": "Кнопка выше или страница <a href=\"https://github.com/BAZKAMAZ/AzForge/releases\" target=\"_blank\" rel=\"noopener\">Releases на GitHub</a> — там же все предыдущие версии.",
+  "s1.p": "Кнопка выше или <a href=\"https://azforge-releases.gdnews2023.workers.dev/release/\" target=\"_blank\" rel=\"noopener\">архив релизов</a> — там же портативные zip-сборки и предыдущие версии.",
 
   "s2.t": "Запусти setup.exe",
   "s2.p": "Установщик подключит AzForge к Azangara и пропишет пути. Отдельная настройка не нужна.",

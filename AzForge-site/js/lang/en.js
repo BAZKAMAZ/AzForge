@@ -55,7 +55,7 @@ window.AF_LANG_EN = {
   "inst.sub": "The installer bundles everything you need and configures the game automatically.",
 
   "s1.t": "Download the installer",
-  "s1.p": "Use the button above or the <a href=\"https://github.com/BAZKAMAZ/AzForge/releases\" target=\"_blank\" rel=\"noopener\">Releases page on GitHub</a> — earlier versions live there too.",
+  "s1.p": "Use the button above or browse the <a href=\"https://azforge-releases.gdnews2023.workers.dev/release/\" target=\"_blank\" rel=\"noopener\">release archive</a> — portable zips and earlier versions live there too.",
 
   "s2.t": "Run setup.exe",
   "s2.p": "The installer hooks AzForge into Azangara and sets the paths. No manual configuration needed.",
