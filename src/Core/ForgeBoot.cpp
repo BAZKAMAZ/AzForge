@@ -233,7 +233,7 @@ namespace Forge
         ModHost::Load(g_registry.LoadOrder(), ModPhase::BeforeLauncher, nullptr);
         ModLoadScreen::Install(g_registry.LoadOrder());
 
-        ShutdownHook::Install(&Boot::Stop);
+        ShutdownHook::Install(&Boot::Stop, &Boot::Finish);
 
         return true;
     }
@@ -286,9 +286,23 @@ namespace Forge
         Subsystems::Clear();
         g_registry.Clear();
 
+        g_running = false;
+    }
+
+    // Held back until App_Shutdown has returned: until then a fault in the game's own teardown
+    // still has somewhere to be reported.
+    void Boot::Finish()
+    {
+        static bool finished = false;
+
+        if (finished)
+        {
+            return;
+        }
+
+        finished = true;
         Crash::Uninstall();
         Log::Close();
-        g_running = false;
     }
 
     const ModRegistry& Boot::Registry()
@@ -310,4 +324,5 @@ extern "C" __declspec(dllexport) void* __cdecl AzForge_HookD3d8(void* d3d8)
 extern "C" __declspec(dllexport) void __cdecl AzForge_Shutdown()
 {
     Forge::Boot::Stop();
+    Forge::Boot::Finish();
 }

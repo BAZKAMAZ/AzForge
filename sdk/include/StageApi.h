@@ -2,6 +2,7 @@
 #define AZFORGE_STAGE_API_H
 
 #include "ForgeTypes.h"
+#include "RenderApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -65,9 +66,28 @@ typedef struct AmodStageApi
     /* Runs the game's music update. */
     void (__cdecl* RunMusic)(AmodMod mod);
 
+    /* THE LOADING SCREEN A MOD IS BEING STARTED ON. Nothing is drawn while a mod sits in AmodInit:
+       the loader repaints between mods, and inside one there is only whatever was on the screen
+       last - which at startup is nothing at all, and looks like a hung white window. A mod that
+       reads files in its init should say so as it goes, and each of these paints the screen there
+       and then.
+
+       Loading tells whether there is a screen to paint. Off it these do nothing and say so, so the
+       same lines are safe to leave in wherever they are called from. */
+    int (__cdecl* Loading)(AmodMod mod);
+    int (__cdecl* LoadingSay)(AmodMod mod, const char* text);
+    int (__cdecl* LoadingStep)(AmodMod mod, int percent, const char* text);
+
+    /* A WHOLE FRAME OF THE MOD'S OWN, drawn while it is still starting. The two above write on the
+       game's loading screen; this one hands the screen over. The loader opens the frame, calls
+       back, and shows it - and inside the callback everything the mod draws with normally works,
+       so the screen it puts up during its own loading can be the screen it wants. Call it as often
+       as there is something new to show. */
+    int (__cdecl* LoadingFrame)(AmodMod mod, AmodRenderCallback draw, void* user);
+
 } AmodStageApi;
 
-AMOD_LAST_FIELD(AmodStageApi, RunMusic, 0x38);
+AMOD_LAST_FIELD(AmodStageApi, LoadingFrame, 0x48);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -160,6 +180,30 @@ namespace Amod
         inline int RunGameLoad()
         {
             return g_stage != nullptr ? g_stage->RunGameLoad(g_stageSelf) : 0;
+        }
+
+        inline bool Loading()
+        {
+            return g_stage != nullptr && g_stage->structSize >= sizeof(AmodStageApi) &&
+                   g_stage->Loading(g_stageSelf) != 0;
+        }
+
+        inline bool LoadingSay(const char* text)
+        {
+            return g_stage != nullptr && g_stage->structSize >= sizeof(AmodStageApi) &&
+                   g_stage->LoadingSay(g_stageSelf, text) != 0;
+        }
+
+        inline bool LoadingFrame(AmodRenderCallback draw, void* user = nullptr)
+        {
+            return g_stage != nullptr && g_stage->structSize >= sizeof(AmodStageApi) &&
+                   g_stage->LoadingFrame(g_stageSelf, draw, user) != 0;
+        }
+
+        inline bool LoadingStep(int percent, const char* text)
+        {
+            return g_stage != nullptr && g_stage->structSize >= sizeof(AmodStageApi) &&
+                   g_stage->LoadingStep(g_stageSelf, percent, text) != 0;
         }
 
         inline void RunMusic()

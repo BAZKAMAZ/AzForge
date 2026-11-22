@@ -118,9 +118,19 @@ namespace Forge
             g_setProgress(g_manager, nullptr, percent);
         }
 
+        int g_wasPercent = 100;
+
         void __cdecl AfterEachMod()
         {
             uint8_t* const screen = CurrentLoadingScreen();
+
+            // A mod may have driven the bar for its own loading; the game's own place goes back,
+            // so the next one does not start from wherever the last left off.
+            if (screen != nullptr)
+            {
+                memcpy(screen + kLoadingPercentOffset, &g_wasPercent, sizeof(g_wasPercent));
+            }
+
             WriteProgressLine(screen);
             Repaint(screen);
         }
@@ -146,6 +156,8 @@ namespace Forge
             // Hold the screen open so the player can read the result.
             SetWaitKey(screen, true);
             ShowHelpText(screen, true);
+
+            memcpy(&g_wasPercent, screen + kLoadingPercentOffset, sizeof(g_wasPercent));
 
             g_total = ModHost::CodeModCount(*g_loadOrder);
             WriteProgressLine(screen);
@@ -205,6 +217,35 @@ namespace Forge
     {
         uint8_t* const screen = CurrentLoadingScreen();
         SetLine(screen, line);
+        Repaint(screen);
+    }
+
+    bool ModLoadScreen::Up()
+    {
+        return CurrentLoadingScreen() != nullptr;
+    }
+
+    void ModLoadScreen::Step(int percent, const char* line)
+    {
+        uint8_t* const screen = CurrentLoadingScreen();
+
+        if (screen == nullptr)
+        {
+            return;
+        }
+
+        if (percent >= 0)
+        {
+            const int wanted = percent > 100 ? 100 : percent;
+
+            memcpy(screen + kLoadingPercentOffset, &wanted, sizeof(wanted));
+        }
+
+        if (line != nullptr)
+        {
+            SetLine(screen, line);
+        }
+
         Repaint(screen);
     }
 

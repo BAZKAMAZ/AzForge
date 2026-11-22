@@ -2,6 +2,8 @@
 #define AZFORGE_SHADER_API_H
 
 #include "ForgeTypes.h"
+#include "MmdApi.h"
+#include "TextureApi.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,6 +21,29 @@ typedef enum AmodBuiltinShader
     AMOD_SHADER_BASIC_PS = 1, /* tex0 * diffuse */
     AMOD_SHADER_COLOR_PS = 2  /* diffuse only */
 } AmodBuiltinShader;
+
+/* One model in a batch: where it stands, what it wears, and how it is blended. */
+typedef struct AmodShadedDraw
+{
+    uint32_t structSize;
+
+    AmodModelId model;
+    AmodTextureId texture;  /* 0 keeps the model's own */
+    uint32_t tint;          /* 0xAARRGGBB; reaches the shader at the tint register */
+    int blend;              /* AMOD_DRAW_BLEND_* */
+    float matrix[16];       /* the world matrix, row major */
+
+    /* Constants this draw wants set before it, and nobody else needs: the lights that reach THIS
+       model, and not the ones that reach the rest of the world. A shader holds ten lights at once
+       and a map holds a hundred - the ten are per draw, which is what makes the hundred possible.
+       Draws pointing at the same block are drawn together and it is uploaded once. Null for none. */
+    const float* constants;
+    int firstRegister;
+    int vec4Count;
+
+} AmodShadedDraw;
+
+AMOD_LAST_FIELD(AmodShadedDraw, vec4Count, 0x5C);
 
 typedef struct AmodShaderApi
 {
@@ -52,9 +77,21 @@ typedef struct AmodShaderApi
     AmodVertexShader(__cdecl* CreateVertexSource)(AmodMod mod, const char* source, const uint32_t* declaration);
     AmodPixelShader(__cdecl* CreatePixelSource)(AmodMod mod, const char* source);
 
+    /* Draws a model with the current shaders; texture 0 keeps the model's own. */
+    int(__cdecl* DrawModel)(AmodMod mod, AmodModelId model, const float* world, AmodTextureId texture);
+
+    /* Where the loader writes the matrices it makes for a draw; -1 for neither. */
+    int(__cdecl* SetTransformRegisters)(AmodMod mod, int worldViewProjection, int world);
+
+    /* Where a draw's tint lands, as red, green, blue, alpha in 0..1; -1 for nowhere. */
+    int(__cdecl* SetTintRegister)(AmodMod mod, int tint);
+
+    /* Draws many models with the current shaders, sorted so a state is set once for a run. */
+    int(__cdecl* DrawModels)(AmodMod mod, const AmodShadedDraw* draws, int count);
+
 } AmodShaderApi;
 
-AMOD_LAST_FIELD(AmodShaderApi, CreatePixelSource, 0x34);
+AMOD_LAST_FIELD(AmodShaderApi, DrawModels, 0x44);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -140,6 +177,30 @@ namespace Amod
         inline AmodPixelShader CreatePixelSource(const char* source)
         {
             return g_shader != nullptr ? g_shader->CreatePixelSource(g_shaderSelf, source) : AMOD_INVALID_SHADER;
+        }
+
+        inline bool DrawModel(AmodModelId model, const float* world, AmodTextureId texture = 0)
+        {
+            return g_shader != nullptr && g_shader->structSize >= sizeof(AmodShaderApi) &&
+                   g_shader->DrawModel(g_shaderSelf, model, world, texture) != 0;
+        }
+
+        inline bool SetTransformRegisters(int worldViewProjection, int world)
+        {
+            return g_shader != nullptr && g_shader->structSize >= sizeof(AmodShaderApi) &&
+                   g_shader->SetTransformRegisters(g_shaderSelf, worldViewProjection, world) != 0;
+        }
+
+        inline int DrawModels(const AmodShadedDraw* draws, int count)
+        {
+            return (g_shader != nullptr && g_shader->structSize >= sizeof(AmodShaderApi))
+                ? g_shader->DrawModels(g_shaderSelf, draws, count) : 0;
+        }
+
+        inline bool SetTintRegister(int tint)
+        {
+            return g_shader != nullptr && g_shader->structSize >= sizeof(AmodShaderApi) &&
+                   g_shader->SetTintRegister(g_shaderSelf, tint) != 0;
         }
     }
 }

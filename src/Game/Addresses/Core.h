@@ -8,10 +8,14 @@ namespace Forge
     {
         constexpr uintptr_t kPreferredImageBase = 0x00400000;
 
-        constexpr uintptr_t kPackageOpenFile = 0x00422F00;
+        constexpr uintptr_t kPackageOpenFile = 0x00422F00; // __stdcall (path) -> file, RET 4; never __cdecl
         constexpr uintptr_t kPackageReadFromDisk = 0x00422660;
         constexpr uintptr_t kPackageReadFromPak = 0x00422CA0;
-        constexpr uintptr_t kPackageFree = 0x00422200;
+        constexpr uintptr_t kPackageFree = 0x00422200; // __stdcall (file), as FilesApi calls it
+
+        // On disk first, then every pak from the last one down.
+        constexpr uintptr_t kPackageManager = 0x0067A080;
+        constexpr uintptr_t kPackageFileExists = 0x00422F40; // __thiscall (packages, path) -> bool in AL, RET 4
 
         constexpr uintptr_t kMemAllocTracked = 0x00421DF0; // __cdecl (size, file, line)
         constexpr uintptr_t kMemFreeTracked = 0x00421CE0; // __cdecl (block)
@@ -189,8 +193,14 @@ namespace Forge
         constexpr uintptr_t kGetAsyncKeyStateSlot = 0x004C7228;
         constexpr uintptr_t kInputUpdate = 0x004271A0; // __fastcall (input)
 
-        // Console open flag.
-        constexpr uintptr_t kInputConsoleOpenOffset = 0x8124;
+        // nsConsole, a static of its own. Input_Update reads the open flag off THIS object, not
+        // off the input one beside it: `MOV ECX,0x680690; CALL 0x004281B0` at 0x0042715F, and that
+        // routine is nothing but `return *(this + 0x8124)`. Both objects run past 0x8000 bytes,
+        // which is how one got mistaken for the other.
+        constexpr uintptr_t kConsole = 0x00680690;
+        constexpr uintptr_t kConsoleOpenOffset = 0x8124;
+        constexpr uintptr_t kConsoleEditOffset = 0x8008;   // nsEditString: 256 bytes of text,
+        constexpr uintptr_t kConsoleCaretOffset = 0x8108;  // then m_cursorPos and m_maxLen
 
         constexpr uintptr_t kGameIsPaused = 0x00426750; // __cdecl () -> bool
         constexpr uintptr_t kGameSetPaused = 0x00426760; // __cdecl (bool)

@@ -15,5 +15,8 @@ namespace Forge
         static const AmodObjectsMenuApi*                            Table();
 
         static void                                                 ForgetMod(ModContext* owner);
+
+        static bool                                                 AskMenu(const char* ownId, bool overlay);
+        static bool                                                 AskBack();
     };
 }

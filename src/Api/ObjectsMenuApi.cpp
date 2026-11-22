@@ -7,6 +7,7 @@
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
 #include "src/Hook/InlineHook.h"
+#include "src/Core/ForgeCrash.h"
 
 #include <map>
 #include <set>
@@ -14,6 +15,7 @@
 #include <string.h>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 namespace Forge
 {
@@ -54,6 +56,16 @@ namespace Forge
         FindItemRoutine g_findItem = nullptr;
         FindMenuRoutine g_findMenu = nullptr;
 
+        // A table's own two, both methods on it: one writes a cell, one raises the dots of a line.
+        typedef void(__fastcall* TableSetCellRoutine)(void* table, void* unused, int column, int line, const char* text);
+        typedef void(__fastcall* TableSetDotsRoutine)(void* table, void* unused, int line, int dots);
+
+        typedef void(__fastcall* TableSetStyleRoutine)(void* table, void* unused, int line, const float* colour, const float* scale);
+
+        TableSetCellRoutine g_tableSetCell = nullptr;
+        TableSetDotsRoutine g_tableSetDots = nullptr;
+        TableSetStyleRoutine g_tableSetStyle = nullptr;
+
         std::map<std::string, void*> g_menusById;
         std::map<void*, std::vector<void*>> g_elementsByMenu;
         std::set<void*> g_validElements;
@@ -63,6 +75,16 @@ namespace Forge
 
         std::vector<Subscription> g_subscriptions;
         uint32_t g_nextSubscriptionId = 1;
+
+        // A menu asked for inside a click goes into the click's own result; Menu_Update opens it once the click is done.
+        bool g_inClick = false;
+        bool g_askedBack = false;
+        const char* g_askedSub = nullptr;
+        const char* g_askedBox = nullptr;
+
+        // Not ID_BACK, not ID_CLOSE_MENU: with this as the item the game only walks to what was asked.
+        const char kNoItem[] = "";
+        const char kBackItem[] = "ID_BACK";
 
         bool Succeeded(int result)
         {
@@ -164,11 +186,6 @@ namespace Forge
             return "";
         }
 
-
-        // --- geometry ------------------------------------------------------------------
-        // Repeats what MenuButton_ParseCommon @0x0045a600 works out once the rectangle is
-        // known, with the same two expressions. This is what MenuItem_Render @0x0045f620
-        // actually draws at, so a rectangle changed without this changes nothing on screen.
         void RecomputeCentre(void* item)
         {
             const float* const rect = Floats(item, GameAddress::kMenuElementRectOffset);
@@ -949,6 +966,9 @@ namespace Forge
             { "sliders",        "slider", GameAddress::kSizeMenuSlider,
               GameSymbol::MenuSliderCreate,    GameSymbol::Count,         ParseStyle::Virtual,
               GameSymbol::MenuAddElement, GameAddress::kElementDestroyVtableSlot },
+            { "tables",         "table",  GameAddress::kSizeMenuTable,
+              GameSymbol::MenuTableCreate,     GameSymbol::MenuTableParse, ParseStyle::Direct,
+              GameSymbol::MenuAddTable,   GameAddress::kTableDestroyVtableSlot },
         };
 
         bool CreationReady()
@@ -1241,6 +1261,131 @@ namespace Forge
             return first;
         }
 
+        // A back asked outside a click: the next Menu_Update is handed it as the top menu's click result.
+        bool g_backLater = false;
+        DWORD g_backLaterAt = 0;
+        const DWORD kBackLaterPatience = 500;
+
+        const char* g_menuLater = nullptr;
+        bool g_menuLaterOverlay = false;
+        DWORD g_menuLaterAt = 0;
+
+        void* ManagerMenu(uintptr_t offset)
+        {
+            void* const* const slot = static_cast<void* const*>(GameModule::Resolve(GameAddress::kMenuManager));
+            const uint8_t* const manager = slot != nullptr ? static_cast<const uint8_t*>(*slot) : nullptr;
+            return manager != nullptr ? *reinterpret_cast<void* const*>(manager + offset) : nullptr;
+        }
+
+        // The overlay when one is up, the screen menu otherwise.
+        void* TopMenu()
+        {
+            void* const box = ManagerMenu(GameAddress::kMenuManagerBoxOffset);
+            return box != nullptr ? box : ManagerMenu(GameAddress::kMenuManagerCurrentOffset);
+        }
+
+        // Any result from an overlay closes it; a screen menu goes back on ID_BACK.
+        void WriteBack(const char** result, void* menu)
+        {
+            const bool overlay = menu == ManagerMenu(GameAddress::kMenuManagerBoxOffset);
+
+            result[GameAddress::kClickResultMenuId / sizeof(char*)] = static_cast<const char*>(menu) + GameAddress::kMenuIdOffset;
+            result[GameAddress::kClickResultItemId / sizeof(char*)] = overlay ? kNoItem : kBackItem;
+            result[GameAddress::kClickResultSubMenu / sizeof(char*)] = nullptr;
+            result[GameAddress::kClickResultBoxMenu / sizeof(char*)] = nullptr;
+            result[GameAddress::kClickResultRegMenu / sizeof(char*)] = nullptr;
+        }
+
+        void WriteMenu(const char** result, void* menu, const char* ownId, bool overlay)
+        {
+            result[GameAddress::kClickResultMenuId / sizeof(char*)] = static_cast<const char*>(menu) + GameAddress::kMenuIdOffset;
+            result[GameAddress::kClickResultItemId / sizeof(char*)] = kNoItem;
+            result[GameAddress::kClickResultSubMenu / sizeof(char*)] = overlay ? nullptr : ownId;
+            result[GameAddress::kClickResultBoxMenu / sizeof(char*)] = overlay ? ownId : nullptr;
+            result[GameAddress::kClickResultRegMenu / sizeof(char*)] = nullptr;
+        }
+
+        typedef int (__cdecl* ModelParseRoutine)(void* parser, void* model);
+        // RET 8 at 0x00451B62: it clears its own arguments, so calling it as __cdecl cleared
+        // them twice and tore the caller's locals off the stack.
+        typedef void* (__stdcall* ModelsGrowRoutine)(void** array, int* count);
+
+        // Models are the one block with no parser of its own: Menu_ParseScript walks $models and
+        // its $item blocks itself, parsing each record onto the stack and copying it into a slot
+        // the array grows by one. This is that loop, run against a mod's fragment instead.
+        // ui_ModelParse reaches the model and texture loaders through global function pointers
+        // and reads keys a fragment may not carry. The game only ever runs it while a menu script
+        // is being loaded; a mod runs it whenever it likes, so it is held at arm's length.
+        bool ParseModelGuarded(ModelParseRoutine parse, void* parser, void* record)
+        {
+            __try
+            {
+                return Succeeded(parse(parser, record));
+            }
+            __except (EXCEPTION_EXECUTE_HANDLER)
+            {
+                FORGE_LOG_WARN("A mod's $models entry threw inside the game's parser");
+                return false;
+            }
+        }
+
+        void* BuildModels(void* menu, void* parser, int& built)
+        {
+            const ModelParseRoutine parse = reinterpret_cast<ModelParseRoutine>(
+                GameSymbols::Address(GameSymbol::UiModelParse));
+            const ModelsGrowRoutine grow = reinterpret_cast<ModelsGrowRoutine>(
+                GameSymbols::Address(GameSymbol::MenuModelsGrow));
+
+            if (parse == nullptr || grow == nullptr ||
+                !Succeeded(g_parserEnter(parser, "models")))
+            {
+                return nullptr;
+            }
+
+            void* first = nullptr;
+
+            if (Succeeded(g_parserEnter(parser, "item")))
+            {
+                do
+                {
+                    // Four byte alignment, because the game reads it as a uint array
+                    uint32_t record[GameAddress::kModelStride / sizeof(uint32_t)] = {};
+
+                    if (!ParseModelGuarded(parse, parser, record))
+                    {
+                        FORGE_LOG_WARN("A mod's $models entry was refused by the game's parser");
+                        continue;
+                    }
+
+                    void** const array =
+                        reinterpret_cast<void**>(Field(menu, GameAddress::kMenuModelsOffset));
+                    int* const count =
+                        reinterpret_cast<int*>(Field(menu, GameAddress::kMenuModelCountOffset));
+                    void* const slot = grow(array, count);
+
+                    if (slot == nullptr)
+                    {
+                        FORGE_LOG_WARN("A mod's $models entry had nowhere to go");
+                        continue;
+                    }
+
+                    memcpy(slot, record, GameAddress::kModelStride);
+
+                    if (first == nullptr)
+                    {
+                        first = slot;
+                    }
+                    ++built;
+                }
+                while (Succeeded(g_parserNext(parser)));
+
+                g_parserLeave(parser);
+            }
+
+            g_parserLeave(parser);
+            return first;
+        }
+
         void* BuildFromFragment(void* menu, const char* fragment, int& built)
         {
             built = 0;
@@ -1286,18 +1431,64 @@ namespace Forge
                 first = decoration;
             }
 
+            void* const model = BuildModels(menu, parser, built);
+            if (first == nullptr)
+            {
+                first = model;
+            }
+
             g_parserDestroy(parser);
             return first;
+        }
+
+        struct MenuCall
+        {
+            const Subscription* item;
+            AmodMenuEvent event;
+            void* data;
+        };
+
+        void __cdecl CallSubscriber(void* context)
+        {
+            const MenuCall* const call = static_cast<const MenuCall*>(context);
+            call->item->callback(call->event, call->data, call->item->user);
+        }
+
+        // A mod that faults in its menu callback loses its menu events, not the game.
+        void DropSubscriber(ModContext* owner)
+        {
+            for (size_t i = g_subscriptions.size(); i-- > 0;)
+            {
+                if (g_subscriptions[i].owner == owner)
+                {
+                    g_subscriptions.erase(g_subscriptions.begin() + static_cast<ptrdiff_t>(i));
+                }
+            }
         }
 
         void Dispatch(AmodMenuEvent event, void* data)
         {
             const std::vector<Subscription> snapshot = g_subscriptions;
+            std::vector<ModContext*> dropped;
+
             for (const Subscription& item : snapshot)
             {
-                if (item.event == event && item.callback != nullptr)
+                if (item.event != event || item.callback == nullptr ||
+                    std::find(dropped.begin(), dropped.end(), item.owner) != dropped.end())
                 {
-                    item.callback(event, data, item.user);
+                    continue;
+                }
+
+                MenuCall call = { &item, event, data };
+
+                if (!Crash::Guarded(&CallSubscriber, &call))
+                {
+                    FORGE_LOG_ERROR("[%s] faulted in its menu callback (%s); it gets no more menu events",
+                        item.owner != nullptr ? item.owner->id.c_str() : "?",
+                        event == AMOD_MENU_LOADED ? "loaded" : "clicked");
+
+                    dropped.push_back(item.owner);
+                    DropSubscriber(item.owner);
                 }
             }
         }
@@ -1315,11 +1506,6 @@ namespace Forge
             }
         }
 
-        // --- detours -------------------------------------------------------------------
-        // The id is read out of the object, never taken from the caller's argument: a menu
-        // built from a script gets it from the $menu_id of its own $header, and the argument
-        // is null in that case. Menu_Register has already copied the argument in by the time
-        // this runs, so the object is right either way.
         void Publish(void* menu)
         {
             if (menu == nullptr)
@@ -1359,8 +1545,7 @@ namespace Forge
             return result;
         }
 
-        int __fastcall RegisterDetour(void* manager, void* unused, void* menu,
-                                      const char* scriptFile, const char* menuId, int force)
+        int __fastcall RegisterDetour(void* manager, void* unused, void* menu, const char* scriptFile, const char* menuId, int force)
         {
             const int result = g_originalRegister(manager, unused, menu, scriptFile, menuId, force);
 
@@ -1378,8 +1563,38 @@ namespace Forge
 
             const char** const result = static_cast<const char**>(dest);
             const char* const itemId = result[GameAddress::kClickResultItemId / sizeof(char*)];
+
             if (itemId == nullptr || itemId[0] == '\0')
             {
+                if (menu != TopMenu())
+                {
+                    return;
+                }
+
+                const DWORD now = GetTickCount();
+
+                if (g_backLater)
+                {
+                    g_backLater = false;
+
+                    if (now - g_backLaterAt <= kBackLaterPatience)
+                    {
+                        WriteBack(result, menu);
+                        return;
+                    }
+                }
+
+                if (g_menuLater != nullptr)
+                {
+                    const char* const ownId = g_menuLater;
+                    g_menuLater = nullptr;
+
+                    if (now - g_menuLaterAt <= kBackLaterPatience)
+                    {
+                        WriteMenu(result, menu, ownId, g_menuLaterOverlay);
+                    }
+                }
+
                 return;
             }
 
@@ -1389,9 +1604,26 @@ namespace Forge
             clicked.menuId = menuId != nullptr ? menuId : "";
             clicked.itemId = itemId;
             clicked.handled = 0;
-            Dispatch(AMOD_MENU_CLICKED, &clicked);
 
-            if (clicked.handled != 0)
+            g_askedSub = nullptr;
+            g_askedBox = nullptr;
+            g_askedBack = false;
+            g_inClick = true;
+            Dispatch(AMOD_MENU_CLICKED, &clicked);
+            g_inClick = false;
+
+            if (g_askedSub != nullptr || g_askedBox != nullptr)
+            {
+                result[GameAddress::kClickResultItemId / sizeof(char*)] = kNoItem;
+                result[GameAddress::kClickResultSubMenu / sizeof(char*)] = g_askedSub;
+                result[GameAddress::kClickResultBoxMenu / sizeof(char*)] = g_askedBox;
+                result[GameAddress::kClickResultRegMenu / sizeof(char*)] = nullptr;
+            }
+            else if (g_askedBack)
+            {
+                WriteBack(result, menu);
+            }
+            else if (clicked.handled != 0)
             {
                 result[GameAddress::kClickResultMenuId / sizeof(char*)] = nullptr;
                 result[GameAddress::kClickResultItemId / sizeof(char*)] = nullptr;
@@ -1446,10 +1678,7 @@ namespace Forge
             return nullptr;
         }
 
-        // --- the table the mods call through -------------------------------------------
-
-        AmodToken __cdecl ApiSubscribe(AmodMod mod, AmodMenuEvent event,
-                                       AmodMenuCallback callback, void* user)
+        AmodToken __cdecl ApiSubscribe(AmodMod mod, AmodMenuEvent event, AmodMenuCallback callback, void* user)
         {
             ModContext* context = Resolve(mod);
             if (context == nullptr || callback == nullptr)
@@ -1770,6 +1999,81 @@ namespace Forge
             return first;
         }
 
+        void* TableOrNull(AmodMenuItem item)
+        {
+            return IsLive(item) && KindOf(item) == ElementKind::Table ? item : nullptr;
+        }
+
+        int __cdecl ApiTableLineCount(AmodMod mod, AmodMenuItem table)
+        {
+            void* const object = Resolve(mod) != nullptr ? TableOrNull(table) : nullptr;
+
+            return object != nullptr
+                ? *reinterpret_cast<const int*>(Field(object, GameAddress::kTableMadeLineCountOffset))
+                : 0;
+        }
+
+        int __cdecl ApiSetTableCell(AmodMod mod, AmodMenuItem table, int column, int line, const char* text)
+        {
+            void* const object = Resolve(mod) != nullptr ? TableOrNull(table) : nullptr;
+
+            if (object == nullptr || g_tableSetCell == nullptr)
+            {
+                return 0;
+            }
+
+            // The routine checks both bounds itself and does nothing outside them, which is no
+            // answer to a mod asking whether it landed.
+            const int columns = *reinterpret_cast<const int*>(Field(object, GameAddress::kTableColumnCountOffset));
+            const int lines = *reinterpret_cast<const int*>(Field(object, GameAddress::kTableMadeLineCountOffset));
+
+            if (column < 0 || column >= columns || line < 0 || line >= lines)
+            {
+                return 0;
+            }
+
+            g_tableSetCell(object, nullptr, column, line, text);
+            return 1;
+        }
+
+        int __cdecl ApiSetTableLineDots(AmodMod mod, AmodMenuItem table, int line, int dots)
+        {
+            void* const object = Resolve(mod) != nullptr ? TableOrNull(table) : nullptr;
+
+            if (object == nullptr || g_tableSetDots == nullptr)
+            {
+                return 0;
+            }
+
+            if (line < 0 || line >= *reinterpret_cast<const int*>(
+                    Field(object, GameAddress::kTableMadeLineCountOffset)))
+            {
+                return 0;
+            }
+
+            g_tableSetDots(object, nullptr, line, dots);
+            return 1;
+        }
+
+        int __cdecl ApiSetTableLineStyle(AmodMod mod, AmodMenuItem table, int line, const float* colour, const float* scale)
+        {
+            void* const object = Resolve(mod) != nullptr ? TableOrNull(table) : nullptr;
+
+            if (object == nullptr || g_tableSetStyle == nullptr)
+            {
+                return 0;
+            }
+
+            if (line < 0 || line >= *reinterpret_cast<const int*>(
+                    Field(object, GameAddress::kTableMadeLineCountOffset)))
+            {
+                return 0;
+            }
+
+            g_tableSetStyle(object, nullptr, line, colour, scale);
+            return 1;
+        }
+
         void* __cdecl ApiGetRawPointer(AmodMod mod, AmodMenuItem item, uint32_t expectedGameBuild)
         {
             if (Resolve(mod) == nullptr || !IsLive(item) ||
@@ -1843,6 +2147,15 @@ namespace Forge
         {
             return true;
         }
+
+        // A table without these is still a table: it shows what its script gave it, and a mod that
+        // asks to write a line is told no.
+        g_tableSetCell = reinterpret_cast<TableSetCellRoutine>(
+            GameSymbols::Address(GameSymbol::MenuTableSetCell));
+        g_tableSetDots = reinterpret_cast<TableSetDotsRoutine>(
+            GameSymbols::Address(GameSymbol::MenuTableSetLineDots));
+        g_tableSetStyle = reinterpret_cast<TableSetStyleRoutine>(
+            GameSymbols::Address(GameSymbol::MenuTableSetLineStyle));
 
         g_findItem = reinterpret_cast<FindItemRoutine>(
             GameSymbols::Address(GameSymbol::MenuFindItemById));
@@ -1941,6 +2254,10 @@ namespace Forge
         g_table.PropertyNameAt = &ApiPropertyNameAt;
         g_table.GetRawPointer = &ApiGetRawPointer;
         g_table.AddObject = &ApiAddObject;
+        g_table.TableLineCount = &ApiTableLineCount;
+        g_table.SetTableCell = &ApiSetTableCell;
+        g_table.SetTableLineDots = &ApiSetTableLineDots;
+        g_table.SetTableLineStyle = &ApiSetTableLineStyle;
 
         ValidatePropertyTable();
 
@@ -1959,6 +2276,49 @@ namespace Forge
 
         FORGE_LOG_INFO("Menu interface installed, %zu propert(ies) across %d kind(s)",
                        kPropertyCount, kinds);
+        return true;
+    }
+
+    bool ObjectsMenuApi::AskMenu(const char* ownId, bool overlay)
+    {
+        if (ownId == nullptr)
+        {
+            return false;
+        }
+
+        if (g_inClick)
+        {
+            g_askedSub = overlay ? nullptr : ownId;
+            g_askedBox = overlay ? ownId : nullptr;
+            return true;
+        }
+
+        if (TopMenu() == nullptr)
+        {
+            return false;
+        }
+
+        g_menuLater = ownId;
+        g_menuLaterOverlay = overlay;
+        g_menuLaterAt = GetTickCount();
+        return true;
+    }
+
+    bool ObjectsMenuApi::AskBack()
+    {
+        if (g_inClick)
+        {
+            g_askedBack = true;
+            return true;
+        }
+
+        if (TopMenu() == nullptr)
+        {
+            return false;
+        }
+
+        g_backLater = true;
+        g_backLaterAt = GetTickCount();
         return true;
     }
 

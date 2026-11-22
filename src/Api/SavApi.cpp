@@ -34,6 +34,9 @@ namespace Forge
         }
 
         typedef void(__fastcall* WriteRoutine)(void* packs, void* unused, const char* path);
+        typedef void*(__fastcall* PackDescAtRoutine)(void* packs, void* unused, int pack);
+        typedef int(__fastcall* MenuLoadFromScriptRoutine)(void* manager, void* unused,
+                                                           const char* menuId, const char* script);
         typedef void(__fastcall* OpenLevelRoutine)(void* packs, void* unused, const char* levelId);
 
         struct Blocked
@@ -431,6 +434,83 @@ namespace Forge
             return (count > 0 && count < 0x1000) ? count : 0;
         }
 
+        uint8_t* PackDesc(int pack)
+        {
+            const PackDescAtRoutine descAt = Routine<PackDescAtRoutine>(GameAddress::kGamePacksDescAt);
+            uint8_t* const packs = Packs();
+
+            if (descAt == nullptr || packs == nullptr)
+            {
+                return nullptr;
+            }
+
+            uint8_t* const desc = static_cast<uint8_t*>(descAt(packs, nullptr, pack));
+            return Readable(desc, GameAddress::kGamePackDescSize) ? desc : nullptr;
+        }
+
+        // A fixed field, not a string: bounded so a full one without a NUL cannot run on
+        void KeepField(char* into, size_t room, const uint8_t* desc, uintptr_t offset, size_t size)
+        {
+            snprintf(into, room, "%.*s", static_cast<int>(size),
+                     reinterpret_cast<const char*>(desc + offset));
+        }
+
+        // kMenuManager is a CMenu**, so the manager is one dereference in
+        void* MenuManager()
+        {
+            void** const at = static_cast<void**>(GameModule::Resolve(GameAddress::kMenuManager));
+            return at != nullptr && Readable(at, sizeof(void*)) ? *at : nullptr;
+        }
+
+        const char* CurrentMenuId()
+        {
+            void* const manager = MenuManager();
+
+            if (manager == nullptr || !Readable(manager, GameAddress::kMenuManagerCurrentOffset + sizeof(void*)))
+            {
+                return "";
+            }
+
+            const uint8_t* const menu = Read<uint8_t*>(static_cast<uint8_t*>(manager),
+                                                       GameAddress::kMenuManagerCurrentOffset);
+
+            return Readable(menu, GameAddress::kMenuIdOffset + 0x40)
+                ? reinterpret_cast<const char*>(menu + GameAddress::kMenuIdOffset)
+                : "";
+        }
+
+        int __cdecl ApiGetPack(AmodMod mod, int pack, AmodPack* out)
+        {
+            static char name[GameAddress::kGamePackNameSize + 1] = "";
+            static char script[GameAddress::kGamePackPathSize + 1] = "";
+            static char preview[GameAddress::kGamePackPathSize + 1] = "";
+
+            const uint8_t* const desc = Caller(mod) != nullptr ? PackDesc(pack) : nullptr;
+
+            if (out == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "GetPack wants somewhere to answer");
+            }
+            if (desc == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no pack %d", pack);
+            }
+
+            KeepField(name, sizeof(name), desc, GameAddress::kGamePackNameOffset, GameAddress::kGamePackNameSize);
+            KeepField(script, sizeof(script), desc, GameAddress::kGamePackMenuOffset, GameAddress::kGamePackPathSize);
+            KeepField(preview, sizeof(preview), desc, GameAddress::kGamePackPreviewOffset, GameAddress::kGamePackPathSize);
+
+            AmodPack filled = {};
+
+            filled.structSize = sizeof(filled);
+            filled.id = Read<int>(desc, GameAddress::kGamePackIdOffset);
+            filled.name = name;
+            filled.menuScript = script;
+            filled.preview = preview;
+
+            return CopyOut(out, out->structSize, &filled, sizeof(filled));
+        }
+
         int __cdecl ApiSetCurrent(AmodMod mod, int pack)
         {
             uint8_t* const packs = Caller(mod) != nullptr ? Packs() : nullptr;
@@ -441,6 +521,51 @@ namespace Forge
             }
 
             memcpy(packs + GameAddress::kGamePacksCurrentOffset, &pack, sizeof(pack));
+            return 1;
+        }
+
+        int __cdecl ApiLoadPackMenu(AmodMod mod, int pack)
+        {
+            const MenuLoadFromScriptRoutine load =
+                Routine<MenuLoadFromScriptRoutine>(GameAddress::kMenuLoadFromScript);
+            void* const manager = MenuManager();
+            const uint8_t* const desc = Caller(mod) != nullptr ? PackDesc(pack) : nullptr;
+
+            if (load == nullptr || manager == nullptr || desc == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no pack %d to take a menu from", pack);
+            }
+
+            const char* const script =
+                reinterpret_cast<const char*>(desc + GameAddress::kGamePackMenuOffset);
+
+            if (*script == 0)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "pack %d names no $new_menu", pack);
+            }
+
+            // The rebuild frees everything the menu is made of, so doing it to the screen on show
+            // leaves the game drawing what it just destroyed
+            if (strcmp(CurrentMenuId(), GameAddress::kPalaceMenuId) == 0)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED,
+                            "'%s' is the screen on show; leave it before loading a pack into it",
+                            GameAddress::kPalaceMenuId);
+            }
+
+            if (ApiSetCurrent(mod, pack) == 0)
+            {
+                return 0;
+            }
+
+            if (load(manager, nullptr, GameAddress::kPalaceMenuId, script) == 0)
+            {
+                return Fail(mod, AMOD_FAIL_REFUSED, "'%s' would not build '%s'",
+                            script, GameAddress::kPalaceMenuId);
+            }
+
+            FORGE_LOG_INFO("'%s' rebuilt from pack %d's '%s'",
+                           GameAddress::kPalaceMenuId, pack, script);
             return 1;
         }
 
@@ -1477,6 +1602,8 @@ namespace Forge
         }
 
         g_table.Keep = &ApiKeep;
+        g_table.GetPack = &ApiGetPack;
+        g_table.LoadPackMenu = &ApiLoadPackMenu;
 
         void* const target = GameModule::Resolve(GameAddress::kGamePacksOpenLevel);
         std::string error;

@@ -3,6 +3,8 @@
 #include "src/Api/AzmApi.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/MmdApi.h"
+#include "src/Api/TextureApi.h"
+#include "src/Api/ShaderApi.h"
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Mods/ModFileSystem.h"
@@ -41,6 +43,11 @@ namespace Forge
             uint32_t texture = 0;
             std::vector<uint32_t> base;
             std::vector<uint16_t> owner;
+
+            // Which material each of the engine mesh's ranges came from, in the order they were
+            // added. Two materials with no texture share a handle of nought, so a range cannot be
+            // found again by what it wears - only by whose it is.
+            std::vector<int> ranges;
         };
 
         struct Part
@@ -95,6 +102,17 @@ namespace Forge
 
         std::vector<Loaded> g_loaded;
         std::vector<AmodModelDraw> g_queue;
+
+        // What a queued draw carries of its own, beside the matrix: the lights that reach it.
+        struct Carried
+        {
+            const float* values = nullptr;
+            int firstRegister = 0;
+            int vec4Count = 0;
+        };
+
+        Carried g_carrying;
+        std::vector<Carried> g_carried;
         uint32_t g_nextId = 1;
 
         Loaded* Find(AmodAzmId id)
@@ -450,6 +468,7 @@ namespace Forge
                 if (mmd->AddMaterial != nullptr)
                 {
                     mmd->AddMaterial(mod, model, range.first, range.count / 3, material.handle);
+                    mesh.ranges.push_back(range.material);
                 }
 
                 mesh.texture = mesh.texture == 0 ? material.handle : mesh.texture;
@@ -1044,6 +1063,74 @@ namespace Forge
             return 1;
         }
 
+        // A texture the mod is holding, put on one of the model's materials. What the .mtl names is
+        // found for you and needs none of this; this is for the ones a game makes up as it runs -
+        // a livery chosen at the door, a skin built out of pixels, a photograph off the disk.
+        int __cdecl ApiSetMaterialTexture(AmodMod mod, AmodAzmId id, int material, AmodTextureId texture)
+        {
+            Loaded* const loaded = FindFor(mod, id);
+            const AmodMmdApi* const mmd = MmdApi::Table();
+
+            if (loaded == nullptr || mmd == nullptr || mmd->AddMaterial == nullptr ||
+                mmd->ClearMaterials == nullptr || mmd->GetMaterial == nullptr ||
+                material < 0 || material >= static_cast<int>(loaded->materials.size()))
+            {
+                return 0;
+            }
+
+            const uint32_t now = texture != AMOD_INVALID_TEXTURE
+                ? static_cast<uint32_t>(reinterpret_cast<uintptr_t>(TextureApi::TextureFor(texture)))
+                : 0;
+
+            loaded->materials[static_cast<size_t>(material)].handle = now;
+
+            int touched = 0;
+
+            for (Mesh& mesh : loaded->meshes)
+            {
+                bool mine = false;
+
+                for (const int owner : mesh.ranges)
+                {
+                    mine = mine || owner == material;
+                }
+
+                if (!mine)
+                {
+                    continue;
+                }
+
+                // Read back where each range starts, then say them all again with the one changed:
+                // a range cannot be edited in place, and the order is the order they went in.
+                std::vector<AmodModelMaterial> was;
+
+                was.resize(mesh.ranges.size());
+
+                for (size_t at = 0; at < mesh.ranges.size(); ++at)
+                {
+                    was[at].structSize = sizeof(AmodModelMaterial);
+                    mmd->GetMaterial(mod, mesh.model, static_cast<int>(at), &was[at]);
+                }
+
+                mmd->ClearMaterials(mod, mesh.model);
+
+                for (size_t at = 0; at < mesh.ranges.size(); ++at)
+                {
+                    const uint32_t wear = mesh.ranges[at] == material
+                        ? now
+                        : loaded->materials[static_cast<size_t>(mesh.ranges[at])].handle;
+
+                    mmd->AddMaterial(mod, mesh.model, was[at].firstIndex, was[at].primitiveCount, wear);
+                }
+
+                mesh.texture = mesh.ranges.empty() ? mesh.texture
+                    : loaded->materials[static_cast<size_t>(mesh.ranges[0])].handle;
+                ++touched;
+            }
+
+            return touched > 0 ? 1 : 0;
+        }
+
         int __cdecl ApiQueue(AmodMod mod, AmodAzmId id, const float* matrix)
         {
             const Loaded* const loaded = FindFor(mod, id);
@@ -1091,6 +1178,7 @@ namespace Forge
                     memcpy(draw.matrix, world, sizeof(draw.matrix));
 
                     g_queue.push_back(draw);
+                    g_carried.push_back(g_carrying);
                     ++queued;
                 }
             }
@@ -1105,17 +1193,158 @@ namespace Forge
             if (Caller(mod) == nullptr || mmd == nullptr || mmd->DrawMany == nullptr || g_queue.empty())
             {
                 g_queue.clear();
+        g_carried.clear();
                 return 0;
             }
 
             const int drawn = mmd->DrawMany(mod, g_queue.data(), static_cast<int>(g_queue.size()));
             g_queue.clear();
+        g_carried.clear();
             return drawn;
         }
 
         int __cdecl ApiDraw(AmodMod mod, AmodAzmId id, const float* matrix)
         {
             return ApiQueue(mod, id, matrix) > 0 ? ApiFlush(mod) : 0;
+        }
+
+        // Every mesh through the mod's own shader, one draw each: the game's per-draw FVF never
+        // gets to overwrite it.
+        int __cdecl ApiDrawShaded(AmodMod mod, AmodAzmId id, const float* matrix)
+        {
+            const Loaded* const loaded = FindFor(mod, id);
+
+            if (loaded == nullptr)
+            {
+                return 0;
+            }
+
+            float placement[16];
+
+            if (matrix != nullptr)
+            {
+                memcpy(placement, matrix, sizeof(placement));
+            }
+            else
+            {
+                Identity(placement);
+            }
+
+            std::vector<AmodShadedDraw> shaded;
+
+            shaded.reserve(loaded->parts.size());
+
+            for (size_t at = 0; at < loaded->parts.size(); ++at)
+            {
+                const Part& part = loaded->parts[at];
+
+                if (part.hidden || (part.flags & AZM_PART_COLLISION) != 0)
+                {
+                    continue;
+                }
+
+                float world[16];
+                WorldFor(*loaded, static_cast<int>(at), placement, world);
+
+                // The part's own tint, or the model's; the shader is told, and does what it likes
+                // with it. The game's own draw path is not in this at all.
+                const uint32_t tint = part.tint != 0xFFFFFFFFu ? part.tint : loaded->tint;
+
+                for (const int which : part.meshes)
+                {
+                    AmodShadedDraw one = {};
+
+                    one.structSize = sizeof(one);
+                    one.model = loaded->meshes[static_cast<size_t>(which)].model;
+                    one.tint = tint;
+
+                    // A part that was packed as glass is drawn as glass; without this a model with
+                    // anything see-through in it comes out solid.
+                    one.blend = part.blend;
+                    one.constants = g_carrying.values;
+                    one.firstRegister = g_carrying.firstRegister;
+                    one.vec4Count = g_carrying.vec4Count;
+
+                    memcpy(one.matrix, world, sizeof(one.matrix));
+                    shaded.push_back(one);
+                }
+            }
+
+            return ShaderApi::DrawMeshes(shaded.data(), static_cast<int>(shaded.size()));
+        }
+
+        // The same queue Flush draws, put through the mod's own shader instead of the game's draw:
+        // one call, sorted inside the loader, so a street of cells on one model costs one state
+        // change rather than one a cell.
+        int __cdecl ApiFlushShaded(AmodMod mod)
+        {
+            if (Caller(mod) == nullptr || g_queue.empty())
+            {
+                g_queue.clear();
+        g_carried.clear();
+                return 0;
+            }
+
+            std::vector<AmodShadedDraw> shaded;
+            shaded.reserve(g_queue.size());
+
+            for (size_t at = 0; at < g_queue.size(); ++at)
+            {
+                const AmodModelDraw& draw = g_queue[at];
+                AmodShadedDraw one = {};
+
+                one.structSize = sizeof(one);
+                one.model = draw.model;
+                one.tint = draw.tint;
+                one.blend = draw.blend;
+
+                // NOT draw.texture. A shaded draw's texture FORCES itself on every range of the
+                // model, and a queued draw carries the first material's handle - so a shop with
+                // a dozen materials came out wearing the first one over all twelve. The batch
+                // already binds each range's own texture; DrawShaded next door has always left
+                // this alone, and the two paths had quietly disagreed.
+                one.texture = 0;
+
+                if (at < g_carried.size())
+                {
+                    one.constants = g_carried[at].values;
+                    one.firstRegister = g_carried[at].firstRegister;
+                    one.vec4Count = g_carried[at].vec4Count;
+                }
+
+                // Queue always fills the matrix in; anything else is put where it says it is.
+                if ((draw.flags & AMOD_DRAW_HAS_MATRIX) != 0)
+                {
+                    memcpy(one.matrix, draw.matrix, sizeof(one.matrix));
+                }
+                else
+                {
+                    Identity(one.matrix);
+                    one.matrix[12] = draw.position[0];
+                    one.matrix[13] = draw.position[1];
+                    one.matrix[14] = draw.position[2];
+                }
+                shaded.push_back(one);
+            }
+
+            const int drawn = ShaderApi::DrawMeshes(shaded.data(), static_cast<int>(shaded.size()));
+
+            g_queue.clear();
+        g_carried.clear();
+            return drawn;
+        }
+
+        int __cdecl ApiQueueConstants(AmodMod mod, const float* values, int firstRegister, int vec4Count)
+        {
+            if (Caller(mod) == nullptr)
+            {
+                return 0;
+            }
+
+            g_carrying.values = (values != nullptr && vec4Count > 0) ? values : nullptr;
+            g_carrying.firstRegister = firstRegister;
+            g_carrying.vec4Count = vec4Count;
+            return 1;
         }
 
         int __cdecl ApiQueued(AmodMod mod)
@@ -1197,6 +1426,10 @@ namespace Forge
         g_table.Flush = &ApiFlush;
         g_table.Draw = &ApiDraw;
         g_table.Queued = &ApiQueued;
+        g_table.DrawShaded = &ApiDrawShaded;
+        g_table.FlushShaded = &ApiFlushShaded;
+        g_table.QueueConstants = &ApiQueueConstants;
+        g_table.SetMaterialTexture = &ApiSetMaterialTexture;
 
         g_table.SetTint = &ApiSetTint;
         g_table.SetPartTint = &ApiSetPartTint;
@@ -1209,6 +1442,7 @@ namespace Forge
     {
         g_loaded.clear();
         g_queue.clear();
+        g_carried.clear();
     }
 
     const AmodAzmApi* AzmApi::Table()
@@ -1224,5 +1458,6 @@ namespace Forge
         }
 
         g_queue.clear();
+        g_carried.clear();
     }
 }

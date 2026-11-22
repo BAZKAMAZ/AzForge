@@ -7,7 +7,11 @@ namespace Forge
     namespace GameAddress
     {
         constexpr uintptr_t kMenuRegister = 0x0043CA40; // __thiscall (manager, menu, script, menuId, force)
-        constexpr uintptr_t kMenuLoadFromScript = 0x0043C090; // __stdcall (menuId, scriptFile)
+        // __thiscall (manager, menuId, scriptFile), RET 8. It never reads ECX ITSELF, which is
+        // what makes this one a trap: it leaves ECX for Menu_FindByMenuId, which is __thiscall and
+        // reads the registry count at manager+0x38. Called without the manager in ECX it crashes
+        // there, not here. The MOV ECX at the game's call site is the signature, not noise.
+        constexpr uintptr_t kMenuLoadFromScript = 0x0043C090;
         constexpr uintptr_t kMenuRegisterAll = 0x0043CAB0; // __thiscall (manager) -> bool
 
         constexpr uintptr_t kMenuManager = 0x00692860; // CMenu**
@@ -86,6 +90,20 @@ namespace Forge
         constexpr uintptr_t kMenuAddTable = 0x00452780; // __thiscall (menu, block)
         constexpr uintptr_t kTableDestroyVtableSlot = 0x00;
 
+        // The lines themselves, which MenuTable_Parse makes from $line_count and MenuTable_Render
+        // walks. Not the same field as kTableLineCountOffset below: that one is what the script
+        // asked for, this one is what the table got. A line is 0x24 - its cells, its own colour
+        // and scale, and the dots drawn between the columns; a cell is 0x44, text and a kind.
+        constexpr uintptr_t kTableMadeLineCountOffset = 0x84;
+        constexpr uintptr_t kTableLinesOffset = 0x88;
+        constexpr size_t kTableLineStride = 0x24;
+        constexpr uintptr_t kTableLineCellsOffset = 0x00;
+        constexpr uintptr_t kTableLineDotsOffset = 0x20;
+        constexpr size_t kTableCellStride = 0x44;
+        constexpr uintptr_t kMenuTableSetCell = 0x004598D0; // __thiscall (table, column, line, text)
+        constexpr uintptr_t kMenuTableSetLineDots = 0x00459870; // __thiscall (table, line, on)
+        constexpr uintptr_t kMenuTableSetLineStyle = 0x00459970; // __thiscall (table, line, colour, scale)
+
         constexpr uintptr_t kMenuParseImages = 0x0044B320; // __cdecl (parser, "images")
         constexpr uintptr_t kMenuParseAnimatedImages = 0x0044B5C0; // __cdecl (parser)
         constexpr uintptr_t kMenuParseStaticText = 0x0044B7E0; // __cdecl (parser)
@@ -144,6 +162,16 @@ namespace Forge
 
         constexpr uintptr_t kMenuStaticTextOffset = 0x084;
         constexpr uintptr_t kStaticTextStride = 0x470;
+
+        // Models are the odd one out. Images and statics each have a routine that parses their
+        // whole block and answers with a collection; models have none - Menu_ParseScript walks
+        // $models/$item itself and drops each record into a bare array. So the menu keeps a plain
+        // pointer and a count rather than a collection, and the records are copied in by hand.
+        constexpr uintptr_t kMenuModelsOffset = 0x07C;
+        constexpr uintptr_t kMenuModelCountOffset = 0x080;
+        constexpr size_t kModelStride = 0x0A8;              // 42 dwords, as the game's REP MOVSD
+        constexpr uintptr_t kUiModelParse = 0x004494A0;     // __cdecl (parser, ui_model_t*) -> bool
+        constexpr uintptr_t kMenuModelsGrow = 0x00451B00;   // __cdecl (void** array, int* count)
         constexpr uintptr_t kStaticTextUnregOnlyOffset = 0x46C;
 
         constexpr uintptr_t kLogoSpriteNormalOffset = 0x758;
@@ -190,5 +218,14 @@ namespace Forge
 
         constexpr uintptr_t kButtonAnimOffset = 0x764;
         constexpr uintptr_t kCastleAnimOffset = 0xADC;
+
+        constexpr uintptr_t kGameLevelHook = 0x0069137C;      // variable: char (__cdecl*)(const char* id); called with 0
+        constexpr uintptr_t kLevelHolder = 0x006928F0;        // ECX for kLevelDrop
+        constexpr uintptr_t kLevelDrop = 0x00442340;          // __thiscall (holder), RET
+        constexpr uintptr_t kLevelRunning = 0x006934AC;       // int, set to 0
+        constexpr uintptr_t kGameState = 0x006914A8;          // ECX for kGameStateReset
+        constexpr uintptr_t kGameStateReset = 0x0043A380;     // __thiscall (state), RET
+        constexpr uintptr_t kMenuSwitchTo = 0x0043C9E0;       // __thiscall (manager, id, flag), RET 8
+        constexpr uintptr_t kMainMenuIdText = 0x004CF0E8;     // the game's own "IDM_MAIN_MENU"
     }
 }

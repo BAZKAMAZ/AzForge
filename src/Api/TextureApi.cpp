@@ -17,6 +17,7 @@
 #include <stddef.h>
 #include <string.h>
 #include <string>
+#include <algorithm>
 #include <vector>
 
 namespace Forge
@@ -78,18 +79,72 @@ namespace Forge
                 Read<uintptr_t>(texture, GameAddress::kTextureNextOffset));
         }
 
-        bool Listed(const uint8_t* texture)
+        // THE LIST, TAKEN AND KEPT, and this one is on the path of every single draw.
+        //
+        // Walking it costs a VirtualQuery a step, because IsTexture asks Readable and Readable is
+        // a system call. ShaderApi's DrawBatch calls SurfaceOf once per draw, SurfaceOf ends here,
+        // and two hundred draws a frame against a few hundred textures came to tens of thousands
+        // of system calls a frame - which measured as 10.6 ms in the flush alone.
+        //
+        // Kept rather than generation-checked because texture frees are not detoured, so there is
+        // nothing to trust. Instead it is retaken three ways: when a lookup misses (a texture made
+        // since the last one), when the head of the list moves, and after a thousand answers, so
+        // a texture freed out of the middle is believed for at most a few frames. A stale yes is
+        // what the walk itself risks between the answer and its use, so nothing new is on offer.
+        std::vector<const uint8_t*> g_live;
+        const uint8_t* g_liveHead = nullptr;
+        int g_liveAsked = 0;
+        bool g_liveTaken = false;
+
+        void TakeTheList()
         {
+            g_live.clear();
+
             int seen = 0;
+
             for (uint8_t* walk = ListHead(); IsTexture(walk) && seen < kWalkLimit;
                  walk = NextTexture(walk), ++seen)
             {
-                if (walk == texture)
-                {
-                    return true;
-                }
+                g_live.push_back(walk);
             }
-            return false;
+
+            std::sort(g_live.begin(), g_live.end());
+            g_liveHead = ListHead();
+            g_liveAsked = 0;
+            g_liveTaken = true;
+        }
+
+        // `now` walks the list again before answering. The kept snapshot is for the draw path,
+        // where a stale yes only risks a draw; on the release path a stale yes authorises a free,
+        // and the head does not move when a texture goes out of the MIDDLE of the list.
+        bool Listed(const uint8_t* texture, bool now = false)
+        {
+            if (texture == nullptr)
+            {
+                return false;
+            }
+
+            const bool fresh = now || !g_liveTaken || g_liveHead != ListHead() || ++g_liveAsked > 1000;
+
+            if (fresh)
+            {
+                TakeTheList();
+            }
+
+            if (std::binary_search(g_live.begin(), g_live.end(), texture))
+            {
+                return true;
+            }
+
+            // A no off an old snapshot might only mean the texture is newer than it. A no off a
+            // fresh one is a no, and retaking the list for every one of those is the walk again
+            if (fresh)
+            {
+                return false;
+            }
+
+            TakeTheList();
+            return std::binary_search(g_live.begin(), g_live.end(), texture);
         }
 
         uint8_t* Resolve(AmodTextureId id)
@@ -370,10 +425,13 @@ namespace Forge
             return IdOf(texture);
         }
 
+        // Listed comes first and off a fresh walk: IsTexture READS the record, so asking it about a
+        // record the manager has already freed is the fault itself. Freeing leaves the old magic at
+        // +0xC untouched, so a second look still believes it - the list is the only honest witness.
         void GiveBack(uint8_t* texture)
         {
             const ReleaseRoutine release = Routine<ReleaseRoutine>(GameAddress::kTextureRelease);
-            if (release != nullptr && Manager() != nullptr && IsTexture(texture) && Listed(texture))
+            if (release != nullptr && Manager() != nullptr && Listed(texture, true) && IsTexture(texture))
             {
                 release(Manager(), nullptr, texture);
             }

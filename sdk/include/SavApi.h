@@ -27,6 +27,20 @@ typedef struct AmodLevelChange
 
 AMOD_LAST_FIELD(AmodLevelChange, value, 0x0C);
 
+/* A pack, as pack_NNN.mis describes it. */
+typedef struct AmodPack
+{
+    uint32_t structSize;
+
+    int id;                  /* $id */
+    const char* name;        /* $name */
+    const char* menuScript;  /* $new_menu - the script its NEW GAME screen is built from */
+    const char* preview;     /* $preview */
+
+} AmodPack;
+
+AMOD_LAST_FIELD(AmodPack, preview, 0x10);
+
 /* packs.sav - the levels the player has opened, one 0x100 block of text each. */
 
 typedef struct AmodSavApi
@@ -105,9 +119,20 @@ typedef struct AmodSavApi
     /* Keeps the level state between runs in the mod's own store. */
     int(__cdecl* Keep)(AmodMod mod, const char* levelId, int keep, int protect);
 
+    /* What pack_NNN.mis holds. The strings are valid until the next call. */
+    int(__cdecl* GetPack)(AmodMod mod, int pack, AmodPack* out);
+
+    /* Selects the pack and rebuilds IDM_NEW_GAME from its $new_menu, which is exactly what
+       clicking it on the PACKS screen does. Call it BEFORE Box::Open("IDM_NEW_GAME"): the menu
+       registered at startup is menu_palace.txt, the tutorial fallback, and that one carries no
+       $images at all - so opening the id on its own gives a black screen with one castle on it.
+       Refused while that screen is the one on show, because the rebuild frees what it is made of.
+       Nothing is kept to restore: the game leaves the menu on the last pack chosen too. */
+    int(__cdecl* LoadPackMenu)(AmodMod mod, int pack);
+
 } AmodSavApi;
 
-AMOD_LAST_FIELD(AmodSavApi, Keep, 0x88);
+AMOD_LAST_FIELD(AmodSavApi, LoadPackMenu, 0x90);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -367,6 +392,21 @@ namespace Amod
         inline bool                                                 Save()
         {
             return g_sav != nullptr && g_sav->Save(g_savSelf) != 0;
+        }
+
+        inline bool                                                 GetPack(int pack, AmodPack& out)
+        {
+            out = AmodPack{};
+            out.structSize = sizeof(out);
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->GetPack != nullptr &&
+                g_sav->GetPack(g_savSelf, pack, &out) != 0;
+        }
+
+        /* Wanted before opening IDM_NEW_GAME: see the note on the table entry. */
+        inline bool                                                 LoadPackMenu(int pack)
+        {
+            return g_sav != nullptr && g_sav->structSize >= sizeof(AmodSavApi) && g_sav->LoadPackMenu != nullptr &&
+                g_sav->LoadPackMenu(g_savSelf, pack) != 0;
         }
     }
 }

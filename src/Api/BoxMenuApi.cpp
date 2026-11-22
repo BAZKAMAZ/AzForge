@@ -1,10 +1,10 @@
 #include "src/Api/BoxMenuApi.h"
-
 #include "src/Api/ModContext.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
+#include "src/Api/ObjectsMenuApi.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -19,18 +19,16 @@ namespace Forge
 
         // AllocTracked __cdecl; menu routines __thiscall → __fastcall (ECX = manager).
         typedef void* (__cdecl* AllocTrackedRoutine)(uint32_t size, const char* file, uint32_t line);
-        typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size,
-                                                       const char* file, uint32_t line);
+        typedef void* (__cdecl* ReallocTrackedRoutine)(void* block, uint32_t size, const char* file, uint32_t line);
         typedef void* (__fastcall* ConstructRoutine)(void* block, void* unused);
         typedef void* (__fastcall* FindMenuRoutine)(void* manager, void* unused, const char* id);
+
         // Menu_Register: __thiscall (manager, menu, script, menuId, force).
-        typedef char (__fastcall* RegisterRoutine)(void* manager, void* unused, void* menu,
-                                                   const char* script, const char* menuId,
-                                                   char force);
+        typedef char (__fastcall* RegisterRoutine)(void* manager, void* unused, void* menu, const char* script, const char* menuId, char force);
         typedef void (__fastcall* NavigateRoutine)(void* manager, void* unused, const char* id);
         typedef void (__fastcall* ManagerRoutine)(void* manager, void* unused);
-        typedef void* (__cdecl* PackageOpenRoutine)(const char* name);
-        typedef void (__cdecl* PackageFreeRoutine)(void* file);
+        typedef void* (__stdcall* PackageOpenRoutine)(const char* name);
+        typedef void (__stdcall* PackageFreeRoutine)(void* file);
 
         AllocTrackedRoutine g_alloc = nullptr;
         ReallocTrackedRoutine g_realloc = nullptr;
@@ -347,47 +345,85 @@ namespace Forge
             return MenuId(MenuField(manager, kMenuManagerBoxOffset));
         }
 
-        int __cdecl ApiOpen(AmodMod mod, const char* menuId)
+        char g_pendingMenu[0x40] = {};
+        bool g_pendingOverlay = false;
+
+        // The game keeps the id pointer it is given, so it is handed the menu's own id, never the caller's buffer.
+        void Walk(void* manager, void* menu, bool overlay)
+        {
+            if (overlay)
+            {
+                g_showBox(manager, nullptr, MenuId(menu));
+            }
+            else
+            {
+                g_enter(manager, nullptr, MenuId(menu));
+            }
+        }
+
+        void __cdecl WalkPending()
+        {
+            if (g_pendingMenu[0] == '\0')
+            {
+                return;
+            }
+
+            void* const manager = Manager();
+
+            // Looked up again by id: a menu freed in between is simply not found.
+            void* const menu = manager != nullptr ? g_find(manager, nullptr, g_pendingMenu) : nullptr;
+            g_pendingMenu[0] = '\0';
+
+            if (menu != nullptr)
+            {
+                Walk(manager, menu, g_pendingOverlay);
+            }
+        }
+
+        int OpenMenu(AmodMod mod, const char* menuId, bool overlay)
         {
             void* const manager = Resolve(mod) != nullptr ? Manager() : nullptr;
-            if (manager == nullptr || menuId == nullptr)
+            void* const menu = manager != nullptr && menuId != nullptr ? g_find(manager, nullptr, menuId) : nullptr;
+
+            if (menu == nullptr)
             {
                 return 0;
             }
 
-            if (g_find(manager, nullptr, menuId) == nullptr)
+            // From a click, Menu_Update is still busy with it; the game opens the menu itself once the click is done.
+            if (ObjectsMenuApi::AskMenu(MenuId(menu), overlay))
             {
-                return 0;
+                return 1;
             }
 
-            g_enter(manager, nullptr, menuId);
+            if (overlay)
+            {
+                g_showBox(manager, nullptr, MenuId(menu));
+            }
+            else
+            {
+                g_enter(manager, nullptr, MenuId(menu));
+            }
+
             return 1;
+        }
+
+        int __cdecl ApiOpen(AmodMod mod, const char* menuId)
+        {
+            return OpenMenu(mod, menuId, false);
         }
 
         void __cdecl ApiBack(AmodMod mod)
         {
-            void* const manager = Resolve(mod) != nullptr ? Manager() : nullptr;
-            if (manager != nullptr)
+            if (Resolve(mod) != nullptr)
             {
-                g_goBack(manager, nullptr);
+                ObjectsMenuApi::AskBack();
             }
         }
 
         int __cdecl ApiShowBox(AmodMod mod, const char* menuId)
         {
-            void* const manager = Resolve(mod) != nullptr ? Manager() : nullptr;
-            if (manager == nullptr || menuId == nullptr)
-            {
-                return 0;
-            }
-
-            if (g_find(manager, nullptr, menuId) == nullptr)
-            {
-                return 0;
-            }
-
-            g_showBox(manager, nullptr, menuId);
-            return 1;
+            return OpenMenu(mod, menuId, true);
         }
 
         void __cdecl ApiCloseAll(AmodMod mod)

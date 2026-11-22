@@ -233,6 +233,27 @@ namespace Forge
             "8D 41 58 83 C1 54 50 51 8D 4C 24 0C E8 ?? ?? ?? ?? 85 C0 74 06 8B 4C 24 04 "
             "89 08 B0 01 C2 04 00"
         },
+        {
+            "MenuTable_SetCell", GameAddress::kMenuTableSetCell,
+            // Both bounds in order - the column against this+0x94, the line against this+0x84 -
+            // and then the cells of that line.
+            "56 8B 74 24 08 85 F6 7C ?? 3B B1 94 00 00 00 7D ?? 8B 44 24 0C 85 C0 7C ?? "
+            "3B 81 84 00 00 00 7D ?? 8B 54 24 10 8B 89 88 00 00 00"
+        },
+        {
+            "MenuTable_SetLineDots", GameAddress::kMenuTableSetLineDots,
+            // The whole routine: the line against this+0x84, then the byte at line+0x20, the
+            // line stride written as EAX*9*4.
+            "8B 44 24 04 85 C0 7C ?? 3B 81 84 00 00 00 7F ?? 8B 89 88 00 00 00 8A 54 24 08 "
+            "8D 04 C0 88 54 81 20 C2 08 00"
+        },
+        {
+            "MenuTable_SetLineStyle", GameAddress::kMenuTableSetLineStyle,
+            // The line against this+0x84, then the colour it was handed - or the table's own,
+            // when it was handed none.
+            "8B 44 24 04 85 C0 0F 8C ?? ?? ?? ?? 3B 81 84 00 00 00 0F 8D ?? ?? ?? ?? "
+            "8B 54 24 08 8D 04 C0"
+        },
 
         // The decoration parsers. Each opens an exception frame, and the scope table it
 
@@ -252,6 +273,18 @@ namespace Forge
             // The 0x474 byte frame is the 0x470 byte record it builds each $static into.
             "55 8D AC 24 8C FB FF FF 81 EC 74 04 00 00 6A FF 68 60 60 4C 00 "
             "64 A1 00 00 00 00 50 83 EC 20 A1 ?? ?? ?? ?? 33 C5"
+        },
+        {
+            "ui_ModelParse", GameAddress::kUiModelParse,
+            "56 8B 74 24 0C 57 68 A8 00 00 00 6A 00 56 E8 ?? ?? ?? ?? 8B 7C 24 18 "
+            "6A 00 68 ?? ?? ?? ?? 57"
+        },
+        {
+            // Grows the menu's model array by one and answers with the new slot. The 0xA8 it
+            // pushes is the record size, which is what ties it to models and nothing else.
+            "Menu_ModelsGrow", GameAddress::kMenuModelsGrow,
+            "56 8B 74 24 0C 57 8B 7C 24 0C 8B 07 85 C0 75 18 6A 1D 68 ?? ?? ?? ?? "
+            "68 A8 00 00 00 89 06"
         },
         {
             "Mem_ReallocTracked", GameAddress::kMemReallocTracked,

@@ -5,6 +5,7 @@
 #include "src/Api/FrameApi.h"
 #include "src/Api/MmdApi.h"
 #include "src/Api/ModContext.h"
+#include "src/Api/RenderApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Core/ForgeLog.h"
 #include "src/Game/GameAddresses.h"
@@ -2539,9 +2540,131 @@ namespace Forge
             return 1;
         }
 
+        typedef char(__fastcall* PackageFileExistsRoutine)(void* packages, void* unused, const char* path);
+        typedef void(__cdecl* LevelStartRoutine)(const char* path, int flag);
+
+        std::string g_levelToStart;
+        bool g_leaveLevel = false;
+
+        void __cdecl StartPendingLevel()
+        {
+            const LevelStartRoutine start =
+                reinterpret_cast<LevelStartRoutine>(GameModule::Resolve(GameAddress::kLevelStart));
+
+            if (g_levelToStart.empty() || start == nullptr)
+            {
+                return;
+            }
+
+            const std::string level = g_levelToStart;
+            g_levelToStart.clear();
+
+            start(level.c_str(), 0);
+        }
+
+        int __cdecl ApiStartLevel(AmodMod mod, const char* levelPath)
+        {
+            const PackageFileExistsRoutine exists =
+                reinterpret_cast<PackageFileExistsRoutine>(GameModule::Resolve(GameAddress::kPackageFileExists));
+            const LevelStartRoutine start =
+                reinterpret_cast<LevelStartRoutine>(GameModule::Resolve(GameAddress::kLevelStart));
+            void* const packages = GameModule::Resolve(GameAddress::kPackageManager);
+
+            if (Resolve(mod) == nullptr || exists == nullptr || start == nullptr || packages == nullptr)
+            {
+                return 0;
+            }
+
+            if (!RenderApi::IsPresentHooked())
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_OFFERED, "Render_Present is not hooked, so no level can be started");
+            }
+
+            if (levelPath == nullptr || levelPath[0] == '\0')
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "StartLevel wants a level path");
+            }
+
+            if (exists(packages, nullptr, levelPath) == 0)
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NO_SUCH, "there is no level '%s'", levelPath);
+            }
+
+            g_leaveLevel = false;
+            g_levelToStart = levelPath;
+            return 1;
+        }
+
+        typedef char(__cdecl* GameLevelHookRoutine)(const char* id);
+        typedef void(__fastcall* ThisOnlyRoutine)(void* self, void* unused);
+        typedef void(__fastcall* MenuSwitchRoutine)(void* manager, void* unused, const char* id, int flag);
+
+        template <typename T>
+        T GameAt(uintptr_t address)
+        {
+            return reinterpret_cast<T>(GameModule::Resolve(address));
+        }
+
+        void __cdecl LeavePendingLevel()
+        {
+            if (!g_leaveLevel)
+            {
+                return;
+            }
+
+            g_leaveLevel = false;
+
+            GameLevelHookRoutine* const hook = GameAt<GameLevelHookRoutine*>(GameAddress::kGameLevelHook);
+            void* const* const managerSlot = GameAt<void* const*>(GameAddress::kMenuManager);
+            const ThisOnlyRoutine closeAll = GameAt<ThisOnlyRoutine>(GameAddress::kMenuCloseAll);
+            const ThisOnlyRoutine drop = GameAt<ThisOnlyRoutine>(GameAddress::kLevelDrop);
+            const ThisOnlyRoutine reset = GameAt<ThisOnlyRoutine>(GameAddress::kGameStateReset);
+            const MenuSwitchRoutine switchTo = GameAt<MenuSwitchRoutine>(GameAddress::kMenuSwitchTo);
+            void* const holder = GameAt<void*>(GameAddress::kLevelHolder);
+            void* const state = GameAt<void*>(GameAddress::kGameState);
+            int32_t* const running = GameAt<int32_t*>(GameAddress::kLevelRunning);
+            const char* const mainMenu = GameAt<const char*>(GameAddress::kMainMenuIdText);
+
+            if (hook == nullptr || managerSlot == nullptr || *managerSlot == nullptr || closeAll == nullptr || drop == nullptr || reset == nullptr || 
+                switchTo == nullptr || holder == nullptr || state == nullptr || running == nullptr || mainMenu == nullptr)
+            {
+                FORGE_LOG_WARN("LeaveLevel: the game's exit path was not found");
+                return;
+            }
+
+            // Game_UpdateFrame 0x00438D6A, step by step.
+            if (*hook != nullptr)
+            {
+                (*hook)(nullptr);
+            }
+
+            closeAll(*managerSlot, nullptr);
+            drop(holder, nullptr);
+            *running = 0;
+            reset(state, nullptr);
+            switchTo(*managerSlot, nullptr, mainMenu, 0);
+        }
+
+        int __cdecl ApiLeaveLevel(AmodMod mod)
+        {
+            if (Resolve(mod) == nullptr)
+            {
+                return 0;
+            }
+
+            if (!RenderApi::IsPresentHooked())
+            {
+                return ApiRead::Fail(mod, AMOD_FAIL_NOT_OFFERED, "Render_Present is not hooked, so no level can be left");
+            }
+
+            // A level asked to start in the same frame would be left at once; the later ask wins.
+            g_levelToStart.clear();
+            g_leaveLevel = true;
+            return 1;
+        }
+
         // All three hooks must succeed or the interface is not offered.
-        bool InstallHook(InlineHook& hook, GameSymbol symbol, void* detour,
-            const uint8_t* prologue, size_t prologueLength, const char* name)
+        bool InstallHook(InlineHook& hook, GameSymbol symbol, void* detour, const uint8_t* prologue, size_t prologueLength, const char* name)
         {
             void* const target = GameSymbols::Address(symbol);
             if (target == nullptr)
@@ -2609,6 +2732,8 @@ namespace Forge
         g_table.Cancel = &ApiRemoveEventHandler;
         g_table.IsPaused = &ApiIsPaused;
         g_table.SetPaused = &ApiSetPaused;
+        g_table.StartLevel = &ApiStartLevel;
+        g_table.LeaveLevel = &ApiLeaveLevel;
         g_table.GetEntityCount = &ApiGetEntityCount;
         g_table.GetEntity = &ApiGetEntity;
         g_table.GetRoomCellRecord = &ApiGetRoomCellRecord;
@@ -2662,6 +2787,8 @@ namespace Forge
         g_table.SetRoomMemory = &ApiSetRoomMemory;
         g_table.GetRoomSavedSize = &ApiGetRoomSavedSize;
         FrameApi::AddInternalTick(&WatchClock);
+        RenderApi::AddAfterPresent(&StartPendingLevel);
+        RenderApi::AddAfterPresent(&LeavePendingLevel);
         g_table.GetTimeLeft = &ApiGetTimeLeft;
         g_table.SetTimeLeft = &ApiSetTimeLeft;
         g_table.GetElapsed = &ApiGetElapsed;
@@ -2688,6 +2815,7 @@ namespace Forge
         g_originalFree = nullptr;
         g_originalLoad = nullptr;
         g_level = nullptr;
+        g_leaveLevel = false;
         g_subscriptions.clear();
         g_pending.clear();
         g_entityLights.clear();

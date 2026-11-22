@@ -13,6 +13,9 @@ namespace Forge
         static bool                                                 Run();
         static void                                                 Stop();
 
+        // What must outlive the game's own shutdown: the crash handler and the log
+        static void                                                 Finish();
+
         static const ModRegistry&                                   Registry();
     };
 }

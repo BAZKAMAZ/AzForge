@@ -440,11 +440,19 @@ typedef struct AmodWorldApi
 
     /* Gets or sets the game's pause state. */
     int(__cdecl* IsPaused)(AmodMod mod);
+
+    /*Set pause game.*/
     int(__cdecl* SetPaused)(AmodMod mod, int paused);
+
+    /*Launching a specific level*/
+    int(__cdecl* StartLevel)(AmodMod mod, const char* levelPath);
+
+    /* Exit the level. */
+    int(__cdecl* LeaveLevel)(AmodMod mod);
 
 } AmodWorldApi;
 
-AMOD_LAST_FIELD(AmodWorldApi, SetPaused, 0x104);
+AMOD_LAST_FIELD(AmodWorldApi, LeaveLevel, 0x10C);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -652,6 +660,17 @@ namespace Amod
         {
             return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->SetLevelStats != nullptr &&
                 g_world->SetLevelStats(g_self, &stats) != 0;
+        }
+
+        inline bool                                                 StartLevel(const char* levelPath)
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) && g_world->StartLevel(g_self, levelPath) != 0;
+        }
+
+        inline bool                                                 LeaveLevel()
+        {
+            return g_world != nullptr && g_world->structSize >= sizeof(AmodWorldApi) &&
+                g_world->LeaveLevel(g_self) != 0;
         }
 
         /* $wall_tex and $floor_tex - the stone the game draws the room in. */

@@ -37,8 +37,8 @@ namespace Forge
 
         typedef uint8_t* (__cdecl* LoadOrFindRoutine)(const char* path);
         typedef void(__cdecl* ReleaseModelRoutine)(uint8_t* model);
-        typedef uint8_t* (__cdecl* PackageOpenRoutine)(const char* path);
-        typedef void(__cdecl* PackageFreeRoutine)(uint8_t* handle);
+        typedef uint8_t* (__stdcall* PackageOpenRoutine)(const char* path);
+        typedef void(__stdcall* PackageFreeRoutine)(uint8_t* handle);
         typedef void(__fastcall* VerticesRenderRoutine)(uint8_t* record, void* unused, void* device);
         typedef char(__fastcall* VerticesUploadRoutine)(uint8_t* record);
         typedef uint8_t* (__cdecl* CreateFromMeshRoutine)(int unused, const void* mesh);
@@ -91,6 +91,10 @@ namespace Forge
             memcpy(record + offset, &written, sizeof(written));
         }
 
+        // Bumped whenever a model is loaded, created or released - the only three things that can
+        // change what is in the game's list
+        uint32_t g_listGeneration = 1;
+
         uint8_t* ListHead()
         {
             uint8_t** const head = static_cast<uint8_t**>(GameModule::Resolve(GameAddress::kModelListHead));
@@ -111,18 +115,51 @@ namespace Forge
         // Cap walk so a corrupted ring ends.
         constexpr int kModelWalkLimit = 0x4000;
 
-        bool Listed(const uint8_t* model)
+        // THE LIST, TAKEN ONCE A GENERATION, and this is not a nicety.
+        //
+        // Walking it costs a VirtualQuery a step, because IsModel asks Readable and Readable is a
+        // system call. Listed is then asked once per tracked model inside ApiCreate - so creating
+        // one mesh walked the whole list a hundred and fifty times over, which measured at three
+        // hundred and fifty milliseconds a mesh on a city-sized map. It was invisible while a mod
+        // held a dozen models and fatal at two hundred.
+        //
+        // Nothing can enter or leave the list without the generation moving: the game's own load
+        // and release are both detoured, and Create bumps it too. So a snapshot is either current
+        // or thrown away, and never wrong.
+        std::vector<const uint8_t*> g_live;
+        uint32_t g_liveAt = 0;
+        bool g_liveTaken = false;
+
+        void TakeTheList()
         {
+            g_live.clear();
+
             int seen = 0;
+
             for (uint8_t* walk = ListHead(); IsModel(walk) && seen < kModelWalkLimit;
                 walk = NextModel(walk), ++seen)
             {
-                if (walk == model)
-                {
-                    return true;
-                }
+                g_live.push_back(walk);
             }
-            return false;
+
+            std::sort(g_live.begin(), g_live.end());
+            g_liveAt = g_listGeneration;
+            g_liveTaken = true;
+        }
+
+        bool Listed(const uint8_t* model)
+        {
+            if (model == nullptr)
+            {
+                return false;
+            }
+
+            if (!g_liveTaken || g_liveAt != g_listGeneration)
+            {
+                TakeTheList();
+            }
+
+            return std::binary_search(g_live.begin(), g_live.end(), model);
         }
 
         uint8_t* ModelMesh(const uint8_t* model)
@@ -470,8 +507,6 @@ namespace Forge
             uintptr_t was;
             uintptr_t applied;
         };
-
-        uint32_t g_listGeneration = 1;
 
         struct WalkMemo
         {
@@ -4548,6 +4583,64 @@ namespace Forge
     void MmdApi::LeaveDraw()
     {
         g_drawDepth -= g_drawDepth > 0 ? 1 : 0;
+    }
+
+    // The buffers and material ranges of a mesh, for a draw that sets its own shader.
+    bool MmdApi::StreamsFor(AmodModelId model, MeshStreams& out)
+    {
+        const Tracked* const tracked = TrackedById(model);
+        uint8_t* const record = tracked != nullptr
+            ? Read<uint8_t*>(tracked->model, GameAddress::kModelVertexBufferOffset)
+            : nullptr;
+
+        if (record == nullptr || Read<int>(record, GameAddress::kVertexRecordKindOffset) != 0)
+        {
+            return false;
+        }
+
+        // The record still holds vertices the device has not seen.
+        if (record[0x30] != 0 || record[0x31] != 0)
+        {
+            const VerticesUploadRoutine upload = Routine<VerticesUploadRoutine>(GameAddress::kVerticesUpload);
+
+            if (upload == nullptr || upload(record) == 0)
+            {
+                return false;
+            }
+        }
+
+        out.vertices = Read<void*>(record, GameAddress::kVertexRecordBufferOffset);
+        out.indices = Read<void*>(record, GameAddress::kVertexRecordIndicesOffset);
+        out.vertexCount = Read<uint32_t>(record, GameAddress::kVertexRecordVertexCountOffset);
+        out.stride = GameAddress::kModelVertexStride;
+        out.ranges.clear();
+
+        if (out.vertices == nullptr || out.indices == nullptr || out.vertexCount == 0)
+        {
+            return false;
+        }
+
+        for (const Material& material : tracked->materials)
+        {
+            if (material.primitiveCount > 0)
+            {
+                MeshRange range;
+                range.firstIndex = static_cast<uint32_t>(material.firstIndex);
+                range.primitiveCount = static_cast<uint32_t>(material.primitiveCount);
+                range.texture = SurfaceOf(material.texture);
+                out.ranges.push_back(range);
+            }
+        }
+
+        // No materials means the whole of it as one range.
+        if (out.ranges.empty())
+        {
+            MeshRange range;
+            range.primitiveCount = Read<uint32_t>(record, GameAddress::kVertexRecordIndexCountOffset) / 3;
+            out.ranges.push_back(range);
+        }
+
+        return out.ranges[0].primitiveCount > 0;
     }
 
     void MmdApi::ForgetMod(ModContext* owner)

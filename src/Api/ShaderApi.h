@@ -16,6 +16,9 @@ namespace Forge
 
         static const AmodShaderApi*                                 Table();
 
+        static int                                                  DrawMesh(AmodModelId model, const float* world, AmodTextureId texture, uint32_t tint);
+        static int                                                  DrawMeshes(const AmodShadedDraw* draws, int count);
+
         static void                                                 ForgetMod(ModContext* owner);
 
         static void                                                 OnDeviceEvent(DeviceEvent event, void* device);

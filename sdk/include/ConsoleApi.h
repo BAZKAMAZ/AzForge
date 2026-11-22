@@ -22,9 +22,18 @@ typedef struct AmodConsoleApi
 
     /* Run a line as if typed. */
     void (__cdecl* Execute)(AmodMod mod, const char* line);
+
+    /* Whether the console is down, and putting it up or down. */
+    int (__cdecl* IsOpen)(AmodMod mod);
+    void (__cdecl* SetOpen)(AmodMod mod, int open);
+
+    /* The line the console is showing, as if it had been typed into it. Nothing is run: the
+       text simply stands there with the caret after it, which is what lets a mod type a
+       command out a letter at a time and then call Execute. */
+    void (__cdecl* SetLine)(AmodMod mod, const char* text);
 } AmodConsoleApi;
 
-AMOD_LAST_FIELD(AmodConsoleApi, Execute, 0x10);
+AMOD_LAST_FIELD(AmodConsoleApi, SetLine, 0x1C);
 
 #ifdef __cplusplus
 }
@@ -98,6 +107,30 @@ namespace Amod
             if (g_console != nullptr)
             {
                 g_console->Execute(g_self, line);
+            }
+        }
+
+        inline bool                                                 IsOpen()
+        {
+            return g_console != nullptr && g_console->structSize >= sizeof(AmodConsoleApi) &&
+                   g_console->IsOpen(g_self) != 0;
+        }
+
+        inline void                                                 SetOpen(bool open)
+        {
+            if (g_console != nullptr && g_console->structSize >= sizeof(AmodConsoleApi))
+            {
+                g_console->SetOpen(g_self, open ? 1 : 0);
+            }
+        }
+
+        /* Puts text on the console's own line without running it. Typing a command out one
+           letter a frame and then calling Execute is what this is for. */
+        inline void                                                 SetLine(const char* text)
+        {
+            if (g_console != nullptr && g_console->structSize >= sizeof(AmodConsoleApi))
+            {
+                g_console->SetLine(g_self, text);
             }
         }
     }

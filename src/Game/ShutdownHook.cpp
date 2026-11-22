@@ -15,25 +15,53 @@ namespace Forge
         InlineHook g_hook;
         AppShutdownRoutine g_original = nullptr;
         void (*g_onShutdown)() = nullptr;
+        void (*g_afterGame)() = nullptr;
+
+        bool g_inDetour = false;
+        bool g_askedUninstall = false;
 
         void __cdecl AppShutdownDetour()
         {
-            const AppShutdownRoutine original = g_original;
             void (*const callback)() = g_onShutdown;
+            void (*const after)() = g_afterGame;
+
+            g_inDetour = true;
+
+            // The loader goes FIRST, and the order is the whole point. App_Shutdown destroys the
+            // sound device, the texture manager and the tracked allocations; every ForgetMod hands
+            // resources back to those managers. Cleaning up afterwards meant releasing a voice
+            // through a null device, releasing texture records the manager had already freed, and
+            // freeing the same tracked block twice - three separate crash reports, one order.
+            if (callback != nullptr)
+            {
+                callback();
+            }
+
+            // Read after the callback: it asked for the uninstall that would have freed this
+            const AppShutdownRoutine original = g_original;
 
             if (original != nullptr)
             {
                 original();
             }
 
-            if (callback != nullptr)
+            g_inDetour = false;
+
+            if (g_askedUninstall)
             {
-                callback();
+                ShutdownHook::Uninstall();
+            }
+
+            // The log and the crash handler come down last, so a fault in the game's own
+            // shutdown still reaches forge.log
+            if (after != nullptr)
+            {
+                after();
             }
         }
     }
 
-    bool ShutdownHook::Install(void (*onShutdown)())
+    bool ShutdownHook::Install(void (*onShutdown)(), void (*afterGame)())
     {
         if (g_hook.IsInstalled())
         {
@@ -72,6 +100,7 @@ namespace Forge
 
         g_original = reinterpret_cast<AppShutdownRoutine>(g_hook.Trampoline());
         g_onShutdown = onShutdown;
+        g_afterGame = afterGame;
 
         FORGE_LOG_INFO("App_Shutdown hooked at 0x%08X, the loader will be torn down with the game",
                        static_cast<unsigned>(reinterpret_cast<uintptr_t>(target)));
@@ -85,9 +114,19 @@ namespace Forge
             return;
         }
 
+        // Asked for from inside the detour, where the trampoline is still being called through:
+        // uninstalling frees it, so the detour does this once the game's shutdown has returned.
+        if (g_inDetour)
+        {
+            g_askedUninstall = true;
+            return;
+        }
+
         g_hook.Uninstall();
         g_original = nullptr;
         g_onShutdown = nullptr;
+        g_afterGame = nullptr;
+        g_askedUninstall = false;
     }
 
     bool ShutdownHook::IsInstalled()

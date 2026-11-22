@@ -62,9 +62,23 @@ typedef struct AmodObjectsMenuApi
 
     /* Build objects from menu_*.txt fragment; returns first, or null. Use in AMOD_MENU_LOADED. */
     AmodMenuItem (__cdecl* AddObject)(AmodMod mod, const char* menuId, const char* fragment);
+
+    /* A table's lines and cells. The lines are made when the table is built, $line_count of them;
+       the script shapes the table and these fill it. Line and column are counted from 0, and a
+       null text empties the cell. */
+    int (__cdecl* TableLineCount)(AmodMod mod, AmodMenuItem table);
+    int (__cdecl* SetTableCell)(AmodMod mod, AmodMenuItem table, int column, int line,
+                                const char* text);
+
+    /* The dots the game runs between the columns of a line, as on the records screen. */
+    int (__cdecl* SetTableLineDots)(AmodMod mod, AmodMenuItem table, int line, int dots);
+
+    /* One line's own colour and scale; either may be null for the table's own. */
+    int (__cdecl* SetTableLineStyle)(AmodMod mod, AmodMenuItem table, int line,
+                                     const float* colour, const float* scale);
 } AmodObjectsMenuApi;
 
-AMOD_LAST_FIELD(AmodObjectsMenuApi, AddObject, 0x34);
+AMOD_LAST_FIELD(AmodObjectsMenuApi, SetTableLineStyle, 0x44);
 
 #ifdef __cplusplus
 }
@@ -321,6 +335,32 @@ namespace Amod
             {
                 return g_menu != nullptr ? g_menu->GetRawPointer(g_self, m_item, expectedGameBuild)
                                          : nullptr;
+            }
+
+            /* A table only: how many lines it was built with, and what stands in them. */
+            int                                                     LineCount() const
+            {
+                return g_menu != nullptr && g_menu->TableLineCount != nullptr
+                           ? g_menu->TableLineCount(g_self, m_item) : 0;
+            }
+
+            bool                                                    SetCell(int column, int line, const char* text) const
+            {
+                return g_menu != nullptr && g_menu->SetTableCell != nullptr &&
+                       g_menu->SetTableCell(g_self, m_item, column, line, text) != 0;
+            }
+
+            bool                                                    SetLineDots(int line, bool dots) const
+            {
+                return g_menu != nullptr && g_menu->SetTableLineDots != nullptr &&
+                       g_menu->SetTableLineDots(g_self, m_item, line, dots ? 1 : 0) != 0;
+            }
+
+            /* Null for either brings that line back to the table's own. */
+            bool                                                    SetLineStyle(int line, const float* colour, const float* scale = nullptr) const
+            {
+                return g_menu != nullptr && g_menu->SetTableLineStyle != nullptr &&
+                       g_menu->SetTableLineStyle(g_self, m_item, line, colour, scale) != 0;
             }
 
         private:

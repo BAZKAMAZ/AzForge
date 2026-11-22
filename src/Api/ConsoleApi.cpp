@@ -6,6 +6,7 @@
 #include "src/Game/GameModule.h"
 #include "src/Game/GameSymbols.h"
 
+#include <stdlib.h>
 #include <map>
 #include <set>
 #include <string>
@@ -219,11 +220,104 @@ namespace Forge
             }
         }
 
+        // nsConsole is a static of its own at kConsole, and the line it shows is an
+        // nsEditString: 256 bytes of text then m_cursorPos. Input_Update reads the open flag
+        // off this object too, which is the only honest way to know whether the console is down.
+        uint8_t* ConsoleObject()
+        {
+            return static_cast<uint8_t*>(GameModule::Resolve(GameAddress::kConsole));
+        }
+
+        int __cdecl ApiIsOpen(AmodMod mod)
+        {
+            uint8_t* const console = Resolve(mod) != nullptr ? ConsoleObject() : nullptr;
+
+            return (console != nullptr && console[GameAddress::kConsoleOpenOffset] != 0) ? 1 : 0;
+        }
+
+        void __cdecl ApiSetOpen(AmodMod mod, int open)
+        {
+            uint8_t* const console = Resolve(mod) != nullptr ? ConsoleObject() : nullptr;
+
+            if (console != nullptr)
+            {
+                console[GameAddress::kConsoleOpenOffset] = open != 0 ? 1 : 0;
+            }
+        }
+
+        void __cdecl ApiSetLine(AmodMod mod, const char* text)
+        {
+            uint8_t* const console = Resolve(mod) != nullptr ? ConsoleObject() : nullptr;
+
+            if (console == nullptr || text == nullptr)
+            {
+                return;
+            }
+
+            char* const line = reinterpret_cast<char*>(console + GameAddress::kConsoleEditOffset);
+            int at = 0;
+
+            for (; text[at] != '\0' && at < 255; ++at)
+            {
+                line[at] = text[at];
+            }
+
+            line[at] = '\0';
+            memcpy(console + GameAddress::kConsoleCaretOffset, &at, sizeof(at));
+        }
+
+        // com_time_scale 0 stops the game's clock dead, and the game does not survive it. A
+        // mod asking for zero wants the world held still, not a crash, so the smallest value
+        // that still ticks is handed over instead. Said out loud in the log the first time,
+        // because a loader that quietly runs something other than what it was given is the
+        // worst kind to debug.
+        bool TimeScaleZero(const char* line, std::string& fixed)
+        {
+            static const char kKey[] = "com_time_scale";
+            const size_t keyLength = sizeof(kKey) - 1;
+
+            if (_strnicmp(line, kKey, keyLength) != 0)
+            {
+                return false;
+            }
+
+            const char* value = line + keyLength;
+
+            while (*value == ' ' || *value == '\t')
+            {
+                ++value;
+            }
+
+            if (*value == '\0' || atof(value) != 0.0)
+            {
+                return false;       // reading it, or setting it to something that ticks
+            }
+
+            fixed = std::string(kKey) + " 0.0001";
+            return true;
+        }
+
         void __cdecl ApiExecute(AmodMod mod, const char* line)
         {
             if (Resolve(mod) == nullptr || g_execute == nullptr || line == nullptr)
             {
                 return;
+            }
+
+            std::string instead;
+
+            if (TimeScaleZero(line, instead))
+            {
+                static bool said = false;
+
+                if (!said)
+                {
+                    said = true;
+                    FORGE_LOG_INFO("com_time_scale 0 would stop the game dead; running '%s'",
+                                   instead.c_str());
+                }
+
+                line = instead.c_str();
             }
             void* const config = Config();
             if (config != nullptr)
@@ -253,6 +347,9 @@ namespace Forge
         g_table.AddCommand = &ApiAddCommand;
         g_table.RemoveCommand = &ApiRemoveCommand;
         g_table.Execute = &ApiExecute;
+        g_table.IsOpen = &ApiIsOpen;
+        g_table.SetOpen = &ApiSetOpen;
+        g_table.SetLine = &ApiSetLine;
 
         FrameApi::AddInternalTick(&PumpPending);
 

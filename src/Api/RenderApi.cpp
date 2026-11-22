@@ -111,6 +111,7 @@ namespace Forge
         std::vector<BgSub> g_bgSubs;
         std::vector<DeviceSub> g_deviceSubs;
         std::vector<InternalDrawRoutine> g_internalPresent;
+        std::vector<InternalDrawRoutine> g_afterPresent;
         AmodToken g_nextToken = 1;
 
         void** g_drawSlot = nullptr;
@@ -613,6 +614,38 @@ namespace Forge
             return g_findFont(name);   // a null name resolves to the default font
         }
 
+        // MENU SPACE INTO PIXELS, which is what the game's text routine actually works in - and it
+        // counts y up from the bottom. Passing menu units straight through was right only while the
+        // viewport happened to be 640x480; anywhere else the letters walked away from the rects
+        // they were meant to sit against, and their size stayed put while everything else grew.
+        void TextPlace(float x, float y, float scale, float* position, float* scaling)
+        {
+            void* const manager = Manager();
+            float across = 1.0f;
+            float down = 1.0f;
+
+            if (manager != nullptr)
+            {
+                const uint8_t* const info = static_cast<const uint8_t*>(manager) + GameAddress::kRenderViewportInfoOffset;
+                const int wide = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportWidthOffset);
+                const int tall = *reinterpret_cast<const int*>(info + GameAddress::kRenderViewportHeightOffset);
+
+                if (wide > 0 && tall > 0)
+                {
+                    across = static_cast<float>(wide) / AMOD_MENU_WIDE;
+                    down = static_cast<float>(tall) / AMOD_MENU_TALL;
+                }
+            }
+
+            position[0] = x * across;
+            position[1] = (AMOD_MENU_TALL - y) * down;
+
+            // A line asked for at a size should cover the same part of the screen whatever the
+            // screen is, like everything else drawn in menu space.
+            scaling[0] = scale * across;
+            scaling[1] = scale * down;
+        }
+
         void __cdecl ApiDrawText(AmodMod mod, void* font, float x, float y, const char* text, float scale, uint32_t color)
         {
             if (Resolve(mod) == nullptr || text == nullptr)
@@ -629,8 +662,10 @@ namespace Forge
                 return;
             }
 
-            float position[2] = { x, AMOD_MENU_TALL - y };
-            float scaling[2] = { scale, scale };
+            float position[2] = {};
+            float scaling[2] = {};
+
+            TextPlace(x, y, scale, position, scaling);
             float rgba[4] =
             {
                 ((color >> 16) & 0xFF) / 255.0f, // R
@@ -665,8 +700,10 @@ namespace Forge
                 return;
             }
 
-            float position[2] = { x, AMOD_MENU_TALL - y };
-            float scaling[2] = { scale, scale };
+            float position[2] = {};
+            float scaling[2] = {};
+
+            TextPlace(x, y, scale, position, scaling);
             float rgba[4] = {};
             Unpack(color, rgba);
 
@@ -1019,6 +1056,11 @@ namespace Forge
             }
 
             g_originalPresent(manager, unused);
+
+            for (const InternalDrawRoutine tick : g_afterPresent)
+            {
+                tick();
+            }
         }
 
         char __fastcall BeginDetour(void* manager, void* unused)
@@ -1237,6 +1279,7 @@ namespace Forge
         g_styleSubs.clear();
         g_bgSubs.clear();
         g_internalPresent.clear();
+        g_afterPresent.clear();
         g_deviceSubs.clear();
         g_drawSlot = nullptr;
         g_originalDraw = nullptr;
@@ -1250,6 +1293,11 @@ namespace Forge
         g_frameIndex = 0;
     }
 
+    bool RenderApi::CanDraw2D()
+    {
+        return ActiveSpriteDraw() != nullptr && SceneReady();
+    }
+
     const AmodRenderApi* RenderApi::Table()
     {
         return g_table.structSize != 0 ? &g_table : nullptr;
@@ -1261,6 +1309,19 @@ namespace Forge
         {
             g_internalPresent.push_back(draw);
         }
+    }
+
+    void RenderApi::AddAfterPresent(void(__cdecl* tick)())
+    {
+        if (tick != nullptr)
+        {
+            g_afterPresent.push_back(tick);
+        }
+    }
+
+    bool RenderApi::IsPresentHooked()
+    {
+        return g_originalPresent != nullptr;
     }
 
     void RenderApi::ForgetMod(ModContext* owner)

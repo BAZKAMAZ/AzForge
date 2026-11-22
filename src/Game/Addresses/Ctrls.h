@@ -166,6 +166,10 @@ namespace Forge
         constexpr uintptr_t kForceFieldFlashFpsOffset = 0x68;
         constexpr uintptr_t kForceFieldShockSpeedOffset = 0x6C;
         constexpr uintptr_t kForceFieldTagOffset = 0x70; // 80 bytes
+        constexpr uintptr_t kForceFieldFlashTimerOffset = 0xB0;
+        constexpr uintptr_t kForceFieldTimerOffset = 0xB4;
+        constexpr uintptr_t kForceFieldOnOffset = 0xB8;   // one byte; the think copies it to entity+0x5B4
+        constexpr uintptr_t kForceFieldVoiceOffset = 0xBC;
 
         // fire, 0x50; grid-placed on 'F'.
         constexpr uintptr_t kFireTextureOffset = 0x04;

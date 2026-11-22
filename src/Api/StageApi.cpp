@@ -3,6 +3,8 @@
 #include <string.h>
 
 #include "src/Api/StageApi.h"
+#include "src/Mods/ModLoadScreen.h"
+#include "src/Api/RenderApi.h"
 
 #include "src/Api/ApiRead.h"
 #include "src/Api/InputApi.h"
@@ -35,6 +37,18 @@ namespace Forge
         typedef uint32_t(__stdcall* ClearRoutine)(void* device, uint32_t count, const void* rects, uint32_t flags, uint32_t color, float z, uint32_t stencil);
         typedef void(__fastcall* LookAtRoutine)(float* matrix, void* unused, const float* eye, const float* target, const float* up);
         typedef void(__fastcall* PerspectiveRoutine)(float* matrix, void* unused, float fovRadians, float aspect, float nearZ, float farZ);
+
+        // Opening and showing a frame, which the game does for itself every tick and a mod being
+        // started has to do for itself, because the game is not ticking yet.
+        typedef void(__fastcall* FrameRoutine)(void* manager, void* unused);
+
+        // Straight off the device: BeginScene, EndScene and Present by their place in the vtable.
+        typedef long(__stdcall* SceneRoutine)(void* device);
+        typedef long(__stdcall* PresentRoutine)(void* device, const void* from, const void* to, void* window, void* dirty);
+
+        constexpr size_t kDevicePresent = 15;
+        constexpr size_t kDeviceBeginScene = 34;
+        constexpr size_t kDeviceEndScene = 35;
 
         AmodStageApi g_table = {};
 
@@ -437,6 +451,104 @@ namespace Forge
             return 1;
         }
     }
+        int __cdecl ApiLoading(AmodMod mod)
+        {
+            return (Caller(mod) != nullptr && ModLoadScreen::Up()) ? 1 : 0;
+        }
+
+        int __cdecl ApiLoadingSay(AmodMod mod, const char* text)
+        {
+            if (Caller(mod) == nullptr || text == nullptr || !ModLoadScreen::Up())
+            {
+                return 0;
+            }
+
+            ModLoadScreen::Report(text);
+            return 1;
+        }
+
+        int __cdecl ApiLoadingStep(AmodMod mod, int percent, const char* text)
+        {
+            if (Caller(mod) == nullptr || !ModLoadScreen::Up())
+            {
+                return 0;
+            }
+
+            ModLoadScreen::Step(percent, text);
+            return 1;
+        }
+
+        int __cdecl ApiLoadingFrame(AmodMod mod, AmodRenderCallback draw, void* user)
+        {
+            void* const device = Caller(mod) != nullptr ? Device() : nullptr;
+
+            if (device == nullptr)
+            {
+                return 0;
+            }
+
+            // THE DEVICE, NOT THE GAME'S WRAPPER. A mod may be blocking on the loading screen,
+            // where no scene is open, or inside its own render, where one already is - and the
+            // game's own Render_Begin says D3DERR_INVALIDCALL to the second case and puts up a
+            // fatal box about it. Asking the device tells us which case this is: opening a scene
+            // succeeds only when there was none.
+            void** const vtable = *static_cast<void***>(device);
+            const auto begin = reinterpret_cast<SceneRoutine>(vtable[kDeviceBeginScene]);
+            const auto end = reinterpret_cast<SceneRoutine>(vtable[kDeviceEndScene]);
+            const auto show = reinterpret_cast<PresentRoutine>(vtable[kDevicePresent]);
+
+            if (begin == nullptr || end == nullptr || show == nullptr)
+            {
+                return 0;
+            }
+
+            // Said once. The loader's own 2D refuses to draw unless the game's scene is up with
+            // its sprite states in it, and whether that is true this early is the whole question.
+            {
+                static bool told = false;
+
+                if (!told)
+                {
+                    told = true;
+
+                    const uint8_t* const scene = static_cast<const uint8_t*>(
+                        GameModule::Resolve(GameAddress::kScene));
+                    void* states = nullptr;
+
+                    if (scene != nullptr)
+                    {
+                        memcpy(&states, scene + GameAddress::kSceneSpriteStatesOffset, sizeof(states));
+                    }
+
+                    FORGE_LOG_INFO("stage: first loading frame - scene %p, sprite states %p, "
+                        "2D %s", static_cast<const void*>(scene), states,
+                        RenderApi::CanDraw2D() ? "ready" : "NOT READY, so nothing 2D will draw");
+                }
+            }
+
+            const long opened = begin(device);
+
+            if (draw != nullptr)
+            {
+                AmodFrame frame = {};
+
+                frame.structSize = sizeof(frame);
+                draw(&frame, user);
+            }
+
+            end(device);
+            show(device, nullptr, nullptr, nullptr, nullptr);
+
+            // There was a scene before this and there has to be one after: whoever was drawing in
+            // it is still in the middle of doing so.
+            if (opened < 0)
+            {
+                begin(device);
+            }
+
+            return 1;
+        }
+
 
     bool StageApi::Install()
     {   
@@ -489,6 +601,10 @@ namespace Forge
         g_table.RunGameRender = &ApiRunGameRender;
         g_table.Clear = &ApiClear;
         g_table.SetCamera = &ApiSetCamera;
+        g_table.Loading = &ApiLoading;
+        g_table.LoadingSay = &ApiLoadingSay;
+        g_table.LoadingStep = &ApiLoadingStep;
+        g_table.LoadingFrame = &ApiLoadingFrame;
         g_table.TakeInput = &ApiTakeInput;
         g_table.TakeShell = &ApiTakeShell;
         g_table.RunGameShell = &ApiRunGameShell;

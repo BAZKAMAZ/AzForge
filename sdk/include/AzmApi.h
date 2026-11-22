@@ -4,6 +4,7 @@
 #include "ForgeTypes.h"
 #include "AzmFile.h"
 #include "MmdApi.h"
+#include "TextureApi.h"
 
 /* Models with parts, materials and colour in the vertex - what .mmd cannot carry. A .azm is read
    once and becomes one engine mesh per part, with the file's materials as index ranges and the
@@ -140,9 +141,25 @@ typedef struct AmodAzmApi
     int(__cdecl* SetPartTint)(AmodMod mod, AmodAzmId model, int part, uint32_t colour);
     int(__cdecl* ClearTints)(AmodMod mod, AmodAzmId model);
 
+    /* Draws the model part by part with the shaders the mod has Set. */
+    int(__cdecl* DrawShaded)(AmodMod mod, AmodAzmId model, const float* matrix);
+
+    /* The same queue as Flush, drawn with the shaders the mod has Set instead of the game's. */
+    int(__cdecl* FlushShaded)(AmodMod mod);
+
+    /* What the next Queue calls carry to the shader: the lights that reach THEM. Held until it is
+       said again, so a street of cells says it once. Null goes back to carrying nothing. */
+    int(__cdecl* QueueConstants)(AmodMod mod, const float* values, int firstRegister, int vec4Count);
+
+    /* Puts a texture the mod is holding on one of the model's materials. What the .mtl names is
+       found on load - beside the model, then by the path as written - and needs none of this. This
+       is for the ones a game makes up as it runs: a livery, a skin built out of pixels, a file
+       from anywhere at all. AMOD_INVALID_TEXTURE takes the texture off again. */
+    int(__cdecl* SetMaterialTexture)(AmodMod mod, AmodAzmId model, int material, AmodTextureId texture);
+
 } AmodAzmApi;
 
-AMOD_LAST_FIELD(AmodAzmApi, ClearTints, 0x60);
+AMOD_LAST_FIELD(AmodAzmApi, SetMaterialTexture, 0x70);
 
 #ifdef __cplusplus
 } /* extern "C" */
@@ -289,6 +306,30 @@ namespace Amod
         {
             return g_azm != nullptr && g_azm->structSize >= sizeof(AmodAzmApi) &&
                    g_azm->SetPartTint(g_azmSelf, model, part, colour) != 0;
+        }
+
+        inline bool                                                 SetMaterialTexture(AmodAzmId model, int material, AmodTextureId texture)
+        {
+            return g_azm != nullptr && g_azm->structSize >= sizeof(AmodAzmApi) &&
+                   g_azm->SetMaterialTexture(g_azmSelf, model, material, texture) != 0;
+        }
+
+        inline bool                                                 QueueConstants(const float* values, int firstRegister, int vec4Count)
+        {
+            return g_azm != nullptr && g_azm->structSize >= sizeof(AmodAzmApi) &&
+                   g_azm->QueueConstants(g_azmSelf, values, firstRegister, vec4Count) != 0;
+        }
+
+        inline int                                                  FlushShaded()
+        {
+            return (g_azm != nullptr && g_azm->structSize >= sizeof(AmodAzmApi))
+                ? g_azm->FlushShaded(g_azmSelf) : 0;
+        }
+
+        inline int                                                  DrawShaded(AmodAzmId model, const float* matrix)
+        {
+            return (g_azm != nullptr && g_azm->structSize >= sizeof(AmodAzmApi))
+                ? g_azm->DrawShaded(g_azmSelf, model, matrix) : 0;
         }
 
         inline bool                                                 ClearTints(AmodAzmId model)

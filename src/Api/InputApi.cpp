@@ -518,6 +518,14 @@ namespace Forge
             ApplyCommand(held.key, held.target.c_str(), static_cast<int>(extra.size()), extra.empty() ? nullptr : extra.data(), held.held);
         }
 
+        // Input_Update leaves the key table untouched whenever the state swallows - which every
+        // menu does - so it keeps whatever it last held and a mod sees every key up forever. This
+        // fills it instead, between the game's frame and the mods reading it.
+        void __cdecl FillStalledTick()
+        {
+            InputApi::FillKeysIfStalled();
+        }
+
         void __cdecl RememberFrame()
         {
             AttachToWindow();
@@ -818,6 +826,7 @@ namespace Forge
             return false;
         }
 
+        FrameApi::AddInternalTick(&FillStalledTick, false);
         FrameApi::AddInternalTick(&RememberFrame, true);
 
         g_asyncSlot = static_cast<AsyncKeyRoutine*>(GameModule::Resolve(kGetAsyncKeyStateSlot));
@@ -935,7 +944,11 @@ namespace Forge
 
     void InputApi::FillKeysIfStalled()
     {
-        if (g_input == nullptr || !Swallowing() || g_input[GameAddress::kInputConsoleOpenOffset] != 0)
+        const uint8_t* const console =
+            static_cast<const uint8_t*>(GameModule::Resolve(GameAddress::kConsole));
+
+        if (g_input == nullptr || !Swallowing() || console == nullptr ||
+            console[GameAddress::kConsoleOpenOffset] != 0)
         {
             return;
         }

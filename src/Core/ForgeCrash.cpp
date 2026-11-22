@@ -1,4 +1,5 @@
 #include <windows.h>
+#include <dbghelp.h>
 
 #include "src/Core/ForgeCrash.h"
 #include "src/Core/ForgeLog.h"
@@ -51,7 +52,62 @@ namespace Forge
             }
         }
 
-        // Formats an address as "game.exe+offset".
+        // Symbols load on the first report only; a module that shipped no PDB just keeps its offset.
+        bool g_symbolsTried = false;
+        bool g_symbolsReady = false;
+
+        bool Symbols()
+        {
+            if (!g_symbolsTried)
+            {
+                g_symbolsTried = true;
+                SymSetOptions(SYMOPT_UNDNAME | SYMOPT_DEFERRED_LOADS | SYMOPT_LOAD_LINES | SYMOPT_FAIL_CRITICAL_ERRORS);
+                g_symbolsReady = SymInitialize(GetCurrentProcess(), nullptr, TRUE) != FALSE;
+            }
+
+            return g_symbolsReady;
+        }
+
+        // " in Function (File.cpp:123)", or nothing when the module has no symbols to give.
+        void Symbolize(const void* address, char* buffer, size_t size)
+        {
+            buffer[0] = 0;
+
+            if (!Symbols())
+            {
+                return;
+            }
+
+            const DWORD64 at = static_cast<DWORD64>(reinterpret_cast<uintptr_t>(address));
+            alignas(SYMBOL_INFO) char storage[sizeof(SYMBOL_INFO) + MAX_SYM_NAME] = {};
+            SYMBOL_INFO* const symbol = reinterpret_cast<SYMBOL_INFO*>(storage);
+            DWORD64 displacement = 0;
+
+            symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
+            symbol->MaxNameLen = MAX_SYM_NAME;
+
+            if (!SymFromAddr(GetCurrentProcess(), at, &displacement, symbol))
+            {
+                return;
+            }
+
+            IMAGEHLP_LINE64 line = {};
+            DWORD column = 0;
+            line.SizeOfStruct = sizeof(line);
+
+            if (SymGetLineFromAddr64(GetCurrentProcess(), at, &column, &line) && line.FileName != nullptr)
+            {
+                const char* const slash = strrchr(line.FileName, '\\');
+                _snprintf_s(buffer, size, _TRUNCATE, " in %s (%s:%u)", symbol->Name,
+                    slash != nullptr ? slash + 1 : line.FileName, static_cast<unsigned>(line.LineNumber));
+            }
+            else
+            {
+                _snprintf_s(buffer, size, _TRUNCATE, " in %s+0x%X", symbol->Name, static_cast<unsigned>(displacement));
+            }
+        }
+
+        // Formats an address as "game.exe+offset", with the function and line when the module has symbols.
         bool Describe(const void* address, char* buffer, size_t size)
         {
             HMODULE module = nullptr;
@@ -65,9 +121,19 @@ namespace Forge
             GetModuleFileNameA(module, path, sizeof(path));
             const char* const slash = strrchr(path, '\\');
 
-            sprintf_s(buffer, size, "%s+0x%08X", slash != nullptr ? slash + 1 : path,
-                static_cast<unsigned>(reinterpret_cast<uintptr_t>(address) - reinterpret_cast<uintptr_t>(module)));
+            // Truncated rather than refused: sprintf_s on a short buffer would end the process from inside its own report.
+            char symbol[512] = {};
+            Symbolize(address, symbol, sizeof(symbol));
+
+            _snprintf_s(buffer, size, _TRUNCATE, "%s+0x%08X%s", slash != nullptr ? slash + 1 : path,
+                static_cast<unsigned>(reinterpret_cast<uintptr_t>(address) - reinterpret_cast<uintptr_t>(module)), symbol);
             return true;
+        }
+
+        // A fault a guarded call can live through; a stack overflow cannot be undone here.
+        int GuardFilter(DWORD code)
+        {
+            return IsFatal(code) && code != EXCEPTION_STACK_OVERFLOW ? EXCEPTION_EXECUTE_HANDLER : EXCEPTION_CONTINUE_SEARCH;
         }
 
         bool IsCode(const void* address)
@@ -101,7 +167,7 @@ namespace Forge
             for (size_t i = 0; i < words && written < kStackFrames; ++i)
             {
                 const void* const candidate = reinterpret_cast<const void*>(stack[i]);
-                char where[MAX_PATH + 32];
+                char where[MAX_PATH + 512];
 
                 if (candidate != nullptr && IsCode(candidate) && Describe(candidate, where, sizeof(where)))
                 {
@@ -124,7 +190,7 @@ namespace Forge
             const EXCEPTION_RECORD& record = *pointers->ExceptionRecord;
             const CONTEXT& context = *pointers->ContextRecord;
 
-            char where[MAX_PATH + 32];
+            char where[MAX_PATH + 512];
             if (!Describe(record.ExceptionAddress, where, sizeof(where)))
             {
                 strcpy_s(where, "outside every loaded module");
@@ -170,6 +236,28 @@ namespace Forge
         {
             RemoveVectoredExceptionHandler(g_handle);
             g_handle = nullptr;
+        }
+
+        if (g_symbolsReady)
+        {
+            SymCleanup(GetCurrentProcess());
+        }
+
+        g_symbolsTried = false;
+        g_symbolsReady = false;
+    }
+
+    bool Crash::Guarded(void(__cdecl* call)(void* context), void* context)
+    {
+        // No C++ objects in here: __try cannot share a function with anything that unwinds.
+        __try
+        {
+            call(context);
+            return true;
+        }
+        __except (GuardFilter(GetExceptionCode()))
+        {
+            return false;
         }
     }
 }

@@ -23,6 +23,7 @@ int g_wheelCount = 0;
 int g_models = 0;                               // how many the 3D batch draws
 int g_azmMany = 0;                              // and how many copies of the loaded .azm
 bool g_shaderQuad = false;                      // draw the shader test quad this frame
+bool g_azmShaded = false;                       // draw the .azm through the mod's own shader
 bool g_skin = false;                            // draw the skinning test bar this frame
 int g_drawn = 0;
 float g_spent = 0.0f;                           // seconds counted since the count was last set
@@ -175,6 +176,80 @@ void DrawField()
     }
 
     g_drawn = Mmd::DrawMany(field, g_models);
+}
+
+// Twelve lights summed per vertex, on a model. c0..c3 and c4..c7 are the loader's, c8 up are ours.
+bool BeginCarShader()
+{
+    const int lamps = 12;
+    static AmodVertexShader vs = AMOD_INVALID_SHADER;
+    static AmodPixelShader ps = AMOD_INVALID_SHADER;
+
+    if (vs == AMOD_INVALID_SHADER)
+    {
+        char src[2048] = {};
+
+        strcat_s(src,
+            "vs.1.1\n"
+            "dp4 oPos.x, v0, c0\n"
+            "dp4 oPos.y, v0, c1\n"
+            "dp4 oPos.z, v0, c2\n"
+            "dp4 oPos.w, v0, c3\n"
+            "dp3 r1.x, v1, c4\n"
+            "dp3 r1.y, v1, c5\n"
+            "dp3 r1.z, v1, c6\n"
+            "mov r0, c8\n");
+
+        for (int at = 0; at < lamps; ++at)
+        {
+            char step[128] = {};
+
+            sprintf_s(step,
+                "dp3 r2, r1, c%d\n"
+                "max r2, r2, c8.w\n"
+                "mad r0, r2, c%d, r0\n",
+                9 + at * 2, 10 + at * 2);
+            strcat_s(src, step);
+        }
+
+        // The model's own vertex colour stays under the light.
+        // c40 is where the loader puts the draw's tint, so 'azm tint' works through the shader.
+        strcat_s(src, "mul r3, r0, v2\nmul oD0, r3, c40\nmov oT0, v3\n");
+
+        vs = Shader::CreateVertexSource(src);
+        ps = Shader::CreatePixelSource("ps.1.1\ntex t0\nmul r0, t0, v0\n");
+    }
+
+    if (vs == AMOD_INVALID_SHADER || ps == AMOD_INVALID_SHADER)
+    {
+        g_azmShaded = false;
+        return false;
+    }
+
+    float constants[4 * (1 + 12 * 2)] = {};
+
+    constants[0] = constants[1] = constants[2] = 0.15f;   // c8 ambient
+    constants[3] = 0.0f;                                  // c8.w is the clamp zero
+
+    for (int at = 0; at < lamps; ++at)
+    {
+        const float turn = g_seconds * 0.4f + at * 0.5236f;
+        const int dir = 4 + at * 8;
+        const int col = dir + 4;
+
+        constants[dir + 0] = cosf(turn);
+        constants[dir + 1] = 0.4f;
+        constants[dir + 2] = sinf(turn);
+
+        constants[col + 0] = 0.35f + 0.35f * cosf(at * 0.5236f);
+        constants[col + 1] = 0.35f + 0.35f * cosf(at * 0.5236f + 2.09f);
+        constants[col + 2] = 0.35f + 0.35f * cosf(at * 0.5236f + 4.19f);
+    }
+
+    Shader::Set(vs, ps);
+    Shader::SetVertexConstant(8, constants, 1 + lamps * 2);
+    Shader::SetTintRegister(40);
+    return true;
 }
 
 void __cdecl StageRender(void*)
@@ -402,6 +477,8 @@ void __cdecl StageRender(void*)
             ++side;
         }
 
+        const bool shaded = g_azmShaded && Shader::IsAvailable() && BeginCarShader();
+
         for (int at = 0; at < many; ++at)
         {
             const float across = static_cast<float>(at % side) - (side - 1) * 0.5f;
@@ -420,7 +497,17 @@ void __cdecl StageRender(void*)
             stand.m[13] = -0.7f;
             stand.m[14] = along * gap;
 
+            // Queued either way; what changes is which light draws the queue.
             Azm::Queue(g_car, stand.m);
+        }
+
+        if (shaded)
+        {
+            // One call for the whole field, sorted inside the loader: same models, same textures,
+            // one state change a run instead of one a copy.
+            g_drawn = Azm::FlushShaded();
+            Shader::Clear();
+            return;
         }
 
         g_drawn = Azm::Flush();
@@ -693,6 +780,7 @@ void __cdecl AzmCommand(int argc, const char** argv, void*)
         g_car = AMOD_INVALID_AZM;
         g_wheelCount = 0;
         g_azmMany = 0;
+        g_azmShaded = false;
         Console::Print("azm: put down\n");
         return;
     }
@@ -712,6 +800,53 @@ void __cdecl AzmCommand(int argc, const char** argv, void*)
             g_slowest * 1000.0f);
         Console::Print("azm: 'azm many <n>' draws that many of the loaded model in one batch;\n");
         Console::Print("     load one with 'azm <path>' first, 'stage take' to hold the frame\n");
+        return;
+    }
+
+    if (strcmp(what, "skin") == 0)
+    {
+        if (g_car == AMOD_INVALID_AZM)
+        {
+            Console::Print("azm: load a model first - 'azm models/testcar.azm'\n");
+            return;
+        }
+
+        // Any path at all: the mod holds the texture, so where it came from stops mattering.
+        const AmodTextureId skin = argc > 2 ? Textures::Load(argv[2]) : AMOD_INVALID_TEXTURE;
+        const int material = argc > 3 ? atoi(argv[3]) : 0;
+
+        if (argc > 2 && skin == AMOD_INVALID_TEXTURE)
+        {
+            Console::Printf("azm: no texture at '%s'\n", argv[2]);
+            return;
+        }
+
+        if (!Azm::SetMaterialTexture(g_car, material, skin))
+        {
+            Console::Printf("azm: material %d would not take it\n", material);
+            return;
+        }
+
+        Console::Printf("azm: material %d now wears '%s'\n", material,
+            argc > 2 ? argv[2] : "nothing at all");
+        Console::Print("     'azm skin' with no path takes the texture off again\n");
+        return;
+    }
+
+    if (strcmp(what, "shader") == 0)
+    {
+        if (g_car == AMOD_INVALID_AZM)
+        {
+            Console::Print("azm: load a model first - 'azm models/testcar.azm'\n");
+            return;
+        }
+
+        g_azmShaded = !g_azmShaded;
+
+        Console::Printf("azm: the model is drawn by %s\n", g_azmShaded
+            ? "the mod's own vertex shader - twelve lights, no fixed-function cap"
+            : "the game's own path again");
+        Console::Print("azm: the loader puts world*view*projection in c0 and the world in c4\n");
         return;
     }
 

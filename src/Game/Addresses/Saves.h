@@ -46,6 +46,22 @@ namespace Forge
         constexpr uintptr_t kGamePacksOpenOffset = 0x10;
         constexpr uintptr_t kGamePacksOpenCountOffset = 0x14;
         constexpr size_t kGamePackDescSize = 0x244;
+
+        // CGamePacks::load fills a desc from pack_NNN.mis: $id as an int, then three fixed strings
+        constexpr uintptr_t kGamePackIdOffset = 0x000;
+        constexpr uintptr_t kGamePackNameOffset = 0x004;
+        constexpr size_t kGamePackNameSize = 0x40;
+        constexpr uintptr_t kGamePackMenuOffset = 0x044;    // $new_menu
+        constexpr uintptr_t kGamePackPreviewOffset = 0x144; // $preview
+        constexpr size_t kGamePackPathSize = 0x100;
+
+        // Bounds-checked inside: a bad index answers null instead of walking off the array
+        constexpr uintptr_t kGamePacksDescAt = 0x00453170; // __thiscall (packs, pack), RET 4
+
+        // What CMenuPacks::OnButtonClick does with the desc: IDM_NEW_GAME is not one menu, it is
+        // RE-REGISTERED from the chosen pack's $new_menu through kMenuLoadFromScript in Menu.h.
+        // menu_palace.txt is only the fallback, and it carries no $images.
+        constexpr const char* kPalaceMenuId = "IDM_NEW_GAME";
         constexpr size_t kOpenLevelSize = 0x100;
 
         // ---- saves/saveNNN.sav ------------------------------------------------------------------

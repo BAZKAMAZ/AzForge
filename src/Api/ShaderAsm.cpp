@@ -1,4 +1,5 @@
 #include "src/Api/ShaderAsm.h"
+#include "src/Core/ForgeLog.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -163,6 +164,40 @@ namespace Forge
             return true;
         }
 
+        // Which components a swizzle reads.
+        uint32_t Reads(const std::string& swizzle)
+        {
+            uint32_t bits = 0;
+
+            for (char at : swizzle)
+            {
+                uint32_t which = 0;
+
+                if (Component(at, which))
+                {
+                    bits |= 1u << which;
+                }
+            }
+
+            return bits == 0 ? 0xFu : bits;
+        }
+
+        std::string Letters(uint32_t bits)
+        {
+            const char* const names = "xyzw";
+            std::string out;
+
+            for (int at = 0; at < 4; ++at)
+            {
+                if ((bits & (1u << at)) != 0)
+                {
+                    out += names[at];
+                }
+            }
+
+            return out;
+        }
+
         // Splits a register token into name, swizzle and negate.
         void Split(const std::string& token, std::string& name, std::string& swizzle, bool& negate)
         {
@@ -217,6 +252,9 @@ namespace Forge
         int number = 0;
         bool haveVersion = false;
         bool pixel = false;
+
+        // Which components of each temporary have been written so far.
+        uint32_t filled[16] = {};
 
         std::string text = source;
         text += "\n";
@@ -290,6 +328,10 @@ namespace Forge
 
             tokens.push_back(op->code);
 
+            uint32_t destFile = 0;
+            int destReg = 0;
+            uint32_t destMask = 0;
+
             // Parses the destination register and write mask.
             {
                 std::string name;
@@ -297,16 +339,12 @@ namespace Forge
                 bool negate = false;
                 Split(words[1], name, swizzle, negate);
 
-                uint32_t file = 0;
-                int reg = 0;
-                uint32_t mask = 0;
-
-                if (!Register(name, file, reg, pixel) || !WriteMask(swizzle, mask))
+                if (!Register(name, destFile, destReg, pixel) || !WriteMask(swizzle, destMask))
                 {
                     return Fault(error, number, "bad destination", words[1]);
                 }
 
-                tokens.push_back(kParam | file | mask | static_cast<uint32_t>(reg));
+                tokens.push_back(kParam | destFile | destMask | static_cast<uint32_t>(destReg));
             }
 
             for (int which = 0; which < op->sources; ++which)
@@ -325,8 +363,28 @@ namespace Forge
                     return Fault(error, number, "bad source", words[2 + which]);
                 }
 
+                // A device refuses a shader that reads a component nothing has written, and says
+                // only that it refused it. This says which line and which component instead.
+                if (file == kTemp && reg >= 0 && reg < 16)
+                {
+                    const uint32_t read = swizzle.empty() ? (head == "dp3" ? 0x7u : 0xFu)
+                                                          : Reads(swizzle);
+                    const uint32_t missing = read & ~filled[reg];
+
+                    if (missing != 0)
+                    {
+                        FORGE_LOG_WARN("shader: line %d reads r%d.%s before anything wrote it - the "
+                            "device will refuse this", number, reg, Letters(missing).c_str());
+                    }
+                }
+
                 const uint32_t modifier = negate ? (1u << 24) : 0u;
                 tokens.push_back(kParam | file | modifier | bits | static_cast<uint32_t>(reg));
+            }
+
+            if (destFile == kTemp && destReg >= 0 && destReg < 16)
+            {
+                filled[destReg] |= (destMask >> 16) & 0xFu;
             }
         }
 

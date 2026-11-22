@@ -101,6 +101,49 @@ A line in the console, a message box with the game's name on it, and the game is
 It is the game's own, not a box of the mod's making - and it RETURNS, so the
 frame that called it finishes.
 
+## Starting up
+
+A mod that reads files in `AmodInit` blocks the game while it does, and nothing is drawn in the
+meantime: the loader repaints the loading screen BETWEEN mods, and inside one there is only
+whatever was on the screen last. At startup that is nothing at all, which is the white window.
+
+Three calls, cheapest first. Off the loading screen all of them do nothing and say so, so the same
+lines are safe to leave where they are.
+
+| Call | What it does |
+| --- | --- |
+| `Stage::Loading()` | whether there is a loading screen to paint at all |
+| `Stage::LoadingSay(text)` | a line on the game's own screen, painted there and then |
+| `Stage::LoadingStep(percent, text)` | the same, and moves the bar |
+| `Stage::LoadingFrame(draw, user)` | a whole frame of the mod's own |
+
+`LoadingFrame` hands the screen over: the loader opens the frame, calls back, and shows it, and
+inside the callback everything a mod draws with normally works — rects, text, sprites, models.
+So the screen a mod puts up while it loads can be the screen it wants, not a line on somebody
+else's.
+
+```c
+void __cdecl MyLoadingScreen(const AmodFrame*, void* user)
+{
+    const int done = *(const int*)user;
+
+    Stage::Clear(0xFF101018);
+    Render::Rect(0.0f, 0.0f, AMOD_MENU_WIDE * done / 100.0f, 8.0f, 0xFFE0A040);
+}
+
+for (int at = 0; at < many; ++at)
+{
+    LoadOneThing(at);
+
+    const int done = (at + 1) * 100 / many;
+
+    Stage::LoadingFrame(&MyLoadingScreen, &done);
+}
+```
+
+The bar a mod moves with `LoadingStep` is put back where the game had it before the next mod runs,
+so one mod's progress is never mistaken for another's.
+
 ## azm
 
 A model with parts, materials and colour in the vertex.
@@ -113,6 +156,8 @@ A model with parts, materials and colour in the vertex.
 | `azm tint` | and that taken off again |
 | `azm paint <rrggbb>` | every paintable material recoloured, in the model itself |
 | `azm many <n>` | that many copies of it, in one sorted batch, with the frame time so far |
+| `azm shader` | the model drawn by the mod's own vertex shader, on or off |
+| `azm skin <path> [material]` | a texture from anywhere put on one of its materials |
 | `azm off` | the model put down |
 
 ```
@@ -122,11 +167,23 @@ azm tint ff4020         red; whatever the file baked shows through it
 azm tint                back to its own colours
 azm many 200            two hundred of it in one batch; read the frame in the corner
 azm paint 2060ff        the model's own vertices are rewritten
+azm shader              twelve lights on it, summed in one vertex shader
 azm off
 ```
 
 Anything the file calls a `wheel` turns on its own pivot. A tint belongs to one draw; paint belongs
 to the model, so every copy of it wears the new colour.
+
+A material's texture is found on load: beside the model first, then by the path exactly as the
+`.mtl` writes it. So `map_Kd textures/paint.png` reaches `resmod/textures/paint.png` and nothing
+needs copying next to the model. `Azm::SetMaterialTexture` is for the other case — a texture the
+game makes up as it runs, from a path of its own, from pixels it built, from anywhere at all.
+
+```
+azm models/testcar.azm
+azm skin textures/dirt.png 0     the paint wears something else
+azm skin                          and takes it off again
+```
 
 Build a `.azm` with the tool beside the loader:
 
@@ -155,6 +212,50 @@ shader              off
 The shader is assembled from text — through `d3dx8.dll` if the machine has it, the loader's own
 assembler otherwise; `forge.log` says which. Ten lamps summed in one shader: eight is the
 fixed-function cap, not the shader's.
+
+### A model through a shader
+
+`Shader::DrawTriangles` draws loose vertices. To put a whole model through your own shader use
+`Azm::DrawShaded` for a `.azm`, or `Shader::DrawModel` for one engine mesh — both issue the
+draw themselves, so the game's per-draw FVF never overwrites what you Set.
+
+| Call | What it draws |
+| --- | --- |
+| `Azm::Queue` then `Azm::FlushShaded()` | the whole queue at once, sorted; what a street wants |
+| `Azm::DrawShaded(model, matrix)` | every visible part, posed, one draw a material |
+| `Shader::DrawModels(draws, count)` | many engine meshes at once, sorted the same way |
+| `Shader::DrawModel(model, matrix, texture)` | one mesh; texture 0 keeps the mesh's own |
+| `Shader::SetTransformRegisters(wvp, world)` | moves those two matrices, -1 for neither |
+| `Shader::SetTintRegister(reg)` | where a draw's tint lands, -1 for nowhere |
+
+The loader fills the matrices before each draw:
+
+| Register | What is in it |
+| --- | --- |
+| `c0..c3` | world * view * projection, transposed — `dp4 oPos.x, v0, c0` |
+| `c4..c7` | the world matrix, transposed — `dp3 r1.x, v1, c4` for the normal |
+
+A draw's tint reaches the shader only if you ask for it: `Shader::SetTintRegister(40)` puts red,
+green, blue and alpha in `c40` before each part, and `Azm::SetPartTint` then works through your
+own shader the way it does through the game's. Without that call nothing is written and a tint is
+simply ignored.
+
+One draw at a time says every state again for every model. A batch says it once for a run: sorted
+by blend, then model, then texture, then tint, so a street of two hundred cells on one model binds
+its stream once. Only the matrices are written per draw, because only they differ. `azm many 40`
+with `azm shader` on goes through that path.
+
+Everything from `c8` up is yours. The vertex is the game's own: `v0` position, `v1` normal,
+`v2` diffuse, `v3` texture corner. A material with no texture of its own gets one white pixel bound
+to `t0`, so `tex t0 ; mul r0, t0, v0` is right whether the model is textured or vertex-coloured.
+
+```
+stage take
+azm models/car.azm
+azm shader          twelve lamps turning around it, its own colours underneath
+azm many 40         forty of them, each one its own draw
+azm shader          the game's path again
+```
 
 ## skin
 
@@ -185,7 +286,7 @@ like a limb. Fixed function cannot deform a mesh by bones at all.
 | Mmd, batched | `models` |
 | Azm | `azm` |
 | Fatal | `fatal` |
-| Shader | `shader`, `skin` |
+| Shader | `shader`, `skin`, `azm shader` |
 | Textures, Mmd | `stage take` builds both by hand |
 | Sound | `window sound` |
 | Input | `window cursor` |

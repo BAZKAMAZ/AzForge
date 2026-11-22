@@ -63,10 +63,19 @@ namespace Forge
         std::vector<Started> g_started;
         std::vector<RoomSnapshot> g_rooms;
 
+        // Every entry of the sound facade opens with MOV ECX,[kSound] and dereferences it, so a
+        // null device is a null read inside the game. kSound is a POINTER VARIABLE, not the object:
+        // resolving its address always answers, which is why the old check here never caught this.
+        bool DeviceUp()
+        {
+            void** const at = static_cast<void**>(GameModule::Resolve(GameAddress::kSound));
+            return at != nullptr && *at != nullptr;
+        }
+
         // Slot filled after Install; resolve per call, not at Install.
         bool Ready()
         {
-            return GameModule::Resolve(GameAddress::kSound) != nullptr && GameModule::Resolve(GameAddress::kResolveSoundSlot) != nullptr &&
+            return DeviceUp() && GameModule::Resolve(GameAddress::kResolveSoundSlot) != nullptr &&
                 Routine<PlayAtRoutine>(GameAddress::kSoundPlayAt) != nullptr;
         }
 
@@ -174,7 +183,7 @@ namespace Forge
         {
             const LoadRoutine load = LoadThroughSlot();
 
-            if (Caller(mod) == nullptr || load == nullptr)
+            if (Caller(mod) == nullptr || load == nullptr || !DeviceUp())
             {
                 return AMOD_INVALID_SOUND;
             }
@@ -196,7 +205,7 @@ namespace Forge
         {
             const PlayRoutine play = Routine<PlayRoutine>(GameAddress::kSoundPlay);
 
-            if (Caller(mod) == nullptr || play == nullptr || sound == AMOD_INVALID_SOUND)
+            if (Caller(mod) == nullptr || play == nullptr || !DeviceUp() || sound == AMOD_INVALID_SOUND)
             {
                 return Fail(mod, AMOD_FAIL_NO_SUCH, "there is no such sound to play");
             }
@@ -210,7 +219,7 @@ namespace Forge
             ModContext* const caller = Caller(mod);
             const PlayAtRoutine play = Routine<PlayAtRoutine>(GameAddress::kSoundPlayAt);
 
-            if (caller == nullptr || play == nullptr)
+            if (caller == nullptr || play == nullptr || !DeviceUp())
             {
                 return AMOD_INVALID_VOICE;
             }
@@ -257,7 +266,7 @@ namespace Forge
         {
             const MoveRoutine move = Routine<MoveRoutine>(GameAddress::kSoundMove);
 
-            if (Caller(mod) == nullptr || move == nullptr || voice == AMOD_INVALID_VOICE || position == nullptr)
+            if (Caller(mod) == nullptr || move == nullptr || !DeviceUp() || voice == AMOD_INVALID_VOICE || position == nullptr)
             {
                 return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "Move needs a voice and a place to move it to");
             }
@@ -270,7 +279,7 @@ namespace Forge
         {
             const StopRoutine stop = Routine<StopRoutine>(GameAddress::kSoundStop);
 
-            if (Caller(mod) == nullptr || stop == nullptr || voice == AMOD_INVALID_VOICE)
+            if (Caller(mod) == nullptr || stop == nullptr || !DeviceUp() || voice == AMOD_INVALID_VOICE)
             {
                 return Fail(mod, AMOD_FAIL_BAD_ARGUMENT, "there is no such voice to stop");
             }
@@ -411,7 +420,8 @@ namespace Forge
                 continue;
             }
 
-            if (stop != nullptr)
+            // No device left means there is no voice left to stop either, so the list just goes
+            if (stop != nullptr && DeviceUp())
             {
                 stop(it->voice);
             }

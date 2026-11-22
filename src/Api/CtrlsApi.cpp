@@ -92,6 +92,8 @@ namespace Forge
             { "flash_fps",   GameAddress::kForceFieldFlashFpsOffset,   Kind::Float,  0, 0, 0, true },
             { "shock_speed", GameAddress::kForceFieldShockSpeedOffset, Kind::Float,  0, 0, 0, true },
             { "tag",         GameAddress::kForceFieldTagOffset,        Kind::Text,   0, 0, 0, false },
+            { "state",       GameAddress::kForceFieldOnOffset,         Kind::Byte,   0, 0, 0, true },
+            { "timer",       GameAddress::kForceFieldTimerOffset,      Kind::Float,  0, 0, 0, true },
         };
 
         const Field kFireFields[] = {
