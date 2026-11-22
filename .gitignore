@@ -40,5 +40,11 @@ plugins/vs2026/Extension/Template/resmod/
 # room_grid.py writes its dumps beside itself
 tools/*.grid.txt
 
+# Custom installer build outputs
+installer/output/
+installer/bin/
+installer/obj/
+installer/payload.zip
+
 # scratch for one chat, never committed
 handoff*.txt

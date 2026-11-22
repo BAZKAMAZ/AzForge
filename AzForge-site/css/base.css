@@ -1,0 +1,104 @@
+:root{
+  --font-ui:"Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;
+  --font-mono:"Cascadia Code","JetBrains Mono",Consolas,"Fira Code","Courier New",monospace;
+  --accent:#ff7800;
+  --accent-soft:#ff8f2b;
+  --radius:12px;
+  --topbar-h:60px;
+}
+
+/* ---------- темы ---------- */
+body[data-theme="dark"]{
+  --bg:#0e1117; --bg-raise:#141924; --bg-panel:#171d2a; --bg-code:#121722;
+  --bg-hover:#1c2434; --border:#26304240; --border-strong:#2e3a50;
+  --text:#dce3ee; --text-dim:#8b96a8; --text-faint:#616c7e;
+  --link:#ffa04d; --ok:#4ade80; --warn:#fbbf24;
+  --code-tag:#ff9440; --code-type:#6cb6ff; --code-kw:#c792ea;
+  --code-str:#a5d6a7; --code-num:#f78c6c; --code-com:#6b7689;
+  --shadow:0 12px 40px rgba(0,0,0,.5);
+  --grid-line:rgba(255,255,255,.025);
+  --glow:rgba(255,120,0,.13);
+  --chip-bg:#1d2534;
+  --kbd-bg:#1d2534;
+}
+body[data-theme="light"]{
+  --bg:#f6f7fa; --bg-raise:#ffffff; --bg-panel:#ffffff; --bg-code:#1a2130;
+  --bg-hover:#eef1f6; --border:#dfe4ec; --border-strong:#c9d2e0;
+  --text:#1e2530; --text-dim:#5b6575; --text-faint:#8b95a5;
+  --link:#c75c00; --ok:#15803d; --warn:#b45309;
+  --code-tag:#ffb36b; --code-type:#8ecbff; --code-kw:#d9a7f0;
+  --code-str:#bfe8c5; --code-num:#ffb08f; --code-com:#8792a5;
+  --shadow:0 12px 40px rgba(30,40,60,.14);
+  --grid-line:rgba(20,30,60,.035);
+  --glow:rgba(255,120,0,.10);
+  --chip-bg:#e8ecf3;
+  --kbd-bg:#e8ecf3;
+}
+
+/* ---------- каркас ---------- */
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{font-family:var(--font-ui);background:var(--bg);color:var(--text);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased;transition:background .25s ease,color .25s ease;overflow-x:hidden}
+::selection{background:rgba(255,120,0,.28)}
+img{display:block}
+a{color:var(--link);text-decoration:none}
+.wrap{max-width:1140px;margin:0 auto;padding:0 22px}
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(var(--grid-line) 1px,transparent 1px),linear-gradient(90deg,var(--grid-line) 1px,transparent 1px);background-size:44px 44px;mask-image:linear-gradient(to bottom,rgba(0,0,0,.9),rgba(0,0,0,.25) 55%,transparent)}
+main{position:relative;z-index:1}
+
+/* ---------- топбар ---------- */
+.topbar{position:fixed;top:0;left:0;right:0;z-index:60;height:var(--topbar-h);background:var(--bg);border-bottom:1px solid var(--border)}
+@supports (backdrop-filter:blur(10px) saturate(1.2)){
+  .topbar{background:color-mix(in srgb,var(--bg) 72%,transparent);backdrop-filter:blur(10px) saturate(1.2)}
+}
+.top-in{display:flex;align-items:center;gap:10px;height:var(--topbar-h)}
+.brand{display:flex;align-items:center;gap:10px;color:var(--text);font-weight:700;font-size:17.5px;letter-spacing:.01em}
+.brand img{width:27px;height:27px}
+.topnav{display:flex;gap:2px;margin-left:auto}
+.topnav a{padding:8px 13px;border-radius:9px;color:var(--text-dim);font-weight:600;font-size:14.5px;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.topnav a:hover{color:var(--text);background:var(--bg-hover)}
+.topnav a.active{color:var(--accent);background:rgba(255,120,0,.1)}
+.iconbtn{width:38px;height:38px;border-radius:10px;border:1px solid var(--border);background:var(--bg-raise);color:var(--text-dim);display:grid;place-items:center;cursor:pointer;transition:.2s}
+.iconbtn:hover{color:var(--text);border-color:var(--border-strong)}
+.iconbtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+body[data-theme="dark"] .ic-sun{display:none}
+body[data-theme="light"] .ic-moon{display:none}
+.burger{display:none;margin-left:2px}
+.mnav{position:fixed;top:var(--topbar-h);left:0;right:0;z-index:59;display:none;flex-direction:column;background:var(--bg);border-bottom:1px solid var(--border);padding:8px 22px 16px;box-shadow:var(--shadow)}
+.mnav.open{display:flex}
+.mnav a{padding:13px 4px;color:var(--text);font-weight:600;border-bottom:1px solid var(--border)}
+.mnav a:last-child{border-bottom:none}
+
+/* ---------- переключатель языка (в правом углу топбара) ---------- */
+.langw{position:relative}
+.langbtn{width:auto;min-width:64px;padding:0 10px;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font-mono);font-size:12px;font-weight:700;letter-spacing:.06em}
+.langbtn .lb-chev{width:12px;height:12px;transition:transform .2s}
+.langw.open .lb-chev{transform:rotate(180deg)}
+.lang-menu{position:absolute;right:0;top:calc(100% + 8px);min-width:168px;background:var(--bg-raise);border:1px solid var(--border-strong);border-radius:11px;box-shadow:var(--shadow);padding:5px;display:none;z-index:80}
+.langw.open .lang-menu{display:block}
+.lang-opt{display:flex;align-items:center;gap:9px;width:100%;padding:9px 12px;border:none;background:transparent;color:var(--text-dim);font-family:var(--font-ui);font-size:14px;font-weight:600;border-radius:8px;cursor:pointer;text-align:left;transition:.15s}
+.lang-opt:hover{background:var(--bg-hover);color:var(--text)}
+.lang-opt.on{color:var(--accent);background:rgba(255,120,0,.09)}
+.lang-opt .tick{margin-left:auto;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;visibility:hidden}
+.lang-opt.on .tick{visibility:visible}
+
+/* ---------- кнопки ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 24px;border-radius:11px;font-weight:700;font-size:15px;border:1px solid transparent;cursor:pointer;transition:.2s;font-family:inherit}
+.btn svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-primary{background:linear-gradient(135deg,#ff7800,#ff9330);color:#1a0d02;box-shadow:0 8px 26px rgba(255,120,0,.28)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 32px rgba(255,120,0,.38)}
+.btn-ghost{border-color:var(--border-strong);color:var(--text);background:var(--bg-raise)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px)}
+.btn-sm{padding:9px 16px;font-size:13.5px;border-radius:9px}
+
+/* ---------- футер ---------- */
+footer{border-top:1px solid var(--border);padding:34px 0;position:relative;z-index:1}
+.foot-in{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.foot-in .brand{font-size:15.5px}
+.foot-in .brand img{width:22px;height:22px}
+.copy-line{margin-left:auto;color:var(--text-faint);font-size:13.5px;font-variant-numeric:tabular-nums}
+
+@media(max-width:860px){
+  .topnav{display:none}
+  .burger{display:grid}
+}

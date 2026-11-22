@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net472</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>AzForge-Setup</AssemblyName>
+    <RootNamespace>AzForgeSetup</RootNamespace>
+    <ApplicationIcon>assets\AzForge.ico</ApplicationIcon>
+    <Version>0.1.0</Version>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <Product>AzForge</Product>
+    <Company>BAZKAMAZ</Company>
+    <Description>AzForge Installer for Azangara</Description>
+    <Copyright>Copyright (c) 2026 BAZKAMAZ</Copyright>
+    <DebugType>none</DebugType>
+    <DebugSymbols>false</DebugSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="System.IO.Compression" />
+  </ItemGroup>
+
+  <ItemGroup Condition="Exists('payload.zip')">
+    <EmbeddedResource Include="payload.zip" LogicalName="AzForgeSetup.payload.zip" />
+  </ItemGroup>
+</Project>
