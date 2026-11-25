@@ -1,0 +1,60 @@
+[
+  {
+    "id": "hud.number",
+    "label": "mod.expr.hudNumber",
+    "call": "Hud.GetProperty",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "hud_number(\"bonus_pulse_scale\", 0)",
+    "hint": "mod.expr.hudNumber.hint"
+  },
+  {
+    "id": "hud.second",
+    "label": "mod.expr.hudSecond",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "hud_number(\"items.start_pos\", 1)",
+    "hint": "mod.expr.hudNumber.hint"
+  },
+  {
+    "id": "hud.frame",
+    "label": "mod.expr.hudFrame",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "kind": "text",
+    "text": "hud_text(\"item_frame.texture\")",
+    "hint": ""
+  },
+  {
+    "id": "hud.count",
+    "label": "mod.expr.hudCount",
+    "call": "Hud.PropertyCount",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "(API->hud ? API->hud->PropertyCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "hud.nameAt",
+    "label": "mod.expr.hudNameAt",
+    "call": "Hud.PropertyNameAt",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "kind": "text",
+    "text": "hud_name_at(0)",
+    "hint": "mod.expr.hudNameAt.hint"
+  },
+  {
+    "id": "hud.imageCount",
+    "label": "mod.expr.hudImages",
+    "call": "Hud.ImageCount",
+    "group": "hud",
+    "section": "mod.sec.hudImages",
+    "kind": "int",
+    "text": "(API->hud ? API->hud->ImageCount(SELF) : 0)",
+    "hint": ""
+  }
+]

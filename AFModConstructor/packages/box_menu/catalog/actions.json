@@ -1,0 +1,576 @@
+[
+  {
+    "id": "box.register",
+    "label": "mod.act.boxRegister",
+    "call": "Box.Register",
+    "group": "box_menu",
+    "section": "mod.sec.create",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MY_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->boxMenu) API->boxMenu->Register(SELF, \"%menu%\");"
+  },
+  {
+    "id": "box.registerFromScript",
+    "label": "mod.act.boxRegisterScript",
+    "call": "Box.RegisterFromScript",
+    "group": "box_menu",
+    "section": "mod.sec.create",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MY_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "file",
+        "label": "mod.p.script",
+        "kind": "text",
+        "preset": "scripts/my_menu.txt"
+      }
+    ],
+    "emit": "if (API->boxMenu) API->boxMenu->RegisterFromScript(SELF, \"%menu%\", \"%file%\");"
+  },
+  {
+    "id": "box.open",
+    "label": "mod.act.boxOpen",
+    "call": "Box.Open",
+    "group": "box_menu",
+    "section": "mod.sec.nav",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->boxMenu) API->boxMenu->Open(SELF, \"%menu%\");"
+  },
+  {
+    "id": "box.showBox",
+    "label": "mod.act.boxShow",
+    "call": "Box.ShowBox",
+    "group": "box_menu",
+    "section": "mod.sec.nav",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_REGBOX",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->boxMenu) API->boxMenu->ShowBox(SELF, \"%menu%\");"
+  },
+  {
+    "id": "box.back",
+    "label": "mod.act.boxBack",
+    "call": "Box.Back",
+    "group": "box_menu",
+    "section": "mod.sec.nav",
+    "emit": "if (API->boxMenu) API->boxMenu->Back(SELF);"
+  },
+  {
+    "id": "box.closeAll",
+    "label": "mod.act.boxCloseAll",
+    "call": "Box.CloseAll",
+    "group": "box_menu",
+    "section": "mod.sec.nav",
+    "emit": "if (API->boxMenu) API->boxMenu->CloseAll(SELF);"
+  }
+]

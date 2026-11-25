@@ -1,0 +1,15 @@
+{
+  "id": "block_expression",
+  "name": "Script blocks",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "block",
+    "block_expression"
+  ]
+}

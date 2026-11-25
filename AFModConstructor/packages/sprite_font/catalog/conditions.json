@@ -1,0 +1,97 @@
+[
+  {
+    "id": "font.mine",
+    "label": "mod.cond.fontMine",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "(font_mine(\"%font%\") != AMOD_FONT_NONE)"
+  },
+  {
+    "id": "font.inGame",
+    "label": "mod.cond.fontInGame",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      }
+    ],
+    "emit": "(API->spriteFont && API->spriteFont->FromGame(SELF, \"%font%\") != AMOD_FONT_NONE)"
+  },
+  {
+    "id": "font.width",
+    "label": "mod.cond.fontWidth",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "100"
+      }
+    ],
+    "emit": "(font_measure(\"%font%\", \"%text%\", (float)(%scale%)) %op% %value%)"
+  }
+]

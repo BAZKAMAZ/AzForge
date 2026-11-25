@@ -1,0 +1,60 @@
+[
+  {
+    "id": "camera.update",
+    "label": "mod.ev.camUpdate",
+    "call": "Camera.SetUpdateHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "values": [
+      "camFrame"
+    ],
+    "filters": [
+      {
+        "key": "driver",
+        "label": "mod.p.camDriver",
+        "kind": "enum",
+        "preset": "AMOD_CAMERA_DRIVER_BOTH",
+        "options": [
+          { "value": "AMOD_CAMERA_DRIVER_BOTH", "label": "mod.cam.drv.both" },
+          { "value": "AMOD_CAMERA_DRIVER_MOD", "label": "mod.cam.drv.mod" }
+        ]
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodCameraFrame* camFrame, void* user)",
+    "subscribe": "if (API->camera) { API->camera->SetUpdateHandler(SELF, %H%, 0); API->camera->SetDriver(SELF, %driver%); }",
+    "provides": "camera_update",
+    "hint": "mod.ev.camUpdate.hint"
+  },
+  {
+    "id": "camera.view",
+    "label": "mod.ev.camView",
+    "call": "Camera.SetViewHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "values": [
+      "view"
+    ],
+    "handler": "static int __cdecl %H%(AmodCameraView* view, void* user)",
+    "subscribe": "if (API->camera) API->camera->SetViewHandler(SELF, %H%, 0);",
+    "retDefault": "return 1;",
+    "provides": "camera_view",
+    "hint": "mod.ev.camView.hint"
+  },
+  {
+    "id": "camera.placing",
+    "label": "mod.ev.camPlacing",
+    "call": "Camera.SetEventHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "canVeto": true,
+    "values": [
+      "info"
+    ],
+    "handler": "static int __cdecl %H%(const AmodCameraEventInfo* info, void* user)",
+    "subscribe": "if (API->camera) API->camera->SetEventHandler(SELF, %H%, 0);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "camera_place",
+    "hint": "mod.ev.camPlacing.hint"
+  }
+]

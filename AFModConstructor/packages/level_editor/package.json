@@ -1,0 +1,14 @@
+{
+  "id": "level_editor",
+  "name": "Level editor",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "level_editor"
+  ]
+}

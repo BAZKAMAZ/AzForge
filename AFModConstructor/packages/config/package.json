@@ -1,0 +1,14 @@
+{
+  "id": "config",
+  "name": "Config",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "config"
+  ]
+}

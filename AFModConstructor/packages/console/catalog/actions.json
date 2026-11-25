@@ -1,0 +1,109 @@
+[
+  {
+    "id": "console.execute",
+    "label": "mod.act.console",
+    "call": "Console.Execute",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "line",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": "level levels/mod.txt"
+      }
+    ],
+    "emit": "if (API->console) API->console->Execute(SELF, \"%line%\");"
+  },
+  {
+    "id": "console.print",
+    "label": "mod.act.consolePrint",
+    "call": "Console.Print",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "level",
+        "label": "mod.p.level",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.level.always"
+          },
+          {
+            "value": "0",
+            "label": "mod.level.developer"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->console) API->console->Print(SELF, %level%, \"%text%\");"
+  },
+  {
+    "id": "console.removeCommand",
+    "label": "mod.act.consoleRemove",
+    "call": "Console.RemoveCommand",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.command",
+        "kind": "text",
+        "preset": "mymod"
+      }
+    ],
+    "emit": "if (API->console) API->console->RemoveCommand(SELF, \"%name%\");"
+  },
+  {
+    "id": "console.setOpen",
+    "label": "mod.act.consoleSetOpen",
+    "call": "Console.SetOpen",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "open",
+        "label": "mod.p.consoleOpen",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.console.open"
+          },
+          {
+            "value": "0",
+            "label": "mod.console.close"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->console) API->console->SetOpen(SELF, %open%);"
+  },
+  {
+    "id": "console.setLine",
+    "label": "mod.act.consoleSetLine",
+    "call": "Console.SetLine",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": "com_time_scale 1"
+      }
+    ],
+    "emit": "if (API->console) API->console->SetLine(SELF, \"%text%\");",
+    "hint": "mod.act.consoleSetLine.hint"
+  }
+]

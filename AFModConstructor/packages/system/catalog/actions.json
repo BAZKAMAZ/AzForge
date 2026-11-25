@@ -1,0 +1,262 @@
+[
+  {
+    "id": "var.set",
+    "label": "mod.act.varSet",
+    "group": "system",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "%name% = %value%;",
+    "section": "mod.sec.vars"
+  },
+  {
+    "id": "var.add",
+    "label": "mod.act.varAdd",
+    "group": "system",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "%name% += %value%;",
+    "section": "mod.sec.vars"
+  },
+  {
+    "id": "log.write",
+    "label": "mod.act.log",
+    "call": "Log(INFO)",
+    "group": "system",
+    "section": "mod.sec.log",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": "hello"
+      }
+    ],
+    "emit": "API->Log(SELF, AMOD_LOG_INFO, \"%text%\");"
+  },
+  {
+    "id": "log.warning",
+    "label": "mod.act.logWarning",
+    "call": "Log(WARNING)",
+    "group": "system",
+    "section": "mod.sec.log",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "API->Log(SELF, AMOD_LOG_WARNING, \"%text%\");"
+  },
+  {
+    "id": "log.error",
+    "label": "mod.act.logError",
+    "call": "Log(ERROR)",
+    "group": "system",
+    "section": "mod.sec.log",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "API->Log(SELF, AMOD_LOG_ERROR, \"%text%\");"
+  },
+  {
+    "id": "forge.fatal",
+    "label": "mod.act.fatal",
+    "call": "Fatal",
+    "group": "system",
+    "section": "mod.sec.log",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.line",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "API->Fatal(SELF, \"%text%\");"
+  },
+  {
+    "id": "system.stopLoop",
+    "label": "mod.act.stopLoop",
+    "call": "break",
+    "group": "system",
+    "section": "mod.sec.loops",
+    "emit": "break;",
+    "needs": "loop"
+  },
+  {
+    "id": "system.nextLoop",
+    "label": "mod.act.nextLoop",
+    "call": "continue",
+    "group": "system",
+    "section": "mod.sec.loops",
+    "emit": "continue;",
+    "needs": "loop"
+  },
+  {
+    "id": "var.setText",
+    "label": "mod.act.varSetText",
+    "group": "system",
+    "section": "mod.sec.vars",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "value",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      }
+    ],
+    "emit": "mod_set_text(%name%, (int)sizeof %name%, \"%value%\");"
+  },
+  {
+    "id": "var.toggle",
+    "label": "mod.act.varToggle",
+    "group": "system",
+    "section": "mod.sec.vars",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "%name% = !%name%;"
+  },
+  {
+    "id": "list.set",
+    "label": "mod.act.listSet",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if ((int)(%index%) >= 0 && (int)(%index%) < (int)(sizeof %list% / sizeof %list%[0])) %list%[(int)(%index%)] = (float)(%value%);"
+  },
+  {
+    "id": "list.fill",
+    "label": "mod.act.listFill",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "{ int list_at; for (list_at = 0; list_at < (int)(sizeof %list% / sizeof %list%[0]); ++list_at) %list%[list_at] = (float)(%value%); }"
+  },
+  {
+    "id": "list.identity",
+    "label": "mod.act.listIdentity",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "{ int list_at; for (list_at = 0; list_at < 16 && list_at < (int)(sizeof %list% / sizeof %list%[0]); ++list_at) %list%[list_at] = (list_at % 5) == 0 ? 1.0f : 0.0f; }"
+  },
+  {
+    "id": "list.place",
+    "label": "mod.act.listPlace",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if ((int)(sizeof %list% / sizeof %list%[0]) >= 16) { int list_at; for (list_at = 0; list_at < 16; ++list_at) %list%[list_at] = 0.0f; %list%[0] = %list%[5] = %list%[10] = (float)(%scale%); %list%[15] = 1.0f; %list%[12] = (float)(%x%); %list%[13] = (float)(%y%); %list%[14] = (float)(%z%); }"
+  }
+]

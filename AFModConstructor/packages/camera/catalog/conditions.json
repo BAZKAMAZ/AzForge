@@ -1,0 +1,143 @@
+[
+  {
+    "id": "camera.isHere",
+    "label": "mod.cond.camHere",
+    "call": "Camera.IsHere",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "params": [],
+    "emit": "(API->camera && API->camera->IsHere(SELF))"
+  },
+  {
+    "id": "camera.isShaking",
+    "label": "mod.cond.camShaking",
+    "call": "Camera.Get",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [],
+    "emit": "cam_flag(0)"
+  },
+  {
+    "id": "camera.followsEye",
+    "label": "mod.cond.camFollowsEye",
+    "call": "Camera.Get",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "params": [],
+    "emit": "cam_flag(1)"
+  },
+  {
+    "id": "camera.followsTarget",
+    "label": "mod.cond.camFollowsTarget",
+    "call": "Camera.Get",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "params": [],
+    "emit": "cam_flag(2)"
+  },
+  {
+    "id": "camera.isFreeMode",
+    "label": "mod.cond.camFreeMode",
+    "call": "Camera.GetFreeMode",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "params": [],
+    "emit": "(API->camera && API->camera->GetFreeMode(SELF) != 0)"
+  },
+  {
+    "id": "camera.effectIs",
+    "label": "mod.cond.camEffect",
+    "call": "Camera.GetEffect",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [
+      {
+        "key": "effect",
+        "label": "mod.p.camEffect",
+        "kind": "enum",
+        "preset": "AMOD_CAMERA_EFFECT_ZOOM",
+        "options": [
+          { "value": "AMOD_CAMERA_EFFECT_NONE", "label": "mod.cam.fx.none" },
+          { "value": "AMOD_CAMERA_EFFECT_ZOOM", "label": "mod.cam.fx.zoom" },
+          { "value": "AMOD_CAMERA_EFFECT_ROCKING", "label": "mod.cam.fx.rocking" },
+          { "value": "AMOD_CAMERA_EFFECT_ROTATE", "label": "mod.cam.fx.rotate" }
+        ]
+      }
+    ],
+    "emit": "((API->camera ? API->camera->GetEffect(SELF) : AMOD_CAMERA_EFFECT_NONE) == %effect%)"
+  },
+  {
+    "id": "camera.driverIs",
+    "label": "mod.cond.camDriver",
+    "call": "Camera.GetDriver",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [
+      {
+        "key": "driver",
+        "label": "mod.p.camDriver",
+        "kind": "enum",
+        "preset": "AMOD_CAMERA_DRIVER_GAME",
+        "options": [
+          { "value": "AMOD_CAMERA_DRIVER_GAME", "label": "mod.cam.drv.game" },
+          { "value": "AMOD_CAMERA_DRIVER_MOD", "label": "mod.cam.drv.mod" },
+          { "value": "AMOD_CAMERA_DRIVER_BOTH", "label": "mod.cam.drv.both" },
+          { "value": "AMOD_CAMERA_DRIVER_NOBODY", "label": "mod.cam.drv.nobody" }
+        ]
+      }
+    ],
+    "emit": "((API->camera ? API->camera->GetDriver(SELF) : AMOD_CAMERA_DRIVER_GAME) == %driver%)"
+  },
+  {
+    "id": "camera.propIs",
+    "label": "mod.cond.camProp",
+    "call": "Camera.GetProperty",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.camKey",
+        "kind": "enum",
+        "preset": "room_dist",
+        "options": [
+          { "value": "room_dist", "label": "mod.cam.prop.roomDist" },
+          { "value": "lag_dist", "label": "mod.cam.prop.lagDist" },
+          { "value": "follow_speed", "label": "mod.cam.prop.followSpeed" },
+          { "value": "center_factor", "label": "mod.cam.prop.centerFactor" },
+          { "value": "rock_amp", "label": "mod.cam.prop.rockAmp" },
+          { "value": "rock_speed", "label": "mod.cam.prop.rockSpeed" },
+          { "value": "zoom_time_in", "label": "mod.cam.prop.zoomTimeIn" },
+          { "value": "zoom_time_out", "label": "mod.cam.prop.zoomTimeOut" },
+          { "value": "zoom_min_dist", "label": "mod.cam.prop.zoomMinDist" },
+          { "value": "rotate_time", "label": "mod.cam.prop.rotateTime" },
+          { "value": "rotate_pause", "label": "mod.cam.prop.rotatePause" },
+          { "value": "rock_angle", "label": "mod.cam.prop.rockAngle" },
+          { "value": "rock_time", "label": "mod.cam.prop.rockTime" },
+          { "value": "rock_count", "label": "mod.cam.prop.rockCount" }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "5.5"
+      }
+    ],
+    "emit": "(cam_prop(\"%key%\") %op% %value%)"
+  }
+]

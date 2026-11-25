@@ -1,0 +1,138 @@
+[
+  {
+    "id": "files.serveText",
+    "label": "mod.act.fileServeText",
+    "call": "Files.Serve",
+    "group": "files",
+    "section": "mod.sec.served",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text"
+      }
+    ],
+    "emit": "files_serve_text(\"%file%\", \"%text%\");"
+  },
+  {
+    "id": "files.serveCopy",
+    "label": "mod.act.fileServeCopy",
+    "call": "Files.Read + Serve",
+    "group": "files",
+    "section": "mod.sec.served",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "from",
+        "label": "mod.p.fromFile",
+        "kind": "text",
+        "preset": "scripts/menu_my.txt"
+      }
+    ],
+    "emit": "files_serve_copy(\"%file%\", \"%from%\");"
+  },
+  {
+    "id": "files.append",
+    "label": "mod.act.fileAppend",
+    "call": "Files.Read + Serve",
+    "group": "files",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text"
+      }
+    ],
+    "emit": "files_append(\"%file%\", \"%text%\");"
+  },
+  {
+    "id": "files.replace",
+    "label": "mod.act.fileReplace",
+    "call": "Files.Read + Serve",
+    "group": "files",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "what",
+        "label": "mod.p.what",
+        "kind": "text"
+      },
+      {
+        "key": "with",
+        "label": "mod.p.with",
+        "kind": "text"
+      }
+    ],
+    "emit": "files_replace(\"%file%\", \"%what%\", \"%with%\");"
+  },
+  {
+    "id": "files.clear",
+    "label": "mod.act.fileClear",
+    "call": "Files.Clear",
+    "group": "files",
+    "section": "mod.sec.served",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      }
+    ],
+    "emit": "files_clear(\"%file%\");"
+  },
+  {
+    "id": "files.clearAll",
+    "label": "mod.act.fileClearAll",
+    "call": "Files.Clear",
+    "group": "files",
+    "section": "mod.sec.served",
+    "emit": "files_clear_all();"
+  },
+  {
+    "id": "files.sizeToVar",
+    "label": "mod.act.fileSizeToVar",
+    "call": "Files.Read",
+    "group": "files",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "value"
+      }
+    ],
+    "emit": "%var% = (float)files_size(\"%file%\");"
+  }
+]

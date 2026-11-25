@@ -1,0 +1,26 @@
+[
+  {
+    "id": "ctrl.touched",
+    "label": "mod.ev.ctrlTouched",
+    "call": "Ctrls.OnTouch",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "object",
+        "label": "mod.p.object",
+        "kind": "object",
+        "test": "if (!info->name || strcmp(info->name, \"%v%\") != 0) return AMOD_CTRL_TOUCH_DEFAULT;"
+      }
+    ],
+    "values": [
+      "object",
+      "side"
+    ],
+    "handler": "static AmodCtrlTouchResult __cdecl %H%(const AmodCtrlTouchInfo* info, void* user)",
+    "subscribe": "{ int i = ctrl_index(\"%object%\"); if (i >= 0 && API->ctrls) API->ctrls->OnTouch(SELF, i, %H%, 0); }",
+    "retDefault": "return AMOD_CTRL_TOUCH_DEFAULT;",
+    "retVeto": "return AMOD_CTRL_TOUCH_HANDLED;",
+    "group": "ctrls",
+    "section": "mod.sec.general"
+  }
+]

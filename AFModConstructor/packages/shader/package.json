@@ -1,0 +1,14 @@
+{
+  "id": "shader",
+  "name": "Shaders",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "shader"
+  ]
+}

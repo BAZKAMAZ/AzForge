@@ -1,0 +1,59 @@
+[
+  {
+    "id": "world.setPaused",
+    "label": "mod.act.pause",
+    "call": "World.SetPaused",
+    "group": "world",
+    "params": [
+      {
+        "key": "paused",
+        "label": "mod.p.paused",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->world) API->world->SetPaused(SELF, %paused%);",
+    "section": "mod.sec.general"
+  },
+  {
+    "id": "world.setTimeLeft",
+    "label": "mod.act.timeLeft",
+    "call": "World.SetTimeLeft",
+    "group": "world",
+    "params": [
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "60"
+      }
+    ],
+    "emit": "if (API->world) API->world->SetTimeLeft(SELF, (float)(%seconds%));",
+    "section": "mod.sec.time"
+  },
+  {
+    "id": "world.startLevel",
+    "label": "mod.act.startLevel",
+    "call": "World.StartLevel",
+    "group": "world",
+    "section": "mod.sec.level",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.levelPath",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      }
+    ],
+    "emit": "if (API->world && API->world->StartLevel) API->world->StartLevel(SELF, \"%level%\");"
+  },
+  {
+    "id": "world.leaveLevel",
+    "label": "mod.act.leaveLevel",
+    "call": "World.LeaveLevel",
+    "group": "world",
+    "section": "mod.sec.level",
+    "params": [],
+    "emit": "if (API->world && API->world->LeaveLevel) API->world->LeaveLevel(SELF);"
+  }
+]

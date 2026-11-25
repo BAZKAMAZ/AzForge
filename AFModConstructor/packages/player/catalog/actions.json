@@ -1,0 +1,50 @@
+[
+  {
+    "id": "player.addScore",
+    "label": "mod.act.addScore",
+    "call": "Player.AddScore",
+    "group": "player",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "100"
+      }
+    ],
+    "emit": "if (API->player) API->player->AddScore(SELF, %points%, 0);",
+    "section": "mod.sec.score"
+  },
+  {
+    "id": "player.setLives",
+    "label": "mod.act.setLives",
+    "call": "Player.SetLives",
+    "group": "player",
+    "params": [
+      {
+        "key": "lives",
+        "label": "mod.p.lives",
+        "kind": "number",
+        "preset": "3"
+      }
+    ],
+    "emit": "if (API->player) API->player->SetLives(SELF, %lives%);",
+    "section": "mod.sec.life"
+  },
+  {
+    "id": "player.burn",
+    "label": "mod.act.burn",
+    "call": "Player.Burn",
+    "group": "player",
+    "emit": "if (API->player) API->player->Burn(SELF);",
+    "section": "mod.sec.life"
+  },
+  {
+    "id": "player.kill",
+    "label": "mod.act.kill",
+    "call": "Player.Kill",
+    "group": "player",
+    "emit": "if (API->player) API->player->Kill(SELF, 0);",
+    "section": "mod.sec.life"
+  }
+]

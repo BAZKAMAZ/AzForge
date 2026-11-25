@@ -1,0 +1,29 @@
+[
+  {
+    "id": "launcher.open",
+    "label": "mod.expr.launcherOpen",
+    "group": "launcher",
+    "section": "mod.sec.dialog",
+    "kind": "int",
+    "text": "API->launcher->IsOpen(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "launcher.control",
+    "label": "mod.expr.launcherControl",
+    "group": "launcher",
+    "section": "mod.sec.launcher",
+    "kind": "int",
+    "text": "launcher_control(\"IDC_HELP_BUTTON\")",
+    "hint": "mod.expr.launcherControl.hint"
+  },
+  {
+    "id": "launcher.window",
+    "label": "mod.expr.launcherWindow",
+    "group": "launcher",
+    "section": "mod.sec.launcher",
+    "kind": "int",
+    "text": "(int)launcher_window()",
+    "hint": "mod.expr.launcherWindow.hint"
+  }
+]

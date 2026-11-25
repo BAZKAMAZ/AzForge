@@ -1,0 +1,23 @@
+[
+  {
+    "id": "console.command",
+    "label": "mod.ev.consoleCommand",
+    "group": "console",
+    "section": "mod.sec.general",
+    "call": "Console.AddCommand",
+    "filters": [
+      {
+        "key": "name",
+        "label": "mod.p.command",
+        "kind": "text",
+        "preset": "mymod"
+      }
+    ],
+    "values": [
+      "argc",
+      "argv"
+    ],
+    "handler": "static void __cdecl %H%(int argc, const char** argv, void* user)",
+    "subscribe": "if (API->console) API->console->AddCommand(SELF, \"%name%\", %H%, 0);"
+  }
+]

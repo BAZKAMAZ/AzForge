@@ -1,0 +1,47 @@
+[
+  {
+    "id": "player.score",
+    "label": "mod.expr.score",
+    "group": "player",
+    "section": "mod.sec.score",
+    "kind": "int",
+    "text": "player_score()",
+    "hint": ""
+  },
+  {
+    "id": "player.lives",
+    "label": "mod.expr.lives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_lives()",
+    "hint": ""
+  },
+  {
+    "id": "player.x",
+    "label": "mod.expr.playerX",
+    "group": "player",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "player_position(0)",
+    "hint": "mod.expr.playerPos.hint"
+  },
+  {
+    "id": "player.y",
+    "label": "mod.expr.playerY",
+    "group": "player",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "player_position(1)",
+    "hint": "mod.expr.playerPos.hint"
+  },
+  {
+    "id": "player.z",
+    "label": "mod.expr.playerZ",
+    "group": "player",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "player_position(2)",
+    "hint": "mod.expr.playerPos.hint"
+  }
+]

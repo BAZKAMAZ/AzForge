@@ -1,0 +1,83 @@
+[
+  {
+    "id": "texture.canvasWidth",
+    "label": "mod.expr.canvasWidth",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "kind": "int",
+    "text": "canvas_size(\"sheet\", 1)",
+    "hint": ""
+  },
+  {
+    "id": "texture.canvasHeight",
+    "label": "mod.expr.canvasHeight",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "kind": "int",
+    "text": "canvas_size(\"sheet\", 0)",
+    "hint": ""
+  },
+  {
+    "id": "texture.pixel",
+    "label": "mod.expr.canvasPixel",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "kind": "float",
+    "text": "canvas_get(\"sheet\", 0, 0, 3)",
+    "hint": "mod.expr.canvasPixel.hint"
+  },
+  {
+    "id": "texture.width",
+    "label": "mod.expr.textureWidth2",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "int",
+    "text": "texture_size(\"textures/dlight.jpg\", 1)",
+    "hint": ""
+  },
+  {
+    "id": "texture.height",
+    "label": "mod.expr.textureHeight2",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "int",
+    "text": "texture_size(\"textures/dlight.jpg\", 0)",
+    "hint": ""
+  },
+  {
+    "id": "texture.count",
+    "label": "mod.expr.textureCount",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "int",
+    "text": "(API->textures ? API->textures->GetCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "texture.nameAt",
+    "label": "mod.expr.textureNameAt",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "text",
+    "text": "texture_name_at(0)",
+    "hint": "mod.expr.textureNameAt.hint"
+  },
+  {
+    "id": "texture.gameHandle",
+    "label": "mod.expr.textureHandle",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "int",
+    "text": "(int)(API->textures ? API->textures->ToGame(SELF, texture_any(\"mine\")) : 0)",
+    "hint": "mod.expr.textureHandle.hint"
+  },
+  {
+    "id": "texture.fromHandle",
+    "label": "mod.expr.textureFromHandle",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "kind": "int",
+    "text": "(int)(API->textures ? API->textures->FromGame(SELF, 0) : 0)",
+    "hint": "mod.expr.textureHandle.hint"
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "id": "textures",
+  "name": "Textures",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "textures",
+    "texture"
+  ]
+}

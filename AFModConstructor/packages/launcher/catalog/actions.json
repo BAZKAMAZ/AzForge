@@ -1,0 +1,378 @@
+[
+  {
+    "id": "launcher.skip",
+    "label": "mod.act.launcherSkip",
+    "call": "Launcher.Skip",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "skip",
+        "label": "mod.p.skip",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->Skip(SELF, %skip%);",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.setText",
+    "label": "mod.act.launcherText",
+    "call": "Launcher.SetText",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ]
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text"
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->SetText(SELF, %control%, \"%text%\");",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.setVisible",
+    "label": "mod.act.launcherVisible",
+    "call": "Launcher.SetVisible",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ]
+      },
+      {
+        "key": "visible",
+        "label": "mod.p.visible",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->SetVisible(SELF, %control%, %visible%);",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.setEnabled",
+    "label": "mod.act.launcherEnabled",
+    "call": "Launcher.SetEnabled",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ]
+      },
+      {
+        "key": "enabled",
+        "label": "mod.p.enabled",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->SetEnabled(SELF, %control%, %enabled%);",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.setBounds",
+    "label": "mod.act.launcherBounds",
+    "call": "Launcher.SetBounds",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "width",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "height",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->SetBounds(SELF, %control%, %x%, %y%, %width%, %height%);",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.setCaption",
+    "label": "mod.act.launcherCaption",
+    "call": "Launcher.SetCaption",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text"
+      }
+    ],
+    "emit": "if (API->launcher) API->launcher->SetCaption(SELF, \"%text%\");",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.setLogo",
+    "label": "mod.act.launcherLogo",
+    "call": "Launcher.SetLogo",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.bmp",
+        "kind": "text",
+        "preset": "textures/logo.bmp"
+      }
+    ],
+    "emit": "launcher_logo(\"%file%\");",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.stopListening",
+    "label": "mod.act.launcherStopListening",
+    "call": "Launcher.Unsubscribe",
+    "group": "launcher",
+    "section": "mod.sec.launcher",
+    "params": [],
+    "emit": "if (API->launcher) API->launcher->Unsubscribe(SELF, %token%);",
+    "needs": "token"
+  }
+]

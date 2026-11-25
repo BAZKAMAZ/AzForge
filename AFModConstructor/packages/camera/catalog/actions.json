@@ -1,0 +1,349 @@
+[
+  {
+    "id": "camera.setEye",
+    "label": "mod.act.camSetEye",
+    "call": "Camera.SetEye",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1) + 0.5f" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2) + 5.5f" }
+    ],
+    "emit": "cam_set_eye((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "camera.setTarget",
+    "label": "mod.act.camSetTarget",
+    "call": "Camera.SetTarget",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2)" }
+    ],
+    "emit": "cam_set_target((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "camera.setUp",
+    "label": "mod.act.camSetUp",
+    "call": "Camera.SetUp",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "0" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "1" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "0" }
+    ],
+    "emit": "cam_set_up((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "camera.setRoll",
+    "label": "mod.act.camSetRoll",
+    "call": "Camera.SetRoll",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "angle", "label": "mod.p.angle", "kind": "number", "preset": "0" }
+    ],
+    "emit": "if (API->camera) API->camera->SetRoll(SELF, (float)(%angle%));",
+    "hint": "mod.act.camSetRoll.hint"
+  },
+  {
+    "id": "camera.follow",
+    "label": "mod.act.camFollow",
+    "call": "Camera.Follow",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2)" }
+    ],
+    "emit": "cam_follow((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "camera.place",
+    "label": "mod.act.camPlace",
+    "call": "Camera.Place",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2)" }
+    ],
+    "emit": "cam_place((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "camera.setFollowEye",
+    "label": "mod.act.camSetFollowEye",
+    "call": "Camera.SetFollowEye",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      {
+        "key": "follows",
+        "label": "mod.p.camFollow",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "if (API->camera) API->camera->SetFollowEye(SELF, %follows%);"
+  },
+  {
+    "id": "camera.setFollowTarget",
+    "label": "mod.act.camSetFollowTarget",
+    "call": "Camera.SetFollowTarget",
+    "group": "camera",
+    "section": "mod.sec.camPos",
+    "params": [
+      {
+        "key": "follows",
+        "label": "mod.p.camFollow",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "if (API->camera) API->camera->SetFollowTarget(SELF, %follows%);"
+  },
+  {
+    "id": "camera.shake",
+    "label": "mod.act.shake",
+    "call": "Camera.StartShake",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [],
+    "emit": "if (API->camera) API->camera->StartShake(SELF);"
+  },
+  {
+    "id": "camera.stopShake",
+    "label": "mod.act.camStopShake",
+    "call": "Camera.StopShake",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [],
+    "emit": "if (API->camera) API->camera->StopShake(SELF);"
+  },
+  {
+    "id": "camera.startEffect",
+    "label": "mod.act.camStartEffect",
+    "call": "Camera.StartEffect",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [
+      {
+        "key": "effect",
+        "label": "mod.p.camEffect",
+        "kind": "enum",
+        "preset": "AMOD_CAMERA_EFFECT_ZOOM",
+        "options": [
+          { "value": "AMOD_CAMERA_EFFECT_ZOOM", "label": "mod.cam.fx.zoom" },
+          { "value": "AMOD_CAMERA_EFFECT_ROCKING", "label": "mod.cam.fx.rocking" },
+          { "value": "AMOD_CAMERA_EFFECT_ROTATE", "label": "mod.cam.fx.rotate" }
+        ]
+      }
+    ],
+    "emit": "if (API->camera) API->camera->StartEffect(SELF, %effect%);"
+  },
+  {
+    "id": "camera.stopEffect",
+    "label": "mod.act.camStopEffect",
+    "call": "Camera.StopEffect",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "params": [],
+    "emit": "if (API->camera) API->camera->StopEffect(SELF);"
+  },
+  {
+    "id": "camera.setFov",
+    "label": "mod.act.camSetFov",
+    "call": "Camera.SetLens",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "params": [
+      { "key": "fov", "label": "mod.p.camFov", "kind": "number", "preset": "1.0472" }
+    ],
+    "emit": "cam_set_lens((float)(%fov%), 0.0f, 0.0f, 0.0f);",
+    "hint": "mod.act.camSetFov.hint"
+  },
+  {
+    "id": "camera.setPlanes",
+    "label": "mod.act.camSetPlanes",
+    "call": "Camera.SetLens",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "params": [
+      { "key": "near", "label": "mod.p.camNear", "kind": "number", "preset": "0.1" },
+      { "key": "far", "label": "mod.p.camFar", "kind": "number", "preset": "10" }
+    ],
+    "emit": "cam_set_lens(0.0f, 0.0f, (float)(%near%), (float)(%far%));",
+    "hint": "mod.act.camSetPlanes.hint"
+  },
+  {
+    "id": "camera.setLens",
+    "label": "mod.act.camSetLens",
+    "call": "Camera.SetLens",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "params": [
+      { "key": "fov", "label": "mod.p.camFov", "kind": "number", "preset": "1.0472" },
+      { "key": "aspect", "label": "mod.p.camAspect", "kind": "number", "preset": "0" },
+      { "key": "near", "label": "mod.p.camNear", "kind": "number", "preset": "0.1" },
+      { "key": "far", "label": "mod.p.camFar", "kind": "number", "preset": "10" }
+    ],
+    "emit": "cam_set_lens((float)(%fov%), (float)(%aspect%), (float)(%near%), (float)(%far%));",
+    "hint": "mod.act.camSetLens.hint"
+  },
+  {
+    "id": "camera.clearLens",
+    "label": "mod.act.camClearLens",
+    "call": "Camera.ClearLens",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "params": [],
+    "emit": "if (API->camera) API->camera->ClearLens(SELF);"
+  },
+  {
+    "id": "camera.setProperty",
+    "label": "mod.act.camSetProp",
+    "call": "Camera.SetProperty",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.camKey",
+        "kind": "enum",
+        "preset": "room_dist",
+        "options": [
+          { "value": "room_dist", "label": "mod.cam.prop.roomDist" },
+          { "value": "lag_dist", "label": "mod.cam.prop.lagDist" },
+          { "value": "follow_speed", "label": "mod.cam.prop.followSpeed" },
+          { "value": "center_factor", "label": "mod.cam.prop.centerFactor" },
+          { "value": "rock_amp", "label": "mod.cam.prop.rockAmp" },
+          { "value": "rock_speed", "label": "mod.cam.prop.rockSpeed" },
+          { "value": "zoom_time_in", "label": "mod.cam.prop.zoomTimeIn" },
+          { "value": "zoom_time_out", "label": "mod.cam.prop.zoomTimeOut" },
+          { "value": "zoom_min_dist", "label": "mod.cam.prop.zoomMinDist" },
+          { "value": "rotate_time", "label": "mod.cam.prop.rotateTime" },
+          { "value": "rotate_pause", "label": "mod.cam.prop.rotatePause" },
+          { "value": "rock_angle", "label": "mod.cam.prop.rockAngle" },
+          { "value": "rock_time", "label": "mod.cam.prop.rockTime" },
+          { "value": "rock_count", "label": "mod.cam.prop.rockCount" }
+        ]
+      },
+      { "key": "value", "label": "mod.p.value", "kind": "number", "preset": "5.5" }
+    ],
+    "emit": "cam_set_prop(\"%key%\", (float)(%value%));"
+  },
+  {
+    "id": "camera.reload",
+    "label": "mod.act.camReload",
+    "call": "Camera.Reload",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "params": [],
+    "emit": "if (API->camera) API->camera->Reload(SELF);"
+  },
+  {
+    "id": "camera.setDriver",
+    "label": "mod.act.camSetDriver",
+    "call": "Camera.SetDriver",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [
+      {
+        "key": "driver",
+        "label": "mod.p.camDriver",
+        "kind": "enum",
+        "preset": "AMOD_CAMERA_DRIVER_GAME",
+        "options": [
+          { "value": "AMOD_CAMERA_DRIVER_GAME", "label": "mod.cam.drv.game" },
+          { "value": "AMOD_CAMERA_DRIVER_MOD", "label": "mod.cam.drv.mod" },
+          { "value": "AMOD_CAMERA_DRIVER_BOTH", "label": "mod.cam.drv.both" },
+          { "value": "AMOD_CAMERA_DRIVER_NOBODY", "label": "mod.cam.drv.nobody" }
+        ]
+      }
+    ],
+    "emit": "if (API->camera) API->camera->SetDriver(SELF, %driver%);"
+  },
+  {
+    "id": "camera.viewSetEye",
+    "label": "mod.act.camViewSetEye",
+    "call": "Camera.SetViewHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1) + 0.5f" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2) + 5.5f" }
+    ],
+    "emit": "cam_view_set(view, 0, (float)(%x%), (float)(%y%), (float)(%z%));",
+    "needs": "camera_view"
+  },
+  {
+    "id": "camera.viewSetTarget",
+    "label": "mod.act.camViewSetTarget",
+    "call": "Camera.SetViewHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=cam_focus(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=cam_focus(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=cam_focus(2)" }
+    ],
+    "emit": "cam_view_set(view, 1, (float)(%x%), (float)(%y%), (float)(%z%));",
+    "needs": "camera_view"
+  },
+  {
+    "id": "camera.viewSetUp",
+    "label": "mod.act.camViewSetUp",
+    "call": "Camera.SetViewHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "0" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "1" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "0" }
+    ],
+    "emit": "cam_view_set(view, 2, (float)(%x%), (float)(%y%), (float)(%z%));",
+    "needs": "camera_view"
+  },
+  {
+    "id": "camera.clearUpdateHandler",
+    "label": "mod.act.camClearUpdate",
+    "call": "Camera.SetUpdateHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [],
+    "emit": "if (API->camera) API->camera->SetUpdateHandler(SELF, 0, 0);"
+  },
+  {
+    "id": "camera.clearViewHandler",
+    "label": "mod.act.camClearView",
+    "call": "Camera.SetViewHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [],
+    "emit": "if (API->camera) API->camera->SetViewHandler(SELF, 0, 0);"
+  },
+  {
+    "id": "camera.clearEventHandler",
+    "label": "mod.act.camClearEvent",
+    "call": "Camera.SetEventHandler",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "params": [],
+    "emit": "if (API->camera) API->camera->SetEventHandler(SELF, 0, 0);"
+  }
+]

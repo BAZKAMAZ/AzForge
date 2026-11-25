@@ -1,0 +1,174 @@
+[
+  {
+    "id": "block.readNumber",
+    "label": "mod.act.blockRead",
+    "call": "BlockExpression.ParseFile + GetExpr",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "value"
+      }
+    ],
+    "emit": "%var% = block_file_number(\"%file%\", \"%path%\", \"%key%\");"
+  },
+  {
+    "id": "block.forget",
+    "label": "mod.act.blockForget",
+    "call": "BlockExpression.Free",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "emit": "block_forget_file();"
+  },
+  {
+    "id": "block.storeSetNumber",
+    "label": "mod.act.blockStoreNumber",
+    "call": "BlockExpression.SetExpr",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "count"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "block_store_set_number(\"%path%\", \"%key%\", (float)(%value%));"
+  },
+  {
+    "id": "block.storeSetText",
+    "label": "mod.act.blockStoreText",
+    "call": "BlockExpression.SetExpr",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "name"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "block_store_set_text(\"%path%\", \"%key%\", \"%text%\");"
+  },
+  {
+    "id": "block.storeRemove",
+    "label": "mod.act.blockStoreRemove",
+    "call": "BlockExpression.RemoveExpr",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "count"
+      }
+    ],
+    "emit": "block_store_remove(\"%path%\", \"%key%\");"
+  },
+  {
+    "id": "block.storeClear",
+    "label": "mod.act.blockStoreClear",
+    "call": "BlockExpression.Free",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "emit": "block_store_clear();"
+  },
+  {
+    "id": "block.objectSetNumber",
+    "label": "mod.act.blockObjectSet",
+    "call": "BlockExpression.Attach + SetExpr",
+    "group": "block_expression",
+    "section": "mod.sec.object",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "block_object_set_number((uintptr_t)(%addr%), \"%key%\", (float)(%value%));"
+  },
+  {
+    "id": "block.objectForget",
+    "label": "mod.act.blockObjectForget",
+    "call": "BlockExpression.Detach",
+    "group": "block_expression",
+    "section": "mod.sec.object",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0"
+      }
+    ],
+    "emit": "block_object_forget((uintptr_t)(%addr%));"
+  }
+]

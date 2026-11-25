@@ -1,0 +1,92 @@
+[
+  {
+    "id": "render.width",
+    "label": "mod.expr.renderWidth",
+    "group": "render",
+    "section": "mod.sec.device",
+    "kind": "int",
+    "text": "render_viewport(1)",
+    "hint": "mod.expr.renderWidth.hint"
+  },
+  {
+    "id": "render.height",
+    "label": "mod.expr.renderHeight",
+    "group": "render",
+    "section": "mod.sec.device",
+    "kind": "int",
+    "text": "render_viewport(0)",
+    "hint": ""
+  },
+  {
+    "id": "render.menuWide",
+    "label": "mod.expr.menuWide",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "kind": "float",
+    "text": "AMOD_MENU_WIDE",
+    "hint": "mod.expr.menuWide.hint"
+  },
+  {
+    "id": "render.menuTall",
+    "label": "mod.expr.menuTall",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "kind": "float",
+    "text": "AMOD_MENU_TALL",
+    "hint": ""
+  },
+  {
+    "id": "render.textureWidth",
+    "label": "mod.expr.textureWidth",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "kind": "int",
+    "text": "render_texture_size(\"textures/dlight.jpg\", 1)",
+    "hint": ""
+  },
+  {
+    "id": "render.textureHeight",
+    "label": "mod.expr.textureHeight",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "kind": "int",
+    "text": "render_texture_size(\"textures/dlight.jpg\", 0)",
+    "hint": ""
+  },
+  {
+    "id": "render.colour",
+    "label": "mod.expr.colour",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "kind": "int",
+    "text": "render_rgba(1.0f, 1.0f, 1.0f, 1.0f)",
+    "hint": "mod.expr.colour.hint"
+  },
+  {
+    "id": "render.deviceGeneration",
+    "label": "mod.expr.deviceGeneration",
+    "group": "render",
+    "section": "mod.sec.device",
+    "kind": "int",
+    "text": "(int)(API->render ? API->render->DeviceGeneration(SELF) : 0)",
+    "hint": "mod.expr.deviceGeneration.hint"
+  },
+  {
+    "id": "render.screenX",
+    "label": "mod.expr.screenX",
+    "group": "render",
+    "section": "mod.sec.device",
+    "kind": "float",
+    "text": "render_to_screen(320.0f, 1)",
+    "hint": "mod.expr.screenX.hint"
+  },
+  {
+    "id": "render.screenY",
+    "label": "mod.expr.screenY",
+    "group": "render",
+    "section": "mod.sec.device",
+    "kind": "float",
+    "text": "render_to_screen(240.0f, 0)",
+    "hint": "mod.expr.screenX.hint"
+  }
+]

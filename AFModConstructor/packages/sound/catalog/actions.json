@@ -1,0 +1,239 @@
+[
+  {
+    "id": "sound.play",
+    "label": "mod.act.sound",
+    "call": "Sound.Play",
+    "group": "sound",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.sound",
+        "kind": "sound"
+      }
+    ],
+    "emit": "if (API->sound) { AmodSoundId s = API->sound->Load(SELF, \"%file%\"); if (s) API->sound->Play(SELF, s); }",
+    "section": "mod.sec.sound"
+  },
+  {
+    "id": "sound.music",
+    "label": "mod.act.music",
+    "call": "Sound.PlayMusic",
+    "group": "sound",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.sound",
+        "kind": "sound"
+      }
+    ],
+    "emit": "if (API->sound) API->sound->PlayMusic(SELF, \"%file%\", 1, 1);",
+    "section": "mod.sec.sound"
+  },
+  {
+    "id": "sound.playAt",
+    "label": "mod.act.soundAt",
+    "call": "Sound.PlayAt",
+    "group": "sound",
+    "section": "mod.sec.sound",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.sound",
+        "kind": "text",
+        "preset": "sounds/water.wav"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.voiceName",
+        "kind": "text",
+        "preset": "water"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "loop",
+        "label": "mod.p.loop",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "pitch",
+        "label": "mod.p.pitch",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "sound_play_at(\"%name%\", \"%file%\", (float)(%x%), (float)(%y%), (float)(%z%), %loop%, (float)(%pitch%));"
+  },
+  {
+    "id": "sound.move",
+    "label": "mod.act.soundMove",
+    "call": "Sound.Move",
+    "group": "sound",
+    "section": "mod.sec.sound",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.voiceName",
+        "kind": "text",
+        "preset": "water"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "sound_move(\"%name%\", (float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "sound.stop",
+    "label": "mod.act.soundStop",
+    "call": "Sound.Stop",
+    "group": "sound",
+    "section": "mod.sec.sound",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.voiceName",
+        "kind": "text",
+        "preset": "water"
+      }
+    ],
+    "emit": "sound_stop(\"%name%\");"
+  },
+  {
+    "id": "sound.stopMusic",
+    "label": "mod.act.musicStop",
+    "call": "Sound.StopMusic",
+    "group": "sound",
+    "section": "mod.sec.music",
+    "params": [],
+    "emit": "if (API->sound) API->sound->StopMusic(SELF);"
+  },
+  {
+    "id": "sound.roomAdd",
+    "label": "mod.act.soundRoomAdd",
+    "call": "Sound.AddRoomSound",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "file",
+        "label": "mod.p.sound",
+        "kind": "text",
+        "preset": "sounds/wind.wav"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "sound_room_add((int)(%room%), \"%file%\", (float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "sound.roomSet",
+    "label": "mod.act.soundRoomSet",
+    "call": "Sound.SetRoomSound",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "file",
+        "label": "mod.p.sound",
+        "kind": "text",
+        "preset": "sounds/wind.wav"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "sound_room_set((int)(%room%), (int)(%index%), \"%file%\", (float)(%x%), (float)(%y%), (float)(%z%));"
+  }
+]

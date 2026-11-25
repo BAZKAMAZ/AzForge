@@ -1,0 +1,8 @@
+[
+  {
+    "id": "console",
+    "label": "mod.sys.console",
+    "prologue": "",
+    "icon": "icons/console.png"
+  }
+]

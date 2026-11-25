@@ -1,0 +1,47 @@
+[
+  {
+    "id": "interop.base",
+    "label": "mod.expr.interopBase",
+    "group": "interop",
+    "section": "mod.sec.general",
+    "kind": "int",
+    "text": "(API->interop ? API->interop->ModuleBase(SELF) : 0)",
+    "hint": "mod.expr.interopBase.hint"
+  },
+  {
+    "id": "interop.size",
+    "label": "mod.expr.interopSize",
+    "group": "interop",
+    "section": "mod.sec.general",
+    "kind": "int",
+    "text": "(API->interop ? API->interop->ModuleSize(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "interop.int",
+    "label": "mod.expr.interopInt",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "kind": "int",
+    "text": "interop_int((uintptr_t)(0x006914A8))",
+    "hint": ""
+  },
+  {
+    "id": "interop.float",
+    "label": "mod.expr.interopFloat",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "kind": "float",
+    "text": "interop_float((uintptr_t)(0x006914A8))",
+    "hint": ""
+  },
+  {
+    "id": "interop.find",
+    "label": "mod.expr.interopFind",
+    "group": "interop",
+    "section": "mod.sec.bytes",
+    "kind": "int",
+    "text": "interop_find(\"56 8B 74 24 08 E8 ?? ?? ?? ??\")",
+    "hint": "mod.expr.interopFind.hint"
+  }
+]

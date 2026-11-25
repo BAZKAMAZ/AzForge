@@ -1,0 +1,8 @@
+[
+  {
+    "id": "level_editor",
+    "label": "mod.sys.levelEditor",
+    "prologue": "",
+    "icon": "icons/level_editor.png"
+  }
+]

@@ -1,0 +1,209 @@
+[
+  {
+    "id": "sav.openedCount",
+    "label": "mod.expr.savOpened",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "int",
+    "text": "(API->sav ? API->sav->Count(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.levelAt",
+    "label": "mod.expr.savLevelAt",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "text",
+    "text": "sav_level_at(0)",
+    "hint": "mod.expr.savLevelAt.hint"
+  },
+  {
+    "id": "sav.find",
+    "label": "mod.expr.savFind",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "int",
+    "text": "sav_find(\"levels/castle1/level1.lev\")",
+    "hint": "mod.expr.savFind.hint"
+  },
+  {
+    "id": "sav.pack",
+    "label": "mod.expr.savPack",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "int",
+    "text": "(API->sav ? API->sav->Current(SELF) : -1)",
+    "hint": ""
+  },
+  {
+    "id": "sav.packCount",
+    "label": "mod.expr.savPackCount",
+    "call": "Sav.PackCount",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "int",
+    "text": "(API->sav ? API->sav->PackCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.packId",
+    "label": "mod.expr.savPackId",
+    "call": "Sav.GetPack",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "int",
+    "text": "sav_pack_id(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.packName",
+    "label": "mod.expr.savPackName",
+    "call": "Sav.GetPack",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "text",
+    "text": "sav_pack_name(0)",
+    "hint": "mod.expr.savPackName.hint"
+  },
+  {
+    "id": "sav.packMenu",
+    "label": "mod.expr.savPackMenu",
+    "call": "Sav.GetPack",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "text",
+    "text": "sav_pack_menu(0)",
+    "hint": "mod.expr.savPackMenu.hint"
+  },
+  {
+    "id": "sav.packPreview",
+    "label": "mod.expr.savPackPreview",
+    "call": "Sav.GetPack",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "kind": "text",
+    "text": "sav_pack_preview(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.slotName",
+    "label": "mod.expr.savSlotName",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "kind": "text",
+    "text": "sav_slot_name(0)",
+    "hint": "mod.expr.savSlotName.hint"
+  },
+  {
+    "id": "sav.slotLevel",
+    "label": "mod.expr.savSlotLevel",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "kind": "text",
+    "text": "sav_slot_level(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.slotsUsed",
+    "label": "mod.expr.savSlotsUsed",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "kind": "int",
+    "text": "sav_slots_used()",
+    "hint": ""
+  },
+  {
+    "id": "sav.freeSlot",
+    "label": "mod.expr.savFreeSlot",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "kind": "int",
+    "text": "sav_free_slot()",
+    "hint": "mod.expr.savFreeSlot.hint"
+  },
+  {
+    "id": "sav.number",
+    "label": "mod.expr.savNumber",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "kind": "float",
+    "text": "sav_number(\"lives\")",
+    "hint": "mod.expr.savNumber.hint"
+  },
+  {
+    "id": "sav.slotOfEvent",
+    "label": "mod.expr.savSlotOfEvent",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "kind": "int",
+    "text": "slot",
+    "hint": "mod.expr.savSlotOfEvent.hint"
+  },
+  {
+    "id": "sav.change",
+    "label": "mod.expr.savChange",
+    "call": "Sav.GetLevelChange",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "kind": "int",
+    "text": "sav_change(\"levels/castle1/level1.lev\", \"door_7\", 0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.changeCount",
+    "label": "mod.expr.savChangeCount",
+    "call": "Sav.LevelChangeCount",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "kind": "int",
+    "text": "(API->sav ? API->sav->LevelChangeCount(SELF) : 0)",
+    "hint": "mod.expr.savChangeCount.hint"
+  },
+  {
+    "id": "sav.changeName",
+    "label": "mod.expr.savChangeName",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "kind": "text",
+    "text": "sav_change_name(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.changeLevel",
+    "label": "mod.expr.savChangeLevel",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "kind": "text",
+    "text": "sav_change_level(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.changeValue",
+    "label": "mod.expr.savChangeValue",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "kind": "int",
+    "text": "sav_change_value(0)",
+    "hint": ""
+  },
+  {
+    "id": "sav.roomThing",
+    "label": "mod.expr.savRoomThing",
+    "call": "Sav.GetSlotRoomThing",
+    "group": "sav",
+    "section": "mod.sec.roomState",
+    "kind": "int",
+    "text": "sav_room_thing(0, 0, 0, 2)",
+    "hint": "mod.expr.savRoomThing.hint"
+  },
+  {
+    "id": "sav.roomMemory",
+    "label": "mod.expr.savRoomMemory",
+    "call": "Sav.GetSlotRoomMemory",
+    "group": "sav",
+    "section": "mod.sec.roomState",
+    "kind": "int",
+    "text": "sav_room_memory(0, 0, 1)",
+    "hint": "mod.expr.savRoomMemory.hint"
+  }
+]

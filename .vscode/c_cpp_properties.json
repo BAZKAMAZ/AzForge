@@ -1,0 +1,35 @@
+{
+    "configurations": [
+        {
+            "name": "AzForge + AFModConstructor (Qt6)",
+            "includePath": [
+                "${workspaceFolder}",
+                "${workspaceFolder}/src",
+                "${workspaceFolder}/sdk/include",
+                "${workspaceFolder}/AFModConstructor/app",
+                "${workspaceFolder}/AFModConstructor/core",
+                "${workspaceFolder}/AFModConstructor/third_party",
+                "${workspaceFolder}/AFModConstructor/build/AFModConstructor_autogen/include",
+                "C:/Qt/6.10.1/mingw_64/include",
+                "C:/Qt/6.10.1/mingw_64/include/QtCore",
+                "C:/Qt/6.10.1/mingw_64/include/QtGui",
+                "C:/Qt/6.10.1/mingw_64/include/QtWidgets"
+            ],
+            "defines": [
+                "UNICODE",
+                "_UNICODE",
+                "WIN32",
+                "QT_CORE_LIB",
+                "QT_GUI_LIB",
+                "QT_WIDGETS_LIB"
+            ],
+            "compilerPath": "C:/Qt/Tools/mingw1310_64/bin/g++.exe",
+            "cStandard": "c99",
+            "cppStandard": "c++20",
+            "intelliSenseMode": "windows-gcc-x64",
+            "compileCommands": "${workspaceFolder}/AFModConstructor/build/compile_commands.json",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}

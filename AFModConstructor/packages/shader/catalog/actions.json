@@ -1,0 +1,594 @@
+[
+  {
+    "id": "shader.fromSource",
+    "label": "mod.act.shaderSource",
+    "call": "Shader.CreateVertexSource",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "source",
+        "label": "mod.p.shaderSource",
+        "kind": "text",
+        "preset": "vs.1.1; dp4 oPos.x, v0, c0; dp4 oPos.y, v0, c1; dp4 oPos.z, v0, c2; dp4 oPos.w, v0, c3; mov oD0, v2; mov oT0, v3"
+      }
+    ],
+    "emit": "shader_make_vertex(\"%name%\", \"%source%\");",
+    "hint": "mod.act.shaderSource.hint"
+  },
+  {
+    "id": "shader.pixelFromSource",
+    "label": "mod.act.shaderPixelSource",
+    "call": "Shader.CreatePixelSource",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "source",
+        "label": "mod.p.shaderSource",
+        "kind": "text",
+        "preset": "ps.1.1; tex t0; mul r0, t0, v0"
+      }
+    ],
+    "emit": "shader_make_pixel(\"%name%\", \"%source%\");"
+  },
+  {
+    "id": "shader.fromTokens",
+    "label": "mod.act.shaderTokens",
+    "call": "Shader.CreateVertex",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "tokens",
+        "label": "mod.p.shaderTokens",
+        "kind": "text",
+        "preset": "0xFFFE0101 0x0000FFFF"
+      },
+      {
+        "key": "half",
+        "label": "mod.p.shaderHalf",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.vertex"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.pixel"
+          }
+        ]
+      }
+    ],
+    "emit": "shader_make_from_tokens(\"%name%\", \"%tokens%\", %half%);"
+  },
+  {
+    "id": "shader.builtin",
+    "label": "mod.act.shaderBuiltin",
+    "call": "Shader.BuiltinVertex",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "which",
+        "label": "mod.p.builtinShader",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.basicVs"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.texturePs"
+          },
+          {
+            "value": "2",
+            "label": "mod.shader.colourPs"
+          }
+        ]
+      },
+      {
+        "key": "half",
+        "label": "mod.p.shaderHalf",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.vertex"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.pixel"
+          }
+        ]
+      }
+    ],
+    "emit": "shader_take_builtin(\"%name%\", %which%, %half%);"
+  },
+  {
+    "id": "shader.use",
+    "label": "mod.act.shaderUse",
+    "call": "Shader.Set",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "vertex",
+        "label": "mod.p.vertexShader",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "pixel",
+        "label": "mod.p.pixelShader",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "shader_use(\"%vertex%\", \"%pixel%\");",
+    "needs": "render"
+  },
+  {
+    "id": "shader.drop",
+    "label": "mod.act.shaderDrop",
+    "call": "Shader.DeleteVertex",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "shader_drop(\"%name%\");"
+  },
+  {
+    "id": "shader.constant",
+    "label": "mod.act.shaderConstant",
+    "call": "Shader.SetVertexConstant",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "half",
+        "label": "mod.p.shaderHalf",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.vertex"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.pixel"
+          }
+        ]
+      },
+      {
+        "key": "first",
+        "label": "mod.p.shaderRegister",
+        "kind": "number",
+        "preset": "4"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.w",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "shader_constant(%half%, (int)(%first%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%w%));",
+    "needs": "render"
+  },
+  {
+    "id": "shader.registers",
+    "label": "mod.act.shaderRegisters",
+    "call": "Shader.SetTransformRegisters + SetTintRegister",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "wvp",
+        "label": "mod.p.registerWvp",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "world",
+        "label": "mod.p.registerWorld",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "tint",
+        "label": "mod.p.registerTint",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ],
+    "emit": "shader_registers((int)(%wvp%), (int)(%world%), (int)(%tint%));"
+  },
+  {
+    "id": "shader.shapeBegin",
+    "label": "mod.act.shapeBegin",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "params": [],
+    "emit": "shape_begin();"
+  },
+  {
+    "id": "shader.shapePoint",
+    "label": "mod.act.shapePoint",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "u",
+        "label": "mod.p.u0",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "v",
+        "label": "mod.p.v0",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "shape_point((float)(%x%), (float)(%y%), (float)(%z%), (float)(%u%), (float)(%v%), shader_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));"
+  },
+  {
+    "id": "shader.shapeDraw",
+    "label": "mod.act.shapeDraw",
+    "call": "Shader.DrawTriangles",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "params": [],
+    "emit": "shape_draw();",
+    "needs": "render"
+  },
+  {
+    "id": "shader.drawModel",
+    "label": "mod.act.shaderModel",
+    "call": "Shader.DrawModel",
+    "group": "shader",
+    "section": "mod.sec.shadedModels",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.modelId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "shader_draw_model((uint32_t)(%model%), \"%texture%\", (float)(%x%), (float)(%y%), (float)(%z%), (float)(%scale%));",
+    "needs": "render"
+  },
+  {
+    "id": "shader.batchBegin",
+    "label": "mod.act.shadedBegin",
+    "group": "shader",
+    "section": "mod.sec.shadedModels",
+    "params": [],
+    "emit": "shaded_begin();"
+  },
+  {
+    "id": "shader.batchAdd",
+    "label": "mod.act.shadedAdd",
+    "group": "shader",
+    "section": "mod.sec.shadedModels",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.modelId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "blend",
+        "label": "mod.p.blend",
+        "kind": "enum",
+        "preset": "AMOD_DRAW_BLEND_NONE",
+        "options": [
+          {
+            "value": "AMOD_DRAW_BLEND_NONE",
+            "label": "mod.blend.none"
+          },
+          {
+            "value": "AMOD_DRAW_BLEND_BLEND",
+            "label": "mod.blend.alpha"
+          },
+          {
+            "value": "AMOD_DRAW_BLEND_ADD",
+            "label": "mod.blend.add"
+          }
+        ]
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "shaded_add((uint32_t)(%model%), \"%texture%\", shader_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)), %blend%, (float)(%x%), (float)(%y%), (float)(%z%), (float)(%scale%));"
+  },
+  {
+    "id": "shader.batchDraw",
+    "label": "mod.act.shadedDraw",
+    "call": "Shader.DrawModels",
+    "group": "shader",
+    "section": "mod.sec.shadedModels",
+    "params": [],
+    "emit": "shaded_draw();",
+    "needs": "render"
+  },
+  {
+    "id": "shader.modelMatrix",
+    "label": "mod.act.shaderModelMatrix",
+    "call": "Shader.DrawModel",
+    "group": "shader",
+    "section": "mod.sec.shadedModels",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.modelId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "matrix",
+        "label": "mod.p.matrixList",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "shader_model_matrix((uint32_t)(%model%), %matrix%, (int)(sizeof %matrix% / sizeof %matrix%[0]), \"%texture%\");",
+    "needs": "render"
+  },
+  {
+    "id": "shader.constants",
+    "label": "mod.act.shaderConstants",
+    "call": "Shader.SetVertexConstant",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "half",
+        "label": "mod.p.shaderHalf",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.vertex"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.pixel"
+          }
+        ]
+      },
+      {
+        "key": "first",
+        "label": "mod.p.shaderRegister",
+        "kind": "number",
+        "preset": "4"
+      },
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "count",
+        "label": "mod.p.vec4Count",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "shader_constants(%half%, (int)(%first%), %list%, (int)(sizeof %list% / sizeof %list%[0]), (int)(%count%));",
+    "needs": "render"
+  },
+  {
+    "id": "shader.trianglesFromList",
+    "label": "mod.act.shaderTrianglesList",
+    "call": "Shader.DrawTriangles",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.vertexList",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "count",
+        "label": "mod.p.vertexCount",
+        "kind": "number",
+        "preset": "3"
+      }
+    ],
+    "emit": "shader_triangles(%list%, (int)(sizeof %list% / sizeof %list%[0]), (int)(%count%));",
+    "needs": "render",
+    "hint": "mod.act.shaderTrianglesList.hint"
+  }
+]

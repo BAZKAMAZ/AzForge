@@ -1,0 +1,1928 @@
+[
+  {
+    "id": "menu.hasItem",
+    "label": "mod.cond.menuHasItem",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      }
+    ],
+    "emit": "(menu_item(\"%menu%\", \"%item%\") != 0)",
+    "section": "mod.sec.items"
+  },
+  {
+    "id": "menu.hasProperty",
+    "label": "mod.cond.menuHasProperty",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "text",
+        "options": [
+          {
+            "value": "active_door_scale",
+            "label": "active_door_scale"
+          },
+          {
+            "value": "align",
+            "label": "align"
+          },
+          {
+            "value": "anim.color_active",
+            "label": "anim.color_active"
+          },
+          {
+            "value": "anim.color_blocked",
+            "label": "anim.color_blocked"
+          },
+          {
+            "value": "anim.color_disabled",
+            "label": "anim.color_disabled"
+          },
+          {
+            "value": "anim.color_nof_active",
+            "label": "anim.color_nof_active"
+          },
+          {
+            "value": "anim.color_passive",
+            "label": "anim.color_passive"
+          },
+          {
+            "value": "anim.scale_active",
+            "label": "anim.scale_active"
+          },
+          {
+            "value": "anim.scale_blocked",
+            "label": "anim.scale_blocked"
+          },
+          {
+            "value": "anim.scale_disabled",
+            "label": "anim.scale_disabled"
+          },
+          {
+            "value": "anim.scale_nof_active",
+            "label": "anim.scale_nof_active"
+          },
+          {
+            "value": "anim.scale_passive",
+            "label": "anim.scale_passive"
+          },
+          {
+            "value": "anim_castle.color_active",
+            "label": "anim_castle.color_active"
+          },
+          {
+            "value": "anim_castle.color_blocked",
+            "label": "anim_castle.color_blocked"
+          },
+          {
+            "value": "anim_castle.color_disabled",
+            "label": "anim_castle.color_disabled"
+          },
+          {
+            "value": "anim_castle.color_nof_active",
+            "label": "anim_castle.color_nof_active"
+          },
+          {
+            "value": "anim_castle.color_passive",
+            "label": "anim_castle.color_passive"
+          },
+          {
+            "value": "anim_castle.scale_active",
+            "label": "anim_castle.scale_active"
+          },
+          {
+            "value": "anim_castle.scale_blocked",
+            "label": "anim_castle.scale_blocked"
+          },
+          {
+            "value": "anim_castle.scale_disabled",
+            "label": "anim_castle.scale_disabled"
+          },
+          {
+            "value": "anim_castle.scale_nof_active",
+            "label": "anim_castle.scale_nof_active"
+          },
+          {
+            "value": "anim_castle.scale_passive",
+            "label": "anim_castle.scale_passive"
+          },
+          {
+            "value": "animation",
+            "label": "animation"
+          },
+          {
+            "value": "blocked_offs",
+            "label": "blocked_offs"
+          },
+          {
+            "value": "body_color",
+            "label": "body_color"
+          },
+          {
+            "value": "body_scale",
+            "label": "body_scale"
+          },
+          {
+            "value": "box_menu",
+            "label": "box_menu"
+          },
+          {
+            "value": "caption.enabled",
+            "label": "caption.enabled"
+          },
+          {
+            "value": "caption.offs",
+            "label": "caption.offs"
+          },
+          {
+            "value": "caption.rect",
+            "label": "caption.rect"
+          },
+          {
+            "value": "caption.rect_len",
+            "label": "caption.rect_len"
+          },
+          {
+            "value": "caption.text",
+            "label": "caption.text"
+          },
+          {
+            "value": "centre",
+            "label": "centre"
+          },
+          {
+            "value": "col.align",
+            "label": "col.align"
+          },
+          {
+            "value": "col.fixed",
+            "label": "col.fixed"
+          },
+          {
+            "value": "col.horz_pos",
+            "label": "col.horz_pos"
+          },
+          {
+            "value": "col.title",
+            "label": "col.title"
+          },
+          {
+            "value": "columns",
+            "label": "columns"
+          },
+          {
+            "value": "cursor3d",
+            "label": "cursor3d"
+          },
+          {
+            "value": "cursor3d.orient",
+            "label": "cursor3d.orient"
+          },
+          {
+            "value": "cursor3d.pos",
+            "label": "cursor3d.pos"
+          },
+          {
+            "value": "demo_level",
+            "label": "demo_level"
+          },
+          {
+            "value": "door_offs",
+            "label": "door_offs"
+          },
+          {
+            "value": "door_size",
+            "label": "door_size"
+          },
+          {
+            "value": "font_color",
+            "label": "font_color"
+          },
+          {
+            "value": "font_id",
+            "label": "font_id"
+          },
+          {
+            "value": "font_scale",
+            "label": "font_scale"
+          },
+          {
+            "value": "group",
+            "label": "group"
+          },
+          {
+            "value": "header_color",
+            "label": "header_color"
+          },
+          {
+            "value": "header_scale",
+            "label": "header_scale"
+          },
+          {
+            "value": "help",
+            "label": "help"
+          },
+          {
+            "value": "help_demo",
+            "label": "help_demo"
+          },
+          {
+            "value": "help_key",
+            "label": "help_key"
+          },
+          {
+            "value": "horz_flip",
+            "label": "horz_flip"
+          },
+          {
+            "value": "horz_rept",
+            "label": "horz_rept"
+          },
+          {
+            "value": "id",
+            "label": "id"
+          },
+          {
+            "value": "img_blocked",
+            "label": "img_blocked"
+          },
+          {
+            "value": "img_disabled",
+            "label": "img_disabled"
+          },
+          {
+            "value": "img_enabled",
+            "label": "img_enabled"
+          },
+          {
+            "value": "img_size",
+            "label": "img_size"
+          },
+          {
+            "value": "inactive_door_scale",
+            "label": "inactive_door_scale"
+          },
+          {
+            "value": "is_offset",
+            "label": "is_offset"
+          },
+          {
+            "value": "items",
+            "label": "items"
+          },
+          {
+            "value": "kind",
+            "label": "kind"
+          },
+          {
+            "value": "left.key",
+            "label": "left.key"
+          },
+          {
+            "value": "left.rect",
+            "label": "left.rect"
+          },
+          {
+            "value": "line_count",
+            "label": "line_count"
+          },
+          {
+            "value": "line_height",
+            "label": "line_height"
+          },
+          {
+            "value": "line_pos",
+            "label": "line_pos"
+          },
+          {
+            "value": "line_step",
+            "label": "line_step"
+          },
+          {
+            "value": "lines_vert_align",
+            "label": "lines_vert_align"
+          },
+          {
+            "value": "lock",
+            "label": "lock"
+          },
+          {
+            "value": "margin",
+            "label": "margin"
+          },
+          {
+            "value": "part_count",
+            "label": "part_count"
+          },
+          {
+            "value": "part_disp",
+            "label": "part_disp"
+          },
+          {
+            "value": "part_radius",
+            "label": "part_radius"
+          },
+          {
+            "value": "plank_width",
+            "label": "plank_width"
+          },
+          {
+            "value": "point_margin",
+            "label": "point_margin"
+          },
+          {
+            "value": "point_step",
+            "label": "point_step"
+          },
+          {
+            "value": "pos",
+            "label": "pos"
+          },
+          {
+            "value": "position",
+            "label": "position"
+          },
+          {
+            "value": "range",
+            "label": "range"
+          },
+          {
+            "value": "rect",
+            "label": "rect"
+          },
+          {
+            "value": "rect_size",
+            "label": "rect_size"
+          },
+          {
+            "value": "reg_menu",
+            "label": "reg_menu"
+          },
+          {
+            "value": "right.key",
+            "label": "right.key"
+          },
+          {
+            "value": "right.rect",
+            "label": "right.rect"
+          },
+          {
+            "value": "size",
+            "label": "size"
+          },
+          {
+            "value": "sp1",
+            "label": "sp1"
+          },
+          {
+            "value": "sp2",
+            "label": "sp2"
+          },
+          {
+            "value": "sprite",
+            "label": "sprite"
+          },
+          {
+            "value": "start_demo",
+            "label": "start_demo"
+          },
+          {
+            "value": "start_level",
+            "label": "start_level"
+          },
+          {
+            "value": "start_play",
+            "label": "start_play"
+          },
+          {
+            "value": "sub_menu",
+            "label": "sub_menu"
+          },
+          {
+            "value": "swap_on_focus",
+            "label": "swap_on_focus"
+          },
+          {
+            "value": "text",
+            "label": "text"
+          },
+          {
+            "value": "text.key",
+            "label": "text.key"
+          },
+          {
+            "value": "text.rect",
+            "label": "text.rect"
+          },
+          {
+            "value": "texture",
+            "label": "texture"
+          },
+          {
+            "value": "two_sprites",
+            "label": "two_sprites"
+          },
+          {
+            "value": "unable_menu",
+            "label": "unable_menu"
+          },
+          {
+            "value": "unreg_enabled",
+            "label": "unreg_enabled"
+          },
+          {
+            "value": "unreg_only",
+            "label": "unreg_only"
+          },
+          {
+            "value": "vert_flip",
+            "label": "vert_flip"
+          },
+          {
+            "value": "vert_rept",
+            "label": "vert_rept"
+          },
+          {
+            "value": "visible",
+            "label": "visible"
+          },
+          {
+            "value": "warning",
+            "label": "warning"
+          }
+        ]
+      }
+    ],
+    "emit": "menu_has(\"%menu%\", \"%item%\", \"%key%\")",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "menu.textIs",
+    "label": "mod.cond.menuTextIs",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "text",
+        "options": [
+          {
+            "value": "box_menu",
+            "label": "box_menu"
+          },
+          {
+            "value": "caption.text",
+            "label": "caption.text"
+          },
+          {
+            "value": "col.title",
+            "label": "col.title"
+          },
+          {
+            "value": "demo_level",
+            "label": "demo_level"
+          },
+          {
+            "value": "group",
+            "label": "group"
+          },
+          {
+            "value": "help",
+            "label": "help"
+          },
+          {
+            "value": "help_demo",
+            "label": "help_demo"
+          },
+          {
+            "value": "help_key",
+            "label": "help_key"
+          },
+          {
+            "value": "id",
+            "label": "id"
+          },
+          {
+            "value": "items",
+            "label": "items"
+          },
+          {
+            "value": "lock",
+            "label": "lock"
+          },
+          {
+            "value": "reg_menu",
+            "label": "reg_menu"
+          },
+          {
+            "value": "start_demo",
+            "label": "start_demo"
+          },
+          {
+            "value": "start_level",
+            "label": "start_level"
+          },
+          {
+            "value": "start_play",
+            "label": "start_play"
+          },
+          {
+            "value": "sub_menu",
+            "label": "sub_menu"
+          },
+          {
+            "value": "text",
+            "label": "text"
+          },
+          {
+            "value": "unable_menu",
+            "label": "unable_menu"
+          },
+          {
+            "value": "warning",
+            "label": "warning"
+          }
+        ]
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "menu_text_is(\"%menu%\", \"%item%\", \"%key%\", \"%text%\")",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "menu.numberIs",
+    "label": "mod.cond.menuNumberIs",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "visible",
+        "options": [
+          {
+            "value": "align",
+            "label": "align"
+          },
+          {
+            "value": "animation",
+            "label": "animation"
+          },
+          {
+            "value": "col.align",
+            "label": "col.align"
+          },
+          {
+            "value": "columns",
+            "label": "columns"
+          },
+          {
+            "value": "img_blocked",
+            "label": "img_blocked"
+          },
+          {
+            "value": "img_disabled",
+            "label": "img_disabled"
+          },
+          {
+            "value": "img_enabled",
+            "label": "img_enabled"
+          },
+          {
+            "value": "left.key",
+            "label": "left.key"
+          },
+          {
+            "value": "line_count",
+            "label": "line_count"
+          },
+          {
+            "value": "lines_vert_align",
+            "label": "lines_vert_align"
+          },
+          {
+            "value": "part_count",
+            "label": "part_count"
+          },
+          {
+            "value": "plank_width",
+            "label": "plank_width"
+          },
+          {
+            "value": "right.key",
+            "label": "right.key"
+          },
+          {
+            "value": "sp1",
+            "label": "sp1"
+          },
+          {
+            "value": "sp2",
+            "label": "sp2"
+          },
+          {
+            "value": "sprite",
+            "label": "sprite"
+          },
+          {
+            "value": "text.key",
+            "label": "text.key"
+          },
+          {
+            "value": "texture",
+            "label": "texture"
+          },
+          {
+            "value": "unreg_only",
+            "label": "unreg_only"
+          },
+          {
+            "value": "caption.enabled",
+            "label": "caption.enabled"
+          },
+          {
+            "value": "cursor3d",
+            "label": "cursor3d"
+          },
+          {
+            "value": "horz_flip",
+            "label": "horz_flip"
+          },
+          {
+            "value": "swap_on_focus",
+            "label": "swap_on_focus"
+          },
+          {
+            "value": "two_sprites",
+            "label": "two_sprites"
+          },
+          {
+            "value": "unreg_enabled",
+            "label": "unreg_enabled"
+          },
+          {
+            "value": "vert_flip",
+            "label": "vert_flip"
+          },
+          {
+            "value": "visible",
+            "label": "visible"
+          },
+          {
+            "value": "caption.rect_len",
+            "label": "caption.rect_len"
+          },
+          {
+            "value": "col.fixed",
+            "label": "col.fixed"
+          },
+          {
+            "value": "col.horz_pos",
+            "label": "col.horz_pos"
+          },
+          {
+            "value": "horz_rept",
+            "label": "horz_rept"
+          },
+          {
+            "value": "line_height",
+            "label": "line_height"
+          },
+          {
+            "value": "line_pos",
+            "label": "line_pos"
+          },
+          {
+            "value": "line_step",
+            "label": "line_step"
+          },
+          {
+            "value": "part_disp",
+            "label": "part_disp"
+          },
+          {
+            "value": "point_margin",
+            "label": "point_margin"
+          },
+          {
+            "value": "point_step",
+            "label": "point_step"
+          },
+          {
+            "value": "position",
+            "label": "position"
+          },
+          {
+            "value": "vert_rept",
+            "label": "vert_rept"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(menu_number(\"%menu%\", \"%item%\", \"%key%\") %op% %value%)",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "menu.kindIs",
+    "label": "mod.cond.menuKindIs",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "text_button",
+        "options": [
+          {
+            "value": "item",
+            "label": "item"
+          },
+          {
+            "value": "logo",
+            "label": "logo"
+          },
+          {
+            "value": "text_button",
+            "label": "text_button"
+          },
+          {
+            "value": "img_button",
+            "label": "img_button"
+          },
+          {
+            "value": "hotkey_button",
+            "label": "hotkey_button"
+          },
+          {
+            "value": "castle_button",
+            "label": "castle_button"
+          },
+          {
+            "value": "list",
+            "label": "list"
+          },
+          {
+            "value": "slider",
+            "label": "slider"
+          },
+          {
+            "value": "table",
+            "label": "table"
+          },
+          {
+            "value": "image",
+            "label": "image"
+          },
+          {
+            "value": "image_anim",
+            "label": "image_anim"
+          },
+          {
+            "value": "static",
+            "label": "static"
+          }
+        ]
+      }
+    ],
+    "emit": "menu_text_is(\"%menu%\", \"%item%\", \"kind\", \"%kind%\")",
+    "section": "mod.sec.items"
+  },
+  {
+    "id": "menu.itemsAtLeast",
+    "label": "mod.cond.menuItems",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "(API->objectsMenu && API->objectsMenu->GetItemCount(SELF, \"%menu%\") >= %count%)",
+    "section": "mod.sec.screen"
+  },
+  {
+    "id": "menu.itemAtIs",
+    "label": "mod.cond.menuItemAt",
+    "group": "objects_menu",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "enum",
+        "preset": "IDM_MAIN_MENU",
+        "options": [
+          {
+            "value": "IDM_MAIN_MENU",
+            "label": "IDM_MAIN_MENU"
+          },
+          {
+            "value": "IDM_NEW_GAME",
+            "label": "IDM_NEW_GAME"
+          },
+          {
+            "value": "IDM_LOAD_GAME",
+            "label": "IDM_LOAD_GAME"
+          },
+          {
+            "value": "IDM_SAVE_GAME",
+            "label": "IDM_SAVE_GAME"
+          },
+          {
+            "value": "IDM_OPTIONS",
+            "label": "IDM_OPTIONS"
+          },
+          {
+            "value": "IDM_GRAPHICS",
+            "label": "IDM_GRAPHICS"
+          },
+          {
+            "value": "IDM_CONTROLS",
+            "label": "IDM_CONTROLS"
+          },
+          {
+            "value": "IDM_HELP",
+            "label": "IDM_HELP"
+          },
+          {
+            "value": "IDM_HELP_PAGE",
+            "label": "IDM_HELP_PAGE"
+          },
+          {
+            "value": "IDM_CREDITS",
+            "label": "IDM_CREDITS"
+          },
+          {
+            "value": "IDM_SCORES",
+            "label": "IDM_SCORES"
+          },
+          {
+            "value": "IDM_SCORE_QUERY",
+            "label": "IDM_SCORE_QUERY"
+          },
+          {
+            "value": "IDM_SCORE_NONAME",
+            "label": "IDM_SCORE_NONAME"
+          },
+          {
+            "value": "IDM_NO_SCORE",
+            "label": "IDM_NO_SCORE"
+          },
+          {
+            "value": "IDM_PACKS",
+            "label": "IDM_PACKS"
+          },
+          {
+            "value": "IDM_REGISTER",
+            "label": "IDM_REGISTER"
+          },
+          {
+            "value": "IDM_REGBOX",
+            "label": "IDM_REGBOX"
+          },
+          {
+            "value": "IDM_ESC_MENU",
+            "label": "IDM_ESC_MENU"
+          },
+          {
+            "value": "IDM_GRAPH_QUERY",
+            "label": "IDM_GRAPH_QUERY"
+          },
+          {
+            "value": "IDM_BREAK_DEMOLEVEL",
+            "label": "IDM_BREAK_DEMOLEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_LEVEL",
+            "label": "IDM_LEVSTAT_LEVEL"
+          },
+          {
+            "value": "IDM_LEVSTAT_BONUS",
+            "label": "IDM_LEVSTAT_BONUS"
+          },
+          {
+            "value": "IDM_NS_GAME",
+            "label": "IDM_NS_GAME"
+          },
+          {
+            "value": "IDM_NS_SCORE",
+            "label": "IDM_NS_SCORE"
+          },
+          {
+            "value": "IDM_NS_COMPLETE",
+            "label": "IDM_NS_COMPLETE"
+          },
+          {
+            "value": "IDM_NS_END",
+            "label": "IDM_NS_END"
+          },
+          {
+            "value": "IDM_NS_NOLEVEL",
+            "label": "IDM_NS_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_FULL_NOLEVEL",
+            "label": "IDM_NS_FULL_NOLEVEL"
+          },
+          {
+            "value": "IDM_NS_REG_END",
+            "label": "IDM_NS_REG_END"
+          },
+          {
+            "value": "IDM_NS_REG_NOLEVEL",
+            "label": "IDM_NS_REG_NOLEVEL"
+          }
+        ]
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      }
+    ],
+    "emit": "menu_item_at_is(\"%menu%\", %index%, \"%item%\")",
+    "section": "mod.sec.items"
+  },
+  {
+    "id": "menu.floatIs",
+    "label": "mod.cond.menuFloat",
+    "group": "objects_menu",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "text",
+        "preset": "IDM_MAIN_MENU"
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "text",
+        "preset": "pos"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "<",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(menu_float(\"%menu%\", \"%item%\", \"%key%\", %index%) %op% %value%)"
+  },
+  {
+    "id": "menu.tableLines",
+    "label": "mod.cond.tableLines",
+    "call": "ObjectsMenu.TableLineCount",
+    "group": "objects_menu",
+    "section": "mod.sec.table",
+    "params": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "text",
+        "preset": "IDM_RECORDS"
+      },
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_TABLE"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(menu_table_lines(\"%menu%\", \"%item%\") %op% %value%)"
+  }
+]

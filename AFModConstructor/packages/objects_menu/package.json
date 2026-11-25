@@ -1,0 +1,15 @@
+{
+  "id": "objects_menu",
+  "name": "Menu objects",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "menu",
+    "objects_menu"
+  ]
+}

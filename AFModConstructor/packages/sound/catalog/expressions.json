@@ -1,0 +1,47 @@
+[
+  {
+    "id": "sound.music",
+    "label": "mod.expr.music",
+    "group": "sound",
+    "section": "mod.sec.music",
+    "kind": "text",
+    "text": "sound_music()",
+    "hint": "mod.expr.music.hint"
+  },
+  {
+    "id": "sound.roomCount",
+    "label": "mod.expr.soundRoomCount",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "kind": "int",
+    "text": "sound_room_count(-1)",
+    "hint": "mod.expr.roomIndex.hint"
+  },
+  {
+    "id": "sound.roomId",
+    "label": "mod.expr.soundRoomId",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "kind": "int",
+    "text": "sound_room_id(-1, 0)",
+    "hint": "mod.expr.roomIndex.hint"
+  },
+  {
+    "id": "sound.roomWhere",
+    "label": "mod.expr.soundRoomWhere",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "kind": "float",
+    "text": "sound_room_where(-1, 0, 0)",
+    "hint": "mod.expr.soundRoomWhere.hint"
+  },
+  {
+    "id": "sound.id",
+    "label": "mod.expr.soundId",
+    "group": "sound",
+    "section": "mod.sec.sound",
+    "kind": "int",
+    "text": "(int)sound_id(\"sounds/water.wav\")",
+    "hint": "mod.expr.soundId.hint"
+  }
+]

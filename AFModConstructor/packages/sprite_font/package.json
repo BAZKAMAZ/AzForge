@@ -1,0 +1,15 @@
+{
+  "id": "sprite_font",
+  "name": "Fonts",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "sprite_font",
+    "font"
+  ]
+}

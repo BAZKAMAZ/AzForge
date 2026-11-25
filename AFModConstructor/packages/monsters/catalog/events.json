@@ -1,0 +1,27 @@
+[
+  {
+    "id": "monster.killed",
+    "label": "mod.ev.monsterKilled",
+    "call": "Monsters.AddKillHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "name",
+        "label": "mod.p.monster",
+        "kind": "monster",
+        "test": "if (!info->name || strcmp(info->name, \"%v%\") != 0) return AMOD_MONSTER_KILL_DEFAULT;"
+      }
+    ],
+    "values": [
+      "monster",
+      "position",
+      "level"
+    ],
+    "handler": "static AmodMonsterKillResult __cdecl %H%(const AmodMonsterKillInfo* info, void* user)",
+    "subscribe": "if (API->monsters) %token% = API->monsters->AddKillHandler(SELF, %H%, 0);",
+    "retDefault": "return AMOD_MONSTER_KILL_DEFAULT;",
+    "retVeto": "return AMOD_MONSTER_KILL_REFUSE;",
+    "group": "monsters",
+    "section": "mod.sec.general"
+  }
+]

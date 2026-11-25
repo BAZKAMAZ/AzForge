@@ -1,0 +1,40 @@
+mod.act.hudProperty=HUD property
+mod.sys.hud=HUD
+mod.act.hudProperty.line=HUD: %key% = %value%
+mod.act.hudAddImages=Add pictures to the panel
+mod.act.hudAddImages.hint=The same $image the game writes in game_info.txt, but in one line: a field holds no line breaks
+mod.act.hudAddImages.line=Add pictures to the panel
+mod.act.hudFrame=Replace the item frame
+mod.act.hudFrame.line=Item frame: "%texture%"
+mod.act.hudNumber=Set a number of the panel
+mod.act.hudNumber.line=%key% = %value%
+mod.act.hudPair=Set a place or a size of the panel
+mod.act.hudPair.line=%key% = %x%, %y%
+mod.act.hudRemoveImage=Remove a picture of the panel
+mod.act.hudRemoveImage.line=Remove picture %index%
+mod.cond.hudHas=The panel has this
+mod.cond.hudHas.line=The panel has %key%
+mod.cond.hudImages=Pictures on the panel
+mod.cond.hudNumber=A number of the panel
+mod.cond.hudNumber.line=%key% %op% %value%
+mod.expr.hudCount=How many keys the panel has
+mod.expr.hudFrame=Picture of the item frame
+mod.expr.hudImages=Pictures on the panel
+mod.expr.hudNameAt=Name of the key
+mod.expr.hudNameAt.hint=By number, so a loop can walk every key the loader knows
+mod.expr.hudNumber=A number of the panel
+mod.expr.hudNumber.hint=The keys are the ones the loader knows; the second number of a pair is read by the entry below
+mod.expr.hudSecond=The second number of a pair
+mod.hud.bonusPulse=Bonus: how much it pulses
+mod.hud.frameSize=Item frame: size
+mod.hud.frameTexture=Item frame: picture
+mod.hud.itemsOffs=Items: step to the next one
+mod.hud.itemsSize=Items: size of a picture
+mod.hud.itemsStart=Items: where the first one goes
+mod.hud.lifePulse=Lives: how much they pulse
+mod.hud.lifeTime=Lives: how long the pulse takes
+mod.hud.pbarOffs=Progress bar: shift from the bonus
+mod.hud.pointsPos=Where the points fly from
+mod.p.hudKey=What to change
+mod.p.imageFragment=An $image block, in one line
+mod.sec.hudImages=Pictures of the panel

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "launcher",
+    "label": "mod.sys.launcher",
+    "prologue": "static MOD_UNUSED int launcher_text_is(int control, const char* text) {\n    char buffer[256];\n    if (API->launcher == 0) return 0;\n    if (API->launcher->GetText(SELF, control, buffer, sizeof buffer) == 0) return 0;\n    return strcmp(buffer, text) == 0;\n}\n\n/* Launcher logo: a whole BMP in memory; the file comes from the game file system */\nstatic MOD_UNUSED int launcher_logo(const char* path) {\n    static unsigned char bitmap[262144];\n    int size;\n    if (API->files == 0 || API->launcher == 0) return 0;\n    size = API->files->Read(SELF, path, bitmap, (int)sizeof bitmap);\n    if (size <= 0) return 0;\n    return API->launcher->SetLogo(SELF, bitmap, (uint32_t)size);\n}\n\n/* Control id by the name from the launcher script; 0 when there is no such control */\nstatic MOD_UNUSED int launcher_control(const char* name) {\n    return API->launcher != 0 ? API->launcher->FindControl(SELF, name) : 0;\n}\n\n/* The launcher dialog window, as an address; 0 unless the API knows this build */\nstatic MOD_UNUSED uintptr_t launcher_window(void) {\n    if (API->launcher == 0) return 0;\n    return (uintptr_t)API->launcher->GetWindow(SELF, AMOD_GAME_BUILD_AZANGARA_10);\n}",
+    "icon": "icons/launcher.png"
+  }
+]

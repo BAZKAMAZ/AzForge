@@ -1,0 +1,100 @@
+[
+  {
+    "id": "launcher.opened",
+    "label": "mod.ev.launcherOpened",
+    "group": "launcher",
+    "call": "Launcher.Subscribe(OPENED)",
+    "handler": "static void __cdecl %H%(AmodLauncherEvent event, void* data, void* user)",
+    "subscribe": "if (API->launcher) %token% = API->launcher->Subscribe(SELF, AMOD_LAUNCHER_OPENED, %H%, 0);",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.command",
+    "label": "mod.ev.launcherCommand",
+    "group": "launcher",
+    "call": "Launcher.Subscribe(COMMAND)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ],
+        "test": "if (!data || ((const AmodLauncherCommand*)data)->commandId != %v%) return;"
+      }
+    ],
+    "values": [
+      "control",
+      "notify"
+    ],
+    "handler": "static void __cdecl %H%(AmodLauncherEvent event, void* data, void* user)",
+    "subscribe": "if (API->launcher) %token% = API->launcher->Subscribe(SELF, AMOD_LAUNCHER_COMMAND, %H%, 0);",
+    "retDefault": "return;",
+    "retVeto": "{ AmodLauncherCommand* command = (AmodLauncherCommand*)data; if (command) command->handled = 1; } return;",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.closing",
+    "label": "mod.ev.launcherClosing",
+    "group": "launcher",
+    "call": "Launcher.Subscribe(CLOSING)",
+    "handler": "static void __cdecl %H%(AmodLauncherEvent event, void* data, void* user)",
+    "subscribe": "if (API->launcher) %token% = API->launcher->Subscribe(SELF, AMOD_LAUNCHER_CLOSING, %H%, 0);",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.layout",
+    "label": "mod.ev.launcherLayout",
+    "group": "launcher",
+    "call": "Launcher.Subscribe(LAYOUT_APPLIED)",
+    "handler": "static void __cdecl %H%(AmodLauncherEvent event, void* data, void* user)",
+    "subscribe": "if (API->launcher) %token% = API->launcher->Subscribe(SELF, AMOD_LAUNCHER_LAYOUT_APPLIED, %H%, 0);",
+    "section": "mod.sec.dialog"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "input.cursorX",
+    "label": "mod.expr.cursorX",
+    "group": "input",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "input_cursor_x()",
+    "hint": ""
+  },
+  {
+    "id": "input.cursorY",
+    "label": "mod.expr.cursorY",
+    "group": "input",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "input_cursor_y()",
+    "hint": ""
+  },
+  {
+    "id": "input.wheel",
+    "label": "mod.expr.wheel",
+    "group": "input",
+    "section": "mod.sec.general",
+    "kind": "int",
+    "text": "API->input->WheelDelta(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "input.keyParam",
+    "label": "mod.expr.keyParam",
+    "group": "input",
+    "section": "mod.sec.bind",
+    "kind": "text",
+    "text": "input_key_param(112, 0)",
+    "hint": ""
+  }
+]

@@ -1,0 +1,54 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: Configure (Release)",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "--preset",
+                "mingw-release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: Build (Release)",
+            "type": "shell",
+            "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+            "args": [
+                "--build",
+                "--preset",
+                "mingw-release",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "env": {
+                    "PATH": "C:/Qt/Tools/mingw1310_64/bin;C:/Qt/6.10.1/mingw_64/bin;C:/Qt/Tools/Ninja;${env:PATH}"
+                }
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
+            "label": "Checks: Package & Catalog",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "tools/checks/packagecheck.py"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

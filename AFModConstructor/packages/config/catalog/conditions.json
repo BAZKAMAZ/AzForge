@@ -1,0 +1,198 @@
+[
+  {
+    "id": "config.has",
+    "label": "mod.cond.cfgHas",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "g_gravity"
+      }
+    ],
+    "emit": "config_has(\"%name%\")"
+  },
+  {
+    "id": "config.number",
+    "label": "mod.cond.cfgNumber",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "g_gravity"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(config_number(\"%name%\") %op% %value%)"
+  },
+  {
+    "id": "config.textIs",
+    "label": "mod.cond.cfgText",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "com_raster"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "raster_d3d.dll"
+      }
+    ],
+    "emit": "config_text_is(\"%name%\", \"%text%\")"
+  },
+  {
+    "id": "config.on",
+    "label": "mod.cond.cfgOn",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "developer"
+      }
+    ],
+    "emit": "(config_number(\"%name%\") != 0.0f)"
+  },
+  {
+    "id": "config.changed",
+    "label": "mod.cond.cfgChanged",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "r_fullscreen"
+      }
+    ],
+    "emit": "config_changed(\"%name%\")"
+  },
+  {
+    "id": "config.saved",
+    "label": "mod.cond.cfgSaved",
+    "group": "config",
+    "section": "mod.sec.persist",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "snd_volume"
+      }
+    ],
+    "emit": "config_flag(\"%name%\", AMOD_CONFIG_SAVED)"
+  },
+  {
+    "id": "config.neverSaved",
+    "label": "mod.cond.cfgNeverSaved",
+    "group": "config",
+    "section": "mod.sec.persist",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "testvar"
+      }
+    ],
+    "emit": "config_flag(\"%name%\", AMOD_CONFIG_NEVER_SAVED)"
+  },
+  {
+    "id": "config.count",
+    "label": "mod.cond.cfgCount",
+    "group": "config",
+    "section": "mod.sec.keys",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(config_count() %op% %value%)"
+  }
+]

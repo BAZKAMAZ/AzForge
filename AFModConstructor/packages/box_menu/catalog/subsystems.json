@@ -1,0 +1,8 @@
+[
+  {
+    "id": "box_menu",
+    "label": "mod.sys.boxMenu",
+    "prologue": "static MOD_UNUSED int box_current_is(const char* menu) {\n    const char* id = API->boxMenu != 0 ? API->boxMenu->Current(SELF) : 0;\n    return id != 0 && strcmp(id, menu) == 0;\n}\n\nstatic MOD_UNUSED int box_overlay_is(const char* menu) {\n    const char* id = API->boxMenu != 0 ? API->boxMenu->Box(SELF) : 0;\n    return id != 0 && strcmp(id, menu) == 0;\n}\n\n/* An overlay is shown when Box() answers with a non-empty id */\nstatic MOD_UNUSED int box_overlay_any(void) {\n    const char* id = API->boxMenu != 0 ? API->boxMenu->Box(SELF) : 0;\n    return id != 0 && id[0] != 0;\n}",
+    "icon": "icons/box_menu.png"
+  }
+]

@@ -1,0 +1,15 @@
+build/
+build-*/
+cmake-build-*/
+compiler/
+assets/tools/*.exe
+examples/*/bin/
+examples/*/build/
+examples/*/.moddertool/
+examples/*/src/mod_generated.c
+CMakeUserPresets.json
+*.user
+.vs/
+.idea/
+**/__pycache__/
+*.pyc

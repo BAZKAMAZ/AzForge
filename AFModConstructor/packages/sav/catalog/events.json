@@ -1,0 +1,30 @@
+[
+  {
+    "id": "sav.slotSaving",
+    "label": "mod.ev.slotSaving",
+    "call": "Sav.OnSlotSave",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "values": [
+      "slot"
+    ],
+    "handler": "static void __cdecl %H%(int slot, void* user)",
+    "subscribe": "if (API->sav) %token% = API->sav->OnSlotSave(SELF, %H%, 0);",
+    "provides": "slot_save"
+  },
+  {
+    "id": "sav.slotLoading",
+    "label": "mod.ev.slotLoading",
+    "call": "Sav.OnSlotLoad",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "values": [
+      "slot",
+      "bytes",
+      "size"
+    ],
+    "handler": "static void __cdecl %H%(int slot, const void* bytes, int size, void* user)",
+    "subscribe": "if (API->sav) %token% = API->sav->OnSlotLoad(SELF, %H%, 0);",
+    "provides": "slot_load"
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "_comment": "C/C++ syntax highlighting colors for AFModConstructor. Edit hex colors and save — changes apply live.",
+  "background": "#15171e",
+  "foreground": "#e4e7f0",
+  "styles": {
+    "keyword":      { "color": "#c792ea", "bold": true },
+    "type":         { "color": "#7aa2f7" },
+    "preprocessor": { "color": "#f07178", "bold": true },
+    "azforge":      { "color": "#9b87f5", "bold": true },
+    "macro":        { "color": "#e5c07b" },
+    "function":     { "color": "#7dcfff" },
+    "number":       { "color": "#f78c6c" },
+    "string":       { "color": "#9ece6a" },
+    "comment":      { "color": "#646c88", "italic": true },
+    "operator":     { "color": "#89ddff" }
+  }
+}

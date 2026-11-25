@@ -1,0 +1,8 @@
+[
+  {
+    "id": "system",
+    "label": "mod.sys.system",
+    "prologue": "/* True on the frame the rest of the conditions start holding, and not again until they stop */\nstatic MOD_UNUSED int trigger_once(int* state, int value) {\n    const int fired = value != 0 && *state == 0;\n    *state = value != 0;\n    return fired;\n}\n\n/* rand() is seeded once, on the first draw */\nstatic MOD_UNUSED int mod_random(int range) {\n    static int seeded = 0;\n    if (seeded == 0) { srand((unsigned)time(0)); seeded = 1; }\n    return range > 0 ? rand() % range : 0;\n}\n\nstatic MOD_UNUSED float mod_random01(void) {\n    return (float)mod_random(10000) / 10000.0f;\n}\n\n/* True once every `seconds`, counting from the first frame; the leftover is kept so a slow\n   frame does not lose time. A state below zero means the first period has not started yet */\nstatic MOD_UNUSED int every_seconds(float* left, float seconds) {\n    if (seconds <= 0.0f) return 1;\n    if (*left < 0.0f) {\n        *left = seconds;\n        return 0;\n    }\n    *left -= mod_delta;\n    if (*left > 0.0f) return 0;\n    *left += seconds;\n    return 1;\n}",
+    "icon": "icons/system.png"
+  }
+]

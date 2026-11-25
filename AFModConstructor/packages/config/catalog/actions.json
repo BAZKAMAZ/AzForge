@@ -1,0 +1,189 @@
+[
+  {
+    "id": "config.setNumber",
+    "label": "mod.act.cfgSetNumber",
+    "call": "Config.SetNumber",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "g_gravity"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "2"
+      }
+    ],
+    "emit": "config_set_number(\"%name%\", (float)(%value%));"
+  },
+  {
+    "id": "config.setText",
+    "label": "mod.act.cfgSetText",
+    "call": "Config.SetText",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "dev_level"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "levels/level_1.txt"
+      }
+    ],
+    "emit": "config_set_text(\"%name%\", \"%text%\");"
+  },
+  {
+    "id": "config.add",
+    "label": "mod.act.cfgAdd",
+    "call": "Config.Add",
+    "group": "config",
+    "section": "mod.sec.keys",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "my_mod_level"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "text",
+        "preset": "1"
+      },
+      {
+        "key": "flags",
+        "label": "mod.p.cfgSaved",
+        "kind": "enum",
+        "preset": "AMOD_CONFIG_SAVED",
+        "options": [
+          {
+            "value": "AMOD_CONFIG_SAVED",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "AMOD_CONFIG_NEVER_SAVED",
+            "label": "mod.cfg.never"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->config) API->config->Add(SELF, \"%name%\", \"%value%\", %flags%);"
+  },
+  {
+    "id": "config.restore",
+    "label": "mod.act.cfgRestore",
+    "call": "Config.Get + SetText",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "g_gravity"
+      }
+    ],
+    "emit": "config_restore(\"%name%\");"
+  },
+  {
+    "id": "config.toVar",
+    "label": "mod.act.cfgToVar",
+    "call": "Config.GetNumber",
+    "group": "config",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "snd_volume"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "value"
+      }
+    ],
+    "emit": "%var% = config_number(\"%name%\");"
+  },
+  {
+    "id": "config.save",
+    "label": "mod.act.cfgSave",
+    "call": "Config.Save",
+    "group": "config",
+    "section": "mod.sec.persist",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.cfgPath",
+        "kind": "text"
+      }
+    ],
+    "emit": "config_save(\"%path%\");"
+  },
+  {
+    "id": "config.keep",
+    "label": "mod.act.cfgKeep",
+    "call": "Config.Keep",
+    "group": "config",
+    "section": "mod.sec.persist",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.cfgKey",
+        "kind": "text",
+        "preset": "my_mod_level"
+      },
+      {
+        "key": "keep",
+        "label": "mod.p.keep",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "protect",
+        "label": "mod.p.protect",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->config) API->config->Keep(SELF, \"%name%\", %keep%, %protect%);"
+  }
+]

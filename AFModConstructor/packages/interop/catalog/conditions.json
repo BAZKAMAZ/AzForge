@@ -1,0 +1,129 @@
+[
+  {
+    "id": "interop.ready",
+    "label": "mod.cond.interopReady",
+    "group": "interop",
+    "section": "mod.sec.general",
+    "emit": "(API->interop != 0)"
+  },
+  {
+    "id": "interop.inside",
+    "label": "mod.cond.interopInside",
+    "group": "interop",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      }
+    ],
+    "emit": "interop_inside((uintptr_t)(%addr%))"
+  },
+  {
+    "id": "interop.number",
+    "label": "mod.cond.interopNumber",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "int",
+        "options": [
+          {
+            "value": "int",
+            "label": "mod.kind.int"
+          },
+          {
+            "value": "float",
+            "label": "mod.kind.float"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(interop_%kind%((uintptr_t)(%addr%)) %op% %value%)"
+  },
+  {
+    "id": "interop.bytesAre",
+    "label": "mod.cond.interopBytes",
+    "group": "interop",
+    "section": "mod.sec.bytes",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "bytes",
+        "label": "mod.p.bytes",
+        "kind": "text",
+        "preset": "56 8B 74"
+      }
+    ],
+    "emit": "interop_bytes_are((uintptr_t)(%addr%), \"%bytes%\")"
+  },
+  {
+    "id": "interop.found",
+    "label": "mod.cond.interopFound",
+    "group": "interop",
+    "section": "mod.sec.bytes",
+    "params": [
+      {
+        "key": "pattern",
+        "label": "mod.p.pattern",
+        "kind": "text",
+        "preset": "56 8B 74 24 08 E8 ?? ?? ?? ??"
+      }
+    ],
+    "emit": "(interop_find(\"%pattern%\") != 0)"
+  }
+]

@@ -1,0 +1,38 @@
+[
+  {
+    "id": "files.size",
+    "label": "mod.expr.fileSize",
+    "group": "files",
+    "section": "mod.sec.file",
+    "kind": "int",
+    "text": "files_size(\"scripts/menu_main.txt\")",
+    "hint": "mod.expr.fileSize.hint"
+  },
+  {
+    "id": "files.isServed",
+    "label": "mod.expr.fileServed",
+    "group": "files",
+    "section": "mod.sec.served",
+    "kind": "int",
+    "text": "files_is_served(\"scripts/menu_main.txt\")",
+    "hint": ""
+  },
+  {
+    "id": "files.servedCount",
+    "label": "mod.expr.filesServed",
+    "group": "files",
+    "section": "mod.sec.served",
+    "kind": "int",
+    "text": "files_served_count()",
+    "hint": ""
+  },
+  {
+    "id": "files.servedAt",
+    "label": "mod.expr.fileServedAt",
+    "group": "files",
+    "section": "mod.sec.served",
+    "kind": "text",
+    "text": "files_served_at(0)",
+    "hint": ""
+  }
+]

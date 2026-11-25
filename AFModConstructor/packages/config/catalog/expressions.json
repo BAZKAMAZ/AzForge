@@ -1,0 +1,47 @@
+[
+  {
+    "id": "config.number",
+    "label": "mod.expr.cfgNumber",
+    "group": "config",
+    "section": "mod.sec.value",
+    "kind": "float",
+    "text": "config_number(\"g_gravity\")",
+    "hint": ""
+  },
+  {
+    "id": "config.text",
+    "label": "mod.expr.cfgText",
+    "group": "config",
+    "section": "mod.sec.value",
+    "kind": "text",
+    "text": "config_text(\"com_raster\")",
+    "hint": "mod.expr.cfgText.hint"
+  },
+  {
+    "id": "config.fallback",
+    "label": "mod.expr.cfgFallback",
+    "group": "config",
+    "section": "mod.sec.value",
+    "kind": "text",
+    "text": "config_fallback(\"g_gravity\")",
+    "hint": ""
+  },
+  {
+    "id": "config.count",
+    "label": "mod.expr.cfgCount",
+    "group": "config",
+    "section": "mod.sec.keys",
+    "kind": "int",
+    "text": "config_count()",
+    "hint": ""
+  },
+  {
+    "id": "config.nameAt",
+    "label": "mod.expr.cfgNameAt",
+    "group": "config",
+    "section": "mod.sec.keys",
+    "kind": "text",
+    "text": "config_name_at(0)",
+    "hint": ""
+  }
+]

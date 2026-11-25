@@ -1,0 +1,160 @@
+[
+  {
+    "id": "render.frame",
+    "label": "mod.ev.renderFrame",
+    "call": "Render.Subscribe",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "values": [
+      "delta",
+      "elapsed"
+    ],
+    "handler": "static void __cdecl %H%(const AmodFrame* frame, void* user)",
+    "subscribe": "if (API->render) %token% = API->render->Subscribe(SELF, %H%, 0);",
+    "provides": "render"
+  },
+  {
+    "id": "render.frameBegin",
+    "label": "mod.ev.renderBegin",
+    "call": "Render.SubscribeFrameBegin",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "values": [
+      "delta",
+      "elapsed"
+    ],
+    "handler": "static void __cdecl %H%(const AmodFrame* frame, void* user)",
+    "subscribe": "if (API->render) %token% = API->render->SubscribeFrameBegin(SELF, %H%, 0);",
+    "provides": "render"
+  },
+  {
+    "id": "render.element",
+    "label": "mod.ev.renderElement",
+    "call": "Render.OnElementDraw",
+    "group": "render",
+    "section": "mod.sec.items",
+    "values": [
+      "item",
+      "phase"
+    ],
+    "filters": [
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      },
+      {
+        "key": "phase",
+        "label": "mod.p.phase",
+        "kind": "enum",
+        "preset": "AMOD_ELEMENT_AFTER",
+        "options": [
+          {
+            "value": "AMOD_ELEMENT_BEFORE",
+            "label": "mod.phase.before"
+          },
+          {
+            "value": "AMOD_ELEMENT_AFTER",
+            "label": "mod.phase.after"
+          },
+          {
+            "value": "AMOD_ELEMENT_REPLACE",
+            "label": "mod.phase.replace"
+          }
+        ]
+      }
+    ],
+    "handler": "static void __cdecl %H%(AmodMenuItem item, AmodElementPhase phase, void* user)",
+    "subscribe": "if (API->render) %token% = API->render->OnElementDraw(SELF, \"%item%\", %phase%, %H%, 0);",
+    "provides": "render"
+  },
+  {
+    "id": "render.itemStyle",
+    "label": "mod.ev.renderStyle",
+    "call": "Render.OnItemStyle",
+    "group": "render",
+    "section": "mod.sec.items",
+    "values": [
+      "item",
+      "rgba",
+      "scale"
+    ],
+    "filters": [
+      {
+        "key": "item",
+        "label": "mod.p.item",
+        "kind": "text",
+        "preset": "ID_NEW_GAME"
+      }
+    ],
+    "handler": "static void __cdecl %H%(AmodMenuItem item, float rgba[4], float scale[2], void* user)",
+    "subscribe": "if (API->render) %token% = API->render->OnItemStyle(SELF, \"%item%\", %H%, 0);",
+    "provides": "render,item_style"
+  },
+  {
+    "id": "render.background",
+    "label": "mod.ev.renderBackground",
+    "call": "Render.OnMenuBackground",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "canVeto": true,
+    "values": [
+      "menuId"
+    ],
+    "filters": [
+      {
+        "key": "menu",
+        "label": "mod.p.menu",
+        "kind": "text",
+        "preset": "IDM_MAIN_MENU",
+        "test": "if (!menuId || strcmp(menuId, \"%v%\") != 0) return 0;"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const char* menuId, void* user)",
+    "subscribe": "if (API->render) %token% = API->render->OnMenuBackground(SELF, %H%, 0);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "render"
+  },
+  {
+    "id": "render.device",
+    "label": "mod.ev.renderDevice",
+    "call": "Render.OnDevice",
+    "group": "render",
+    "section": "mod.sec.device",
+    "values": [
+      "event",
+      "device"
+    ],
+    "filters": [
+      {
+        "key": "kind",
+        "label": "mod.p.deviceEvent",
+        "kind": "enum",
+        "preset": "AMOD_DEVICE_LOST",
+        "test": "if (event != %v%) return;",
+        "options": [
+          {
+            "value": "AMOD_DEVICE_CREATED",
+            "label": "mod.device.created"
+          },
+          {
+            "value": "AMOD_DEVICE_LOST",
+            "label": "mod.device.lost"
+          },
+          {
+            "value": "AMOD_DEVICE_RESET",
+            "label": "mod.device.reset"
+          },
+          {
+            "value": "AMOD_DEVICE_RELEASED",
+            "label": "mod.device.released"
+          }
+        ]
+      }
+    ],
+    "handler": "static void __cdecl %H%(AmodDeviceEvent event, void* device, void* user)",
+    "subscribe": "if (API->render) %token% = API->render->OnDevice(SELF, %H%, 0);"
+  }
+]

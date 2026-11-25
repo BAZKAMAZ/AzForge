@@ -1,0 +1,8 @@
+[
+  {
+    "id": "input",
+    "label": "mod.sys.input",
+    "prologue": "/* A key counts as bound when the game has a cvar or a command on it */\nstatic MOD_UNUSED int input_key_bound(int key) {\n    AmodKeyInfo info;\n    if (API->input == 0) return 0;\n    memset(&info, 0, sizeof info);\n    info.structSize = sizeof info;\n    if (API->input->GetKey(SELF, key, &info) == 0) return 0;\n    return info.bind != AMOD_KEY_UNBOUND;\n}\n\n/* The cursor lives in the 640x480 menu space, y counted from the top */\nstatic MOD_UNUSED float input_cursor_x(void) {\n    float x = 0.0f, y = 0.0f;\n    if (API->input != 0) API->input->GetCursor(SELF, &x, &y);\n    return x;\n}\n\nstatic MOD_UNUSED float input_cursor_y(void) {\n    float x = 0.0f, y = 0.0f;\n    if (API->input != 0) API->input->GetCursor(SELF, &x, &y);\n    return y;\n}\n\n/* A command bound to a key keeps its parameters; this reads one of them */\nstatic MOD_UNUSED const char* input_key_param(int key, int index) {\n    return API->input != 0 ? API->input->GetKeyParam(SELF, key, index) : 0;\n}\n\nstatic MOD_UNUSED int input_key_count(void) {\n    return API->input != 0 ? API->input->KeyCount(SELF) : 0;\n}",
+    "icon": "icons/input.png"
+  }
+]

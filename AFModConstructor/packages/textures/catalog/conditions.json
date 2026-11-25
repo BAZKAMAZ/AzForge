@@ -1,0 +1,119 @@
+[
+  {
+    "id": "texture.exists",
+    "label": "mod.cond.textureExists",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "(texture_any(\"%name%\") != AMOD_INVALID_TEXTURE)"
+  },
+  {
+    "id": "texture.valid",
+    "label": "mod.cond.textureValid",
+    "call": "Textures.IsValid",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "(API->textures && API->textures->IsValid(SELF, texture_any(\"%name%\")))"
+  },
+  {
+    "id": "texture.canvasHas",
+    "label": "mod.cond.canvasHas",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      }
+    ],
+    "emit": "(canvas_size(\"%canvas%\", 1) > 0)"
+  },
+  {
+    "id": "texture.pixelIs",
+    "label": "mod.cond.canvasPixel",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "channel",
+        "label": "mod.p.channel",
+        "kind": "number",
+        "preset": "3"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0.5"
+      }
+    ],
+    "emit": "(canvas_get(\"%canvas%\", (int)(%x%), (int)(%y%), (int)(%channel%)) %op% %value%)"
+  }
+]

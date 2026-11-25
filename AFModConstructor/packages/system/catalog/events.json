@@ -1,0 +1,30 @@
+[
+  {
+    "id": "frame.update",
+    "label": "mod.ev.frame",
+    "call": "AmodUpdate",
+    "values": [
+      "delta",
+      "elapsed"
+    ],
+    "frameTest": "1",
+    "group": "system",
+    "section": "mod.sec.general"
+  },
+  {
+    "id": "system.modInit",
+    "label": "mod.ev.modInit",
+    "call": "AmodInit",
+    "group": "system",
+    "section": "mod.sec.general",
+    "body": "init"
+  },
+  {
+    "id": "system.modShutdown",
+    "label": "mod.ev.modShutdown",
+    "call": "AmodShutdown",
+    "group": "system",
+    "section": "mod.sec.general",
+    "body": "shutdown"
+  }
+]

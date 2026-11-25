@@ -1,0 +1,23 @@
+{
+  "id": "system",
+  "name": "System",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "expr",
+    "forge",
+    "frame",
+    "list",
+    "log",
+    "math",
+    "system",
+    "text",
+    "var"
+  ],
+  "loader": false
+}

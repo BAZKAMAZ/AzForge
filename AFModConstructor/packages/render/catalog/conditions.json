@@ -1,0 +1,159 @@
+[
+  {
+    "id": "render.ready",
+    "label": "mod.cond.renderReady",
+    "group": "render",
+    "section": "mod.sec.device",
+    "emit": "render_ready()"
+  },
+  {
+    "id": "render.width",
+    "label": "mod.cond.renderWidth",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1024"
+      }
+    ],
+    "emit": "(render_viewport(1) %op% %value%)"
+  },
+  {
+    "id": "render.height",
+    "label": "mod.cond.renderHeight",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "768"
+      }
+    ],
+    "emit": "(render_viewport(0) %op% %value%)"
+  },
+  {
+    "id": "render.hasFont",
+    "label": "mod.cond.renderFont",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      }
+    ],
+    "emit": "(render_font(\"%name%\") != 0)"
+  },
+  {
+    "id": "render.hasTexture",
+    "label": "mod.cond.renderTexture",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      }
+    ],
+    "emit": "(render_texture(\"%file%\") != AMOD_INVALID_TEXTURE)"
+  },
+  {
+    "id": "render.deviceNew",
+    "label": "mod.cond.renderDeviceNew",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "state": "uint32_t",
+    "stateInit": "0",
+    "emit": "render_device_new(&%state%)"
+  },
+  {
+    "id": "render.hasWindow",
+    "label": "mod.cond.renderWindow",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "(API->render != 0 && API->render->GetWindow(SELF) != 0)"
+  },
+  {
+    "id": "render.wide",
+    "label": "mod.cond.renderWide",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "(render_viewport(1) * 3 > render_viewport(0) * 4)"
+  }
+]

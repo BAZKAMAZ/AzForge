@@ -1,0 +1,44 @@
+[
+  {
+    "id": "world.levelLoaded",
+    "label": "mod.ev.levelLoaded",
+    "call": "World.AddEventHandler(LEVEL_LOADED)",
+    "values": [
+      "level"
+    ],
+    "handler": "static void __cdecl %H%(const AmodWorldEventInfo* info, void* user)",
+    "subscribe": "if (API->world) %token% = API->world->AddEventHandler(SELF, AMOD_WORLD_EVENT_LEVEL_LOADED, %H%, 0);",
+    "group": "world",
+    "section": "mod.sec.level"
+  },
+  {
+    "id": "world.roomChanged",
+    "label": "mod.ev.roomChanged",
+    "call": "World.AddEventHandler(ROOM_CHANGED)",
+    "filters": [
+      {
+        "key": "room",
+        "label": "mod.p.room",
+        "kind": "room",
+        "test": "if (info->roomId != %v%) return;"
+      }
+    ],
+    "values": [
+      "room",
+      "previous"
+    ],
+    "handler": "static void __cdecl %H%(const AmodWorldEventInfo* info, void* user)",
+    "subscribe": "if (API->world) %token% = API->world->AddEventHandler(SELF, AMOD_WORLD_EVENT_ROOM_CHANGED, %H%, 0);",
+    "group": "world",
+    "section": "mod.sec.level"
+  },
+  {
+    "id": "world.timeUp",
+    "label": "mod.ev.timeUp",
+    "call": "World.AddEventHandler(TIME_UP)",
+    "handler": "static void __cdecl %H%(const AmodWorldEventInfo* info, void* user)",
+    "subscribe": "if (API->world) %token% = API->world->AddEventHandler(SELF, AMOD_WORLD_EVENT_TIME_UP, %H%, 0);",
+    "group": "world",
+    "section": "mod.sec.level"
+  }
+]

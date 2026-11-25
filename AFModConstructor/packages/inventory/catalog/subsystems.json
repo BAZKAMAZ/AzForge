@@ -1,0 +1,8 @@
+[
+  {
+    "id": "inventory",
+    "label": "mod.sys.inventory",
+    "prologue": "",
+    "icon": "icons/inventory.png"
+  }
+]

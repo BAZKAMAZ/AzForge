@@ -1,0 +1,14 @@
+{
+  "id": "mod_screen",
+  "name": "Mods",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "mod_screen"
+  ]
+}

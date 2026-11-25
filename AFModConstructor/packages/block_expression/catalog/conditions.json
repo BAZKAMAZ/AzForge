@@ -1,0 +1,406 @@
+[
+  {
+    "id": "block.fileHas",
+    "label": "mod.cond.blockFileHas",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      }
+    ],
+    "emit": "block_file_has(\"%file%\", \"%path%\", \"%key%\")"
+  },
+  {
+    "id": "block.fileNumberIs",
+    "label": "mod.cond.blockFileNumber",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(block_file_number(\"%file%\", \"%path%\", \"%key%\") %op% %value%)"
+  },
+  {
+    "id": "block.fileTextIs",
+    "label": "mod.cond.blockFileText",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "block_file_text_is(\"%file%\", \"%path%\", \"%key%\", \"%text%\")"
+  },
+  {
+    "id": "block.childCount",
+    "label": "mod.cond.blockChildren",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "scripts/menu_main.txt"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "(block_file_children(\"%file%\", \"%path%\") %op% %value%)"
+  },
+  {
+    "id": "block.storeHas",
+    "label": "mod.cond.blockStoreHas",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "count"
+      }
+    ],
+    "emit": "block_store_has(\"%path%\", \"%key%\")"
+  },
+  {
+    "id": "block.storeNumberIs",
+    "label": "mod.cond.blockStoreNumber",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "count"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(block_store_number(\"%path%\", \"%key%\") %op% %value%)"
+  },
+  {
+    "id": "block.storeTextIs",
+    "label": "mod.cond.blockStoreText",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "data"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "name"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "block_store_text_is(\"%path%\", \"%key%\", \"%text%\")"
+  },
+  {
+    "id": "block.textHas",
+    "label": "mod.cond.blockTextHas",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.script",
+        "kind": "text",
+        "preset": "$header { $menu_id 1 }"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      }
+    ],
+    "emit": "block_text_has(\"%text%\", \"%path%\", \"%key%\")"
+  },
+  {
+    "id": "block.textNumberIs",
+    "label": "mod.cond.blockTextNumber",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.script",
+        "kind": "text",
+        "preset": "$header { $menu_id 1 }"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.blockPath",
+        "kind": "text",
+        "preset": "header"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "menu_id"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "(block_text_number(\"%text%\", \"%path%\", \"%key%\") %op% %value%)"
+  },
+  {
+    "id": "block.objectHas",
+    "label": "mod.cond.blockObjectHas",
+    "group": "block_expression",
+    "section": "mod.sec.object",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.blockKey",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "block_object_has((uintptr_t)(%addr%), \"%key%\")"
+  }
+]

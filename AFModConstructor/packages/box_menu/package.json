@@ -1,0 +1,15 @@
+{
+  "id": "box_menu",
+  "name": "Screens",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "box",
+    "box_menu"
+  ]
+}

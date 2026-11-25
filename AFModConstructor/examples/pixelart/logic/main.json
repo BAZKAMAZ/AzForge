@@ -1,0 +1,754 @@
+{
+    "name": "main",
+    "rules": [
+        {
+            "actions": [],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "canvas": "art",
+                                "h": "64",
+                                "w": "64"
+                            },
+                            "id": "texture.canvas"
+                        },
+                        {
+                            "args": {
+                                "canvas": "font",
+                                "h": "16",
+                                "w": "80"
+                            },
+                            "id": "texture.canvas"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "id": "render.ready",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "1",
+                                        "r": "1",
+                                        "w": "4",
+                                        "x": "=d * 8 + 2",
+                                        "y": "1"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 5 + 0)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "5",
+                                        "r": "1",
+                                        "w": "1",
+                                        "x": "=d * 8 + 6",
+                                        "y": "2"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 1)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "5",
+                                        "r": "1",
+                                        "w": "1",
+                                        "x": "=d * 8 + 6",
+                                        "y": "9"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 2)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "1",
+                                        "r": "1",
+                                        "w": "4",
+                                        "x": "=d * 8 + 2",
+                                        "y": "14"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 3)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "5",
+                                        "r": "1",
+                                        "w": "1",
+                                        "x": "=d * 8 + 1",
+                                        "y": "9"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 4)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "5",
+                                        "r": "1",
+                                        "w": "1",
+                                        "x": "=d * 8 + 1",
+                                        "y": "2"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 5)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "b": "1",
+                                        "canvas": "font",
+                                        "g": "1",
+                                        "h": "1",
+                                        "r": "1",
+                                        "w": "4",
+                                        "x": "=d * 8 + 2",
+                                        "y": "8"
+                                    },
+                                    "id": "texture.fill"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "text": "=(((d < 5) ? 0x669F6C33FULL : 0x6FFE1FEEDULL) >> ((d % 5) * 7 + 6)) & 1"
+                                    },
+                                    "id": "expr",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        },
+                        {
+                            "args": {
+                                "count": "10",
+                                "var": "d"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "canvas": "font",
+                                "name": "digits"
+                            },
+                            "id": "texture.make"
+                        },
+                        {
+                            "args": {
+                                "name": "digits",
+                                "path": "mod/digits.tga"
+                            },
+                            "id": "texture.override"
+                        },
+                        {
+                            "args": {
+                                "cellH": "16",
+                                "cellW": "8",
+                                "chars": "0123456789",
+                                "file": "mod/digits.tga",
+                                "font": "mine",
+                                "offsetX": "0"
+                            },
+                            "id": "font.grid"
+                        },
+                        {
+                            "args": {
+                                "font": "mine",
+                                "height": "16"
+                            },
+                            "id": "font.lineHeight"
+                        },
+                        {
+                            "args": {
+                                "name": "built",
+                                "value": "1"
+                            },
+                            "id": "var.set"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "id": "render.ready",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "repaint",
+                                "value": "1"
+                            },
+                            "id": "var.set"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "seconds": "0.05"
+                            },
+                            "id": "system.everySeconds",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "a": "1",
+                                "b": "=(sqrtf((px - 32.0f) * (px - 32.0f) + (py - 32.0f) * (py - 32.0f)) < 22.0f) ? 0.85f : 0.15f",
+                                "canvas": "art",
+                                "g": "=0.5f + 0.5f * sinf((px * 0.07f) - (py * 0.16f) - wave * 1.7f)",
+                                "r": "=0.5f + 0.5f * sinf((px * 0.18f) + (py * 0.11f) + wave)",
+                                "x": "=px",
+                                "y": "=py"
+                            },
+                            "id": "texture.pixel"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "repaint"
+                            },
+                            "id": "var.on",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "count": "64",
+                                "var": "px"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "count": "64",
+                                "var": "py"
+                            },
+                            "id": "system.repeat",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "canvas": "art",
+                                "name": "art"
+                            },
+                            "id": "texture.make"
+                        },
+                        {
+                            "args": {
+                                "name": "art",
+                                "path": "mod/art.tga"
+                            },
+                            "id": "texture.override"
+                        },
+                        {
+                            "args": {
+                                "name": "repaint",
+                                "value": "0"
+                            },
+                            "id": "var.set"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "repaint"
+                            },
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "wave",
+                                "value": "=mod_delta * 2.0f"
+                            },
+                            "id": "var.add"
+                        },
+                        {
+                            "args": {
+                                "name": "frames",
+                                "value": "1"
+                            },
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "a": "1",
+                                "b": "1",
+                                "file": "mod/art.tga",
+                                "g": "1",
+                                "h": "128",
+                                "r": "1",
+                                "w": "128",
+                                "x": "24",
+                                "y": "24"
+                            },
+                            "id": "render.sprite"
+                        },
+                        {
+                            "args": {
+                                "a": "1",
+                                "b": "0.25",
+                                "g": "0.75",
+                                "h": "132",
+                                "r": "0.9",
+                                "thickness": "2",
+                                "w": "132",
+                                "x": "22",
+                                "y": "22"
+                            },
+                            "id": "render.outline"
+                        },
+                        {
+                            "args": {
+                                "a": "1",
+                                "align": "AMOD_FONT_LEFT",
+                                "b": "0.25",
+                                "font": "mine",
+                                "g": "0.75",
+                                "r": "0.9",
+                                "scale": "1",
+                                "text": "{frames}",
+                                "x": "24",
+                                "y": "162"
+                            },
+                            "id": "font.draw"
+                        },
+                        {
+                            "args": {
+                                "a": "1",
+                                "b": "0.9",
+                                "font": "",
+                                "g": "0.78",
+                                "r": "0.75",
+                                "scale": "0.7",
+                                "text": "pixelart: no files at all",
+                                "x": "24",
+                                "y": "190"
+                            },
+                            "id": "render.text"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "built"
+                            },
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "render.frame",
+            "filters": {},
+            "veto": false
+        }
+    ],
+    "vars": [
+        {
+            "name": "built",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "wave",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "frames",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "repaint",
+            "type": "bool",
+            "value": "0"
+        }
+    ]
+}

@@ -1,0 +1,289 @@
+[
+  {
+    "id": "font.create",
+    "label": "mod.act.fontCreate",
+    "call": "SpriteFont.Create",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "font_make(\"%font%\");"
+  },
+  {
+    "id": "font.grid",
+    "label": "mod.act.fontGrid",
+    "call": "SpriteFont.SetGrid",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "fonts/mine.tga"
+      },
+      {
+        "key": "chars",
+        "label": "mod.p.glyphs",
+        "kind": "text",
+        "preset": "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+      },
+      {
+        "key": "cellW",
+        "label": "mod.p.cellWidth",
+        "kind": "number",
+        "preset": "16"
+      },
+      {
+        "key": "cellH",
+        "label": "mod.p.cellHeight",
+        "kind": "number",
+        "preset": "16"
+      },
+      {
+        "key": "offsetX",
+        "label": "mod.p.offsetX",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "font_grid(\"%font%\", \"%file%\", \"%chars%\", (float)(%cellW%), (float)(%cellH%), (float)(%offsetX%));"
+  },
+  {
+    "id": "font.glyph",
+    "label": "mod.act.fontGlyph",
+    "call": "SpriteFont.SetGlyph",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "ch",
+        "label": "mod.p.glyph",
+        "kind": "text",
+        "preset": "A"
+      },
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "fonts/mine.tga"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "16"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "16"
+      },
+      {
+        "key": "offsetX",
+        "label": "mod.p.offsetX",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "offsetY",
+        "label": "mod.p.offsetY",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "font_glyph(\"%font%\", \"%ch%\"[0], \"%file%\", (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%offsetX%), (float)(%offsetY%));"
+  },
+  {
+    "id": "font.lineHeight",
+    "label": "mod.act.fontLineHeight",
+    "call": "SpriteFont.SetLineHeight",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "height",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "16"
+      }
+    ],
+    "emit": "if (API->spriteFont) API->spriteFont->SetLineHeight(SELF, font_any(\"%font%\"), (float)(%height%));"
+  },
+  {
+    "id": "font.draw",
+    "label": "mod.act.fontDraw",
+    "call": "SpriteFont.Draw",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "align",
+        "label": "mod.p.align",
+        "kind": "enum",
+        "preset": "AMOD_FONT_LEFT",
+        "options": [
+          {
+            "value": "AMOD_FONT_LEFT",
+            "label": "mod.align.left"
+          },
+          {
+            "value": "AMOD_FONT_CENTRE",
+            "label": "mod.align.centre"
+          },
+          {
+            "value": "AMOD_FONT_RIGHT",
+            "label": "mod.align.right"
+          }
+        ]
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->spriteFont) API->spriteFont->Draw(SELF, font_any(\"%font%\"), (float)(%x%), (float)(%y%), \"%text%\", (float)(%scale%), font_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)), %align%);",
+    "needs": "render"
+  },
+  {
+    "id": "font.replace",
+    "label": "mod.act.fontReplace",
+    "call": "SpriteFont.Replace",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "gameFont",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      },
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "if (API->spriteFont) API->spriteFont->Replace(SELF, \"%gameFont%\", font_make(\"%font%\"));"
+  },
+  {
+    "id": "font.restore",
+    "label": "mod.act.fontRestore",
+    "call": "SpriteFont.Restore",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "gameFont",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      }
+    ],
+    "emit": "if (API->spriteFont) API->spriteFont->Restore(SELF, \"%gameFont%\");"
+  },
+  {
+    "id": "font.destroy",
+    "label": "mod.act.fontDestroy",
+    "call": "SpriteFont.Destroy",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "params": [
+      {
+        "key": "font",
+        "label": "mod.p.fontName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "font_forget(\"%font%\");"
+  }
+]

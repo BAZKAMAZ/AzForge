@@ -1,0 +1,15 @@
+{
+  "id": "ctrls",
+  "name": "Room objects",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "ctrl",
+    "ctrls"
+  ]
+}

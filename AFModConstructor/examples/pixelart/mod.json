@@ -1,0 +1,16 @@
+{
+    "api_version": 1,
+    "author": "AzangaraStudio",
+    "capabilities": [],
+    "description": "Art and a font painted pixel by pixel, without a single file",
+    "entry": "bin/pixelart.dll",
+    "game_version": "1.0",
+    "id": "pixelart",
+    "name": "pixelart",
+    "requires": [
+        "render",
+        "sprite_font",
+        "textures"
+    ],
+    "version": "1.0.0"
+}

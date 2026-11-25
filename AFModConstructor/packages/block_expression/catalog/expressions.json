@@ -1,0 +1,65 @@
+[
+  {
+    "id": "block.fileNumber",
+    "label": "mod.expr.blockNumber",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "kind": "float",
+    "text": "block_file_number(\"scripts/menu_main.txt\", \"header\", \"help_pos\")",
+    "hint": ""
+  },
+  {
+    "id": "block.storeNumber",
+    "label": "mod.expr.blockStore",
+    "group": "block_expression",
+    "section": "mod.sec.store",
+    "kind": "float",
+    "text": "block_store_number(\"data\", \"count\")",
+    "hint": ""
+  },
+  {
+    "id": "block.textNumber",
+    "label": "mod.expr.blockTextNumber",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "kind": "float",
+    "text": "block_text_number(\"$header { $menu_id 1 }\", \"header\", \"menu_id\")",
+    "hint": "mod.expr.blockTextNumber.hint"
+  },
+  {
+    "id": "block.childName",
+    "label": "mod.expr.blockChildName",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "kind": "text",
+    "text": "block_file_child_name(\"scripts/menu_main.txt\", \"menu_items\", 0)",
+    "hint": "mod.expr.blockChildName.hint"
+  },
+  {
+    "id": "block.keyCount",
+    "label": "mod.expr.blockKeyCount",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "kind": "int",
+    "text": "block_file_keys(\"scripts/menu_main.txt\", \"header\")",
+    "hint": ""
+  },
+  {
+    "id": "block.keyName",
+    "label": "mod.expr.blockKeyName",
+    "group": "block_expression",
+    "section": "mod.sec.file",
+    "kind": "text",
+    "text": "block_file_key_name(\"scripts/menu_main.txt\", \"header\", 0)",
+    "hint": "mod.expr.blockChildName.hint"
+  },
+  {
+    "id": "block.objectNumber",
+    "label": "mod.expr.blockObjectNumber",
+    "group": "block_expression",
+    "section": "mod.sec.object",
+    "kind": "float",
+    "text": "block_object_number(0, \"mine\")",
+    "hint": "mod.expr.blockObjectNumber.hint"
+  }
+]

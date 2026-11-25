@@ -1,0 +1,129 @@
+[
+  {
+    "id": "interop.writeInt",
+    "label": "mod.act.interopWriteInt",
+    "call": "Interop.Write",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "needs": "",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "interop_write_int((uintptr_t)(%addr%), (int)(%value%));"
+  },
+  {
+    "id": "interop.writeFloat",
+    "label": "mod.act.interopWriteFloat",
+    "call": "Interop.Write",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "interop_write_float((uintptr_t)(%addr%), (float)(%value%));"
+  },
+  {
+    "id": "interop.toVar",
+    "label": "mod.act.interopToVar",
+    "call": "Interop.Read",
+    "group": "interop",
+    "section": "mod.sec.value",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "int",
+        "options": [
+          {
+            "value": "int",
+            "label": "mod.kind.int"
+          },
+          {
+            "value": "float",
+            "label": "mod.kind.float"
+          }
+        ]
+      },
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "value"
+      }
+    ],
+    "emit": "%var% = interop_%kind%((uintptr_t)(%addr%));"
+  },
+  {
+    "id": "interop.writeBytes",
+    "label": "mod.act.interopWriteBytes",
+    "call": "Interop.Write",
+    "group": "interop",
+    "section": "mod.sec.bytes",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "bytes",
+        "label": "mod.p.bytes",
+        "kind": "text",
+        "preset": "90 90 90"
+      }
+    ],
+    "emit": "interop_write_bytes((uintptr_t)(%addr%), \"%bytes%\");"
+  },
+  {
+    "id": "interop.nop",
+    "label": "mod.act.interopNop",
+    "call": "Interop.Write",
+    "group": "interop",
+    "section": "mod.sec.bytes",
+    "params": [
+      {
+        "key": "addr",
+        "label": "mod.p.address",
+        "kind": "text",
+        "preset": "0x006914A8"
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "5"
+      }
+    ],
+    "emit": "interop_nop((uintptr_t)(%addr%), (int)(%count%));"
+  }
+]

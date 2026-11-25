@@ -1,0 +1,11 @@
+{
+    "cmake.cmakePath": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+    "cmake.useCMakePresets": "always",
+    "cmake.configureOnOpen": true,
+    "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools",
+    "files.encoding": "utf8",
+    "files.associations": {
+        "*.h": "cpp"
+    }
+}

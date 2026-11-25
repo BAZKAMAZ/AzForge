@@ -1,0 +1,262 @@
+[
+  {
+    "id": "scores.count",
+    "label": "mod.cond.scoreCount",
+    "call": "Dat.Count",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "((API->scores ? API->scores->Count(SELF) : 0) %op% %value%)"
+  },
+  {
+    "id": "scores.has",
+    "label": "mod.cond.scoreHas",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.playerName",
+        "kind": "text",
+        "preset": "MOD"
+      }
+    ],
+    "emit": "(scores_find(\"%name%\") >= 0)"
+  },
+  {
+    "id": "scores.point",
+    "label": "mod.cond.scorePoint",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "(scores_point((int)(%index%)) %op% %value%)"
+  },
+  {
+    "id": "scores.time",
+    "label": "mod.cond.scoreTime",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "<",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.timeSeconds",
+        "kind": "number",
+        "preset": "60"
+      }
+    ],
+    "emit": "(scores_time((int)(%index%)) %op% %value%)"
+  },
+  {
+    "id": "scores.nameIs",
+    "label": "mod.cond.scoreNameIs",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.playerName",
+        "kind": "text",
+        "preset": "MOD"
+      }
+    ],
+    "emit": "(strcmp(scores_name((int)(%index%)), \"%name%\") == 0)"
+  },
+  {
+    "id": "scores.levelKnown",
+    "label": "mod.cond.levelKnown",
+    "call": "Dat.CastleOfLevel",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.levelPath",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      }
+    ],
+    "emit": "(scores_castle_of(\"%level%\") >= 0)"
+  },
+  {
+    "id": "scores.castleCount",
+    "label": "mod.cond.castleCount",
+    "call": "Dat.CastleEntryCount",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "params": [
+      {
+        "key": "castle",
+        "label": "mod.p.castle",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(scores_in_castle((int)(%castle%)) %op% %value%)"
+  }
+]

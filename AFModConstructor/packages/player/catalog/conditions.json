@@ -1,0 +1,32 @@
+[
+  {
+    "id": "player.scoreAtLeast",
+    "label": "mod.cond.scoreAtLeast",
+    "group": "player",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "(API->player && API->player->GetScore(SELF) >= %points%)",
+    "section": "mod.sec.score"
+  },
+  {
+    "id": "player.livesAtMost",
+    "label": "mod.cond.livesAtMost",
+    "group": "player",
+    "params": [
+      {
+        "key": "lives",
+        "label": "mod.p.lives",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "(API->player && API->player->GetLives(SELF) <= %lives%)",
+    "section": "mod.sec.life"
+  }
+]

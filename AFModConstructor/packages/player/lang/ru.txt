@@ -1,0 +1,27 @@
+mod.act.addScore=Добавить очки
+mod.act.burn=Сжечь игрока
+mod.act.kill=Убить игрока
+mod.act.setLives=Задать жизни
+mod.cond.livesAtMost=Жизней не больше
+mod.cond.scoreAtLeast=Очков не меньше
+mod.ev.playerDied=Игрок умирает
+mod.ev.playerScore=Очки изменились
+mod.expr.lives=Жизни игрока
+mod.expr.playerPos.hint=Координаты в мире, работает только когда игрок в уровне
+mod.expr.playerX=Игрок: X
+mod.expr.playerY=Игрок: Y
+mod.expr.playerZ=Игрок: Z
+mod.expr.score=Очки игрока
+mod.p.lives=Жизни
+mod.p.points=Очки
+mod.sec.life=Жизни
+mod.sec.score=Очки
+mod.sys.player=Игрок
+mod.act.addScore.line=Игрок: очки +%points%
+mod.act.burn.line=Игрок: сжечь
+mod.act.kill.line=Игрок: убить
+mod.act.setLives.line=Игрок: жизней = %lives%
+mod.cond.livesAtMost.line=Жизней не больше %lives%
+mod.cond.scoreAtLeast.line=Очков не меньше %points%
+mod.ev.playerDied.line=Игрок умирает
+mod.ev.playerScore.line=Очки изменились

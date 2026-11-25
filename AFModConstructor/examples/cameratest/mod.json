@@ -1,0 +1,16 @@
+{
+    "api_version": 1,
+    "author": "AFModConstructor",
+    "capabilities": [],
+    "description": "Interactive showcase of all CameraApi events, conditions, actions and expressions",
+    "entry": "bin/cameratest.dll",
+    "game_version": "1.0",
+    "id": "cameratest",
+    "name": "cameratest",
+    "requires": [
+        "camera",
+        "input",
+        "render"
+    ],
+    "version": "1.0.0"
+}

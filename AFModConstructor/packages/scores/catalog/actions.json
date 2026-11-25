@@ -1,0 +1,187 @@
+[
+  {
+    "id": "scores.add",
+    "label": "mod.act.scoreAdd",
+    "call": "Dat.Add",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.levelPath",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.playerName",
+        "kind": "text",
+        "preset": "MOD"
+      },
+      {
+        "key": "time",
+        "label": "mod.p.timeSeconds",
+        "kind": "number",
+        "preset": "60"
+      },
+      {
+        "key": "score",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "if (API->scores) API->scores->Add(SELF, \"%level%\", \"%name%\", (float)(%time%), (int)(%score%));"
+  },
+  {
+    "id": "scores.set",
+    "label": "mod.act.scoreSet",
+    "call": "Dat.Set",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.playerName",
+        "kind": "text",
+        "preset": "MOD"
+      },
+      {
+        "key": "time",
+        "label": "mod.p.timeSeconds",
+        "kind": "number",
+        "preset": "60"
+      },
+      {
+        "key": "score",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "if (API->scores) API->scores->Set(SELF, (int)(%index%), \"%name%\", (float)(%time%), (int)(%score%));"
+  },
+  {
+    "id": "scores.setName",
+    "label": "mod.act.scoreSetName",
+    "call": "Dat.SetName",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.playerName",
+        "kind": "text",
+        "preset": "MOD"
+      }
+    ],
+    "emit": "if (API->scores) API->scores->SetName(SELF, (int)(%index%), \"%name%\");"
+  },
+  {
+    "id": "scores.setPoint",
+    "label": "mod.act.scoreSetPoint",
+    "call": "Dat.SetPoint",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "score",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "if (API->scores) API->scores->SetPoint(SELF, (int)(%index%), (int)(%score%));"
+  },
+  {
+    "id": "scores.remove",
+    "label": "mod.act.scoreRemove",
+    "call": "Dat.Remove",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->scores) API->scores->Remove(SELF, (int)(%index%));"
+  },
+  {
+    "id": "scores.keep",
+    "label": "mod.act.scoreKeep",
+    "call": "Dat.Keep",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.scoreIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "keep",
+        "label": "mod.p.keepBetweenRuns",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "protect",
+        "label": "mod.p.protectRow",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->scores) API->scores->Keep(SELF, (int)(%index%), %keep%, %protect%);"
+  },
+  {
+    "id": "scores.save",
+    "label": "mod.act.scoreSave",
+    "call": "Dat.Save",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "params": [],
+    "emit": "if (API->scores) API->scores->Save(SELF);"
+  }
+]

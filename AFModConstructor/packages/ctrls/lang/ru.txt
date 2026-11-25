@@ -1,0 +1,9 @@
+mod.act.ctrlHidden=Спрятать объект
+mod.act.ctrlProperty=Свойство объекта
+mod.ev.ctrlTouched=Игрок коснулся объекта
+mod.p.hidden=Спрятан
+mod.p.object=Объект
+mod.sys.ctrls=Объекты комнаты
+mod.act.ctrlHidden.line=%object%: спрятан = %hidden%
+mod.act.ctrlProperty.line=%object%: %key% = %value%
+mod.ev.ctrlTouched.line=Игрок коснулся «%object%»

@@ -1,0 +1,264 @@
+[
+  {
+    "id": "texture.canvas",
+    "label": "mod.act.canvasNew",
+    "call": "Textures.Create",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "64"
+      }
+    ],
+    "emit": "canvas_new(\"%canvas%\", (int)(%w%), (int)(%h%));"
+  },
+  {
+    "id": "texture.pixel",
+    "label": "mod.act.canvasPixel",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "canvas_set(\"%canvas%\", (int)(%x%), (int)(%y%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));"
+  },
+  {
+    "id": "texture.fill",
+    "label": "mod.act.canvasFill",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "8"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "8"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "canvas_fill(\"%canvas%\", (int)(%x%), (int)(%y%), (int)(%w%), (int)(%h%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));"
+  },
+  {
+    "id": "texture.make",
+    "label": "mod.act.canvasToTexture",
+    "call": "Textures.Create + Replace",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "canvas_to_texture(\"%canvas%\", \"%name%\");"
+  },
+  {
+    "id": "texture.read",
+    "label": "mod.act.textureToCanvas",
+    "call": "Textures.ReadPixels",
+    "group": "textures",
+    "section": "mod.sec.pixels",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      },
+      {
+        "key": "canvas",
+        "label": "mod.p.canvas",
+        "kind": "text",
+        "preset": "sheet"
+      }
+    ],
+    "emit": "texture_to_canvas(\"%name%\", \"%canvas%\");"
+  },
+  {
+    "id": "texture.override",
+    "label": "mod.act.textureOverride",
+    "call": "Textures.Override",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "texture_override(\"%path%\", \"%name%\");"
+  },
+  {
+    "id": "texture.clearOverride",
+    "label": "mod.act.textureClearOverride",
+    "call": "Textures.ClearOverride",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "path",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      }
+    ],
+    "emit": "if (API->textures) API->textures->ClearOverride(SELF, \"%path%\");"
+  },
+  {
+    "id": "texture.save",
+    "label": "mod.act.textureSave",
+    "call": "Textures.Save",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "path",
+        "label": "mod.p.file",
+        "kind": "text",
+        "preset": "mod/picture.tga"
+      }
+    ],
+    "emit": "if (API->textures) API->textures->Save(SELF, texture_any(\"%name%\"), \"%path%\");"
+  },
+  {
+    "id": "texture.release",
+    "label": "mod.act.textureRelease",
+    "call": "Textures.Release",
+    "group": "textures",
+    "section": "mod.sec.pictures",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.pictureName",
+        "kind": "text",
+        "preset": "mine"
+      }
+    ],
+    "emit": "texture_release(\"%name%\");"
+  }
+]

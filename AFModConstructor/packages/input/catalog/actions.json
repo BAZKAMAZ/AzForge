@@ -1,0 +1,1946 @@
+[
+  {
+    "id": "input.press",
+    "label": "mod.act.pressKey",
+    "call": "Input.PressKey",
+    "group": "input",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->PressKey(SELF, %key%);"
+  },
+  {
+    "id": "input.hold",
+    "label": "mod.act.holdKey",
+    "call": "Input.HoldKey",
+    "group": "input",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      },
+      {
+        "key": "down",
+        "label": "mod.p.down",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "exclusive",
+        "label": "mod.p.exclusive",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->HoldKey(SELF, %key%, %down%, %exclusive%);"
+  },
+  {
+    "id": "input.setCursor",
+    "label": "mod.act.setCursor",
+    "call": "Input.SetCursor",
+    "group": "input",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      }
+    ],
+    "emit": "if (API->input) API->input->SetCursor(SELF, (float)(%x%), (float)(%y%));"
+  },
+  {
+    "id": "input.showCursor",
+    "label": "mod.act.showCursor",
+    "call": "Input.ShowSystemCursor",
+    "group": "input",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "show",
+        "label": "mod.p.visible",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->ShowSystemCursor(SELF, %show%);"
+  },
+  {
+    "id": "input.bindCommand",
+    "label": "mod.act.bindCommand",
+    "call": "Input.BindCommand",
+    "group": "input",
+    "section": "mod.sec.bind",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      },
+      {
+        "key": "command",
+        "label": "mod.p.command",
+        "kind": "text",
+        "preset": "level"
+      },
+      {
+        "key": "held",
+        "label": "mod.p.held",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->BindCommand(SELF, %key%, \"%command%\", 0, 0, %held%);"
+  },
+  {
+    "id": "input.bindCvar",
+    "label": "mod.act.bindCvar",
+    "call": "Input.BindCvar",
+    "group": "input",
+    "section": "mod.sec.bind",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      },
+      {
+        "key": "cvar",
+        "label": "mod.p.cvar",
+        "kind": "text",
+        "preset": "developer"
+      },
+      {
+        "key": "held",
+        "label": "mod.p.held",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->BindCvar(SELF, %key%, \"%cvar%\", %held%);"
+  },
+  {
+    "id": "input.unbind",
+    "label": "mod.act.unbind",
+    "call": "Input.Unbind",
+    "group": "input",
+    "section": "mod.sec.bind",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->Unbind(SELF, %key%);"
+  },
+  {
+    "id": "input.keep",
+    "label": "mod.act.keepBinding",
+    "call": "Input.Keep",
+    "group": "input",
+    "section": "mod.sec.bind",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key",
+        "kind": "enum",
+        "preset": "112",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.key.mouseLeft"
+          },
+          {
+            "value": "2",
+            "label": "mod.key.mouseRight"
+          },
+          {
+            "value": "4",
+            "label": "mod.key.mouseMiddle"
+          },
+          {
+            "value": "8",
+            "label": "mod.key.backspace"
+          },
+          {
+            "value": "9",
+            "label": "mod.key.tab"
+          },
+          {
+            "value": "13",
+            "label": "mod.key.enter"
+          },
+          {
+            "value": "16",
+            "label": "mod.key.shift"
+          },
+          {
+            "value": "17",
+            "label": "mod.key.ctrl"
+          },
+          {
+            "value": "18",
+            "label": "mod.key.alt"
+          },
+          {
+            "value": "27",
+            "label": "mod.key.escape"
+          },
+          {
+            "value": "32",
+            "label": "mod.key.space"
+          },
+          {
+            "value": "37",
+            "label": "mod.key.left"
+          },
+          {
+            "value": "38",
+            "label": "mod.key.up"
+          },
+          {
+            "value": "39",
+            "label": "mod.key.right"
+          },
+          {
+            "value": "40",
+            "label": "mod.key.down"
+          },
+          {
+            "value": "45",
+            "label": "mod.key.insert"
+          },
+          {
+            "value": "46",
+            "label": "mod.key.delete"
+          },
+          {
+            "value": "112",
+            "label": "mod.key.f1"
+          },
+          {
+            "value": "113",
+            "label": "mod.key.f2"
+          },
+          {
+            "value": "114",
+            "label": "mod.key.f3"
+          },
+          {
+            "value": "115",
+            "label": "mod.key.f4"
+          },
+          {
+            "value": "116",
+            "label": "mod.key.f5"
+          },
+          {
+            "value": "117",
+            "label": "mod.key.f6"
+          },
+          {
+            "value": "118",
+            "label": "mod.key.f7"
+          },
+          {
+            "value": "119",
+            "label": "mod.key.f8"
+          },
+          {
+            "value": "120",
+            "label": "mod.key.f9"
+          },
+          {
+            "value": "121",
+            "label": "mod.key.f10"
+          },
+          {
+            "value": "122",
+            "label": "mod.key.f11"
+          },
+          {
+            "value": "123",
+            "label": "mod.key.f12"
+          },
+          {
+            "value": "256",
+            "label": "mod.key.joyLeft"
+          },
+          {
+            "value": "257",
+            "label": "mod.key.joyRight"
+          },
+          {
+            "value": "258",
+            "label": "mod.key.joyDown"
+          },
+          {
+            "value": "259",
+            "label": "mod.key.joyUp"
+          },
+          {
+            "value": "260",
+            "label": "mod.key.joy1"
+          },
+          {
+            "value": "48",
+            "label": "0"
+          },
+          {
+            "value": "49",
+            "label": "1"
+          },
+          {
+            "value": "50",
+            "label": "2"
+          },
+          {
+            "value": "51",
+            "label": "3"
+          },
+          {
+            "value": "52",
+            "label": "4"
+          },
+          {
+            "value": "53",
+            "label": "5"
+          },
+          {
+            "value": "54",
+            "label": "6"
+          },
+          {
+            "value": "55",
+            "label": "7"
+          },
+          {
+            "value": "56",
+            "label": "8"
+          },
+          {
+            "value": "57",
+            "label": "9"
+          },
+          {
+            "value": "65",
+            "label": "A"
+          },
+          {
+            "value": "66",
+            "label": "B"
+          },
+          {
+            "value": "67",
+            "label": "C"
+          },
+          {
+            "value": "68",
+            "label": "D"
+          },
+          {
+            "value": "69",
+            "label": "E"
+          },
+          {
+            "value": "70",
+            "label": "F"
+          },
+          {
+            "value": "71",
+            "label": "G"
+          },
+          {
+            "value": "72",
+            "label": "H"
+          },
+          {
+            "value": "73",
+            "label": "I"
+          },
+          {
+            "value": "74",
+            "label": "J"
+          },
+          {
+            "value": "75",
+            "label": "K"
+          },
+          {
+            "value": "76",
+            "label": "L"
+          },
+          {
+            "value": "77",
+            "label": "M"
+          },
+          {
+            "value": "78",
+            "label": "N"
+          },
+          {
+            "value": "79",
+            "label": "O"
+          },
+          {
+            "value": "80",
+            "label": "P"
+          },
+          {
+            "value": "81",
+            "label": "Q"
+          },
+          {
+            "value": "82",
+            "label": "R"
+          },
+          {
+            "value": "83",
+            "label": "S"
+          },
+          {
+            "value": "84",
+            "label": "T"
+          },
+          {
+            "value": "85",
+            "label": "U"
+          },
+          {
+            "value": "86",
+            "label": "V"
+          },
+          {
+            "value": "87",
+            "label": "W"
+          },
+          {
+            "value": "88",
+            "label": "X"
+          },
+          {
+            "value": "89",
+            "label": "Y"
+          },
+          {
+            "value": "90",
+            "label": "Z"
+          }
+        ]
+      },
+      {
+        "key": "keep",
+        "label": "mod.p.keep",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "protect",
+        "label": "mod.p.protect",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->input) API->input->Keep(SELF, %key%, %keep%, %protect%);"
+  }
+]

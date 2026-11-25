@@ -1,0 +1,20 @@
+[
+  {
+    "id": "shader.shapePoints",
+    "label": "mod.expr.shapePoints",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "kind": "int",
+    "text": "shape_points()",
+    "hint": ""
+  },
+  {
+    "id": "shader.id",
+    "label": "mod.expr.shaderId",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "kind": "int",
+    "text": "(int)shader_of(\"mine\", 0)",
+    "hint": "mod.expr.shaderId.hint"
+  }
+]

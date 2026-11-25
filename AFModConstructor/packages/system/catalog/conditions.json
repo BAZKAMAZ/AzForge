@@ -1,0 +1,331 @@
+[
+  {
+    "id": "system.triggerOnce",
+    "label": "mod.cond.triggerOnce",
+    "group": "system",
+    "section": "mod.sec.general",
+    "emit": "trigger_once(&%state%)"
+  },
+  {
+    "id": "var.compare",
+    "label": "mod.cond.varCompare",
+    "group": "system",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "text",
+        "preset": "=="
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "%name% %op% %value%",
+    "section": "mod.sec.vars"
+  },
+  {
+    "id": "expr",
+    "label": "mod.cond.expr",
+    "group": "system",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.expr",
+        "kind": "text",
+        "preset": "1"
+      }
+    ],
+    "emit": "%text%",
+    "section": "mod.sec.vars"
+  },
+  {
+    "id": "forge.lastFailed",
+    "label": "mod.cond.lastFailed",
+    "group": "system",
+    "section": "mod.sec.general",
+    "emit": "(API->LastErrorCode(SELF) != AMOD_FAIL_NONE)"
+  },
+  {
+    "id": "forge.gameBuild",
+    "label": "mod.cond.gameBuild",
+    "group": "system",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "build",
+        "label": "mod.p.build",
+        "kind": "enum",
+        "preset": "AMOD_GAME_BUILD_AZANGARA_10",
+        "options": [
+          {
+            "value": "AMOD_GAME_BUILD_AZANGARA_10",
+            "label": "mod.build.azangara10"
+          },
+          {
+            "value": "AMOD_GAME_BUILD_UNKNOWN",
+            "label": "mod.build.unknown"
+          }
+        ]
+      }
+    ],
+    "emit": "(API->GetGameBuild() == %build%)"
+  },
+  {
+    "id": "system.everySeconds",
+    "label": "mod.cond.everySeconds",
+    "group": "system",
+    "section": "mod.sec.time",
+    "params": [
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "state": "float",
+    "stateInit": "-1.0f",
+    "emit": "every_seconds(&%state%, (float)(%seconds%))"
+  },
+  {
+    "id": "system.chance",
+    "label": "mod.cond.chance",
+    "group": "system",
+    "section": "mod.sec.general",
+    "params": [
+      {
+        "key": "percent",
+        "label": "mod.p.percent",
+        "kind": "number",
+        "preset": "50"
+      }
+    ],
+    "emit": "(mod_random01() * 100.0f < (float)(%percent%))"
+  },
+  {
+    "id": "system.compare",
+    "label": "mod.cond.compare",
+    "group": "system",
+    "section": "mod.sec.vars",
+    "params": [
+      {
+        "key": "first",
+        "label": "mod.p.first",
+        "kind": "text",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "second",
+        "label": "mod.p.second",
+        "kind": "text",
+        "preset": "0"
+      }
+    ],
+    "emit": "((%first%) %op% (%second%))"
+  },
+  {
+    "id": "system.repeat",
+    "label": "mod.cond.repeat",
+    "group": "system",
+    "section": "mod.sec.loops",
+    "params": [
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "10"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.loopVar",
+        "kind": "text",
+        "preset": "i"
+      }
+    ],
+    "loop": "for (int %var% = 0; %var% < (int)(%count%); ++%var%)"
+  },
+  {
+    "id": "system.for",
+    "label": "mod.cond.for",
+    "group": "system",
+    "section": "mod.sec.loops",
+    "params": [
+      {
+        "key": "from",
+        "label": "mod.p.from",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "to",
+        "label": "mod.p.to",
+        "kind": "number",
+        "preset": "9"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.loopVar",
+        "kind": "text",
+        "preset": "i"
+      }
+    ],
+    "loop": "for (int %var% = (int)(%from%); %var% <= (int)(%to%); ++%var%)"
+  },
+  {
+    "id": "system.while",
+    "label": "mod.cond.while",
+    "group": "system",
+    "section": "mod.sec.loops",
+    "params": [
+      {
+        "key": "expr",
+        "label": "mod.p.expr",
+        "kind": "text",
+        "preset": "0"
+      },
+      {
+        "key": "var",
+        "label": "mod.p.loopVar",
+        "kind": "text",
+        "preset": "i"
+      }
+    ],
+    "loop": "for (int %var% = 0; %var% < 1000000 && (%expr%); ++%var%)"
+  },
+  {
+    "id": "var.textIs",
+    "label": "mod.cond.varTextIs",
+    "group": "system",
+    "section": "mod.sec.vars",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "value",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      }
+    ],
+    "emit": "(strcmp(%name%, \"%value%\") == 0)"
+  },
+  {
+    "id": "var.on",
+    "label": "mod.cond.varOn",
+    "group": "system",
+    "section": "mod.sec.vars",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "(%name% != 0)"
+  },
+  {
+    "id": "list.value",
+    "label": "mod.cond.listValue",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "params": [
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(%list%[(int)(%index%)] %op% %value%)"
+  }
+]

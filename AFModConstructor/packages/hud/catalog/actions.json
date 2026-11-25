@@ -1,0 +1,161 @@
+[
+  {
+    "id": "hud.setProperty",
+    "label": "mod.act.hudProperty",
+    "call": "Hud.SetProperty",
+    "group": "hud",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "text"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "text"
+      }
+    ],
+    "emit": "{ AmodValue v = as_value(\"%value%\"); if (API->hud) API->hud->SetProperty(SELF, \"%key%\", &v); }",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "hud.setPair",
+    "label": "mod.act.hudPair",
+    "call": "Hud.SetProperty",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.hudKey",
+        "kind": "enum",
+        "preset": "items.start_pos",
+        "options": [
+          {
+            "value": "items.start_pos",
+            "label": "mod.hud.itemsStart"
+          },
+          {
+            "value": "items.offs",
+            "label": "mod.hud.itemsOffs"
+          },
+          {
+            "value": "items.size",
+            "label": "mod.hud.itemsSize"
+          },
+          {
+            "value": "item_frame.size",
+            "label": "mod.hud.frameSize"
+          },
+          {
+            "value": "points_pos",
+            "label": "mod.hud.pointsPos"
+          },
+          {
+            "value": "pbar_offs",
+            "label": "mod.hud.pbarOffs"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "30"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "440"
+      }
+    ],
+    "emit": "hud_set_numbers(\"%key%\", 2, (float)(%x%), (float)(%y%));"
+  },
+  {
+    "id": "hud.setNumber",
+    "label": "mod.act.hudNumber",
+    "call": "Hud.SetProperty",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.hudKey",
+        "kind": "enum",
+        "preset": "bonus_pulse_scale",
+        "options": [
+          {
+            "value": "bonus_pulse_scale",
+            "label": "mod.hud.bonusPulse"
+          },
+          {
+            "value": "life_pulse_scale",
+            "label": "mod.hud.lifePulse"
+          },
+          {
+            "value": "life_pulse_time",
+            "label": "mod.hud.lifeTime"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1.5"
+      }
+    ],
+    "emit": "hud_set_numbers(\"%key%\", 1, (float)(%value%), 0.0f);"
+  },
+  {
+    "id": "hud.setFrame",
+    "label": "mod.act.hudFrame",
+    "call": "Hud.SetProperty",
+    "group": "hud",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/ui/bonus_border.png"
+      }
+    ],
+    "emit": "hud_set_text(\"item_frame.texture\", \"%texture%\");"
+  },
+  {
+    "id": "hud.addImages",
+    "label": "mod.act.hudAddImages",
+    "call": "Hud.AddImages",
+    "group": "hud",
+    "section": "mod.sec.hudImages",
+    "params": [
+      {
+        "key": "fragment",
+        "label": "mod.p.imageFragment",
+        "kind": "text",
+        "preset": "$image { $texture \"textures/ui/a60.png\" $pos 517 42 $size 118 38 }"
+      }
+    ],
+    "emit": "if (API->hud) API->hud->AddImages(SELF, \"%fragment%\");",
+    "hint": "mod.act.hudAddImages.hint"
+  },
+  {
+    "id": "hud.removeImage",
+    "label": "mod.act.hudRemoveImage",
+    "call": "Hud.RemoveImage",
+    "group": "hud",
+    "section": "mod.sec.hudImages",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->hud) API->hud->RemoveImage(SELF, (int)(%index%));"
+  }
+]

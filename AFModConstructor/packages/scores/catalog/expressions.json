@@ -1,0 +1,110 @@
+[
+  {
+    "id": "scores.count",
+    "label": "mod.expr.scoreCount",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "int",
+    "text": "(API->scores ? API->scores->Count(SELF) : 0)",
+    "hint": "mod.expr.scoreCount.hint"
+  },
+  {
+    "id": "scores.name",
+    "label": "mod.expr.scoreName",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "text",
+    "text": "scores_name(0)",
+    "hint": "mod.expr.scoreIndex.hint"
+  },
+  {
+    "id": "scores.point",
+    "label": "mod.expr.scorePoint",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "int",
+    "text": "scores_point(0)",
+    "hint": "mod.expr.scoreIndex.hint"
+  },
+  {
+    "id": "scores.time",
+    "label": "mod.expr.scoreTime",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "float",
+    "text": "scores_time(0)",
+    "hint": "mod.expr.scoreIndex.hint"
+  },
+  {
+    "id": "scores.level",
+    "label": "mod.expr.scoreLevel",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "text",
+    "text": "scores_level(0)",
+    "hint": "mod.expr.scoreIndex.hint"
+  },
+  {
+    "id": "scores.find",
+    "label": "mod.expr.scoreFind",
+    "group": "scores",
+    "section": "mod.sec.scores",
+    "kind": "int",
+    "text": "scores_find(\"MOD\")",
+    "hint": "mod.expr.scoreFind.hint"
+  },
+  {
+    "id": "scores.best",
+    "label": "mod.expr.scoreBest",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "scores_best(0)",
+    "hint": "mod.expr.scoreBest.hint"
+  },
+  {
+    "id": "scores.castle",
+    "label": "mod.expr.scoreCastle",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "scores_field(0, 0)",
+    "hint": "mod.expr.scoreIndex.hint"
+  },
+  {
+    "id": "scores.place",
+    "label": "mod.expr.scorePlace",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "scores_field(0, 1)",
+    "hint": "mod.expr.scorePlace.hint"
+  },
+  {
+    "id": "scores.castles",
+    "label": "mod.expr.castleCount",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "(API->scores ? API->scores->CastleCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "scores.castleEntries",
+    "label": "mod.expr.castleEntries",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "scores_in_castle(0)",
+    "hint": ""
+  },
+  {
+    "id": "scores.castleOfLevel",
+    "label": "mod.expr.castleOfLevel",
+    "group": "scores",
+    "section": "mod.sec.castles",
+    "kind": "int",
+    "text": "scores_castle_of(\"levels/castle1/level1.lev\")",
+    "hint": "mod.expr.castleOfLevel.hint"
+  }
+]

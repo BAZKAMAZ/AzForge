@@ -1,0 +1,93 @@
+[
+  {
+    "id": "menu.items",
+    "label": "mod.expr.menuItems",
+    "group": "objects_menu",
+    "section": "mod.sec.screen",
+    "kind": "int",
+    "text": "API->objectsMenu->GetItemCount(SELF, \"IDM_MAIN_MENU\")",
+    "hint": ""
+  },
+  {
+    "id": "menu.number",
+    "label": "mod.expr.menuNumber",
+    "group": "objects_menu",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "menu_number(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\", \"visible\")",
+    "hint": ""
+  },
+  {
+    "id": "menu.text",
+    "label": "mod.expr.menuText",
+    "group": "objects_menu",
+    "section": "mod.sec.props",
+    "kind": "text",
+    "text": "menu_text(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\", \"text\")",
+    "hint": "mod.expr.menuText.hint"
+  },
+  {
+    "id": "menu.floatAt",
+    "label": "mod.expr.menuFloat",
+    "group": "objects_menu",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "menu_float(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\", \"pos\", 0)",
+    "hint": "mod.expr.menuFloat.hint"
+  },
+  {
+    "id": "menu.idAt",
+    "label": "mod.expr.menuIdAt",
+    "group": "objects_menu",
+    "section": "mod.sec.items",
+    "kind": "text",
+    "text": "menu_id_at(\"IDM_MAIN_MENU\", 0)",
+    "hint": ""
+  },
+  {
+    "id": "menu.exists",
+    "label": "mod.expr.menuExists",
+    "group": "objects_menu",
+    "section": "mod.sec.items",
+    "kind": "int",
+    "text": "menu_exists(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\")",
+    "hint": ""
+  },
+  {
+    "id": "menu.propertyCount",
+    "label": "mod.expr.menuPropertyCount",
+    "group": "objects_menu",
+    "section": "mod.sec.menu",
+    "kind": "int",
+    "text": "menu_property_count(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\")",
+    "hint": ""
+  },
+  {
+    "id": "menu.propertyName",
+    "label": "mod.expr.menuPropertyName",
+    "group": "objects_menu",
+    "section": "mod.sec.menu",
+    "kind": "text",
+    "text": "menu_property_name(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\", 0)",
+    "hint": "mod.expr.menuPropertyName.hint"
+  },
+  {
+    "id": "menu.itemAddress",
+    "label": "mod.expr.menuItemAddress",
+    "group": "objects_menu",
+    "section": "mod.sec.menu",
+    "kind": "int",
+    "text": "(int)menu_item_address(\"IDM_MAIN_MENU\", \"ID_NEW_GAME\")",
+    "hint": "mod.expr.menuItemAddress.hint"
+  },
+  {
+    "id": "menu.tableLines",
+    "label": "mod.expr.tableLines",
+    "call": "ObjectsMenu.TableLineCount",
+    "group": "objects_menu",
+    "section": "mod.sec.table",
+    "kind": "int",
+    "text": "menu_table_lines(\"IDM_RECORDS\", \"ID_TABLE\")",
+    "hint": "mod.expr.tableLines.hint"
+  }
+]

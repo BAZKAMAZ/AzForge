@@ -1,0 +1,6 @@
+mod.act.monsterKill=Убить монстра
+mod.ev.monsterKilled=Монстр убит
+mod.p.monster=Монстр
+mod.sys.monsters=Монстры
+mod.act.monsterKill.line=Убить монстра «%name%»
+mod.ev.monsterKilled.line=Монстр «%name%» убит

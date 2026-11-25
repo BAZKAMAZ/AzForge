@@ -1,0 +1,1930 @@
+{
+    "name": "main",
+    "vars": [
+        {
+            "name": "hud_on",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "orbit_on",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "orbit_angle",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "view_on",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "freeze_on",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "far_prop",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "upd_ticks",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "upd_dt",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "view_ticks",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "snap_ticks",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "snap_x",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "snap_y",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "snap_z",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "last_cmd",
+            "type": "text",
+            "value": "Ready - enter a level to test"
+        },
+        {
+            "name": "st_here",
+            "type": "text",
+            "value": "NO"
+        },
+        {
+            "name": "st_shake",
+            "type": "text",
+            "value": "no"
+        },
+        {
+            "name": "st_feye",
+            "type": "text",
+            "value": "ON"
+        },
+        {
+            "name": "st_ftgt",
+            "type": "text",
+            "value": "ON"
+        },
+        {
+            "name": "st_free",
+            "type": "text",
+            "value": "off"
+        },
+        {
+            "name": "st_fx",
+            "type": "text",
+            "value": "NONE"
+        },
+        {
+            "name": "st_drv",
+            "type": "text",
+            "value": "BOTH"
+        },
+        {
+            "name": "st_prop",
+            "type": "text",
+            "value": "<=6"
+        }
+    ],
+    "rules": [
+        {
+            "event": "render.frame",
+            "filters": {},
+            "conditions": [],
+            "actions": [],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isHere",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_here",
+                                        "value": "YES"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isHere",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_here",
+                                        "value": "NO"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isShaking",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_shake",
+                                        "value": "YES"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isShaking",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_shake",
+                                        "value": "no"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.followsEye",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_feye",
+                                        "value": "ON"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.followsEye",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_feye",
+                                        "value": "FROZEN"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.followsTarget",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_ftgt",
+                                        "value": "ON"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.followsTarget",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_ftgt",
+                                        "value": "FROZEN"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isFreeMode",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_free",
+                                        "value": "ON"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.isFreeMode",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_free",
+                                        "value": "off"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.effectIs",
+                                    "args": {
+                                        "effect": "AMOD_CAMERA_EFFECT_NONE"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_fx",
+                                        "value": "NONE"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.effectIs",
+                                    "args": {
+                                        "effect": "AMOD_CAMERA_EFFECT_ZOOM"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_fx",
+                                        "value": "ZOOM"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.effectIs",
+                                    "args": {
+                                        "effect": "AMOD_CAMERA_EFFECT_ROCKING"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_fx",
+                                        "value": "ROCKING"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.effectIs",
+                                    "args": {
+                                        "effect": "AMOD_CAMERA_EFFECT_ROTATE"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_fx",
+                                        "value": "ROTATE"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.driverIs",
+                                    "args": {
+                                        "driver": "AMOD_CAMERA_DRIVER_GAME"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_drv",
+                                        "value": "GAME"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.driverIs",
+                                    "args": {
+                                        "driver": "AMOD_CAMERA_DRIVER_MOD"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_drv",
+                                        "value": "MOD"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.driverIs",
+                                    "args": {
+                                        "driver": "AMOD_CAMERA_DRIVER_BOTH"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_drv",
+                                        "value": "BOTH"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.driverIs",
+                                    "args": {
+                                        "driver": "AMOD_CAMERA_DRIVER_NOBODY"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_drv",
+                                        "value": "NOBODY"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.propIs",
+                                    "args": {
+                                        "key": "room_dist",
+                                        "op": ">",
+                                        "value": "6"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_prop",
+                                        "value": ">6(FAR)"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "camera.propIs",
+                                    "args": {
+                                        "key": "room_dist",
+                                        "op": ">",
+                                        "value": "6"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_prop",
+                                        "value": "<=6(DEF)"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": true,
+                    "name": "Проверка всех 8 условий камеры",
+                    "collapsed": true
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "hud_on"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "render.rect",
+                            "args": {
+                                "x": "8",
+                                "y": "8",
+                                "w": "624",
+                                "h": "182",
+                                "r": "0.04",
+                                "g": "0.05",
+                                "b": "0.09",
+                                "a": "0.78"
+                            }
+                        },
+                        {
+                            "id": "render.outline",
+                            "args": {
+                                "x": "8",
+                                "y": "8",
+                                "w": "624",
+                                "h": "182",
+                                "thickness": "1",
+                                "r": "0.42",
+                                "g": "0.52",
+                                "b": "0.85",
+                                "a": "0.85"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "[CAMERA API TEST] {last_cmd}   [Tab: HUD]",
+                                "x": "16",
+                                "y": "14",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.62",
+                                "g": "0.84",
+                                "b": "1.0",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Conds: here={st_here}({#(API->camera ? API->camera->IsHere(SELF) : 0)}) drv={st_drv}({#(API->camera ? (int)API->camera->GetDriver(SELF) : 0)}) fx={st_fx}({#(API->camera ? API->camera->GetEffect(SELF) : 0)}) shake={st_shake} free={st_free}({#(API->camera ? API->camera->GetFreeMode(SELF) : 0)})",
+                                "x": "16",
+                                "y": "28",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.78",
+                                "g": "0.95",
+                                "b": "0.78",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Follow: eye={st_feye} target={st_ftgt}  roll={~cam_roll()}  orbit(F7)={orbit_on}  cinemaView(F8)={view_on}",
+                                "x": "16",
+                                "y": "41",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Eye: ({~cam_vec(0, 0)}, {~cam_vec(0, 1)}, {~cam_vec(0, 2)})  Target: ({~cam_vec(1, 0)}, {~cam_vec(1, 1)}, {~cam_vec(1, 2)})",
+                                "x": "16",
+                                "y": "54",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Up: ({~cam_vec(2, 0)}, {~cam_vec(2, 1)}, {~cam_vec(2, 2)})  Followed: ({~cam_vec(3, 0)}, {~cam_vec(3, 1)}, {~cam_vec(3, 2)})",
+                                "x": "16",
+                                "y": "67",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Focus(player): ({~cam_focus(0)}, {~cam_focus(1)}, {~cam_focus(2)})",
+                                "x": "16",
+                                "y": "80",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "ViewEye: ({~cam_view(0, 0)}, {~cam_view(0, 1)}, {~cam_view(0, 2)})  ViewTgt: ({~cam_view(1, 0)}, {~cam_view(1, 1)}, {~cam_view(1, 2)})",
+                                "x": "16",
+                                "y": "93",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "ViewUp: ({~cam_view(2, 0)}, {~cam_view(2, 1)}, {~cam_view(2, 2)})  Lens: fov={~cam_lens(0)} asp={~cam_lens(1)} {~cam_lens(2)}..{~cam_lens(3)}",
+                                "x": "16",
+                                "y": "106",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Props({#(API->camera ? API->camera->PropertyCount(SELF) : 0)}): [0]={$cam_prop_name(0)}  room_dist={~cam_prop(\"room_dist\")} ({st_prop})",
+                                "x": "16",
+                                "y": "119",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.9",
+                                "g": "0.93",
+                                "b": "0.98",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "Handlers: upd={upd_ticks}(dt={upd_dt})  view={view_ticks}  snap={snap_ticks} at ({snap_x}, {snap_y}, {snap_z})",
+                                "x": "16",
+                                "y": "132",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.96",
+                                "g": "0.88",
+                                "b": "0.65",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "1:Shake 2:StopShake 3:Zoom 4:Rock 5:Rotate180 6:StopFx 7:Wide+Roll 8:TeleLens",
+                                "x": "16",
+                                "y": "150",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.72",
+                                "g": "0.78",
+                                "b": "0.9",
+                                "a": "1"
+                            }
+                        },
+                        {
+                            "id": "render.text",
+                            "args": {
+                                "text": "9:FarDist/Reload 0:ResetAll P:Place F6:FreezeFollow F7:Orbit F8:View Shift+F9:Unhook",
+                                "x": "16",
+                                "y": "163",
+                                "font": "",
+                                "scale": "0.56",
+                                "r": "0.72",
+                                "g": "0.78",
+                                "b": "0.9",
+                                "a": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "",
+            "collapsed": false
+        },
+        {
+            "event": "camera.update",
+            "filters": {
+                "driver": "AMOD_CAMERA_DRIVER_BOTH"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "upd_ticks",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "upd_dt",
+                        "value": "=(camFrame ? camFrame->delta : 0.0f)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        },
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "orbit_on"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "orbit_angle",
+                                "value": "=(camFrame ? camFrame->delta : 0.0f) * 1.6f"
+                            }
+                        },
+                        {
+                            "id": "camera.setEye",
+                            "args": {
+                                "x": "=cam_focus(0) + sinf(orbit_angle) * 2.2f",
+                                "y": "=cam_focus(1) + 1.0f",
+                                "z": "=cam_focus(2) + 5.2f"
+                            }
+                        },
+                        {
+                            "id": "camera.setTarget",
+                            "args": {
+                                "x": "=cam_focus(0)",
+                                "y": "=cam_focus(1)",
+                                "z": "=cam_focus(2)"
+                            }
+                        },
+                        {
+                            "id": "camera.setUp",
+                            "args": {
+                                "x": "=sinf(orbit_angle) * 0.12f",
+                                "y": "1",
+                                "z": "0"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "",
+            "collapsed": false
+        },
+        {
+            "event": "camera.view",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "view_ticks",
+                        "value": "1"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        },
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "view_on"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.viewSetEye",
+                            "args": {
+                                "x": "=cam_focus(0)",
+                                "y": "=cam_focus(1) + 3.0f",
+                                "z": "=cam_focus(2) + 6.8f"
+                            }
+                        },
+                        {
+                            "id": "camera.viewSetTarget",
+                            "args": {
+                                "x": "=cam_focus(0)",
+                                "y": "=cam_focus(1) - 0.2f",
+                                "z": "=cam_focus(2)"
+                            }
+                        },
+                        {
+                            "id": "camera.viewSetUp",
+                            "args": {
+                                "x": "0",
+                                "y": "1",
+                                "z": "0"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "",
+            "collapsed": false
+        },
+        {
+            "event": "camera.placing",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "snap_ticks",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "snap_x",
+                        "value": "=(info ? info->point[0] : 0.0f)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "snap_y",
+                        "value": "=(info ? info->point[1] : 0.0f)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "snap_z",
+                        "value": "=(info ? info->point[2] : 0.0f)"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Event: camera.placing fired"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "",
+            "collapsed": false
+        },
+        {
+            "event": "",
+            "filters": {},
+            "conditions": [],
+            "actions": [],
+            "children": [
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "9"
+                    },
+                    "conditions": [],
+                    "actions": [
+                        {
+                            "id": "var.toggle",
+                            "args": {
+                                "name": "hud_on"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "49"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.shake",
+                            "args": {}
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "1: StartShake"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "50"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.stopShake",
+                            "args": {}
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "2: StopShake"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "51"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.startEffect",
+                            "args": {
+                                "effect": "AMOD_CAMERA_EFFECT_ZOOM"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "3: StartEffect(ZOOM)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "52"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.startEffect",
+                            "args": {
+                                "effect": "AMOD_CAMERA_EFFECT_ROCKING"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "4: StartEffect(ROCKING)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "53"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.startEffect",
+                            "args": {
+                                "effect": "AMOD_CAMERA_EFFECT_ROTATE"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "5: StartEffect(ROTATE 180)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "54"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.stopEffect",
+                            "args": {}
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "6: StopEffect"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "55"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.setFov",
+                            "args": {
+                                "fov": "1.30"
+                            }
+                        },
+                        {
+                            "id": "camera.setPlanes",
+                            "args": {
+                                "near": "0.05",
+                                "far": "18"
+                            }
+                        },
+                        {
+                            "id": "camera.setRoll",
+                            "args": {
+                                "angle": "0.18"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "7: Wide FOV 1.30 + Planes 0.05..18 + Roll 0.18"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "56"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.setLens",
+                            "args": {
+                                "fov": "0.72",
+                                "aspect": "1.3333",
+                                "near": "0.1",
+                                "far": "12"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "8: SetLens(0.72, 1.333, 0.1..12)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "57"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.toggle",
+                            "args": {
+                                "name": "far_prop"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "far_prop"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.setProperty",
+                                    "args": {
+                                        "key": "room_dist",
+                                        "value": "8.5"
+                                    }
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "9: SetProperty room_dist = 8.5"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "far_prop"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.reload",
+                                    "args": {}
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "9: Reload scripts/camera.txt"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "48"
+                    },
+                    "conditions": [],
+                    "actions": [
+                        {
+                            "id": "var.set",
+                            "args": {
+                                "name": "orbit_on",
+                                "value": "0"
+                            }
+                        },
+                        {
+                            "id": "var.set",
+                            "args": {
+                                "name": "view_on",
+                                "value": "0"
+                            }
+                        },
+                        {
+                            "id": "var.set",
+                            "args": {
+                                "name": "freeze_on",
+                                "value": "0"
+                            }
+                        },
+                        {
+                            "id": "var.set",
+                            "args": {
+                                "name": "far_prop",
+                                "value": "0"
+                            }
+                        },
+                        {
+                            "id": "camera.clearLens",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.setRoll",
+                            "args": {
+                                "angle": "0"
+                            }
+                        },
+                        {
+                            "id": "camera.setUp",
+                            "args": {
+                                "x": "0",
+                                "y": "1",
+                                "z": "0"
+                            }
+                        },
+                        {
+                            "id": "camera.stopShake",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.stopEffect",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.reload",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.setFollowEye",
+                            "args": {
+                                "follows": "1"
+                            }
+                        },
+                        {
+                            "id": "camera.setFollowTarget",
+                            "args": {
+                                "follows": "1"
+                            }
+                        },
+                        {
+                            "id": "camera.setDriver",
+                            "args": {
+                                "driver": "AMOD_CAMERA_DRIVER_BOTH"
+                            }
+                        },
+                        {
+                            "id": "camera.follow",
+                            "args": {
+                                "x": "=cam_focus(0)",
+                                "y": "=cam_focus(1)",
+                                "z": "=cam_focus(2)"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "0: Reset all camera overrides"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "80"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.place",
+                            "args": {
+                                "x": "=cam_focus(0)",
+                                "y": "=cam_focus(1)",
+                                "z": "=cam_focus(2)"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "P: Place camera on player focus"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "117"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.toggle",
+                            "args": {
+                                "name": "freeze_on"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "freeze_on"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.setFollowEye",
+                                    "args": {
+                                        "follows": "0"
+                                    }
+                                },
+                                {
+                                    "id": "camera.setFollowTarget",
+                                    "args": {
+                                        "follows": "0"
+                                    }
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "F6: Follow FROZEN (walk around)"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "freeze_on"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.setFollowEye",
+                                    "args": {
+                                        "follows": "1"
+                                    }
+                                },
+                                {
+                                    "id": "camera.setFollowTarget",
+                                    "args": {
+                                        "follows": "1"
+                                    }
+                                },
+                                {
+                                    "id": "camera.follow",
+                                    "args": {
+                                        "x": "=cam_focus(0)",
+                                        "y": "=cam_focus(1)",
+                                        "z": "=cam_focus(2)"
+                                    }
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "F6: Follow RESTORED"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "118"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.toggle",
+                            "args": {
+                                "name": "orbit_on"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "orbit_on"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.setDriver",
+                                    "args": {
+                                        "driver": "AMOD_CAMERA_DRIVER_BOTH"
+                                    }
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "F7: Orbit in camera.update ON"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "orbit_on"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "camera.setUp",
+                                    "args": {
+                                        "x": "0",
+                                        "y": "1",
+                                        "z": "0"
+                                    }
+                                },
+                                {
+                                    "id": "camera.follow",
+                                    "args": {
+                                        "x": "=cam_focus(0)",
+                                        "y": "=cam_focus(1)",
+                                        "z": "=cam_focus(2)"
+                                    }
+                                },
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "last_cmd",
+                                        "value": "F7: Orbit OFF"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "119"
+                    },
+                    "conditions": [
+                        {
+                            "id": "camera.isHere",
+                            "args": {}
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.toggle",
+                            "args": {
+                                "name": "view_on"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "F8: Toggled camera.view override"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "input.key",
+                    "filters": {
+                        "key": "120"
+                    },
+                    "conditions": [
+                        {
+                            "id": "input.keyDown",
+                            "args": {
+                                "key": "16"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "camera.clearUpdateHandler",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.clearViewHandler",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.clearEventHandler",
+                            "args": {}
+                        },
+                        {
+                            "id": "camera.setDriver",
+                            "args": {
+                                "driver": "AMOD_CAMERA_DRIVER_GAME"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "Shift+F9: Cleared all camera handlers"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": true,
+            "name": "Горячие клавиши управления камерой",
+            "collapsed": false
+        }
+    ]
+}

@@ -1,0 +1,436 @@
+[
+  {
+    "id": "sav.open",
+    "label": "mod.act.savOpen",
+    "call": "Sav.Open",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.palaceId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->Open(SELF, \"%level%\");"
+  },
+  {
+    "id": "sav.close",
+    "label": "mod.act.savClose",
+    "call": "Sav.Close",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.palaceId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->Close(SELF, \"%level%\");"
+  },
+  {
+    "id": "sav.block",
+    "label": "mod.act.savBlock",
+    "call": "Sav.Block",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.palaceId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      },
+      {
+        "key": "blocked",
+        "label": "mod.p.blocked",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->sav) API->sav->Block(SELF, \"%level%\", %blocked%);"
+  },
+  {
+    "id": "sav.removeAt",
+    "label": "mod.act.savRemoveAt",
+    "call": "Sav.Remove",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.rowIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->Remove(SELF, (int)(%index%));"
+  },
+  {
+    "id": "sav.setId",
+    "label": "mod.act.savSetId",
+    "call": "Sav.SetId",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.rowIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "level",
+        "label": "mod.p.palaceId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->SetId(SELF, (int)(%index%), \"%level%\");"
+  },
+  {
+    "id": "sav.setPack",
+    "label": "mod.act.savSetPack",
+    "call": "Sav.SetCurrent",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "pack",
+        "label": "mod.p.pack",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->SetCurrent(SELF, (int)(%pack%));"
+  },
+  {
+    "id": "sav.loadPackMenu",
+    "label": "mod.act.savLoadPackMenu",
+    "call": "Sav.LoadPackMenu",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "pack",
+        "label": "mod.p.pack",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->LoadPackMenu(SELF, (int)(%pack%));",
+    "hint": "mod.act.savLoadPackMenu.hint"
+  },
+  {
+    "id": "sav.keep",
+    "label": "mod.act.savKeep",
+    "call": "Sav.Keep",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.palaceId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      },
+      {
+        "key": "keep",
+        "label": "mod.p.keepBetweenRuns",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "protect",
+        "label": "mod.p.protectRow",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->sav) API->sav->Keep(SELF, \"%level%\", %keep%, %protect%);"
+  },
+  {
+    "id": "sav.write",
+    "label": "mod.act.savWrite",
+    "call": "Sav.Save",
+    "group": "sav",
+    "section": "mod.sec.opened",
+    "params": [],
+    "emit": "if (API->sav) API->sav->Save(SELF);"
+  },
+  {
+    "id": "sav.saveSlot",
+    "label": "mod.act.savSaveSlot",
+    "call": "Sav.SaveSlot",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.slot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "caption",
+        "label": "mod.p.slotCaption",
+        "kind": "text",
+        "preset": "MOD"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->SaveSlot(SELF, (int)(%slot%), \"%caption%\");"
+  },
+  {
+    "id": "sav.loadSlot",
+    "label": "mod.act.savLoadSlot",
+    "call": "Sav.LoadSlot",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.slot",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->LoadSlot(SELF, (int)(%slot%));"
+  },
+  {
+    "id": "sav.deleteSlot",
+    "label": "mod.act.savDeleteSlot",
+    "call": "Sav.DeleteSlot",
+    "group": "sav",
+    "section": "mod.sec.slots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.slot",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->DeleteSlot(SELF, (int)(%slot%));"
+  },
+  {
+    "id": "sav.remember",
+    "label": "mod.act.savRemember",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.rememberName",
+        "kind": "text",
+        "preset": "lives"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "3"
+      }
+    ],
+    "emit": "sav_set_number(\"%name%\", (float)(%value%));"
+  },
+  {
+    "id": "sav.forget",
+    "label": "mod.act.savForget",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "params": [],
+    "emit": "sav_forget_numbers();"
+  },
+  {
+    "id": "sav.writeMine",
+    "label": "mod.act.savWriteMine",
+    "call": "Sav.WriteSlotData",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "params": [],
+    "emit": "sav_write_numbers();",
+    "needs": "slot_save"
+  },
+  {
+    "id": "sav.readMine",
+    "label": "mod.act.savReadMine",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "params": [],
+    "emit": "sav_read_numbers(bytes, size);",
+    "needs": "slot_load"
+  },
+  {
+    "id": "sav.stopListening",
+    "label": "mod.act.savStopListening",
+    "call": "Sav.Cancel",
+    "group": "sav",
+    "section": "mod.sec.savedByMod",
+    "params": [],
+    "emit": "if (API->sav) API->sav->Cancel(SELF, %token%);",
+    "needs": "token"
+  },
+  {
+    "id": "sav.setChange",
+    "label": "mod.act.savSetChange",
+    "call": "Sav.SetLevelChange",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.levelId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.changeName",
+        "kind": "text",
+        "preset": "door_7"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->SetLevelChange(SELF, \"%level%\", \"%name%\", (int)(%value%));"
+  },
+  {
+    "id": "sav.clearChange",
+    "label": "mod.act.savClearChange",
+    "call": "Sav.ClearLevelChange",
+    "group": "sav",
+    "section": "mod.sec.levelChanges",
+    "params": [
+      {
+        "key": "level",
+        "label": "mod.p.levelId",
+        "kind": "text",
+        "preset": "levels/castle1/level1.lev"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.changeName",
+        "kind": "text",
+        "preset": "door_7"
+      }
+    ],
+    "emit": "if (API->sav) API->sav->ClearLevelChange(SELF, \"%level%\", \"%name%\");"
+  },
+  {
+    "id": "sav.setRoomThing",
+    "label": "mod.act.savSetRoomThing",
+    "call": "Sav.SetSlotRoomThing",
+    "group": "sav",
+    "section": "mod.sec.roomState",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.slot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.thingIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "first",
+        "label": "mod.p.first",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "second",
+        "label": "mod.p.second",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "third",
+        "label": "mod.p.third",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "sav_set_room_thing((int)(%slot%), (int)(%room%), (int)(%index%), (int)(%first%), (int)(%second%), (int)(%third%));"
+  },
+  {
+    "id": "sav.setRoomMemory",
+    "label": "mod.act.savSetRoomMemory",
+    "call": "Sav.SetSlotRoomMemory",
+    "group": "sav",
+    "section": "mod.sec.roomState",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.slot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "state",
+        "label": "mod.p.roomState",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "extra",
+        "label": "mod.p.roomExtra",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "sav_set_room_memory((int)(%slot%), (int)(%room%), (int)(%state%), (int)(%extra%));"
+  }
+]

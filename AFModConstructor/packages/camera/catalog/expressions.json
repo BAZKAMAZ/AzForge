@@ -1,0 +1,373 @@
+[
+  {
+    "id": "camera.eyeX",
+    "label": "mod.expr.camEyeX",
+    "call": "Camera.Get",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(0, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.eyeY",
+    "label": "mod.expr.camEyeY",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(0, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.eyeZ",
+    "label": "mod.expr.camEyeZ",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(0, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.targetX",
+    "label": "mod.expr.camTargetX",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(1, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.targetY",
+    "label": "mod.expr.camTargetY",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(1, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.targetZ",
+    "label": "mod.expr.camTargetZ",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(1, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.upX",
+    "label": "mod.expr.camUpX",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(2, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.upY",
+    "label": "mod.expr.camUpY",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(2, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.upZ",
+    "label": "mod.expr.camUpZ",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(2, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.followedX",
+    "label": "mod.expr.camFollowedX",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(3, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.followedY",
+    "label": "mod.expr.camFollowedY",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(3, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.followedZ",
+    "label": "mod.expr.camFollowedZ",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_vec(3, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.roll",
+    "label": "mod.expr.camRoll",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_roll()",
+    "hint": "mod.expr.camRoll.hint"
+  },
+  {
+    "id": "camera.focusX",
+    "label": "mod.expr.camFocusX",
+    "call": "Camera.GetFocus",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_focus(0)",
+    "hint": "mod.expr.camFocusX.hint"
+  },
+  {
+    "id": "camera.focusY",
+    "label": "mod.expr.camFocusY",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_focus(1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.focusZ",
+    "label": "mod.expr.camFocusZ",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "float",
+    "text": "cam_focus(2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.isHere",
+    "label": "mod.expr.camHere",
+    "call": "Camera.IsHere",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "int",
+    "text": "(API->camera ? API->camera->IsHere(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.freeMode",
+    "label": "mod.expr.camFreeMode",
+    "call": "Camera.GetFreeMode",
+    "group": "camera",
+    "section": "mod.sec.camState",
+    "kind": "int",
+    "text": "(API->camera ? API->camera->GetFreeMode(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.effect",
+    "label": "mod.expr.camEffect",
+    "call": "Camera.GetEffect",
+    "group": "camera",
+    "section": "mod.sec.camFx",
+    "kind": "int",
+    "text": "(API->camera ? API->camera->GetEffect(SELF) : 0)",
+    "hint": "mod.expr.camEffect.hint"
+  },
+  {
+    "id": "camera.viewEyeX",
+    "label": "mod.expr.camViewEyeX",
+    "call": "Camera.GetView",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(0, 0)",
+    "hint": "mod.expr.camViewEyeX.hint"
+  },
+  {
+    "id": "camera.viewEyeY",
+    "label": "mod.expr.camViewEyeY",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(0, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewEyeZ",
+    "label": "mod.expr.camViewEyeZ",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(0, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewTargetX",
+    "label": "mod.expr.camViewTargetX",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(1, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewTargetY",
+    "label": "mod.expr.camViewTargetY",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(1, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewTargetZ",
+    "label": "mod.expr.camViewTargetZ",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(1, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewUpX",
+    "label": "mod.expr.camViewUpX",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(2, 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewUpY",
+    "label": "mod.expr.camViewUpY",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(2, 1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.viewUpZ",
+    "label": "mod.expr.camViewUpZ",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_view(2, 2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.fov",
+    "label": "mod.expr.camFov",
+    "call": "Camera.GetLens",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_lens(0)",
+    "hint": "mod.expr.camFov.hint"
+  },
+  {
+    "id": "camera.aspect",
+    "label": "mod.expr.camAspect",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_lens(1)",
+    "hint": ""
+  },
+  {
+    "id": "camera.nearPlane",
+    "label": "mod.expr.camNear",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_lens(2)",
+    "hint": ""
+  },
+  {
+    "id": "camera.farPlane",
+    "label": "mod.expr.camFar",
+    "group": "camera",
+    "section": "mod.sec.camLens",
+    "kind": "float",
+    "text": "cam_lens(3)",
+    "hint": ""
+  },
+  {
+    "id": "camera.prop",
+    "label": "mod.expr.camProp",
+    "call": "Camera.GetProperty",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "cam_prop(\"room_dist\")",
+    "hint": "mod.expr.camProp.hint"
+  },
+  {
+    "id": "camera.propCount",
+    "label": "mod.expr.camPropCount",
+    "call": "Camera.PropertyCount",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "(API->camera ? API->camera->PropertyCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "camera.propNameAt",
+    "label": "mod.expr.camPropNameAt",
+    "call": "Camera.PropertyNameAt",
+    "group": "camera",
+    "section": "mod.sec.props",
+    "kind": "text",
+    "text": "cam_prop_name(0)",
+    "hint": "mod.expr.camPropNameAt.hint"
+  },
+  {
+    "id": "camera.driver",
+    "label": "mod.expr.camDriver",
+    "call": "Camera.GetDriver",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "kind": "int",
+    "text": "(API->camera ? (int)API->camera->GetDriver(SELF) : 0)",
+    "hint": "mod.expr.camDriver.hint"
+  },
+  {
+    "id": "camera.updateDelta",
+    "label": "mod.expr.camUpdateDelta",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "kind": "float",
+    "text": "(camFrame ? camFrame->delta : 0.0f)",
+    "hint": "mod.expr.camUpdateDelta.hint"
+  },
+  {
+    "id": "camera.placeX",
+    "label": "mod.expr.camPlaceX",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "kind": "float",
+    "text": "(info ? info->point[0] : 0.0f)",
+    "hint": "mod.expr.camPlaceX.hint"
+  },
+  {
+    "id": "camera.placeY",
+    "label": "mod.expr.camPlaceY",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "kind": "float",
+    "text": "(info ? info->point[1] : 0.0f)",
+    "hint": "mod.expr.camPlaceX.hint"
+  },
+  {
+    "id": "camera.placeZ",
+    "label": "mod.expr.camPlaceZ",
+    "group": "camera",
+    "section": "mod.sec.camControl",
+    "kind": "float",
+    "text": "(info ? info->point[2] : 0.0f)",
+    "hint": "mod.expr.camPlaceX.hint"
+  }
+]

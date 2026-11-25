@@ -1,0 +1,32 @@
+[
+  {
+    "id": "world.room",
+    "label": "mod.cond.room",
+    "group": "world",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.room",
+        "kind": "room",
+        "preset": "1"
+      }
+    ],
+    "emit": "(API->world && API->world->GetCurrentRoom(SELF) == API->world->FindRoomById(SELF, %room%))",
+    "section": "mod.sec.level"
+  },
+  {
+    "id": "world.timeLeftBelow",
+    "label": "mod.cond.timeLeft",
+    "group": "world",
+    "params": [
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "10"
+      }
+    ],
+    "emit": "(API->world && API->world->GetTimeLeft(SELF) < (float)(%seconds%))",
+    "section": "mod.sec.time"
+  }
+]

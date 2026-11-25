@@ -1,0 +1,14 @@
+{
+  "id": "camera",
+  "name": "Camera",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "camera"
+  ]
+}

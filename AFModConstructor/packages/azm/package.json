@@ -1,0 +1,14 @@
+{
+  "id": "azm",
+  "name": "Azm models",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "azm"
+  ]
+}

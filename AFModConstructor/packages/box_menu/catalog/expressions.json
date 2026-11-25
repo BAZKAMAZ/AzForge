@@ -1,0 +1,20 @@
+[
+  {
+    "id": "box.current",
+    "label": "mod.expr.boxCurrent",
+    "group": "box_menu",
+    "section": "mod.sec.state",
+    "kind": "text",
+    "text": "API->boxMenu->Current(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "box.overlay",
+    "label": "mod.expr.boxOverlay",
+    "group": "box_menu",
+    "section": "mod.sec.state",
+    "kind": "text",
+    "text": "API->boxMenu->Box(SELF)",
+    "hint": ""
+  }
+]

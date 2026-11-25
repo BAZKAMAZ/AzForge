@@ -1,0 +1,964 @@
+[
+  {
+    "id": "render.text",
+    "label": "mod.act.renderText",
+    "call": "Render.DrawTextLine",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "font",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) API->render->DrawTextLine(SELF, render_font(\"%font%\"), (float)(%x%), (float)(%y%), \"%text%\", (float)(%scale%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.textAligned",
+    "label": "mod.act.renderTextAligned",
+    "call": "Render.DrawTextLineAligned",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "font",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "align",
+        "label": "mod.p.align",
+        "kind": "enum",
+        "preset": "AMOD_TEXT_ALIGN_DEFAULT",
+        "options": [
+          {
+            "value": "AMOD_TEXT_ALIGN_DEFAULT",
+            "label": "mod.align.game"
+          },
+          {
+            "value": "0x20",
+            "label": "mod.align.left"
+          },
+          {
+            "value": "0x22",
+            "label": "mod.align.right"
+          },
+          {
+            "value": "0x08",
+            "label": "mod.align.topLeft"
+          },
+          {
+            "value": "0x0C",
+            "label": "mod.align.top"
+          },
+          {
+            "value": "0x0A",
+            "label": "mod.align.topRight"
+          }
+        ]
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) API->render->DrawTextLineAligned(SELF, render_font(\"%font%\"), (float)(%x%), (float)(%y%), \"%text%\", (float)(%scale%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)), %align%);",
+    "needs": "render"
+  },
+  {
+    "id": "render.sprite",
+    "label": "mod.act.renderSprite",
+    "call": "Render.DrawSprite",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) API->render->DrawSprite(SELF, render_texture(\"%file%\"), (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.spritePart",
+    "label": "mod.act.renderSpritePart",
+    "call": "Render.DrawSpritePart",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/dlight.jpg"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "u0",
+        "label": "mod.p.u0",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "v0",
+        "label": "mod.p.v0",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "u1",
+        "label": "mod.p.u1",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "v1",
+        "label": "mod.p.v1",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) API->render->DrawSpritePart(SELF, render_texture(\"%file%\"), (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%u0%), (float)(%v0%), (float)(%u1%), (float)(%v1%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.rect",
+    "label": "mod.act.renderRect",
+    "call": "Render.FillRect",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "640"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "480"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "0.5"
+      }
+    ],
+    "emit": "if (API->render) API->render->FillRect(SELF, (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.styleColor",
+    "label": "mod.act.renderStyleColor",
+    "call": "rgba[]",
+    "group": "render",
+    "section": "mod.sec.items",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "rgba[0] = (float)(%r%); rgba[1] = (float)(%g%); rgba[2] = (float)(%b%); rgba[3] = (float)(%a%);",
+    "needs": "item_style"
+  },
+  {
+    "id": "render.styleScale",
+    "label": "mod.act.renderStyleScale",
+    "call": "scale[]",
+    "group": "render",
+    "section": "mod.sec.items",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.scaleX",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.scaleY",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "scale[0] = (float)(%x%); scale[1] = (float)(%y%);",
+    "needs": "item_style"
+  },
+  {
+    "id": "render.spriteTurned",
+    "label": "mod.act.renderSpriteTurned",
+    "call": "Render.DrawQuads",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "menu/logo.tga"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "angle",
+        "label": "mod.p.angle",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "render_quad(render_texture(\"%file%\"), (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%angle%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.rectTurned",
+    "label": "mod.act.renderRectTurned",
+    "call": "Render.DrawQuads",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "64"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "16"
+      },
+      {
+        "key": "angle",
+        "label": "mod.p.angle",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "render_quad(AMOD_INVALID_TEXTURE, (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%angle%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.line",
+    "label": "mod.act.renderLine",
+    "call": "Render.DrawQuads",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "x1",
+        "label": "mod.p.x1",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y1",
+        "label": "mod.p.y1",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x2",
+        "label": "mod.p.x2",
+        "kind": "number",
+        "preset": "640"
+      },
+      {
+        "key": "y2",
+        "label": "mod.p.y2",
+        "kind": "number",
+        "preset": "480"
+      },
+      {
+        "key": "thickness",
+        "label": "mod.p.thickness",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "render_line((float)(%x1%), (float)(%y1%), (float)(%x2%), (float)(%y2%), (float)(%thickness%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.outline",
+    "label": "mod.act.renderOutline",
+    "call": "Render.FillRect",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "100"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "40"
+      },
+      {
+        "key": "thickness",
+        "label": "mod.p.thickness",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "render_outline((float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%thickness%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.tiled",
+    "label": "mod.act.renderTiled",
+    "call": "Render.DrawQuads",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "menu/panel.tga"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "200"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "100"
+      },
+      {
+        "key": "tileW",
+        "label": "mod.p.tileWidth",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "tileH",
+        "label": "mod.p.tileHeight",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "render_tiled(\"%file%\", (float)(%x%), (float)(%y%), (float)(%w%), (float)(%h%), (float)(%tileW%), (float)(%tileH%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
+    "needs": "render"
+  },
+  {
+    "id": "render.bar",
+    "label": "mod.act.renderBar",
+    "call": "Render.FillRect",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "20"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "20"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "120"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "10"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.fill",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) {\n    const float bar_w = (float)(%w%);\n    float bar_fill = (float)(%value%);\n    if (bar_fill < 0.0f) bar_fill = 0.0f;\n    if (bar_fill > 1.0f) bar_fill = 1.0f;\n    API->render->FillRect(SELF, (float)(%x%), (float)(%y%), bar_w, (float)(%h%), render_rgba(0.0f, 0.0f, 0.0f, 0.5f));\n    API->render->FillRect(SELF, (float)(%x%), (float)(%y%), bar_w * bar_fill, (float)(%h%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));\n}",
+    "needs": "render"
+  },
+  {
+    "id": "render.textShadow",
+    "label": "mod.act.renderTextShadow",
+    "call": "Render.DrawTextLine",
+    "group": "render",
+    "section": "mod.sec.draw",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "hello"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "320"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "240"
+      },
+      {
+        "key": "font",
+        "label": "mod.p.fontId",
+        "kind": "text",
+        "preset": "bigitem"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "shift",
+        "label": "mod.p.shadowShift",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "if (API->render) {\n    AmodFont shadow_font = render_font(\"%font%\");\n    const float shadow_shift = (float)(%shift%);\n    API->render->DrawTextLine(SELF, shadow_font, (float)(%x%) + shadow_shift, (float)(%y%) + shadow_shift, \"%text%\", (float)(%scale%), render_rgba(0.0f, 0.0f, 0.0f, (float)(%a%)));\n    API->render->DrawTextLine(SELF, shadow_font, (float)(%x%), (float)(%y%), \"%text%\", (float)(%scale%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));\n}",
+    "needs": "render"
+  },
+  {
+    "id": "render.stopFrame",
+    "label": "mod.act.renderStopFrame",
+    "call": "Render.Unsubscribe",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "if (API->render) API->render->Unsubscribe(SELF, %token%);",
+    "needs": "token"
+  },
+  {
+    "id": "render.stopElement",
+    "label": "mod.act.renderStopElement",
+    "call": "Render.CancelElementDraw",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "if (API->render) API->render->CancelElementDraw(SELF, %token%);",
+    "needs": "token"
+  },
+  {
+    "id": "render.stopItemStyle",
+    "label": "mod.act.renderStopItemStyle",
+    "call": "Render.CancelItemStyle",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "if (API->render) API->render->CancelItemStyle(SELF, %token%);",
+    "needs": "token"
+  },
+  {
+    "id": "render.stopBackground",
+    "label": "mod.act.renderStopBackground",
+    "call": "Render.CancelMenuBackground",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "if (API->render) API->render->CancelMenuBackground(SELF, %token%);",
+    "needs": "token"
+  },
+  {
+    "id": "render.stopAny",
+    "label": "mod.act.renderStopAny",
+    "call": "Render.Cancel",
+    "group": "render",
+    "section": "mod.sec.device",
+    "params": [],
+    "emit": "if (API->render) API->render->Cancel(SELF, %token%);",
+    "needs": "token"
+  }
+]

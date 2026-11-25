@@ -1,0 +1,9 @@
+mod.act.ctrlHidden=Hide object
+mod.act.ctrlProperty=Object property
+mod.ev.ctrlTouched=Player touched an object
+mod.p.hidden=Hidden
+mod.p.object=Object
+mod.sys.ctrls=Room objects
+mod.act.ctrlHidden.line=%object%: hidden = %hidden%
+mod.act.ctrlProperty.line=%object%: %key% = %value%
+mod.ev.ctrlTouched.line=Player touched "%object%"

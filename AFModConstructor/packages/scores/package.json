@@ -1,0 +1,14 @@
+{
+  "id": "scores",
+  "name": "Scores",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "scores"
+  ]
+}

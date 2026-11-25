@@ -1,0 +1,89 @@
+[
+  {
+    "id": "shader.available",
+    "label": "mod.cond.shaderAvailable",
+    "call": "Shader.IsAvailable",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [],
+    "emit": "(API->shader && API->shader->IsAvailable(SELF))"
+  },
+  {
+    "id": "shader.made",
+    "label": "mod.cond.shaderMade",
+    "group": "shader",
+    "section": "mod.sec.shaders",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.shaderName",
+        "kind": "text",
+        "preset": "mine"
+      },
+      {
+        "key": "half",
+        "label": "mod.p.shaderHalf",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.shader.vertex"
+          },
+          {
+            "value": "1",
+            "label": "mod.shader.pixel"
+          }
+        ]
+      }
+    ],
+    "emit": "(shader_of(\"%name%\", %half%) != AMOD_INVALID_SHADER)"
+  },
+  {
+    "id": "shader.shapePoints",
+    "label": "mod.cond.shapePoints",
+    "group": "shader",
+    "section": "mod.sec.shapes",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(shape_points() %op% %value%)"
+  }
+]

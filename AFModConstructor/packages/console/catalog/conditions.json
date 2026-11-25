@@ -1,0 +1,11 @@
+[
+  {
+    "id": "console.isOpen",
+    "label": "mod.cond.consoleOpen",
+    "call": "Console.IsOpen",
+    "group": "console",
+    "section": "mod.sec.general",
+    "params": [],
+    "emit": "(API->console && API->console->IsOpen(SELF))"
+  }
+]

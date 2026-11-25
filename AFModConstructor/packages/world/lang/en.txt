@@ -1,0 +1,27 @@
+mod.act.pause=Pause the game
+mod.act.timeLeft=Time left
+mod.cond.room=Player in room
+mod.cond.timeLeft=Time left below
+mod.ev.levelLoaded=Level loaded
+mod.ev.roomChanged=Room changed
+mod.ev.timeUp=Time is up
+mod.expr.elapsed=Time in the level
+mod.expr.room=Current room index
+mod.expr.rooms=Rooms in the level
+mod.expr.timeLeft=Time left
+mod.expr.timeLeft.hint=Bonus levels only
+mod.p.paused=Paused
+mod.p.room=Room
+mod.sec.level=Level
+mod.sys.world=World
+mod.act.pause.line=Game paused = %paused%
+mod.act.timeLeft.line=Time left = %seconds%s
+mod.cond.room.line=Player in room %room%
+mod.cond.timeLeft.line=Less than %seconds%s left
+mod.ev.levelLoaded.line=Level loaded
+mod.ev.roomChanged.line=Room changed to %room%
+mod.ev.timeUp.line=Time is up
+mod.act.leaveLevel=Leave the level
+mod.act.leaveLevel.line=Leave the level
+mod.act.startLevel=Start a level
+mod.act.startLevel.line=Start "%level%"

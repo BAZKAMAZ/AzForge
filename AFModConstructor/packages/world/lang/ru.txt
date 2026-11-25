@@ -1,0 +1,27 @@
+mod.act.pause=Пауза игры
+mod.act.timeLeft=Оставшееся время
+mod.cond.room=Игрок в комнате
+mod.cond.timeLeft=Времени осталось меньше
+mod.ev.levelLoaded=Уровень загружен
+mod.ev.roomChanged=Комната сменилась
+mod.ev.timeUp=Время вышло
+mod.expr.elapsed=Время на уровне
+mod.expr.room=Номер текущей комнаты
+mod.expr.rooms=Комнат в уровне
+mod.expr.timeLeft=Оставшееся время
+mod.expr.timeLeft.hint=Только на бонусном уровне
+mod.p.paused=Пауза
+mod.p.room=Комната
+mod.sec.level=Уровень
+mod.sys.world=Мир
+mod.act.pause.line=Пауза игры = %paused%
+mod.act.timeLeft.line=Оставшееся время = %seconds% с
+mod.cond.room.line=Игрок в комнате %room%
+mod.cond.timeLeft.line=Осталось меньше %seconds% с
+mod.ev.levelLoaded.line=Уровень загружен
+mod.ev.roomChanged.line=Комната сменилась на %room%
+mod.ev.timeUp.line=Время вышло
+mod.act.leaveLevel=Выйти из уровня
+mod.act.leaveLevel.line=Выйти из уровня
+mod.act.startLevel=Запустить уровень
+mod.act.startLevel.line=Запустить "%level%"

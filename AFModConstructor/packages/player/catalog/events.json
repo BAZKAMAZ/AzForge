@@ -1,0 +1,28 @@
+[
+  {
+    "id": "player.died",
+    "label": "mod.ev.playerDied",
+    "call": "Player.AddEventHandler(DIED)",
+    "values": [
+      "lives",
+      "crashed"
+    ],
+    "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_DIED, %H%, 0);",
+    "group": "player",
+    "section": "mod.sec.life"
+  },
+  {
+    "id": "player.scoreChanged",
+    "label": "mod.ev.playerScore",
+    "call": "Player.AddEventHandler(SCORE_CHANGED)",
+    "values": [
+      "score",
+      "wasScore"
+    ],
+    "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_SCORE_CHANGED, %H%, 0);",
+    "group": "player",
+    "section": "mod.sec.score"
+  }
+]

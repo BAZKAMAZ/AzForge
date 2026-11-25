@@ -1,0 +1,90 @@
+[
+  {
+    "id": "launcher.isOpen",
+    "label": "mod.cond.launcherOpen",
+    "group": "launcher",
+    "emit": "(API->launcher && API->launcher->IsOpen(SELF))",
+    "section": "mod.sec.dialog"
+  },
+  {
+    "id": "launcher.textIs",
+    "label": "mod.cond.launcherTextIs",
+    "group": "launcher",
+    "params": [
+      {
+        "key": "control",
+        "label": "mod.p.control",
+        "kind": "enum",
+        "preset": "AMOD_LAUNCHER_ID_PLAY",
+        "options": [
+          {
+            "value": "AMOD_LAUNCHER_ID_PLAY",
+            "label": "mod.ctl.play"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_EXIT",
+            "label": "mod.ctl.exit"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_CONFIG_BUTTON",
+            "label": "mod.ctl.config"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_HELP_BUTTON",
+            "label": "mod.ctl.help"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REGISTER_BUTTON",
+            "label": "mod.ctl.register"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_BUYNOW_BUTTON",
+            "label": "mod.ctl.buy"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RASTER_COMBO",
+            "label": "mod.ctl.raster"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_COMBO",
+            "label": "mod.ctl.lang"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_LANG_STATIC",
+            "label": "mod.ctl.langLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_REG_STATIC",
+            "label": "mod.ctl.regLabel"
+          },
+          {
+            "value": "AMOD_LAUNCHER_ID_RENDERAPI_STATIC",
+            "label": "mod.ctl.renderLabel"
+          }
+        ]
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text"
+      }
+    ],
+    "emit": "launcher_text_is(%control%, \"%text%\")",
+    "section": "mod.sec.controls"
+  },
+  {
+    "id": "launcher.hasControl",
+    "label": "mod.cond.launcherControl",
+    "group": "launcher",
+    "section": "mod.sec.launcher",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.controlName",
+        "kind": "text",
+        "preset": "IDC_HELP_BUTTON"
+      }
+    ],
+    "emit": "(launcher_control(\"%name%\") != 0)"
+  }
+]

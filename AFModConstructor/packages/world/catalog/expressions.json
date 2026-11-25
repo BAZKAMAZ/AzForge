@@ -1,0 +1,38 @@
+[
+  {
+    "id": "world.room",
+    "label": "mod.expr.room",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "API->world->GetCurrentRoom(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "world.rooms",
+    "label": "mod.expr.rooms",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "API->world->GetRoomCount(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "world.timeLeft",
+    "label": "mod.expr.timeLeft",
+    "group": "world",
+    "section": "mod.sec.time",
+    "kind": "float",
+    "text": "API->world->GetTimeLeft(SELF)",
+    "hint": "mod.expr.timeLeft.hint"
+  },
+  {
+    "id": "world.elapsed",
+    "label": "mod.expr.elapsed",
+    "group": "world",
+    "section": "mod.sec.time",
+    "kind": "float",
+    "text": "API->world->GetElapsed(SELF)",
+    "hint": ""
+  }
+]

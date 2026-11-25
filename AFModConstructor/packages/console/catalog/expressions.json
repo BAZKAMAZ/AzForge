@@ -1,0 +1,12 @@
+[
+  {
+    "id": "console.isOpen",
+    "label": "mod.expr.consoleOpen",
+    "call": "Console.IsOpen",
+    "group": "console",
+    "section": "mod.sec.general",
+    "kind": "int",
+    "text": "(API->console ? API->console->IsOpen(SELF) : 0)",
+    "hint": ""
+  }
+]

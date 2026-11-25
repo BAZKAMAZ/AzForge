@@ -1,0 +1,27 @@
+mod.act.addScore=Add score
+mod.act.burn=Burn the player
+mod.act.kill=Kill the player
+mod.act.setLives=Set lives
+mod.cond.livesAtMost=Lives at most
+mod.cond.scoreAtLeast=Score at least
+mod.ev.playerDied=Player is dying
+mod.ev.playerScore=Score changed
+mod.expr.lives=Player lives
+mod.expr.playerPos.hint=World coordinates, only while the player is in a level
+mod.expr.playerX=Player: X
+mod.expr.playerY=Player: Y
+mod.expr.playerZ=Player: Z
+mod.expr.score=Player score
+mod.p.lives=Lives
+mod.p.points=Points
+mod.sec.life=Lives
+mod.sec.score=Score
+mod.sys.player=Player
+mod.act.addScore.line=Player: score +%points%
+mod.act.burn.line=Player: burn
+mod.act.kill.line=Player: kill
+mod.act.setLives.line=Player: lives = %lives%
+mod.cond.livesAtMost.line=Lives at most %lives%
+mod.cond.scoreAtLeast.line=Score at least %points%
+mod.ev.playerDied.line=Player is dying
+mod.ev.playerScore.line=Score changed

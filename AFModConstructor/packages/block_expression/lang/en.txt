@@ -1,0 +1,52 @@
+mod.act.blockForget=Forget the parsed file
+mod.act.blockRead=Read a number from a file
+mod.act.blockStoreClear=Clear the table
+mod.act.blockStoreNumber=Put a number into the table
+mod.act.blockStoreRemove=Remove a key from the table
+mod.act.blockStoreText=Put text into the table
+mod.cond.blockChildren=Nested blocks in a file
+mod.cond.blockFileHas=File has a key
+mod.cond.blockFileNumber=Number from a file
+mod.cond.blockFileText=Text from a file
+mod.cond.blockStoreHas=Table has a key
+mod.cond.blockStoreNumber=Number from the table
+mod.cond.blockStoreText=Text from the table
+mod.expr.blockNumber=Number from a game file
+mod.expr.blockStore=Number from the mod table
+mod.p.blockKey=Key
+mod.p.blockPath=Block path
+mod.sec.store=Mod table
+mod.sys.blockExpression=Script blocks
+mod.act.blockForget.line=Forget the parsed file
+mod.act.blockRead.line=%var% = "%file%" %path%/%key%
+mod.act.blockStoreClear.line=Clear the mod table
+mod.act.blockStoreNumber.line=Table %path%/%key% = %value%
+mod.act.blockStoreRemove.line=Remove %path%/%key% from the table
+mod.act.blockStoreText.line=Table %path%/%key% = "%text%"
+mod.cond.blockChildren.line="%file%" blocks %path% %op% %value%
+mod.cond.blockFileHas.line="%file%" has %path%/%key%
+mod.cond.blockFileNumber.line="%file%" %path%/%key% %op% %value%
+mod.cond.blockFileText.line="%file%" %path%/%key% = "%text%"
+mod.cond.blockStoreHas.line=Table has %path%/%key%
+mod.cond.blockStoreNumber.line=Table %path%/%key% %op% %value%
+mod.cond.blockStoreText.line=Table %path%/%key% = "%text%"
+mod.act.blockObjectForget=Forget what is on the object
+mod.act.blockObjectForget.line=Forget the data of object %addr%
+mod.act.blockObjectSet=Remember a number on the object
+mod.act.blockObjectSet.line=Object %addr%: %key% = %value%
+mod.cond.blockObjectHas=The object holds this
+mod.cond.blockTextHas=The script text has the key
+mod.cond.blockTextNumber=A number in the script text
+mod.expr.blockChildName=Name of the nested block
+mod.expr.blockChildName.hint=By number, so a loop can walk everything inside
+mod.expr.blockKeyCount=Keys in the block
+mod.expr.blockKeyName=Name of the key
+mod.expr.blockObjectNumber=Number kept on the object
+mod.expr.blockObjectNumber.hint=The mod hangs its own data on a game object and finds it again by the same address
+mod.expr.blockTextNumber=Number out of script text
+mod.expr.blockTextNumber.hint=The text is read as a script, the way a game file is
+mod.p.script=Script text
+mod.sec.object=On a game object
+mod.cond.blockObjectHas.line=Object %addr% holds "%key%"
+mod.cond.blockTextHas.line=Text has %path%/%key%
+mod.cond.blockTextNumber.line=Text %path%/%key% %op% %value%

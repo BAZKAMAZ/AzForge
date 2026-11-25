@@ -1,0 +1,40 @@
+mod.act.hudProperty=Свойство HUD
+mod.sys.hud=Экран игры
+mod.act.hudProperty.line=HUD: %key% = %value%
+mod.act.hudAddImages=Добавить картинки на панель
+mod.act.hudAddImages.hint=Тот же $image, что игра пишет в game_info.txt, но одной строкой: поле не хранит переносов
+mod.act.hudAddImages.line=Добавить картинки на панель
+mod.act.hudFrame=Заменить рамку предметов
+mod.act.hudFrame.line=Рамка предметов: "%texture%"
+mod.act.hudNumber=Задать число панели
+mod.act.hudNumber.line=%key% = %value%
+mod.act.hudPair=Задать место или размер на панели
+mod.act.hudPair.line=%key% = %x%, %y%
+mod.act.hudRemoveImage=Убрать картинку панели
+mod.act.hudRemoveImage.line=Убрать картинку %index%
+mod.cond.hudHas=На панели есть это
+mod.cond.hudHas.line=На панели есть %key%
+mod.cond.hudImages=Картинок на панели
+mod.cond.hudNumber=Число панели
+mod.cond.hudNumber.line=%key% %op% %value%
+mod.expr.hudCount=Сколько ключей у панели
+mod.expr.hudFrame=Картинка рамки предметов
+mod.expr.hudImages=Картинок на панели
+mod.expr.hudNameAt=Имя ключа
+mod.expr.hudNameAt.hint=По номеру, чтобы циклом обойти все ключи, которые знает загрузчик
+mod.expr.hudNumber=Число панели
+mod.expr.hudNumber.hint=Ключи — те, что знает загрузчик; второе число пары читает запись ниже
+mod.expr.hudSecond=Второе число пары
+mod.hud.bonusPulse=Бонус: насколько пульсирует
+mod.hud.frameSize=Рамка предмета: размер
+mod.hud.frameTexture=Рамка предмета: картинка
+mod.hud.itemsOffs=Предметы: шаг до следующего
+mod.hud.itemsSize=Предметы: размер картинки
+mod.hud.itemsStart=Предметы: где первый
+mod.hud.lifePulse=Жизни: насколько пульсируют
+mod.hud.lifeTime=Жизни: сколько длится пульсация
+mod.hud.pbarOffs=Полоска: сдвиг от бонуса
+mod.hud.pointsPos=Откуда разлетаются очки
+mod.p.hudKey=Что менять
+mod.p.imageFragment=Блок $image, одной строкой
+mod.sec.hudImages=Картинки панели

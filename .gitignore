@@ -46,5 +46,23 @@ installer/bin/
 installer/obj/
 installer/payload.zip
 
+# AFModConstructor (Qt 6 mod constructor)
+AFModConstructor/build/
+AFModConstructor/build-*/
+AFModConstructor/cmake-build-*/
+AFModConstructor/compiler/
+AFModConstructor/assets/tools/*.exe
+AFModConstructor/examples/*/bin/
+AFModConstructor/examples/*/build/
+AFModConstructor/examples/*/.moddertool/
+AFModConstructor/examples/*/src/mod_generated.c
+AFModConstructor/.idea/
+CMakeUserPresets.json
+
+# Python bytecode
+**/__pycache__/
+*.pyc
+
 # scratch for one chat, never committed
 handoff*.txt
+AFModConstructor/порядок.txt

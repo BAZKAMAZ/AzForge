@@ -1,0 +1,38 @@
+[
+  {
+    "id": "font.measure",
+    "label": "mod.expr.fontMeasure",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "kind": "float",
+    "text": "font_measure(\"mine\", \"hello\", 1.0f)",
+    "hint": "mod.expr.fontMeasure.hint"
+  },
+  {
+    "id": "font.lineHeight",
+    "label": "mod.expr.fontLineHeight",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "kind": "float",
+    "text": "font_line_height(\"mine\")",
+    "hint": ""
+  },
+  {
+    "id": "font.gameCount",
+    "label": "mod.expr.fontGameCount",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "kind": "int",
+    "text": "(API->spriteFont ? API->spriteFont->GameFontCount(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "font.gameName",
+    "label": "mod.expr.fontGameName",
+    "group": "sprite_font",
+    "section": "mod.sec.font",
+    "kind": "text",
+    "text": "font_game_name(0)",
+    "hint": "mod.expr.fontGameName.hint"
+  }
+]

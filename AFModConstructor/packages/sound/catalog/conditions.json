@@ -1,0 +1,93 @@
+[
+  {
+    "id": "sound.started",
+    "label": "mod.cond.soundStarted",
+    "group": "sound",
+    "section": "mod.sec.sound",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.voiceName",
+        "kind": "text",
+        "preset": "water"
+      }
+    ],
+    "emit": "sound_started(\"%name%\")"
+  },
+  {
+    "id": "sound.musicPlaying",
+    "label": "mod.cond.musicPlaying",
+    "group": "sound",
+    "section": "mod.sec.music",
+    "params": [],
+    "emit": "(sound_music()[0] != 0)"
+  },
+  {
+    "id": "sound.musicIs",
+    "label": "mod.cond.musicIs",
+    "group": "sound",
+    "section": "mod.sec.music",
+    "params": [
+      {
+        "key": "file",
+        "label": "mod.p.music",
+        "kind": "text",
+        "preset": "music/theme.mp3"
+      }
+    ],
+    "emit": "sound_music_is(\"%file%\")"
+  },
+  {
+    "id": "sound.roomCount",
+    "label": "mod.cond.soundRoomCount",
+    "group": "sound",
+    "section": "mod.sec.roomSound",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "gt",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": "ge",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "lt",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "le",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "eq",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "ne",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(sound_room_count((int)(%room%)) %op% %value%)"
+  }
+]

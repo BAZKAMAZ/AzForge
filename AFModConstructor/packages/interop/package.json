@@ -1,0 +1,14 @@
+{
+  "id": "interop",
+  "name": "Game memory",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "interop"
+  ]
+}

@@ -1,0 +1,17 @@
+[
+  {
+    "id": "monster.kill",
+    "label": "mod.act.monsterKill",
+    "call": "Monsters.Kill",
+    "group": "monsters",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monster",
+        "kind": "monster"
+      }
+    ],
+    "emit": "if (API->monsters) { int i = API->monsters->IndexOf(SELF, API->monsters->Find(SELF, \"%name%\")); if (i >= 0) API->monsters->Kill(SELF, i); }",
+    "section": "mod.sec.general"
+  }
+]

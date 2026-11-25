@@ -1,0 +1,8 @@
+[
+  {
+    "id": "player",
+    "label": "mod.sys.player",
+    "prologue": "static MOD_UNUSED int player_score(void) {\n    return API->player != 0 ? API->player->GetScore(SELF) : 0;\n}\n\nstatic MOD_UNUSED int player_lives(void) {\n    return API->player != 0 ? API->player->GetLives(SELF) : 0;\n}\n\n/* 0 is x, 1 is y, 2 is z */\nstatic MOD_UNUSED float player_position(int axis) {\n    AmodPlayer player;\n    if (API->player == 0) return 0.0f;\n    memset(&player, 0, sizeof player);\n    player.structSize = sizeof player;\n    if (API->player->Get(SELF, &player) == 0) return 0.0f;\n    return (axis >= 0 && axis < 3) ? player.position[axis] : 0.0f;\n}",
+    "icon": "icons/player.png"
+  }
+]

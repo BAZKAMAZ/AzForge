@@ -1,0 +1,14 @@
+{
+  "id": "particles",
+  "name": "Particles",
+  "version": "1.0",
+  "author": "AzangaraStudio",
+  "tiers": [
+    "data",
+    "tcc",
+    "vs"
+  ],
+  "namespaces": [
+    "particles"
+  ]
+}

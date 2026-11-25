@@ -1,0 +1,48 @@
+[
+  {
+    "id": "ctrl.setProperty",
+    "label": "mod.act.ctrlProperty",
+    "call": "Ctrls.SetProperty",
+    "group": "ctrls",
+    "params": [
+      {
+        "key": "object",
+        "label": "mod.p.object",
+        "kind": "object"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "text"
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "text"
+      }
+    ],
+    "emit": "{ int i = ctrl_index(\"%object%\"); AmodValue v = as_value(\"%value%\"); if (i >= 0 && API->ctrls) API->ctrls->SetProperty(SELF, i, \"%key%\", &v); }",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "ctrl.setHidden",
+    "label": "mod.act.ctrlHidden",
+    "call": "Ctrls.SetHidden",
+    "group": "ctrls",
+    "params": [
+      {
+        "key": "object",
+        "label": "mod.p.object",
+        "kind": "object"
+      },
+      {
+        "key": "hidden",
+        "label": "mod.p.hidden",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "{ int i = ctrl_index(\"%object%\"); if (i >= 0 && API->ctrls) API->ctrls->SetHidden(SELF, i, %hidden%); }",
+    "section": "mod.sec.props"
+  }
+]

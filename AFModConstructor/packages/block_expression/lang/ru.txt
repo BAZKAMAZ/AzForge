@@ -1,0 +1,52 @@
+mod.act.blockForget=Забыть разобранный файл
+mod.act.blockRead=Прочитать число из файла
+mod.act.blockStoreClear=Очистить таблицу
+mod.act.blockStoreNumber=Записать число в таблицу
+mod.act.blockStoreRemove=Убрать ключ из таблицы
+mod.act.blockStoreText=Записать текст в таблицу
+mod.cond.blockChildren=Вложенных блоков в файле
+mod.cond.blockFileHas=В файле есть ключ
+mod.cond.blockFileNumber=Число из файла
+mod.cond.blockFileText=Текст из файла
+mod.cond.blockStoreHas=В таблице есть ключ
+mod.cond.blockStoreNumber=Число из таблицы
+mod.cond.blockStoreText=Текст из таблицы
+mod.expr.blockNumber=Число из файла игры
+mod.expr.blockStore=Число из таблицы мода
+mod.p.blockKey=Ключ
+mod.p.blockPath=Путь блока
+mod.sec.store=Таблица мода
+mod.sys.blockExpression=Блоки скриптов
+mod.act.blockForget.line=Забыть разобранный файл
+mod.act.blockRead.line=%var% = «%file%» %path%/%key%
+mod.act.blockStoreClear.line=Очистить таблицу мода
+mod.act.blockStoreNumber.line=Таблица %path%/%key% = %value%
+mod.act.blockStoreRemove.line=Убрать из таблицы %path%/%key%
+mod.act.blockStoreText.line=Таблица %path%/%key% = «%text%»
+mod.cond.blockChildren.line=В «%file%» блоков %path% %op% %value%
+mod.cond.blockFileHas.line=В «%file%» есть %path%/%key%
+mod.cond.blockFileNumber.line=«%file%» %path%/%key% %op% %value%
+mod.cond.blockFileText.line=«%file%» %path%/%key% = «%text%»
+mod.cond.blockStoreHas.line=В таблице есть %path%/%key%
+mod.cond.blockStoreNumber.line=Таблица %path%/%key% %op% %value%
+mod.cond.blockStoreText.line=Таблица %path%/%key% = «%text%»
+mod.act.blockObjectForget=Забыть данные объекта
+mod.act.blockObjectForget.line=Забыть данные объекта %addr%
+mod.act.blockObjectSet=Запомнить число на объекте
+mod.act.blockObjectSet.line=Объект %addr%: %key% = %value%
+mod.cond.blockObjectHas=На объекте есть данные
+mod.cond.blockTextHas=В тексте скрипта есть ключ
+mod.cond.blockTextNumber=Число в тексте скрипта
+mod.expr.blockChildName=Имя вложенного блока
+mod.expr.blockChildName.hint=По номеру, чтобы циклом обойти всё, что внутри
+mod.expr.blockKeyCount=Ключей в блоке
+mod.expr.blockKeyName=Имя ключа
+mod.expr.blockObjectNumber=Число, лежащее на объекте
+mod.expr.blockObjectNumber.hint=Мод вешает свои данные на объект игры и находит их по тому же адресу
+mod.expr.blockTextNumber=Число из текста скрипта
+mod.expr.blockTextNumber.hint=Текст разбирается как скрипт, так же как файл игры
+mod.p.script=Текст скрипта
+mod.sec.object=На объекте игры
+mod.cond.blockObjectHas.line=На объекте %addr% есть "%key%"
+mod.cond.blockTextHas.line=В тексте есть %path%/%key%
+mod.cond.blockTextNumber.line=В тексте %path%/%key% %op% %value%

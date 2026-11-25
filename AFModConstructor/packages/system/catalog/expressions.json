@@ -1,0 +1,209 @@
+[
+  {
+    "id": "math.random",
+    "label": "mod.expr.random",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "int",
+    "text": "mod_random(10)",
+    "hint": "mod.expr.random.hint"
+  },
+  {
+    "id": "math.random01",
+    "label": "mod.expr.random01",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "mod_random01()",
+    "hint": "mod.expr.random01.hint"
+  },
+  {
+    "id": "math.floor",
+    "label": "mod.expr.floor",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "int",
+    "text": "(int)(1.5)",
+    "hint": "mod.expr.floor.hint"
+  },
+  {
+    "id": "math.abs",
+    "label": "mod.expr.abs",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "fabsf(-1.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.min",
+    "label": "mod.expr.min",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "fminf(1.0f, 2.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.max",
+    "label": "mod.expr.max",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "fmaxf(1.0f, 2.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.sqrt",
+    "label": "mod.expr.sqrt",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "sqrtf(4.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.pow",
+    "label": "mod.expr.pow",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "powf(2.0f, 3.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.sin",
+    "label": "mod.expr.sin",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "sinf(0.0f)",
+    "hint": ""
+  },
+  {
+    "id": "math.cos",
+    "label": "mod.expr.cos",
+    "group": "system",
+    "section": "mod.sec.math",
+    "kind": "float",
+    "text": "cosf(0.0f)",
+    "hint": ""
+  },
+  {
+    "id": "frame.delta",
+    "label": "mod.expr.delta",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "frame->delta",
+    "hint": "mod.expr.delta.hint"
+  },
+  {
+    "id": "frame.elapsed",
+    "label": "mod.expr.elapsedFrames",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "float",
+    "text": "frame->elapsed",
+    "hint": "mod.expr.delta.hint"
+  },
+  {
+    "id": "forge.modId",
+    "label": "mod.expr.modId",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "text",
+    "text": "API->GetModId(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "forge.modVersion",
+    "label": "mod.expr.modVersion",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "text",
+    "text": "API->GetModVersion(SELF)",
+    "hint": ""
+  },
+  {
+    "id": "forge.loaderVersion",
+    "label": "mod.expr.loaderVersion",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "text",
+    "text": "API->GetLoaderVersion()",
+    "hint": ""
+  },
+  {
+    "id": "forge.gameDir",
+    "label": "mod.expr.gameDir",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "text",
+    "text": "API->GetGameDirectory()",
+    "hint": ""
+  },
+  {
+    "id": "forge.lastError",
+    "label": "mod.expr.lastError",
+    "group": "system",
+    "section": "mod.sec.general",
+    "kind": "text",
+    "text": "API->LastError(SELF)",
+    "hint": "mod.expr.lastError.hint"
+  },
+  {
+    "id": "text.format",
+    "label": "mod.expr.textFormat",
+    "group": "system",
+    "section": "mod.sec.text",
+    "kind": "text",
+    "text": "mod_text(\"value: %d\", 0)",
+    "hint": "mod.expr.textFormat.hint"
+  },
+  {
+    "id": "text.number",
+    "label": "mod.expr.textNumber",
+    "group": "system",
+    "section": "mod.sec.text",
+    "kind": "text",
+    "text": "mod_text(\"%g\", 0.0f)",
+    "hint": ""
+  },
+  {
+    "id": "text.join",
+    "label": "mod.expr.textJoin",
+    "group": "system",
+    "section": "mod.sec.text",
+    "kind": "text",
+    "text": "mod_text(\"%s%s\", \"\", \"\")",
+    "hint": ""
+  },
+  {
+    "id": "system.delta",
+    "label": "mod.expr.delta",
+    "group": "system",
+    "section": "mod.sec.time",
+    "kind": "float",
+    "text": "mod_delta",
+    "hint": "mod.expr.delta.hint"
+  },
+  {
+    "id": "list.at",
+    "label": "mod.expr.listAt",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "kind": "float",
+    "text": "mylist[0]",
+    "hint": "mod.expr.listAt.hint"
+  },
+  {
+    "id": "list.length",
+    "label": "mod.expr.listLength",
+    "group": "system",
+    "section": "mod.sec.lists",
+    "kind": "int",
+    "text": "(int)(sizeof mylist / sizeof mylist[0])",
+    "hint": "mod.expr.listAt.hint"
+  }
+]
