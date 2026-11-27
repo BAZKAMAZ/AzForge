@@ -1,0 +1,18 @@
+{
+  "api_version": 1,
+  "author": "AFModConstructor",
+  "capabilities": [],
+  "description": "Interactive PlayerApi showcase (state, position, noclip, shield veto, custom driver, 4x10 window)",
+  "entry": "bin/playertest.dll",
+  "game_version": "1.0",
+  "id": "playertest",
+  "name": "Player Showcase",
+  "requires": [
+    "fonts",
+    "input",
+    "player",
+    "render",
+    "world"
+  ],
+  "version": "1.0.0"
+}

@@ -1,1 +1,355 @@
 mod.sys.bonuses=Бонусы
+mod.sec.bonusPlace=Размещение бонусов на карте
+mod.sec.bonusRoom=Подсчёт и поиск в комнате
+mod.sec.bonusTypes=Типы бонусов и создание своих
+mod.sec.bonusScore=Очки бонусов и комбо-цепочка
+mod.sec.bonusEvents=События взятия и появления
+mod.sec.bonusKind=Свои виды бонусов и перехват (Kind)
+
+mod.ev.bonusBeforeTake=Перед взятием бонуса
+mod.ev.bonusBeforeTake.line=Перед взятием бонуса
+mod.ev.bonusBeforeTake.hint=Через + можно добавить фильтр по ID или метке бонуса; «Вместо игры» запрещает подбор, либо используйте «Задать исход взятия бонуса»
+mod.ev.bonusBeforeSpawn=Перед появлением бонуса в комнате
+mod.ev.bonusBeforeSpawn.line=Перед появлением бонуса в комнате
+mod.ev.bonusBeforeSpawn.hint=Включите «Вместо игры» на правиле, чтобы не создавать этот бонус при входе в комнату
+mod.ev.bonusKindBuild=Сборка своего вида бонуса
+mod.ev.bonusKindBuild.line=Сборка вида бонуса «%kindName%»
+mod.ev.bonusKindBuild.hint=Настройте модель, текстуру, свечение, свет, рамку и очки при появлении «%kindName%»; «Вместо игры» отменяет создание
+mod.ev.bonusKindUpdate=Кадр своего / перехваченного бонуса
+mod.ev.bonusKindUpdate.line=Кадр вида бонуса «%kindName%»
+mod.ev.bonusKindUpdate.hint=Вызывается каждый кадр для «%kindName%» (созданных и перехваченных); «Вместо игры» отключает штатное покачивание у перехваченных бонусов
+mod.ev.bonusKindTake=Взятие своего / перехваченного бонуса
+mod.ev.bonusKindTake.line=Игрок коснулся бонуса вида «%kindName%»
+mod.ev.bonusKindTake.hint=Включите «Вместо игры» для запрета взятия или используйте «Задать исход взятия бонуса»
+
+mod.cond.bonusTypeExists=Тип бонуса существует
+mod.cond.bonusTypeExists.line=Тип бонуса %name% существует
+mod.cond.bonusTypeFlag=У типа бонуса включён флаг
+mod.cond.bonusTypeFlag.line=У бонуса %name% флаг: %flag%
+mod.cond.bonusTypeCmp=Сравнить параметр типа бонуса
+mod.cond.bonusTypeCmp.line=Бонус %name%: %field% %op% %value%
+mod.cond.bonusHasTypeProp=У типа бонуса есть свойство
+mod.cond.bonusHasTypeProp.line=У бонуса %name% есть свойство %key%
+mod.cond.bonusRoomCountCmp=Сравнить число бонусов в комнате
+mod.cond.bonusRoomCountCmp.line=Бонусов в комнате (%mode%) %op% %count%
+mod.cond.bonusNamedCountCmp=Сравнить число живых бонусов вида в комнате
+mod.cond.bonusNamedCountCmp.line=Живых бонусов %name% в комнате %op% %count%
+mod.cond.bonusTaggedExists=В комнате есть живой бонус с меткой
+mod.cond.bonusTaggedExists.line=Есть живой бонус с меткой «%tag%»
+mod.cond.bonusCellHas=На клетке лежит живой бонус
+mod.cond.bonusCellHas.line=На клетке (%col%, %row%) лежит бонус
+mod.cond.bonusPlLive=Размещение бонуса активно (не собрано)
+mod.cond.bonusPlLive.line=Размещение бонуса #%index% активно
+mod.cond.bonusPlMatches=Размещение бонуса совпадает с ID, видом или меткой
+mod.cond.bonusPlMatches.line=Размещение #%index% совпадает с %text%
+mod.cond.bonusPlPropCmp=Сравнить числовое свойство размещения бонуса
+mod.cond.bonusPlPropCmp.line=Размещение #%index%: %key% %op% %value%
+mod.cond.bonusForEachPl=Для каждого размещения бонуса в комнате
+mod.cond.bonusForEachPl.line=Для каждого бонуса в комнате (%var%)
+mod.cond.bonusForEachPl.hint=Автоматически выбирает каждое размещение для выражений «Выбранное размещение» (через + можно задать комнату и фильтр живых)
+mod.cond.bonusTakeMatches=Взятый бонус совпадает с ID, видом или меткой
+mod.cond.bonusTakeMatches.line=Взятый бонус совпадает с %text%
+mod.cond.bonusTakeDecor=Взятый бонус декоративный ($decor)
+mod.cond.bonusTakeDecor.line=Взятый бонус декоративный
+mod.cond.bonusSpawnMatches=Появляющийся бонус совпадает с ID, видом или меткой
+mod.cond.bonusSpawnMatches.line=Появляющийся бонус совпадает с %text%
+mod.cond.bonusSpawnLive=Появляющийся бонус ещё не собран
+mod.cond.bonusSpawnLive.line=Появляющийся бонус не собран
+
+mod.act.bonusPlace=Создать бонус
+mod.act.bonusPlace.line=Создать бонус %name% в (%col%, %row%)
+mod.act.bonusPlace.hint=Создаёт любой встроенный или кастомный бонус; через + доступны комната, метка, таймер, декор, модель и текстура
+mod.act.bonusSelectPl=Выбрать размещение бонуса
+mod.act.bonusSelectPl.line=Выбрать размещение бонуса #%index%
+mod.act.bonusRemove=Убрать бонус
+mod.act.bonusRemove.line=Убрать бонус (%by%)
+mod.act.bonusRemove.hint=Тихо убирает бонусы по индексу спавна, метке или типу/ID (комнату можно добавить через +)
+mod.act.bonusSetPlNum=Задать числовое свойство размещения бонуса
+mod.act.bonusSetPlNum.line=Размещение #%index%: %key% = %value%
+mod.act.bonusSetPlPos=Задать мировые координаты размещения бонуса
+mod.act.bonusSetPlPos.line=Размещение #%index%: позиция = (%x%, %y%, %z%)
+mod.act.bonusSetPlText=Задать текстовое/ресурсное свойство размещения бонуса
+mod.act.bonusSetPlText.line=Размещение #%index%: %key% = «%text%»
+mod.act.bonusSelectType=Выбрать тип бонуса
+mod.act.bonusSelectType.line=Выбрать тип бонуса (%by%)
+mod.act.bonusDefine.hint=Вызывайте в «При запуске мода» или в меню до загрузки уровня (внутри загруженного уровня DefineType не применяется)
+mod.act.bonusBeginType=1. Начать настройку нового типа бонуса
+mod.act.bonusBeginType.line=Начать тип бонуса «%id%» на основе %basedOn% (%behavesAs%, +%pointsTake% очк.)
+mod.act.bonusTypeAssets=2. Ресурсы нового типа бонуса
+mod.act.bonusTypeAssets.line=Ресурсы типа бонуса: модель «%model%», текстура «%texture%»
+mod.act.bonusTypeTimer=3. Таймер и шлейф нового типа бонуса
+mod.act.bonusTypeTimer.line=Таймер типа бонуса: %time% с (%timerMode%)
+mod.act.bonusTypeGlow=4. Цвета свечения нового типа бонуса
+mod.act.bonusTypeGlow.line=Свечение типа бонуса RGBA(%r%, %g%, %b%, %a%)
+mod.act.bonusTypeRockLight=5. Покачивание и свет нового типа бонуса
+mod.act.bonusTypeRockLight.line=Покачивание типа бонуса: ампл. %amp%, скор. %speed%
+mod.act.bonusCommitType=6. Зарегистрировать настроенный тип бонуса
+mod.act.bonusCommitType.line=Зарегистрировать новый тип бонуса (DefineType)
+mod.act.bonusSetTypeTex=Сменить текстуру своего типа бонуса
+mod.act.bonusSetTypeTex.line=Текстура типа бонуса «%id%» = «%texture%»
+mod.act.bonusOwnedType.hint=Работает для типов бонусов, созданных этим модом через DefineType; SetTexture сразу обновляет и уже стоящие в комнате бонусы
+mod.act.bonusSetTypeIcon=Сменить иконку HUD своего типа бонуса
+mod.act.bonusSetTypeIcon.line=Иконка HUD типа бонуса «%id%» = «%icon%»
+mod.act.bonusSetTypeNum=Задать числовое/флаговое свойство своего типа бонуса
+mod.act.bonusSetTypeNum.line=Тип бонуса «%id%»: %key% = %value%
+mod.act.bonusSetTypeVec=Задать цвет/ось своего типа бонуса
+mod.act.bonusSetTypeVec.line=Тип бонуса «%id%»: %key% = (%r%, %g%, %b%, %a%)
+mod.act.bonusSetTypeAsset=Задать ресурс своего типа бонуса
+mod.act.bonusSetTypeAsset.line=Тип бонуса «%id%»: %key% = «%path%»
+mod.act.bonusAwardPts=Начислить бонусные очки
+mod.act.bonusAwardPts.line=Начислить +%points% бонусных очков (%where%)
+mod.act.bonusChainLink=Продлить комбо-цепочку алмазов
+mod.act.bonusChainLink.line=Звено комбо-цепочки +%points% очк. (%where%)
+mod.act.bonusChainLink.hint=Увеличивает счётчик комбо Азангары («5 combo»..«Excellent!»), проигрывает нарастающий звук и сохраняет очки звена в «Очки последнего звена комбо»
+mod.act.bonusSetTakeRes=Задать исход взятия бонуса
+mod.act.bonusSetTakeRes.line=Исход взятия бонуса = %result%
+mod.act.bonusSetTakeRes.hint=DEFAULT — обычное взятие игрой; HANDLED — убрать бонус без стандартного эффекта (награда от мода); REFUSE — оставить лежать
+mod.act.bonusRegKind=Зарегистрировать свой вид бонуса (Kind)
+mod.act.bonusRegKind.line=Зарегистрировать вид бонуса «%kindName%»
+mod.act.bonusPlaceKind=Создать свой вид бонуса
+mod.act.bonusPlaceKind.line=Создать вид бонуса «%kindName%» в (%col%, %row%)
+mod.act.bonusBorrowPl=Перехватить размещение бонуса под свой вид
+mod.act.bonusBorrowPl.line=Перехватить бонус #%index% в вид «%kindName%»
+mod.act.bonusBorrowPl.hint=Передаёт существующий бонус уровня под управление событий Кадр и Взятие вида «%kindName%»
+mod.act.bonusBorrowAll=Перехватить все живые бонусы комнаты в свой вид
+mod.act.bonusBorrowAll.line=Перехватить живые бонусы комнаты в вид «%kindName%»
+mod.act.bonusBorrowAll.hint=Через + можно добавить фильтр метки для выборочного перехвата бонусов
+mod.act.bonusReturnPl=Вернуть перехваченный бонус игре
+mod.act.bonusReturnPl.line=Вернуть бонус #%index% под управление игры
+mod.act.bonusReturnAll=Вернуть все перехваченные бонусы комнаты игре
+mod.act.bonusReturnAll.line=Вернуть все перехваченные бонусы комнаты игре
+mod.act.bonusBodyLook=Задать модель и текстуру тела бонуса
+mod.act.bonusBodyLook.line=Модель тела бонуса = «%model%»
+mod.act.bonusBodyIds=Задать ID модели и текстуры тела бонуса
+mod.act.bonusBodyIds.line=Тело бонуса: modelId = %modelId%
+mod.act.bonusBodyPos=Задать позицию тела своего / перехваченного бонуса
+mod.act.bonusBodyPos.line=Позиция тела бонуса = (%x%, %y%, %z%)
+mod.act.bonusBodyGlow=Задать основное свечение тела бонуса
+mod.act.bonusBodyGlow.line=Свечение 1 тела бонуса RGB(%r%, %g%, %b%)
+mod.act.bonusBodyGlow2=Задать второе свечение тела бонуса
+mod.act.bonusBodyGlow2.line=Свечение 2 тела бонуса RGB(%r%, %g%, %b%)
+mod.act.bonusBodyRock=Задать покачивание тела бонуса
+mod.act.bonusBodyRock.line=Покачивание тела бонуса: ампл. %amp%, скор. %speed%
+mod.act.bonusBodyLight=Задать точечный свет тела бонуса
+mod.act.bonusBodyLight.line=Свет тела бонуса: RGB(%r%, %g%, %b%), радиус %radius%
+mod.act.bonusBodyBox=Задать рамку касания тела бонуса
+mod.act.bonusBodyBox.line=Рамка тела бонуса: (%minX%, %minY%, %minZ%) .. (%maxX%, %maxY%, %maxZ%)
+mod.act.bonusBodyPts=Задать очки при взятии тела бонуса
+mod.act.bonusBodyPts.line=Очки тела бонуса при взятии = %points%
+mod.act.bonusBodyHidden=Скрыть или показать тело бонуса
+mod.act.bonusBodyHidden.line=Тело бонуса скрыто = %hidden%
+mod.act.bonusCancel=Отменить подписку на событие бонусов
+mod.act.bonusCancel.line=Отписаться от этого события бонусов
+
+mod.expr.bonusTypeCount=Количество зарегистрированных типов бонусов
+mod.expr.bonusLiveCount=Живых (несобранных) бонусов в текущей комнате
+mod.expr.bonusTotalPl=Всего размещений бонусов в текущей комнате
+mod.expr.bonusSlotCount=Всего слотов спауна в текущей комнате (PlacementCount)
+mod.expr.bonusIdxTag=Индекс живого бонуса с меткой (-1 если нет)
+mod.expr.bonusIdxCell=Индекс живого бонуса на клетке (-1 если нет)
+mod.expr.bonusLastChainPts=Очки последнего звена комбо-цепочки
+mod.expr.bonusKindId=Числовой ID зарегистрированного вида бонуса
+
+mod.expr.bonusSelTypeName=Выбранный тип: имя поведения ($name)
+mod.expr.bonusSelTypeRes=Выбранный тип: ID ресурса ($res_id)
+mod.expr.bonusSelTypePtsTake=Выбранный тип: очки при взятии
+mod.expr.bonusSelTypePtsOut=Выбранный тип: очки по окончании / применении
+mod.expr.bonusSelTypeTotem=Выбранный тип: 1 если тотем с таймером
+mod.expr.bonusSelTypeTorch=Выбранный тип: 1 если факел
+mod.expr.bonusSelTypeTrain=Выбранный тип: 1 если пускает шлейф частиц
+mod.expr.bonusSelTypeTrainIdx=Выбранный тип: индекс пресета шлейфа
+mod.expr.bonusSelTypeModelId=Выбранный тип: ID модели
+mod.expr.bonusSelTypeTexId=Выбранный тип: ID текстуры
+mod.expr.bonusSelTypeIconId=Выбранный тип: ID иконки HUD
+mod.expr.bonusSelTypeTime=Выбранный тип: длительность в секундах ($time)
+mod.expr.bonusSelTypeBurn=Выбранный тип: время разгорания факела (с)
+mod.expr.bonusSelTypeLightR=Выбранный тип: радиус света у игрока
+mod.expr.bonusSelTypeBLightR=Выбранный тип: радиус света лежащего бонуса
+mod.expr.bonusSelTypeGlowR=Выбранный тип: свечение R
+mod.expr.bonusSelTypeGlowG=Выбранный тип: свечение G
+mod.expr.bonusSelTypeGlowB=Выбранный тип: свечение B
+mod.expr.bonusSelTypeGlowA=Выбранный тип: свечение A
+
+mod.expr.bonusTypePropCnt=Число свойств типа бонуса
+mod.expr.bonusTypePropName=Имя свойства типа бонуса по индексу
+mod.expr.bonusTypePropInt=Прочитать целое свойство типа бонуса
+mod.expr.bonusTypePropNum=Прочитать дробное свойство типа бонуса
+mod.expr.bonusTypePropText=Прочитать текстовое свойство типа бонуса
+mod.expr.bonusPlPropCnt=Число свойств размещения бонуса
+mod.expr.bonusPlPropName=Имя свойства размещения бонуса по индексу
+mod.expr.bonusPlPropNum=Прочитать числовое свойство размещения бонуса
+mod.expr.bonusPlPropText=Прочитать текстовое свойство размещения бонуса
+
+mod.expr.bonusSelPlIdx=Выбранное размещение: индекс слота
+mod.expr.bonusSelPlName=Выбранное размещение: имя типа/вида
+mod.expr.bonusSelPlRes=Выбранное размещение: ID ресурса
+mod.expr.bonusSelPlTag=Выбранное размещение: метка ($tag)
+mod.expr.bonusSelPlX=Выбранное размещение: X
+mod.expr.bonusSelPlY=Выбранное размещение: Y
+mod.expr.bonusSelPlZ=Выбранное размещение: Z
+mod.expr.bonusSelPlCol=Выбранное размещение: столбец клетки
+mod.expr.bonusSelPlRow=Выбранное размещение: строка клетки
+mod.expr.bonusSelPlLive=Выбранное размещение: 1 если не собрано
+mod.expr.bonusSelPlHasType=Выбранное размещение: 1 если тип найден
+mod.expr.bonusSelPlKind=Выбранное размещение: ID своего вида (0 = игровой)
+
+mod.expr.bonusTakeName=Событие взятия: имя поведения ($name)
+mod.expr.bonusTakeRes=Событие взятия: ID ресурса ($res_id)
+mod.expr.bonusTakeTag=Событие взятия: метка размещения ($tag)
+mod.expr.bonusTakeCol=Событие взятия: столбец клетки
+mod.expr.bonusTakeRow=Событие взятия: строка клетки
+mod.expr.bonusTakePts=Событие взятия: базовые очки при взятии
+mod.expr.bonusTakeDecor=Событие взятия: 1 если декоративный ($decor)
+mod.expr.bonusTakeX=Событие взятия: X
+mod.expr.bonusTakeY=Событие взятия: Y
+mod.expr.bonusTakeZ=Событие взятия: Z
+
+mod.expr.bonusSpawnName=Событие появления: имя размещения
+mod.expr.bonusSpawnRes=Событие появления: ID ресурса
+mod.expr.bonusSpawnTag=Событие появления: метка ($tag)
+mod.expr.bonusSpawnX=Событие появления: X
+mod.expr.bonusSpawnY=Событие появления: Y
+mod.expr.bonusSpawnZ=Событие появления: Z
+mod.expr.bonusSpawnHasType=Событие появления: 1 если тип найден
+mod.expr.bonusSpawnLive=Событие появления: 1 если не собран
+mod.expr.bonusSpawnKind=Событие появления: ID своего вида (0 = игровой)
+
+mod.expr.bonusBodyName=Тело бонуса: имя
+mod.expr.bonusBodyTag=Тело бонуса: метка
+mod.expr.bonusBodyX=Тело бонуса: X
+mod.expr.bonusBodyY=Тело бонуса: Y
+mod.expr.bonusBodyZ=Тело бонуса: Z
+mod.expr.bonusBodyRockAmp=Тело бонуса: амплитуда покачивания
+mod.expr.bonusBodyRockSpd=Тело бонуса: скорость покачивания
+mod.expr.bonusBodyHidden=Тело бонуса: 1 если скрыто
+mod.expr.bonusBodyPts=Тело бонуса: очки при взятии
+mod.expr.bonusBodyModelId=Тело бонуса: ID модели
+mod.expr.bonusBodyTexId=Тело бонуса: ID текстуры
+mod.expr.bonusKindDt=Кадр вида бонуса: дельта времени (с)
+
+mod.p.points=Очки
+mod.p.bonusId=Бонус
+mod.p.bonusLookupBy=Искать
+mod.p.bonusPopupWhere=Где показать очки
+mod.p.bonusFilter=Фильтр (ID, вид или метка)
+mod.p.bonusKindName=Имя своего вида (Kind)
+mod.p.bonusFlag=Флаг типа
+mod.p.bonusField=Параметр типа
+mod.p.bonusCountMode=Что считать
+mod.p.bonusTag=Метка ($tag)
+mod.p.bonusCol=Столбец (0..39)
+mod.p.bonusRow=Строка (0..29)
+mod.p.bonusOnlyLive=Только живые бонусы
+mod.p.bonusDecor=Декоративный ($decor)
+mod.p.bonusModel=Модель (.mmd)
+mod.p.bonusIcon=Иконка HUD
+mod.p.bonusSoundTake=Звук взятия
+mod.p.bonusSoundUse=Звук окончания / использования
+mod.p.bonusBasedOn=Базовый бонус
+mod.p.bonusBehavesAs=Поведение при взятии
+mod.p.bonusPointsOut=Очки при окончании / применении
+mod.p.bonusTimerMode=Владелец таймера
+mod.p.bonusTrain=Шлейф частиц к HUD
+mod.p.bonusTrainIdx=Индекс пресета шлейфа
+mod.p.bonusR2=Свечение 2: Красный
+mod.p.bonusG2=Свечение 2: Зелёный
+mod.p.bonusB2=Свечение 2: Синий
+mod.p.bonusA2=Свечение 2: Прозрачность
+mod.p.bonusRockAmp=Амплитуда покачивания
+mod.p.bonusRockSpeed=Скорость покачивания
+mod.p.bonusLightRad=Радиус света
+mod.p.bonusTakeResult=Исход взятия
+mod.p.bonusModelId=ID модели
+mod.p.bonusTextureId=ID текстуры
+mod.p.bonusMinZ=Мин. Z
+mod.p.bonusMaxZ=Макс. Z
+mod.p.bonusHidden=Скрыт
+
+mod.bonuses.by.name=по ID / имени
+mod.bonuses.by.index=по номеру в таблице
+mod.bonuses.rm.index=по индексу спавна
+mod.bonuses.rm.tag=по метке
+mod.bonuses.rm.name=по типу / ID
+mod.bonuses.at.player=над игроком
+mod.bonuses.at.pos=в точке (X, Y, Z)
+
+mod.bonuses.id.bonus=Золотой алмаз («bonus»)
+mod.bonuses.id.bonusT=Синий алмаз («bonus_t»)
+mod.bonuses.id.bonus0=Янтарный алмаз («bonus_0»)
+mod.bonuses.id.bonus1=Голубой кристалл («bonus_1»)
+mod.bonuses.id.bonus2=Лаймовый алмаз («bonus_2»)
+mod.bonuses.id.bonus3=Изумруд («bonus_3»)
+mod.bonuses.id.bonus4=Сапфировый кристалл («bonus_4»)
+mod.bonuses.id.bonus5=Белый бриллиант («bonus_5»)
+mod.bonuses.id.mega=Корона — мега-бонус 5000 очк. («mega_bonus»)
+mod.bonuses.id.life=Сердце — доп. жизнь («life»)
+mod.bonuses.id.quest=Квестовый артефакт («quest»)
+mod.bonuses.id.totem=Тотем защиты («totem»)
+mod.bonuses.id.torch=Факел («torch»)
+mod.bonuses.id.knife=Кинжал («knife»)
+mod.bonuses.id.fomka=Фомка / лом («fomka»)
+mod.bonuses.id.keyA=Белый ключ («key_a»)
+mod.bonuses.id.keyB=Синий ключ («key_b»)
+mod.bonuses.id.keyC=Красный ключ («key_c»)
+mod.bonuses.id.keyD=Зелёный ключ («key_d»)
+mod.bonuses.id.keyE=Фиолетовый ключ («key_e»)
+mod.bonuses.id.uniKey=Мастер-ключ («uni_key»)
+
+mod.bonuses.like.scored=Очковый кристалл («bonus», идёт в счётчик уровня)
+mod.bonuses.like.mega=Мега-корона («mega_bonus»)
+mod.bonuses.like.life=Дополнительная жизнь («life», +1 жизнь)
+mod.bonuses.like.quest=Квестовая реликвия («quest»)
+mod.bonuses.like.silent=Тихий подбор без эффекта («sys»)
+mod.bonuses.like.slot=Кладётся в слот инвентаря (свой предмет)
+
+mod.bonuses.timer.none=Без таймера (лежит в слоте до применения)
+mod.bonuses.timer.game=Таймер игры (сгорает сам, как тотем)
+mod.bonuses.timer.mod=Кольцо таймера под управлением мода
+
+mod.bonuses.take.default=Обычное взятие игрой (DEFAULT)
+mod.bonuses.take.handled=Забрать тихо — награду выдаёт мод (HANDLED)
+mod.bonuses.take.refuse=Запретить подбор — оставить лежать (REFUSE)
+
+mod.bonuses.flag.totem=Тотем с таймером (isTotem)
+mod.bonuses.flag.torch=Светящийся факел (isTorch)
+mod.bonuses.flag.train=Пускает шлейф к HUD при взятии (makesTrain)
+mod.bonuses.flag.modTimer=Таймер слота ведёт мод (timer_is_mine)
+
+mod.bonuses.cnt.live=Живых (несобранных) бонусов
+mod.bonuses.cnt.all=Всех размещений бонусов
+mod.bonuses.cnt.slots=Всех слотов спауна комнаты
+
+mod.bonuses.tp.ptsTake=Очки при взятии (pts_take)
+mod.bonuses.tp.ptsOut=Очки по окончании/использовании (pts_out)
+mod.bonuses.tp.time=Длительность в секундах (time)
+mod.bonuses.tp.burnTime=Время разгорания факела (burn_time)
+mod.bonuses.tp.lightRadius=Радиус света у игрока (light_radius)
+mod.bonuses.tp.bonusLightRadius=Радиус света бонуса в комнате (bonus_light_radius)
+mod.bonuses.tp.rockAmp=Амплитуда покачивания (rocking_amp)
+mod.bonuses.tp.rockSpeed=Скорость покачивания (rocking_speed)
+mod.bonuses.tp.trainIdx=Индекс пресета шлейфа (train_idx)
+mod.bonuses.tp.flags=Битовая маска флагов (flags)
+mod.bonuses.tp.isTotem=Флаг тотема (is_totem)
+mod.bonuses.tp.isTorch=Флаг факела (is_torch)
+mod.bonuses.tp.makesTrain=Флаг шлейфа частиц (makes_train)
+mod.bonuses.tp.timerMine=Флаг таймера мода (timer_is_mine)
+mod.bonuses.tp.glowColor=Основное свечение RGBA (glow_color)
+mod.bonuses.tp.glowColor2=Второе свечение RGBA (glow_color2)
+mod.bonuses.tp.lightColor=Цвет света RGB (light_color)
+mod.bonuses.tp.rockAxis=Ось покачивания XYZ (rocking_axis)
+mod.bonuses.tp.texture=Текстура модели (texture)
+mod.bonuses.tp.model=3D-модель (model)
+mod.bonuses.tp.icon=Иконка HUD (icon)
+mod.bonuses.tp.soundTake=Звук взятия (sound_take)
+mod.bonuses.tp.soundUse=Звук окончания/применения (sound_use)
+mod.bonuses.tp.name=Имя поведения (name)
+mod.bonuses.tp.resId=ID ресурса (res_id)
+
+mod.bonuses.pp.time=Переопределение таймера, с (time)
+mod.bonuses.pp.decor=Декоративный 0/1 (decor)
+mod.bonuses.pp.isLive=Не собран 0/1 (is_live)
+mod.bonuses.pp.phase=Фаза покачивания, рад (phase)
+mod.bonuses.pp.ownLook=Своя модель/текстура 0/1 (own_look)
+mod.bonuses.pp.tag=Метка размещения (tag)
+mod.bonuses.pp.model=Своя модель размещения (model)
+mod.bonuses.pp.texture=Своя текстура размещения (texture)

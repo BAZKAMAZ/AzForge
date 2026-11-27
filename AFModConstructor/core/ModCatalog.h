@@ -3,10 +3,17 @@
 #include <string>
 #include <vector>
 
+namespace ModLogic { struct Param; }
+
 namespace ModCatalog {
 
 struct Option {
     std::string value;
+    std::string label;
+};
+
+struct LabelWhen {
+    std::vector<std::string> values;
     std::string label;
 };
 
@@ -16,6 +23,14 @@ struct ParamDef {
     std::string kind = "text";
     std::string preset;
     std::string test;
+    bool optional = false;
+    std::string whenParam;
+    std::vector<std::string> whenValues;
+    bool whenNegate = false;
+    bool whenCustom = false;
+    std::string autoWhenParam;
+    std::vector<std::string> autoWhenValues;
+    std::vector<LabelWhen> labelWhen;
     std::vector<Option> options;
 };
 
@@ -55,6 +70,7 @@ struct ConditionDef {
     std::string loop;
     std::string state;
     std::string stateInit = "0";
+    std::string needs;
 };
 
 struct ExpressionDef {
@@ -65,6 +81,7 @@ struct ExpressionDef {
     std::string text;
     std::string hint;
     std::string kind = "float";
+    std::string needs;
 };
 
 struct ActionDef {
@@ -94,5 +111,14 @@ const EventDef* FindEvent(const std::string& id);
 const ConditionDef* FindCondition(const std::string& id);
 const ActionDef* FindAction(const std::string& id);
 const ExpressionDef* FindExpression(const std::string& id);
+
+bool IsWhenMatched(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool IsAutoWhenMatched(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool IsParamActive(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool CanRemoveOptionalParam(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool CanAddOptionalParam(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool HasAddableOptionalParams(const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
+bool HasDependentParams(const std::vector<ParamDef>& allDefs, const std::string& changedKey);
+std::string EffectiveParamLabelKey(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args);
 
 } // namespace ModCatalog

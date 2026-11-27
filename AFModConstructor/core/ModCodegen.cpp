@@ -111,7 +111,50 @@ std::string ContextHint(const std::string& needs) {
     if (needs == "slot_save") return "writes into a save, so it belongs in the event that writes one";
     if (needs == "slot_load") return "reads a save, so it belongs in the event that reads one";
     if (needs == "camera_view") return "works only inside the camera view event";
+    if (needs == "particle_trail") return "works only inside the bonus trail spawn event";
+    if (needs == "demo_input") return "works only inside the demo input event";
+    if (needs == "player_move") return "works only inside the player move-intent event";
+    if (needs == "world_event") return "reads world event payload outside a world event";
+    if (needs == "player_event") return "reads player event payload outside a player event";
+    if (needs == "player_death") return "reads death hook payload outside Before player dies";
+    if (needs == "player_frame") return "reads player hook frame outside Drive or State update";
+    if (needs == "camera_update") return "reads camera update frame outside Camera update";
+    if (needs == "camera_place") return "reads camera placement point outside Camera placing";
+    if (needs == "particle_birth") return "reads particle birth kind outside Particle birth";
+    if (needs == "particle_think") return "reads particle think delta outside Particle think";
+    if (needs == "demo_state") return "reads demo event outside Demo state changed";
+    if (needs == "demo_move") return "reads demo move index outside Demo move started";
+    if (needs == "slot_event") return "reads save slot outside a slot save/load event";
+    if (needs == "bonus_take") return "works only inside a bonus take event";
+    if (needs == "bonus_spawn") return "works only inside Before bonus spawns";
+    if (needs == "bonus_body") return "works only inside Build or Update of a custom bonus kind";
+    if (needs == "bonus_kind_update") return "reads kind update delta outside Update bonus kind";
+    if (needs == "inv_slot_event") return "works only inside Inventory slot emptied";
+    if (needs == "inv_chain_event") return "works only inside Combo chain grew or broke";
+    if (needs == "monster_kill") return "works only inside Before monster dies";
+    if (needs == "monster_touch") return "works only inside a monster touch event";
+    if (needs == "monster_spawn") return "works only inside Monster spawned in room";
+    if (needs == "monster_place") return "works only inside Before placement builds monster";
+    if (needs == "monster_think") return "works only inside a monster AI / behaviour tick event";
+    if (needs == "monster_body") return "works only inside Build custom monster kind";
     return "out of place";
+}
+
+bool HasParamKey(const std::vector<ModCatalog::ParamDef>& defs, const std::string& key) {
+    for (const ModCatalog::ParamDef& d : defs) {
+        if (d.key == key) return true;
+    }
+    return false;
+}
+
+bool HasArrowAccess(const std::string& code, const std::string& ident) {
+    const std::string needle = ident + "->";
+    for (size_t pos = code.find(needle); pos != std::string::npos; pos = code.find(needle, pos + 1)) {
+        if (pos == 0) return true;
+        const unsigned char prev = static_cast<unsigned char>(code[pos - 1]);
+        if (!std::isalnum(prev) && prev != '_' && prev != '.') return true;
+    }
+    return false;
 }
 
 std::vector<std::string> HandlerParams(const std::string& declaration) {
@@ -236,6 +279,7 @@ struct GenState {
     std::map<std::string, std::string> vars;
     std::string where;
     std::set<std::string> context;
+    std::set<std::string> handlerVars;
     std::string ruleName;
     std::vector<std::string> ruleStates;
     std::string ruleToken;
@@ -245,6 +289,50 @@ struct GenState {
 
     void Warn(const std::string& text) {
         if (warnings) warnings->push_back(where.empty() ? text : where + ": " + text);
+    }
+
+    void CheckSnippetVars(const std::string& code) {
+        static const char* const KnownVars[] = {
+            "frame", "info", "pframe", "dinfo", "move", "view", "camFrame", "trailDesc",
+            "tinfo", "sinfo", "kinfo", "iinfo", "cinfo", "pinfo", "minfo", "mkinfo"
+        };
+        for (const char* ident : KnownVars) {
+            if (HasArrowAccess(code, ident) && handlerVars.count(ident) == 0) {
+                Warn(std::string("expression uses '") + ident + "->' which does not exist in this event (use mod_delta / ready expressions instead)");
+            }
+        }
+        for (const ModCatalog::ExpressionDef& ex : ModCatalog::Expressions()) {
+            if (ex.needs.empty() || ex.text.empty()) continue;
+            if (code.find(ex.text) != std::string::npos && context.count(ex.needs) == 0) {
+                Warn(ContextHint(ex.needs) + ": " + ex.id);
+            }
+        }
+    }
+
+    void CheckRawHandlerVars(const std::vector<ModCatalog::ParamDef>& defs, const std::vector<ModLogic::Param>& args) {
+        for (const ModLogic::Param& p : args) {
+            if (!defs.empty()) {
+                const ModCatalog::ParamDef* foundDef = nullptr;
+                for (const ModCatalog::ParamDef& d : defs) {
+                    if (d.key == p.key) { foundDef = &d; break; }
+                }
+                if (foundDef && !ModCatalog::IsParamActive(*foundDef, defs, args)) continue;
+            }
+            const std::string& v = p.value;
+            if (v.size() > 1 && v[0] == '=' && v[1] != '=') {
+                CheckSnippetVars(v.substr(1));
+                continue;
+            }
+            for (size_t at = 0; at < v.size();) {
+                const size_t open = v.find('{', at);
+                const size_t close = open == std::string::npos ? std::string::npos : v.find('}', open + 1);
+                if (close == std::string::npos) break;
+                if (open + 2 < close && (v[open + 1] == '#' || v[open + 1] == '~' || v[open + 1] == '$')) {
+                    CheckSnippetVars(v.substr(open + 2, close - open - 2));
+                }
+                at = close + 1;
+            }
+        }
     }
 
     std::string SpecOf(const std::string& code) const {
@@ -322,7 +410,8 @@ struct GenState {
     std::string Substitute(const std::string& tmpl, const std::vector<ModCatalog::ParamDef>& defs, const std::vector<ModLogic::Param>& args) {
         Values values;
         for (const ModCatalog::ParamDef& def : defs) {
-            const std::string* value = Find(args, def.key);
+            const bool active = ModCatalog::IsParamActive(def, defs, args);
+            const std::string* value = active ? Find(args, def.key) : nullptr;
             std::string text = value ? *value : def.preset;
             if (text.empty()) text = (def.kind == "number") ? "0" : "";
 
@@ -385,10 +474,14 @@ struct GenState {
                 continue;
             }
             if (!cd->loop.empty()) continue;
-            if (cd->state.empty() && cd->emitCode.find("%state%") != std::string::npos) {
+            if (cd->state.empty() && !HasParamKey(cd->params, "state") && cd->emitCode.find("%state%") != std::string::npos) {
                 once = true;
                 continue;
             }
+            if (!cd->needs.empty() && context.count(cd->needs) == 0) {
+                Warn(ContextHint(cd->needs) + ": " + cd->id);
+            }
+            CheckRawHandlerVars(cd->params, condition.args);
             std::string emit = cd->emitCode;
             if (!cd->state.empty()) emit = Replace(emit, "%state%", StateOf(*cd));
 
@@ -436,6 +529,7 @@ struct GenState {
             if (!ad->needs.empty() && context.count(ad->needs) == 0) {
                 Warn(ContextHint(ad->needs) + ": " + action.id);
             }
+            CheckRawHandlerVars(ad->params, action.args);
             std::string emit = ad->emitCode;
             if (emit.find("%token%") != std::string::npos) {
                 emit = Replace(emit, "%token%", ruleToken.empty() ? "0" : ruleToken);
@@ -543,7 +637,7 @@ std::string ModCodegen::Generate(const std::vector<ModLogic::Sheet>& sheets, std
     gen.warnings = warnings;
 
     std::string code =
-        "/* Generated by AFModConstructor. Edit the event sheets, not this file */\n"
+        "/* Generated by AFModConstructor */\n"
         "#include \"_as-cm10.h\"\n"
         "\n";
 
@@ -576,15 +670,25 @@ std::string ModCodegen::Generate(const std::vector<ModLogic::Sheet>& sheets, std
             }
 
             gen.context.clear();
+            gen.handlerVars.clear();
             if (!gen.ruleToken.empty()) gen.context.insert("token");
+            if (!def || !def->frameTest.empty()) {
+                gen.handlerVars.insert("frame");
+            } else if (!def->handler.empty()) {
+                for (const std::string& hp : HandlerParams(def->handler)) gen.handlerVars.insert(hp);
+            }
             if (def) {
                 std::string part;
                 for (size_t at = 0; at <= def->provides.size(); ++at) {
                     const char c = at < def->provides.size() ? def->provides[at] : ',';
                     if (c != ',') { if (c != ' ') part += c; continue; }
-                    if (!part.empty()) gen.context.insert(part);
+                    if (!part.empty()) {
+                        gen.context.insert(part);
+                        if (part == "slot_save" || part == "slot_load") gen.context.insert("slot_event");
+                    }
                     part.clear();
                 }
+                gen.CheckRawHandlerVars(def->filters, rule.filters);
             }
 
             if (!def) {
@@ -616,8 +720,12 @@ std::string ModCodegen::Generate(const std::vector<ModLogic::Sheet>& sheets, std
             const std::string ret = rule.veto ? def->retVeto : def->retDefault;
             handlers += "/* " + sheet.name + ": " + def->id + " */\n";
             handlers += Replace(def->handler, "%H%", name) + " {\n";
-            for (const std::string& param : HandlerParams(def->handler)) {
+            const std::vector<std::string> hParams = HandlerParams(def->handler);
+            for (const std::string& param : hParams) {
                 handlers += "    (void)" + param + ";\n";
+            }
+            if (def->handler.find("const AmodFrame* frame") != std::string::npos) {
+                handlers += "    if (frame != 0) { mod_delta = frame->delta; mod_elapsed = frame->elapsed; }\n";
             }
             for (const ModCatalog::ParamDef& filter : def->filters) {
                 if (filter.test.empty()) continue;
@@ -667,6 +775,7 @@ std::string ModCodegen::Generate(const std::vector<ModLogic::Sheet>& sheets, std
     code += "AMOD_EXPORT void __cdecl AmodShutdown(void) {\n" + stopping + "}\n\n";
     code += "AMOD_EXPORT void __cdecl AmodUpdate(const AmodFrame* frame) {\n"
             "    mod_delta = frame != 0 ? frame->delta : 0.0f;\n"
+            "    mod_elapsed = frame != 0 ? frame->elapsed : mod_elapsed;\n"
             "    (void)frame;\n";
     code += frame;
     code += "}\n";
@@ -688,9 +797,23 @@ std::string ModCodegen::GenerateRulePreview(const ModLogic::Sheet& sheet, const 
     gen.RegisterVars({ sheet }, dummyDecls);
     gen.ruleName = "preview";
     gen.where = sheet.name;
-    gen.context.insert({ "render", "item_style", "loop", "token", "slot_save", "slot_load", "camera_view" });
+    gen.context.insert({
+        "render", "item_style", "loop", "token", "slot_save", "slot_load", "slot_event",
+        "camera_view", "camera_update", "camera_place", "particle_birth", "particle_think",
+        "particle_trail", "demo_state", "demo_move", "demo_input", "world_event",
+        "player_event", "player_death", "player_frame", "player_move",
+        "bonus_take", "bonus_spawn", "bonus_body", "bonus_kind_update",
+        "inv_slot_event", "inv_chain_event",
+        "monster_kill", "monster_touch", "monster_spawn", "monster_place",
+        "monster_think", "monster_body"
+    });
 
     const ModCatalog::EventDef* def = ModCatalog::FindEvent(rule.event);
+    if (!def || !def->frameTest.empty()) {
+        gen.handlerVars.insert("frame");
+    } else if (!def->handler.empty()) {
+        for (const std::string& hp : HandlerParams(def->handler)) gen.handlerVars.insert(hp);
+    }
     if (!def) {
         const std::string conditions = gen.ConditionsExpr(rule);
         std::string out;

@@ -1,0 +1,2072 @@
+{
+    "name": "main",
+    "vars": [
+        {
+            "name": "hud_on",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "trail_lift",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "skip_draw",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "phase",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "birth_total",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "birth_last_kind",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "trail_events",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "trail_x",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "trail_y",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "trail_z",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "trail_wp",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "think_ticks",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "think_dt",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "draw_ticks",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "pool2_seen",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "insp_x",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_y",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_z",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_dx",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_dy",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_dz",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_spd",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_sz",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_life",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_dec",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_r",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_g",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_b",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_a",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_gx",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_gy",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_gz",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_sg",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_zg",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_ang",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_spin",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_gsx",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_gsy",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_wp",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "insp_shape",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "insp_mdl",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "insp_frm",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "insp_par",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "insp_kind",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "insp_tag",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "st_here",
+            "type": "text",
+            "value": "NO"
+        },
+        {
+            "name": "st_font",
+            "type": "text",
+            "value": "NO"
+        },
+        {
+            "name": "st_busy",
+            "type": "text",
+            "value": "idle"
+        },
+        {
+            "name": "last_cmd",
+            "type": "text",
+            "value": "Ready - enter a level and press 1..0"
+        }
+    ],
+    "rules": [
+        {
+            "event": "render.frame",
+            "filters": {},
+            "conditions": [],
+            "actions": [],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.isHere",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_here",
+                                        "value": "YES"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.isHere",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_here",
+                                        "value": "NO"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.hasTextFont",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_font",
+                                        "value": "READY"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.hasTextFont",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_font",
+                                        "value": "NO"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.countIs",
+                                    "args": {
+                                        "kind": "-1",
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_busy",
+                                        "value": "ACTIVE"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.countIs",
+                                    "args": {
+                                        "kind": "-1",
+                                        "op": "==",
+                                        "value": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_busy",
+                                        "value": "empty"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": true,
+                    "name": "Evaluate conditions",
+                    "collapsed": true
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "phase",
+                                        "value": "=mod_delta * 3.2f"
+                                    }
+                                },
+                                {
+                                    "id": "particles.select",
+                                    "args": {
+                                        "by": "0",
+                                        "kind": "-1",
+                                        "index": "0"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_kind",
+                                        "value": "=part_kind_of()"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_tag",
+                                        "value": "=((int)part_tag_of())"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "Pick newest particle in any store",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.hasPicked",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_x",
+                                        "value": "=part_num(0)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_y",
+                                        "value": "=part_num(1)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_z",
+                                        "value": "=part_num(2)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_dx",
+                                        "value": "=part_num(3)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_dy",
+                                        "value": "=part_num(4)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_dz",
+                                        "value": "=part_num(5)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_spd",
+                                        "value": "=part_num(6)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_sz",
+                                        "value": "=part_num(7)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_life",
+                                        "value": "=part_num(8)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_dec",
+                                        "value": "=part_num(9)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_r",
+                                        "value": "=part_num(10)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_g",
+                                        "value": "=part_num(11)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_b",
+                                        "value": "=part_num(12)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_a",
+                                        "value": "=part_num(13)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_gx",
+                                        "value": "=part_num(14)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_gy",
+                                        "value": "=part_num(15)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_gz",
+                                        "value": "=part_num(16)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_sg",
+                                        "value": "=part_num(17)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_zg",
+                                        "value": "=part_num(18)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_ang",
+                                        "value": "=part_num(19)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_spin",
+                                        "value": "=part_num(20)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_gsx",
+                                        "value": "=part_num(21)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_gsy",
+                                        "value": "=part_num(22)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_wp",
+                                        "value": "=part_num(23)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_shape",
+                                        "value": "=part_int(0)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_mdl",
+                                        "value": "=part_int(1)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_frm",
+                                        "value": "=part_int(2)"
+                                    }
+                                },
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "insp_par",
+                                        "value": "=part_int(3)"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "Snapshot all 28 fields of picked particle",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": true,
+                    "name": "Snapshot newest particle",
+                    "collapsed": true
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "hud_on"
+                            }
+                        }
+                    ],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "render.rect",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "10",
+                                        "w": "620",
+                                        "h": "222",
+                                        "r": "0.05",
+                                        "g": "0.07",
+                                        "b": "0.11",
+                                        "a": "0.78"
+                                    }
+                                },
+                                {
+                                    "id": "render.outline",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "10",
+                                        "w": "620",
+                                        "h": "222",
+                                        "thickness": "1",
+                                        "r": "0.3",
+                                        "g": "0.62",
+                                        "b": "0.95",
+                                        "a": "0.9"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "PARTICLES API TEST [F1 HUD]  Here:{st_here}({#(API->particles ? API->particles->IsHere(SELF) : 0)})  Font:{st_font}({#part_text_font()})  State:{st_busy}",
+                                        "x": "18",
+                                        "y": "15",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.45",
+                                        "g": "0.86",
+                                        "b": "1.0",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Counts All:{#part_count(-1)}/{#part_capacity(-1)}  P0:{#part_count(AMOD_PARTICLE_KIND_POOL_0)}/{#part_capacity(AMOD_PARTICLE_KIND_POOL_0)}  P1:{#part_count(AMOD_PARTICLE_KIND_POOL_1)}  P2:{#part_count(AMOD_PARTICLE_KIND_POOL_2)}  Uni:{#part_count(AMOD_PARTICLE_KIND_UNI)}/{#part_capacity(AMOD_PARTICLE_KIND_UNI)}",
+                                        "x": "18",
+                                        "y": "31",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Tag1:{#part_count_tagged(1)}  Anim(pulse):{#part_anim_id(\"pulse\")}  TextScale:({~part_text_scale(0)}, {~part_text_scale(1)})",
+                                        "x": "18",
+                                        "y": "47",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Events Birth:{birth_total}(lastKind:{birth_last_kind})  Think:{think_ticks}(dt:{think_dt})  Draw:{draw_ticks}(P2:{pool2_seen})  Trail:{trail_events}",
+                                        "x": "18",
+                                        "y": "63",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Last Trail Spawn Pos:({trail_x}, {trail_y}, {trail_z}) wp:{trail_wp}  Lift[9]:{trail_lift}  SkipDraw[F7]:{skip_draw}",
+                                        "x": "18",
+                                        "y": "79",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Newest Picked Kind:{insp_kind} Tag:{insp_tag} Shape:{insp_shape} Pos:({insp_x}, {insp_y}, {insp_z})",
+                                        "x": "18",
+                                        "y": "95",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Dir:({insp_dx}, {insp_dy}, {insp_dz}) Spd:{insp_spd} Size:{insp_sz} Life:{insp_life} Decay:{insp_dec}",
+                                        "x": "18",
+                                        "y": "111",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RGBA:({insp_r}, {insp_g}, {insp_b}, {insp_a}) Grav:({insp_gx}, {insp_gy}, {insp_gz}) Grow:({insp_sg}, {insp_zg})",
+                                        "x": "18",
+                                        "y": "127",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Ang:{insp_ang} Spin:{insp_spin} Mdl:{insp_mdl}:#{insp_frm} Glyph:({insp_gsx}, {insp_gsy}) Par:{insp_par} WP:{insp_wp}",
+                                        "x": "18",
+                                        "y": "143",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "[1]Stars(tag1) [2]Flipbook(tag2) [3]ThinkHelix(tag3) [4]3DText+Glyph [5]UniTrail",
+                                        "x": "18",
+                                        "y": "163",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.75",
+                                        "g": "0.92",
+                                        "b": "0.78",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "[6]Pool2 [7]MutateTag1 [8]ClearThink3+Kill2 [9]TrailLift [0]ClearAll",
+                                        "x": "18",
+                                        "y": "179",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.75",
+                                        "g": "0.92",
+                                        "b": "0.78",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "[F5]DetachHandlers [F6]RestoreHandlers [F7]SkipGameDraw",
+                                        "x": "18",
+                                        "y": "195",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.75",
+                                        "g": "0.92",
+                                        "b": "0.78",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Last: {last_cmd}",
+                                        "x": "18",
+                                        "y": "213",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "1.0",
+                                        "g": "0.88",
+                                        "b": "0.45",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "Draw telemetry HUD",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "HUD when enabled",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Frame update & HUD",
+            "collapsed": false
+        },
+        {
+            "event": "particles.birth",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "birth_total",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "birth_last_kind",
+                        "value": "=part_ev_birth_kind()"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Count every particle allocation",
+            "collapsed": false
+        },
+        {
+            "event": "particles.trailSpawning",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "trail_events",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "trail_x",
+                        "value": "=part_ev_trail_num(0)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "trail_y",
+                        "value": "=part_ev_trail_num(1)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "trail_z",
+                        "value": "=part_ev_trail_num(2)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "trail_wp",
+                        "value": "=part_ev_trail_num(3)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "trail_lift"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "particles.trailSetPos",
+                            "args": {
+                                "x": "=part_ev_trail_num(0)",
+                                "y": "=part_ev_trail_num(1) + 0.5f",
+                                "z": "=part_ev_trail_num(2)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Lift trail +0.5Y when enabled",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Inspect & optionally lift bonus trails",
+            "collapsed": false
+        },
+        {
+            "event": "particles.think",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "think_ticks",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "think_dt",
+                        "value": "=part_ev_think_dt()"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "particles.tagIs",
+                            "args": {
+                                "tag": "3"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "particles.setPos",
+                            "args": {
+                                "x": "=part_num(0) - sinf(phase + part_num(1) * 4.0f) * 0.9f * part_ev_think_dt()",
+                                "y": "=part_num(1) + 0.45f * part_ev_think_dt()",
+                                "z": "=part_num(2) + cosf(phase + part_num(1) * 4.0f) * 0.9f * part_ev_think_dt()"
+                            }
+                        },
+                        {
+                            "id": "particles.setLife",
+                            "args": {
+                                "life": "=part_num(8) - 0.30f * part_ev_think_dt()",
+                                "decay": "0.30"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "particles.fieldIs",
+                                    "args": {
+                                        "field": "8",
+                                        "op": "<=",
+                                        "value": "0.02"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "particles.kill",
+                                    "args": {
+                                        "scope": "0"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "Finish when life spent",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Swirl upward & spend life",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Helix motion for tag-3 particles",
+            "collapsed": false
+        },
+        {
+            "event": "particles.draw",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "draw_ticks",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "pool2_seen",
+                        "value": "0"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "particles.forEach",
+                            "args": {
+                                "by": "0",
+                                "kind": "AMOD_PARTICLE_KIND_POOL_2",
+                                "var": "d_i"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "pool2_seen",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Walk live Pool 2 particles during draw",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Count draw passes & walk Pool 2",
+            "collapsed": false
+        },
+        {
+            "event": "particles.draw",
+            "filters": {},
+            "conditions": [
+                {
+                    "id": "var.on",
+                    "args": {
+                        "name": "skip_draw"
+                    }
+                }
+            ],
+            "actions": [],
+            "children": [],
+            "veto": true,
+            "enabled": true,
+            "group": false,
+            "name": "Skip game particle draw when F7 toggle is on",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "112"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "hud_on"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F1: Toggle HUD",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "49"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                },
+                {
+                    "id": "system.repeat",
+                    "args": {
+                        "count": "12",
+                        "var": "s_i"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.spawnSprite",
+                    "args": {
+                        "kind": "AMOD_PARTICLE_KIND_POOL_0",
+                        "shape": "AMOD_PARTICLE_SHAPE_SPRITE",
+                        "texA": "textures/star.tga",
+                        "texB": "",
+                        "x": "=player_position(0)",
+                        "y": "=player_position(1) + 0.35f",
+                        "z": "=player_position(2)",
+                        "dx": "=cosf((float)s_i * 0.5236f)",
+                        "dy": "1.35",
+                        "dz": "=sinf((float)s_i * 0.5236f)",
+                        "speed": "0.95",
+                        "size": "0.18",
+                        "life": "1.0",
+                        "decay": "0.45",
+                        "r": "1.0",
+                        "g": "0.88",
+                        "b": "0.30",
+                        "a": "1.0"
+                    }
+                },
+                {
+                    "id": "particles.setGravity",
+                    "args": {
+                        "gx": "0",
+                        "gy": "-1.5",
+                        "gz": "0"
+                    }
+                },
+                {
+                    "id": "particles.setGrowth",
+                    "args": {
+                        "speedGrow": "-0.15",
+                        "sizeGrow": "-0.03"
+                    }
+                },
+                {
+                    "id": "particles.setTurn",
+                    "args": {
+                        "angle": "0",
+                        "spin": "6.0"
+                    }
+                },
+                {
+                    "id": "particles.setTag",
+                    "args": {
+                        "tag": "1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "1: Spawned 12 golden star fountain particles (tag 1)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "1: Golden Star Fountain (Pool 0 + gravity + spin + tag 1)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "50"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.createAnimation",
+                    "args": {
+                        "name": "pulse",
+                        "frames": "textures/part_red.jpg;textures/part_green.jpg;textures/part_blue.jpg;textures/flare.bmp"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "2: Spawned 10 flipbook particles in Pool 1 (tag 2)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "system.repeat",
+                            "args": {
+                                "count": "10",
+                                "var": "f_i"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "particles.spawnSprite",
+                            "args": {
+                                "kind": "AMOD_PARTICLE_KIND_POOL_1",
+                                "shape": "AMOD_PARTICLE_SHAPE_SPRITE",
+                                "texA": "textures/part_red.jpg",
+                                "texB": "",
+                                "x": "=player_position(0) + cosf((float)f_i * 0.6283f) * 0.25f",
+                                "y": "=player_position(1) + 0.35f",
+                                "z": "=player_position(2) + sinf((float)f_i * 0.6283f) * 0.25f",
+                                "dx": "=cosf((float)f_i * 0.6283f) * 0.4f",
+                                "dy": "0.85",
+                                "dz": "=sinf((float)f_i * 0.6283f) * 0.4f",
+                                "speed": "0.55",
+                                "size": "0.22",
+                                "life": "1.0",
+                                "decay": "0.35",
+                                "r": "1.0",
+                                "g": "1.0",
+                                "b": "1.0",
+                                "a": "1.0"
+                            }
+                        },
+                        {
+                            "id": "particles.setAnimation",
+                            "args": {
+                                "name": "pulse",
+                                "fps": "12"
+                            }
+                        },
+                        {
+                            "id": "particles.setTag",
+                            "args": {
+                                "tag": "2"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "2: Flipbook Animation Burst (Pool 1 + CreateAnimation)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "51"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                },
+                {
+                    "id": "system.repeat",
+                    "args": {
+                        "count": "8",
+                        "var": "t_i"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.spawnSprite",
+                    "args": {
+                        "kind": "AMOD_PARTICLE_KIND_POOL_0",
+                        "shape": "AMOD_PARTICLE_SHAPE_SPRITE",
+                        "texA": "textures/firework.tga",
+                        "texB": "",
+                        "x": "=player_position(0) + cosf((float)t_i * 0.7854f) * 0.45f",
+                        "y": "=player_position(1) + 0.25f + (float)t_i * 0.05f",
+                        "z": "=player_position(2) + sinf((float)t_i * 0.7854f) * 0.45f",
+                        "dx": "0",
+                        "dy": "1",
+                        "dz": "0",
+                        "speed": "0.2",
+                        "size": "0.20",
+                        "life": "1.0",
+                        "decay": "0.25",
+                        "r": "0.4",
+                        "g": "0.95",
+                        "b": "1.0",
+                        "a": "1.0"
+                    }
+                },
+                {
+                    "id": "particles.setTag",
+                    "args": {
+                        "tag": "3"
+                    }
+                },
+                {
+                    "id": "particles.setThink",
+                    "args": {}
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "3: Spawned 8 custom-think helix particles (tag 3)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "3: Custom Think Helix (SetThink + tag 3)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "52"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.spawnText",
+                    "args": {
+                        "text": "+500 AZFORGE",
+                        "x": "=player_position(0)",
+                        "y": "=player_position(1) + 0.55f",
+                        "z": "=player_position(2)",
+                        "scaleX": "1.1",
+                        "scaleY": "1.1",
+                        "speed": "0.14",
+                        "decay": "0.45",
+                        "dx": "0",
+                        "dy": "1",
+                        "dz": "0",
+                        "gravity": "0"
+                    }
+                },
+                {
+                    "id": "particles.spawnGlyph",
+                    "args": {
+                        "kind": "AMOD_PARTICLE_KIND_POOL_0",
+                        "frame": "0",
+                        "scale": "1.6",
+                        "x": "=player_position(0) - 0.35f",
+                        "y": "=player_position(1) + 0.45f",
+                        "z": "=player_position(2)",
+                        "dx": "-0.3",
+                        "dy": "1",
+                        "dz": "0",
+                        "speed": "0.4",
+                        "life": "1.0",
+                        "decay": "0.45",
+                        "r": "1.0",
+                        "g": "0.9",
+                        "b": "0.3",
+                        "a": "1.0"
+                    }
+                },
+                {
+                    "id": "particles.spawnModel",
+                    "args": {
+                        "kind": "AMOD_PARTICLE_KIND_POOL_0",
+                        "model": "=part_text_font()",
+                        "frame": "1",
+                        "scaleX": "=part_text_scale(0) * 1.6f",
+                        "scaleY": "=part_text_scale(1) * 1.6f",
+                        "x": "=player_position(0) + 0.35f",
+                        "y": "=player_position(1) + 0.45f",
+                        "z": "=player_position(2)",
+                        "dx": "0.3",
+                        "dy": "1",
+                        "dz": "0",
+                        "speed": "0.4",
+                        "life": "1.0",
+                        "decay": "0.45"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "4: Spawned 3D floating text + glyph + model particles"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "4: Floating 3D Score Text + Glyph + Model",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "53"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                },
+                {
+                    "id": "system.repeat",
+                    "args": {
+                        "count": "8",
+                        "var": "u_i"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.spawnTrail",
+                    "args": {
+                        "shape": "AMOD_PARTICLE_SHAPE_SPRITE",
+                        "texA": "textures/part_blue.jpg",
+                        "texB": "textures/flare.bmp",
+                        "x": "=player_position(0) + cosf((float)u_i * 0.7854f) * 0.4f",
+                        "y": "=player_position(1) + 0.35f",
+                        "z": "=player_position(2) + sinf((float)u_i * 0.7854f) * 0.4f",
+                        "waypoint": "0",
+                        "speed": "0.35",
+                        "size": "0.17",
+                        "life": "1.0",
+                        "decay": "0.45",
+                        "r": "0.45",
+                        "g": "0.85",
+                        "b": "1.0",
+                        "a": "1.0"
+                    }
+                },
+                {
+                    "id": "particles.setWaypoint",
+                    "args": {
+                        "waypoint": "0"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "5: Spawned 8 two-layer Uni trail particles"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "5: Two-Layer Bonus Trail Ring (Uni)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "54"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                },
+                {
+                    "id": "system.repeat",
+                    "args": {
+                        "count": "6",
+                        "var": "p2_i"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.spawnSprite",
+                    "args": {
+                        "kind": "AMOD_PARTICLE_KIND_POOL_2",
+                        "shape": "AMOD_PARTICLE_SHAPE_QUAD",
+                        "texA": "textures/dlight.jpg",
+                        "texB": "",
+                        "x": "=player_position(0)",
+                        "y": "=player_position(1) + 0.4f",
+                        "z": "=player_position(2)",
+                        "dx": "=cosf((float)p2_i * 1.0472f)",
+                        "dy": "0.5",
+                        "dz": "=sinf((float)p2_i * 1.0472f)",
+                        "speed": "0.3",
+                        "size": "0.2",
+                        "life": "1.0",
+                        "decay": "0.25",
+                        "r": "0.8",
+                        "g": "0.4",
+                        "b": "1.0",
+                        "a": "1.0"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "6: Spawned 6 Pool 2 particles (stepped, hidden from game draw)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "6: Pool 2 Custom-Draw Store",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "55"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.select",
+                    "args": {
+                        "by": "1",
+                        "tag": "1",
+                        "index": "0"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "7: Mutated all tag-1 particles (colour/size/speed/textures)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "particles.forEach",
+                            "args": {
+                                "by": "1",
+                                "tag": "1",
+                                "var": "m_i"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "particles.setColour",
+                            "args": {
+                                "r": "0.2",
+                                "g": "1.0",
+                                "b": "0.85",
+                                "a": "1.0"
+                            }
+                        },
+                        {
+                            "id": "particles.setVelocity",
+                            "args": {
+                                "dx": "0",
+                                "dy": "1",
+                                "dz": "0",
+                                "speed": "0.75"
+                            }
+                        },
+                        {
+                            "id": "particles.setSpeed",
+                            "args": {
+                                "speed": "0.8"
+                            }
+                        },
+                        {
+                            "id": "particles.setSize",
+                            "args": {
+                                "size": "0.26"
+                            }
+                        },
+                        {
+                            "id": "particles.setLife",
+                            "args": {
+                                "life": "1.0",
+                                "decay": "0.35"
+                            }
+                        },
+                        {
+                            "id": "particles.setTextures",
+                            "args": {
+                                "texA": "textures/flare.bmp",
+                                "texB": "textures/star.tga"
+                            }
+                        },
+                        {
+                            "id": "particles.setShape",
+                            "args": {
+                                "shape": "AMOD_PARTICLE_SHAPE_SPRITE"
+                            }
+                        },
+                        {
+                            "id": "particles.setParent",
+                            "args": {
+                                "parent": "0"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "particles.hasPicked",
+                            "args": {}
+                        },
+                        {
+                            "id": "particles.kindIs",
+                            "args": {
+                                "kind": "AMOD_PARTICLE_KIND_POOL_0"
+                            }
+                        },
+                        {
+                            "id": "particles.fieldIs",
+                            "args": {
+                                "field": "8",
+                                "op": ">",
+                                "value": "0.99"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "particles.setModel",
+                            "args": {
+                                "model": "0",
+                                "frame": "0"
+                            }
+                        },
+                        {
+                            "id": "particles.setGlyphScale",
+                            "args": {
+                                "scaleX": "0.006",
+                                "scaleY": "0.006"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "7: Mutate All Tag-1 Particles (Set fields + forEach tag)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "56"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.select",
+                    "args": {
+                        "by": "1",
+                        "tag": "3",
+                        "index": "0"
+                    }
+                },
+                {
+                    "id": "particles.clearThink",
+                    "args": {
+                        "scope": "0"
+                    }
+                },
+                {
+                    "id": "particles.clearThink",
+                    "args": {
+                        "scope": "1",
+                        "tag": "3"
+                    }
+                },
+                {
+                    "id": "particles.select",
+                    "args": {
+                        "by": "1",
+                        "tag": "2",
+                        "index": "0"
+                    }
+                },
+                {
+                    "id": "particles.kill",
+                    "args": {
+                        "scope": "0"
+                    }
+                },
+                {
+                    "id": "particles.kill",
+                    "args": {
+                        "scope": "1",
+                        "tag": "2"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "8: Restored game step on tag 3 & killed tag 2"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "8: ClearThink on Tag 3 & Kill Tag 2",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "57"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "trail_lift"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "9: Toggled bonus trail spawn +0.5Y lift"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "9: Toggle Trail Spawn Lift",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "48"
+            },
+            "conditions": [
+                {
+                    "id": "particles.isHere",
+                    "args": {}
+                }
+            ],
+            "actions": [
+                {
+                    "id": "particles.clear",
+                    "args": {
+                        "kind": "-1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "0: Cleared all 4 particle stores"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "0: Clear All Particle Stores",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "116"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "particles.clearHandler",
+                    "args": {
+                        "which": "0"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "F5: Cleared birth, trail-spawn & draw handlers"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F5: Detach Particle Handlers",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "117"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "particles.restoreHandlers",
+                    "args": {}
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "F6: Re-attached sheet particle handlers"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F6: Restore Particle Handlers",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "118"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "skip_draw"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "F7: Toggled skipping game particle draw pass"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F7: Toggle Skip Game Particle Draw",
+            "collapsed": false
+        }
+    ]
+}

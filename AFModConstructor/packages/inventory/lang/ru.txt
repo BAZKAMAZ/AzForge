@@ -1,1 +1,214 @@
 mod.sys.inventory=Инвентарь
+mod.sec.invSlots=Слоты и переносимые предметы
+mod.sec.invSelected=Осмотр выбранного слота
+mod.sec.invTimers=Таймеры предметов и пауза
+mod.sec.invChain=Состояние комбо-цепочки
+mod.sec.invLevel=Оставшиеся бонусы уровня
+mod.sec.invEvents=События слотов и цепочки
+
+mod.ev.invSlotEmptied=Слот инвентаря освободился
+mod.ev.invSlotEmptied.line=Слот инвентаря освободился
+mod.ev.invSlotEmptied.hint=Срабатывает после истечения таймера предмета или его применения/очистки; через + доступны фильтры причины и предмета
+mod.ev.invChainChanged=Комбо-цепочка выросла или прервалась
+mod.ev.invChainChanged.line=Комбо-цепочка изменилась
+mod.ev.invChainChanged.hint=Срабатывает при каждом росте длины комбо алмазов и при сбросе окна таймера в 0
+
+mod.cond.invAvailable=Инвентарь игрока доступен
+mod.cond.invAvailable.line=Инвентарь доступен (игрок на уровне)
+mod.cond.invCarrying=У игрока в инвентаре есть предмет
+mod.cond.invCarrying.line=У игрока есть %name%
+mod.cond.invHasFreeSlot=В инвентаре есть свободный слот
+mod.cond.invHasFreeSlot.line=В инвентаре есть свободный слот
+mod.cond.invCountCmp=Сравнить число слотов инвентаря
+mod.cond.invCountCmp.line=Инвентарь: %mode% %op% %count%
+mod.cond.invSlotFilled=Слот инвентаря занят
+mod.cond.invSlotFilled.line=Слот инвентаря #%slot% занят
+mod.cond.invSlotItemIs=В слоте инвентаря лежит предмет
+mod.cond.invSlotItemIs.line=В слоте #%slot% лежит %name%
+mod.cond.invSlotTimeCmp=Сравнить таймер предмета в слоте
+mod.cond.invSlotTimeCmp.line=Слот #%slot%: %field% %op% %value%
+mod.cond.invSlotTicking=Таймер слота инвентаря тикает
+mod.cond.invSlotTicking.line=Таймер слота #%slot% идёт (не на паузе)
+mod.cond.invHasItemProp=У предмета в слоте есть свойство
+mod.cond.invHasItemProp.line=У слота #%slot% есть свойство %key%
+mod.cond.invItemPropCmp=Сравнить свойство предмета в слоте
+mod.cond.invItemPropCmp.line=Слот #%slot% %key% %op% %value%
+mod.cond.invForEachSlot=Для каждого слота инвентаря
+mod.cond.invForEachSlot.line=Для каждого слота инвентаря (%var%)
+mod.cond.invForEachSlot.hint=Автоматически выбирает каждый слот для чтения через выражения «Выбранный слот»
+mod.cond.invChainCmp=Сравнить текущую комбо-цепочку
+mod.cond.invChainCmp.line=Комбо-цепочка: %field% %op% %value%
+mod.cond.invLevelLeftCmp=Сравнить оставшиеся бонусы на уровне
+mod.cond.invLevelLeftCmp.line=Осталось на уровне (%which%) %op% %count%
+mod.cond.invEvReason=Причина освобождения слота
+mod.cond.invEvReason.line=Слот освободился по причине: %reason%
+mod.cond.invChainEvBroke=Комбо-цепочка только что прервалась
+mod.cond.invChainEvBroke.line=Комбо-цепочка прервалась (время вышло)
+
+mod.act.invGive=Выдать предмет в инвентарь
+mod.act.invGive.line=Выдать %name% в инвентарь
+mod.act.invGive.hint=Кладёт любой стандартный или кастомный предмет в первый свободный слот; через + доступны номер слота, время и режим таймера
+mod.act.invSelectSlot=Выбрать слот инвентаря
+mod.act.invSelectSlot.line=Выбрать слот инвентаря #%slot%
+mod.act.invClear=Очистить инвентарь
+mod.act.invClear.line=Очистить инвентарь (%by%)
+mod.act.invClear.hint=Очищает конкретный слот, все предметы выбранного типа/ID или весь инвентарь сразу
+mod.act.invMoveItem=Переместить предмет в пустой слот
+mod.act.invMoveItem.line=Переместить предмет из слота #%fromSlot% в пустой слот #%toSlot%
+mod.act.invMoveItem.hint=Сохраняет индивидуальную иконку и таймер слота; если целевой слот занят — используйте «Поменять местами»
+mod.act.invSwapItems=Поменять два слота инвентаря местами
+mod.act.invSwapItems.line=Поменять местами слоты #%first% и #%second%
+mod.act.invSetSlotCount=Задать вместимость инвентаря (1..32 слота)
+mod.act.invSetSlotCount.line=Вместимость инвентаря = %count% слотов
+mod.act.invSetSlotCount.hint=По умолчанию 5; значения 6..32 переносят массив слотов во внешний буфер до 32 ячеек
+mod.act.invSetIcon=Сменить иконку HUD у конкретного слота
+mod.act.invSetIcon.line=Иконка HUD слота #%slot% = «%icon%»
+mod.act.invSetIcon.hint=Меняет иконку только в этом слоте, не затрагивая сам тип бонуса
+mod.act.invSetTimeLeft=Задать остаток времени таймера в слоте
+mod.act.invSetTimeLeft.line=Остаток времени слота #%slot% = %seconds% с
+mod.act.invSetTimeLeft.hint=Ограничивается диапазоном от 0 до полной длительности слота
+mod.act.invAddTimeLeft=Прибавить или убавить время таймера в слоте
+mod.act.invAddTimeLeft.line=Прибавить %delta% с к таймеру слота #%slot%
+mod.act.invAddTimeLeft.hint=Автоматически увеличивает полную длительность слота, если новое время превышает прежний максимум
+mod.act.invSetTicking=Управление таймерами слотов
+mod.act.invSetTicking.line=Таймеры инвентаря: %mode%
+mod.act.invSetTicking.hint=Ставит на паузу, возобновляет или переключает таймер одного слота либо всех занятых слотов сразу
+mod.act.invSetPropNum=Задать числовое/флаговое свойство предмета в слоте
+mod.act.invSetPropNum.line=Слот #%slot% %key% = %value%
+mod.act.invSetPropAsset=Задать иконку или звук предмета в слоте
+mod.act.invSetPropAsset.line=Слот #%slot% %key% = «%path%»
+mod.act.invCancel=Отменить подписку на событие инвентаря/цепочки
+mod.act.invCancel.line=Отписаться от этого события инвентаря
+
+mod.expr.invAvailable=1, если инвентарь игрока доступен
+mod.expr.invSlotCount=Текущая вместимость инвентаря (слотов)
+mod.expr.invUsedCount=Количество занятых слотов инвентаря
+mod.expr.invFreeCount=Количество свободных слотов инвентаря
+mod.expr.invFreeSlot=Индекс первого свободного слота (-1 если полон)
+mod.expr.invSlotOf=Индекс слота с предметом (-1 если нет)
+mod.expr.invLastPutSlot=Слот последней выдачи предмета (-1 при неудаче)
+mod.expr.invSlotName=Имя поведения предмета в слоте
+mod.expr.invSlotResId=ID ресурса предмета в слоте
+mod.expr.invSlotTimeLeft=Остаток таймера предмета в слоте (с)
+mod.expr.invSlotTimeTotal=Полная длительность таймера в слоте (с)
+mod.expr.invSlotFraction=Доля оставшегося времени в слоте (0..1)
+mod.expr.invSlotTicking=1, если таймер слота сейчас отсчитывается
+
+mod.expr.invSelSlotIdx=Выбранный слот: индекс
+mod.expr.invSelFilled=Выбранный слот: 1 если занят
+mod.expr.invSelName=Выбранный слот: имя поведения предмета
+mod.expr.invSelResId=Выбранный слот: ID ресурса ($res_id)
+mod.expr.invSelTimeLeft=Выбранный слот: осталось секунд
+mod.expr.invSelTimeTotal=Выбранный слот: полная длительность (с)
+mod.expr.invSelFraction=Выбранный слот: доля времени (0..1)
+mod.expr.invSelBurn=Выбранный слот: время разгорания факела (с)
+mod.expr.invSelTotem=Выбранный слот: 1 если тотем с таймером
+mod.expr.invSelTorch=Выбранный слот: 1 если факел
+mod.expr.invSelPtsOut=Выбранный слот: очки по окончании ($pts_out)
+
+mod.expr.invBonusesLeft=Осталось обычных алмазов на уровне
+mod.expr.invMegaLeft=Осталось мега-бонусов (корон) на уровне
+mod.expr.invOtherLeft=Осталось прочих бонусов на уровне
+mod.expr.invTotalLeft=Всего осталось зачётных бонусов на уровне
+
+mod.expr.invChainLen=Комбо-цепочка: текущая длина
+mod.expr.invChainPts=Комбо-цепочка: набрано очков в серии
+mod.expr.invChainTime=Комбо-цепочка: остаток окна времени (с)
+mod.expr.invChainWindow=Комбо-цепочка: длительность окна (с)
+mod.expr.invChainFrac=Комбо-цепочка: доля оставшегося окна (0..1)
+
+mod.expr.invPropCnt=Число свойств предмета в слоте
+mod.expr.invPropName=Имя свойства слота по индексу
+mod.expr.invPropInt=Прочитать целое свойство предмета в слоте
+mod.expr.invPropNum=Прочитать дробное свойство предмета в слоте
+mod.expr.invPropText=Прочитать текстовое свойство предмета в слоте
+
+mod.expr.invEvReason=Событие слота: причина (0 истёк, 1 использован)
+mod.expr.invEvSlot=Событие слота: индекс освободившегося слота
+mod.expr.invEvPtsOut=Событие слота: очки по окончании (pts_out)
+mod.expr.invEvTimeLeft=Событие слота: остаток секунд в момент очистки
+mod.expr.invEvName=Событие слота: имя поведения предмета
+mod.expr.invEvResId=Событие слота: ID ресурса предмета
+
+mod.expr.invChainEvLen=Событие комбо: новая длина цепочки (0 при сбросе)
+mod.expr.invChainEvPts=Событие комбо: очки серии
+mod.expr.invChainEvBroke=Событие комбо: 1 если прервалась, 0 если выросла
+
+mod.p.invSlot=Номер слота (0..)
+mod.p.invSlotOrFree=Номер слота (-1 = первый свободный)
+mod.p.invFromSlot=Из слота
+mod.p.invToSlot=В пустой слот
+mod.p.invItemName=Предмет
+mod.p.invClearBy=Что очистить
+mod.p.invTickMode=Действие
+mod.p.invFilterItem=Фильтр предмета
+mod.p.invReason=Причина
+mod.p.invChainChange=Изменение комбо
+mod.p.invCountMode=Что считать
+mod.p.invTimeField=Параметр таймера
+mod.p.invChainField=Параметр комбо
+mod.p.invLeftKind=Категория бонусов
+mod.p.invOnlyFilled=Только занятые слоты
+mod.p.invTimerMode=Режим таймера
+mod.p.invIcon=Текстура иконки HUD
+
+mod.inv.clr.slot=по номеру слота
+mod.inv.clr.name=по типу / ID предмета
+mod.inv.clr.all=все занятые слоты
+
+mod.inv.tick.pauseSlot=пауза слота
+mod.inv.tick.resumeSlot=продолжить слот
+mod.inv.tick.toggleSlot=переключить слот
+mod.inv.tick.pauseAll=пауза всех слотов
+mod.inv.tick.resumeAll=продолжить все слоты
+
+mod.inv.item.totem=Тотем защиты («totem»)
+mod.inv.item.torch=Факел («torch»)
+mod.inv.item.knife=Кинжал («knife»)
+mod.inv.item.fomka=Фомка / лом («fomka»)
+mod.inv.item.keyA=Белый ключ («key_a»)
+mod.inv.item.keyB=Синий ключ («key_b»)
+mod.inv.item.keyC=Красный ключ («key_c»)
+mod.inv.item.keyD=Зелёный ключ («key_d»)
+mod.inv.item.keyE=Фиолетовый ключ («key_e»)
+mod.inv.item.uniKey=Мастер-ключ («uni_key»)
+
+mod.inv.timer.game=Таймер игры (исчезает на 0)
+mod.inv.timer.none=Без таймера (лежит до использования)
+mod.inv.timer.mod=Кольцо таймера под управлением мода
+
+mod.inv.reason.any=Любая причина (истёк или использован)
+mod.inv.reason.expired=Время таймера истекло (0)
+mod.inv.reason.used=Использован / очищен до истечения (1)
+
+mod.inv.chain.any=Выросла или прервалась
+mod.inv.chain.grew=Цепочка выросла (+1)
+mod.inv.chain.broke=Цепочка прервалась (окно истекло)
+
+mod.inv.cnt.used=Занятых слотов
+mod.inv.cnt.free=Свободных слотов
+mod.inv.cnt.capacity=Общая вместимость слотов
+
+mod.inv.tf.left=Остаток секунд (timeLeft)
+mod.inv.tf.total=Полная длительность (timeTotal)
+mod.inv.tf.fraction=Доля остатка 0..1
+
+mod.inv.cf.length=Длина комбо
+mod.inv.cf.points=Очки комбо
+mod.inv.cf.timeLeft=Остаток окна (с)
+
+mod.inv.left.bonuses=Обычные алмазы (BonusesLeft)
+mod.inv.left.mega=Мега-короны (MegaBonusesLeft)
+mod.inv.left.other=Прочие предметы (OtherBonusesLeft)
+mod.inv.left.total=Все зачётные бонусы суммарно
+
+mod.inv.ip.ptsOut=Очки при окончании/использовании (pts_out)
+mod.inv.ip.timeLeft=Остаток секунд (time_left)
+mod.inv.ip.timeTotal=Полная длительность, с (time_total)
+mod.inv.ip.burnTime=Время разгорания факела, с (burn_time)
+mod.inv.ip.flags=Битовая маска флагов слота (flags)
+mod.inv.ip.hasTimer=Флаг кольца таймера (has_timer)
+mod.inv.ip.timerMine=Флаг таймера мода (timer_is_mine)
+mod.inv.ip.icon=Иконка HUD этого слота (icon)
+mod.inv.ip.soundUse=Звук использования/истечения слота (sound_use)
+mod.inv.ip.name=Имя предмета (name)

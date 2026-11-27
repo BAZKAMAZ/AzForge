@@ -62,7 +62,8 @@
       }
     ],
     "emit": "if (API->render) API->render->DrawTextLine(SELF, render_font(\"%font%\"), (float)(%x%), (float)(%y%), \"%text%\", (float)(%scale%), render_rgba((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%)));",
-    "needs": "render"
+    "needs": "render",
+    "hint": "mod.act.renderText.hint"
   },
   {
     "id": "render.textAligned",

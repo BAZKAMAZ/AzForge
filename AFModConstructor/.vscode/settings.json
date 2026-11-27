@@ -1,5 +1,6 @@
 {
     "cmake.cmakePath": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
+    "cmake.buildDirectory": "${workspaceFolder}/build",
     "cmake.useCMakePresets": "always",
     "cmake.configureOnOpen": true,
     "C_Cpp.default.compileCommands": "${workspaceFolder}/build/compile_commands.json",

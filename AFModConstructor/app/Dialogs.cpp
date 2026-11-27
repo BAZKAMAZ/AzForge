@@ -1,6 +1,7 @@
 #include "Dialogs.h"
 
 #include "CppHighlighter.h"
+#include "ExprPickerDialog.h"
 #include "GameLauncher.h"
 #include "ModCatalog.h"
 #include "ModCompiler.h"
@@ -22,6 +23,7 @@
 #include <QMessageBox>
 #include <QPlainTextEdit>
 #include <QPushButton>
+#include <QShortcut>
 #include <QSpinBox>
 #include <QStandardPaths>
 #include <QTreeWidget>
@@ -524,4 +526,100 @@ FullCodeDialog::FullCodeDialog(const QString& code, const QString& title, QWidge
     closeBtn->setProperty("primary", true);
     connect(closeBtn, &QPushButton::clicked, this, &QDialog::accept);
     root->addWidget(closeBtn, 0, Qt::AlignRight);
+}
+
+ValueEditorDialog::ValueEditorDialog(const QString& title, const std::string& initialValue, const std::string& paramKind, bool allowExpressions, bool preserveNewlines, QWidget* parent) : QDialog(parent), m_value(initialValue) {
+    setWindowTitle(title);
+    resize(660, 400);
+
+    auto* root = new QVBoxLayout(this);
+    root->setContentsMargins(14, 12, 14, 12);
+    root->setSpacing(8);
+
+    auto* topRow = new QHBoxLayout();
+    auto* headLbl = new QLabel(title, this);
+    headLbl->setStyleSheet(QStringLiteral("font-weight: 600; color: #e6e8f0;"));
+    topRow->addWidget(headLbl, 1);
+
+    auto* wrapCb = new QCheckBox(UiFormat::Label("app.dlg.valWrap"), this);
+    wrapCb->setChecked(true);
+    topRow->addWidget(wrapCb);
+
+    auto* editor = new QPlainTextEdit(this);
+    editor->setFont(Theme::MonoFont(10));
+    editor->setLineWrapMode(QPlainTextEdit::WidgetWidth);
+    editor->setPlainText(QString::fromStdString(initialValue));
+
+    if (allowExpressions) {
+        auto* fxBtn = new QPushButton(QStringLiteral("+ fx  ") + UiFormat::Label("mod.expr.title"), this);
+        connect(fxBtn, &QPushButton::clicked, this, [this, editor, paramKind]() {
+            ExprPickerDialog dlg(this);
+            if (dlg.exec() != QDialog::Accepted || !dlg.chosenExpression()) return;
+            const auto* e = dlg.chosenExpression();
+            std::string val = editor->toPlainText().toStdString();
+            const bool started = !val.empty() && val[0] == '=' && (val.size() < 2 || val[1] != '=');
+            const bool asCode = (paramKind == "number") || started;
+            const char mark = e->kind == "int" ? '#' : (e->kind == "text" ? '$' : '~');
+            const std::string piece = asCode ? e->text : (std::string("{") + mark + e->text + "}");
+            if (asCode && (val.empty() || val[0] != '=')) {
+                editor->setPlainText(QString::fromStdString("=" + val));
+                QTextCursor cur = editor->textCursor();
+                cur.movePosition(QTextCursor::End);
+                editor->setTextCursor(cur);
+            }
+            editor->insertPlainText(QString::fromStdString(piece));
+            editor->setFocus();
+        });
+        topRow->addWidget(fxBtn);
+    }
+
+    root->addLayout(topRow);
+    root->addWidget(editor, 1);
+
+    connect(wrapCb, &QCheckBox::toggled, editor, [editor](bool on) {
+        editor->setLineWrapMode(on ? QPlainTextEdit::WidgetWidth : QPlainTextEdit::NoWrap);
+    });
+
+    auto* buttons = new QDialogButtonBox(QDialogButtonBox::Ok | QDialogButtonBox::Cancel, this);
+    buttons->button(QDialogButtonBox::Ok)->setProperty("primary", true);
+    buttons->button(QDialogButtonBox::Ok)->setText(UiFormat::Label("common.ok"));
+    buttons->button(QDialogButtonBox::Cancel)->setText(UiFormat::Label("common.cancel"));
+    root->addWidget(buttons);
+
+    auto commitAndClose = [this, editor, preserveNewlines]() {
+        const std::string raw = editor->toPlainText().toStdString();
+        if (preserveNewlines) {
+            std::string out;
+            out.reserve(raw.size());
+            for (char c : raw) {
+                if (c != '\r') out += c;
+            }
+            m_value = out;
+        } else {
+            std::string out;
+            out.reserve(raw.size());
+            for (char c : raw) {
+                if (c == '\r') continue;
+                if (c == '\n') {
+                    if (!out.empty() && out.back() != ';' && out.back() != ',' && out.back() != ' ') {
+                        out += ' ';
+                    }
+                    continue;
+                }
+                out += c;
+            }
+            m_value = out;
+        }
+        accept();
+    };
+
+    connect(buttons, &QDialogButtonBox::accepted, this, commitAndClose);
+    connect(buttons, &QDialogButtonBox::rejected, this, &QDialog::reject);
+    auto* acceptKey = new QShortcut(QKeySequence(Qt::CTRL | Qt::Key_Return), this);
+    connect(acceptKey, &QShortcut::activated, this, commitAndClose);
+
+    editor->setFocus();
+    QTextCursor cur = editor->textCursor();
+    cur.movePosition(QTextCursor::End);
+    editor->setTextCursor(cur);
 }

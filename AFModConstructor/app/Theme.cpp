@@ -58,6 +58,8 @@ namespace Theme {
         pal.setColor(QPalette::Disabled, QPalette::ButtonText, c.textMuted);
         app.setPalette(pal);
 
+        const QString chevronUrl = QString::fromStdWString(PathUtil::ResourcePath("icons/chevron_down.svg").generic_wstring());
+
         app.setStyleSheet(QStringLiteral(R"(
             QMainWindow {
                 background: #16181f;
@@ -177,7 +179,7 @@ namespace Theme {
                 color: #938eb8;
                 border-color: #423c69;
             }
-            QLineEdit, QComboBox, QPlainTextEdit, QSpinBox {
+            QLineEdit, QPlainTextEdit, QSpinBox {
                 background: #16181f;
                 color: #e6e8f0;
                 border: 1px solid #313647;
@@ -185,12 +187,46 @@ namespace Theme {
                 padding: 4px 8px;
                 selection-background-color: #52468a;
             }
+            QComboBox {
+                background: #1b1f2b;
+                color: #e6e8f0;
+                border: 1px solid #383f54;
+                border-radius: 4px;
+                padding: 4px 28px 4px 8px;
+                selection-background-color: #52468a;
+            }
+            QComboBox:hover {
+                background: #222736;
+                border-color: #525b78;
+            }
             QLineEdit:focus, QComboBox:focus, QPlainTextEdit:focus, QSpinBox:focus {
                 border-color: #9b87f5;
             }
             QComboBox::drop-down {
-                border: none;
-                width: 22px;
+                subcontrol-origin: border;
+                subcontrol-position: top right;
+                width: 24px;
+                border-left: 1px solid #2e3447;
+                background: #232838;
+                border-top-right-radius: 3px;
+                border-bottom-right-radius: 3px;
+            }
+            QComboBox::drop-down:hover {
+                background: #2d344a;
+            }
+            QComboBox::down-arrow {
+                image: url("%1");
+                width: 11px;
+                height: 11px;
+            }
+            QComboBox QAbstractItemView {
+                background: #1f232e;
+                color: #e6e8f0;
+                border: 1px solid #383f54;
+                selection-background-color: #363257;
+                selection-color: #ffffff;
+                padding: 3px;
+                outline: none;
             }
             QTreeWidget, QListWidget, QTableWidget {
                 background: #1a1d26;
@@ -262,7 +298,7 @@ namespace Theme {
                 border: 1px solid #454d66;
                 padding: 4px 8px;
             }
-        )"));
+        )").arg(chevronUrl));
     }
 
 } // namespace Theme

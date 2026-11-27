@@ -702,13 +702,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "[CAMERA API TEST] {last_cmd}   [Tab: HUD]",
-                                "x": "16",
+                                "x": "18",
                                 "y": "14",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.62",
                                 "g": "0.84",
                                 "b": "1.0",
@@ -716,13 +717,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Conds: here={st_here}({#(API->camera ? API->camera->IsHere(SELF) : 0)}) drv={st_drv}({#(API->camera ? (int)API->camera->GetDriver(SELF) : 0)}) fx={st_fx}({#(API->camera ? API->camera->GetEffect(SELF) : 0)}) shake={st_shake} free={st_free}({#(API->camera ? API->camera->GetFreeMode(SELF) : 0)})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "28",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.78",
                                 "g": "0.95",
                                 "b": "0.78",
@@ -730,13 +732,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Follow: eye={st_feye} target={st_ftgt}  roll={~cam_roll()}  orbit(F7)={orbit_on}  cinemaView(F8)={view_on}",
-                                "x": "16",
+                                "x": "18",
                                 "y": "41",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -744,13 +747,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Eye: ({~cam_vec(0, 0)}, {~cam_vec(0, 1)}, {~cam_vec(0, 2)})  Target: ({~cam_vec(1, 0)}, {~cam_vec(1, 1)}, {~cam_vec(1, 2)})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "54",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -758,13 +762,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Up: ({~cam_vec(2, 0)}, {~cam_vec(2, 1)}, {~cam_vec(2, 2)})  Followed: ({~cam_vec(3, 0)}, {~cam_vec(3, 1)}, {~cam_vec(3, 2)})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "67",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -772,13 +777,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Focus(player): ({~cam_focus(0)}, {~cam_focus(1)}, {~cam_focus(2)})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "80",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -786,13 +792,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "ViewEye: ({~cam_view(0, 0)}, {~cam_view(0, 1)}, {~cam_view(0, 2)})  ViewTgt: ({~cam_view(1, 0)}, {~cam_view(1, 1)}, {~cam_view(1, 2)})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "93",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -800,13 +807,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "ViewUp: ({~cam_view(2, 0)}, {~cam_view(2, 1)}, {~cam_view(2, 2)})  Lens: fov={~cam_lens(0)} asp={~cam_lens(1)} {~cam_lens(2)}..{~cam_lens(3)}",
-                                "x": "16",
+                                "x": "18",
                                 "y": "106",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -814,13 +822,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Props({#(API->camera ? API->camera->PropertyCount(SELF) : 0)}): [0]={$cam_prop_name(0)}  room_dist={~cam_prop(\"room_dist\")} ({st_prop})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "119",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.9",
                                 "g": "0.93",
                                 "b": "0.98",
@@ -828,13 +837,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "Handlers: upd={upd_ticks}(dt={upd_dt})  view={view_ticks}  snap={snap_ticks} at ({snap_x}, {snap_y}, {snap_z})",
-                                "x": "16",
+                                "x": "18",
                                 "y": "132",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.96",
                                 "g": "0.88",
                                 "b": "0.65",
@@ -842,13 +852,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "1:Shake 2:StopShake 3:Zoom 4:Rock 5:Rotate180 6:StopFx 7:Wide+Roll 8:TeleLens",
-                                "x": "16",
+                                "x": "18",
                                 "y": "150",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.72",
                                 "g": "0.78",
                                 "b": "0.9",
@@ -856,13 +867,14 @@
                             }
                         },
                         {
-                            "id": "render.text",
+                            "id": "render.textAligned",
                             "args": {
                                 "text": "9:FarDist/Reload 0:ResetAll P:Place F6:FreezeFollow F7:Orbit F8:View Shift+F9:Unhook",
-                                "x": "16",
+                                "x": "18",
                                 "y": "163",
                                 "font": "",
-                                "scale": "0.56",
+                                "scale": "0.45",
+                                "align": "0x08",
                                 "r": "0.72",
                                 "g": "0.78",
                                 "b": "0.9",
@@ -902,7 +914,7 @@
                     "id": "var.set",
                     "args": {
                         "name": "upd_dt",
-                        "value": "=(camFrame ? camFrame->delta : 0.0f)"
+                        "value": "=cam_update_delta()"
                     }
                 }
             ],
@@ -927,7 +939,7 @@
                             "id": "var.add",
                             "args": {
                                 "name": "orbit_angle",
-                                "value": "=(camFrame ? camFrame->delta : 0.0f) * 1.6f"
+                                "value": "=cam_update_delta() * 1.6f"
                             }
                         },
                         {
@@ -1054,21 +1066,21 @@
                     "id": "var.set",
                     "args": {
                         "name": "snap_x",
-                        "value": "=(info ? info->point[0] : 0.0f)"
+                        "value": "=cam_place_num(0)"
                     }
                 },
                 {
                     "id": "var.set",
                     "args": {
                         "name": "snap_y",
-                        "value": "=(info ? info->point[1] : 0.0f)"
+                        "value": "=cam_place_num(1)"
                     }
                 },
                 {
                     "id": "var.set",
                     "args": {
                         "name": "snap_z",
-                        "value": "=(info ? info->point[2] : 0.0f)"
+                        "value": "=cam_place_num(2)"
                     }
                 },
                 {

@@ -18,7 +18,7 @@
             "externalConsole": false,
             "MIMode": "gdb",
             "miDebuggerPath": "C:/Qt/Tools/mingw1310_64/bin/gdb.exe",
-            "preLaunchTask": "CMake: Build (Release)"
+            "preLaunchTask": "CMake: Build"
         }
     ]
 }

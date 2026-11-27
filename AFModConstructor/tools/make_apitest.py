@@ -47,6 +47,19 @@ SAFE = {
     'shader.registers', 'shader.shapeBegin', 'shader.shapePoint', 'shader.batchBegin',
     'shader.batchAdd', 'shader.drop',
     'files.sizeToVar', 'config.toVar', 'interop.toVar',
+    'world.selectRoom', 'world.selectMazeCell',
+    'world.selectCell', 'world.snapshotCells',
+    'world.selectBox', 'world.selectEntity', 'world.selectPlayerEntity',
+    'world.selectSpawn', 'world.selectLight', 'world.selectLightTriangle',
+    'world.selectStatic', 'world.readStaticMatrix', 'world.selectThing',
+    'bonuses.selectType', 'bonuses.selectPlacement',
+    'bonuses.beginType', 'bonuses.typeAssets', 'bonuses.typeTimerAndTrain',
+    'bonuses.typeGlow', 'bonuses.typeRockingAndLight',
+    'inventory.selectSlot',
+    'monsters.selectType', 'monsters.selectTypeBox',
+    'monsters.selectLive',
+    'monsters.selectLiveBox', 'monsters.selectPlaced',
+    'particles.select',
 }
 
 # Visible or audible, so they wait for a key rather than firing sixty times a second
@@ -63,10 +76,43 @@ CONTEXT_EVENT = {
     'slot_save': 'sav.slotSaving',
     'slot_load': 'sav.slotLoading',
     'camera_view': 'camera.view',
+    'particle_trail': 'particles.trailSpawning',
+    'demo_input': 'demo.input',
+    'player_move': 'player.onMove',
+    'player_death': 'player.beforeDeath',
+    'bonus_take': 'bonuses.beforeTake',
+    'bonus_spawn': 'bonuses.beforeSpawn',
+    'bonus_body': 'bonuses.kindBuild',
+    'bonus_kind_update': 'bonuses.kindUpdate',
+    'inv_slot_event': 'inventory.slotEmptied',
+    'inv_chain_event': 'inventory.chainChanged',
+    'monster_kill': 'monsters.beforeKill',
+    'monster_touch': 'monsters.beforeTouch',
+    'monster_spawn': 'monsters.spawned',
+    'monster_place': 'monsters.beforePlace',
+    'monster_think': 'monsters.behaviourTick',
+    'monster_body': 'monsters.kindBuild',
 }
 
 # A loop variable of its own for each looping condition, so two of them never collide
-LOOP_VAR = {'system.repeat': 'i', 'system.for': 'j', 'system.while': 'k'}
+LOOP_VAR = {
+    'system.repeat': 'i',
+    'system.for': 'j',
+    'system.while': 'k',
+    'particles.forEach': 'p_idx',
+    'world.forEachRoom': 'w_room_i',
+    'world.forEachBox': 'w_box_i',
+    'world.forEachEntity': 'w_ent_i',
+    'world.forEachSpawn': 'w_spw_i',
+    'world.forEachLight': 'w_lgt_i',
+    'world.forEachLightTri': 'w_tri_i',
+    'world.forEachStatic': 'w_stc_i',
+    'world.forEachThing': 'w_thg_i',
+    'bonuses.forEachPlacement': 'b_pl_i',
+    'inventory.forEachSlot': 'inv_s_i',
+    'monsters.forEachLive': 'm_lv_i',
+    'monsters.forEachPlaced': 'm_pl_i',
+}
 
 # An expression that reads a value of its event only stands inside that event
 EVENT_EXPRESSION = {
@@ -75,6 +121,48 @@ EVENT_EXPRESSION = {
     'camera.placeX': 'camera.placing',
     'camera.placeY': 'camera.placing',
     'camera.placeZ': 'camera.placing',
+    'particles.birthKind': 'particles.birth',
+    'particles.thinkDelta': 'particles.think',
+    'particles.trailX': 'particles.trailSpawning',
+    'particles.trailY': 'particles.trailSpawning',
+    'particles.trailZ': 'particles.trailSpawning',
+    'particles.trailWaypoint': 'particles.trailSpawning',
+    'demo.eventKind': 'demo.stateChanged',
+    'demo.eventScript': 'demo.stateChanged',
+    'demo.eventMove': 'demo.moveStarted',
+    'demo.inputX': 'demo.input',
+    'demo.inputY': 'demo.input',
+    'demo.inputZ': 'demo.input',
+    'demo.inputHorz': 'demo.input',
+    'demo.inputVert': 'demo.input',
+    'demo.inputJump': 'demo.input',
+    'demo.inputSeconds': 'demo.input',
+    'world.eventKind': 'world.roomChanged',
+    'world.eventRoomIndex': 'world.roomChanged',
+    'world.eventRoomId': 'world.roomChanged',
+    'world.eventPrevRoom': 'world.roomChanged',
+    'world.eventMazeX': 'world.roomChanged',
+    'world.eventMazeY': 'world.roomChanged',
+    'player.eventKind': 'player.died',
+    'player.eventLives': 'player.livesChanged',
+    'player.eventWasLives': 'player.livesChanged',
+    'player.eventScore': 'player.scoreChanged',
+    'player.eventWasScore': 'player.scoreChanged',
+    'player.eventCrashed': 'player.died',
+    'player.deathKind': 'player.beforeDeath',
+    'player.deathLives': 'player.beforeDeath',
+    'player.deathX': 'player.beforeDeath',
+    'player.deathY': 'player.beforeDeath',
+    'player.deathZ': 'player.beforeDeath',
+    'player.frameDelta': 'player.drive',
+    'player.frameX': 'player.drive',
+    'player.frameY': 'player.drive',
+    'player.frameZ': 'player.drive',
+    'player.frameFall': 'player.drive',
+    'player.frameState': 'player.drive',
+    'player.frameSubState': 'player.drive',
+    'player.moveDirX': 'player.onMove',
+    'player.moveDirY': 'player.onMove',
 }
 
 KEY = '84'   # T, as the catalog itself lists the keys: by number
@@ -158,13 +246,14 @@ def main():
         else:
             name = 'probe_f' if item.get('kind') == 'float' else 'probe_i'
             step = action('var.set', name=name, value='=' + text)
-        where = EVENT_EXPRESSION.get(item['id'])
+        where = EVENT_EXPRESSION.get(item['id']) or CONTEXT_EVENT.get(item.get('needs', ''))
         if where:
             event_expressions.setdefault(where, []).append(rule(actions=[step], name=item['id']))
         else:
             expression_rules.append(rule(actions=[step], name=item['id']))
 
     # ---- conditions: each one alone in a rule that counts when it holds ----------------
+    by_context = {}
     condition_rules = []
     for item in book['conditions']:
         args = {}
@@ -172,20 +261,26 @@ def main():
             if param['key'] == 'var':
                 args[param['key']] = LOOP_VAR.get(item['id'], 'i')
             # A variable field is empty in the catalog: the sheet says which one it means
-            if param.get('label') == 'mod.p.varName':
+            elif param.get('label') == 'mod.p.varName':
                 args[param['key']] = 'probe_t' if item['id'] == 'var.textIs' else 'value'
             if param.get('label') in ('mod.p.listName', 'mod.p.matrixList', 'mod.p.vertexList'):
                 args[param['key']] = 'probe_list'
-        if '%state%' in item.get('emit', '') and not item.get('state'):
+        has_state_param = any(p.get('key') == 'state' for p in item.get('params', []))
+        if '%state%' in item.get('emit', '') and not item.get('state') and not has_state_param:
             condition_rules.append(rule(conditions=[condition(item['id'])],
                                         actions=[count('checks')], name=item['id']))
+            continue
+        cond_where = CONTEXT_EVENT.get(item.get('needs', ''))
+        if cond_where and cond_where != 'render.frame':
+            by_context.setdefault(cond_where, []).append(
+                rule(conditions=[condition(item['id'], **args)],
+                     actions=[count('checks')], name=item['id']))
             continue
         condition_rules.append(rule(conditions=[condition(item['id'], **args)],
                                     actions=[count('checks')], name=item['id']))
 
     # ---- actions: by tier, and by the context each one needs ---------------------------
     tiers = {'safe': [], 'key': [], 'writes': []}
-    by_context = {}
     in_loop = []
     for item in book['actions']:
         needs = item.get('needs', '')
@@ -230,8 +325,8 @@ def main():
         rule(conditions=[condition('var.on', name='writes_on'),
                          condition('system.repeat', count=1, var='i')],
              children=in_loop, name='внутри цикла: %d' % len(in_loop)),
-        rule(actions=[action('render.text', text='apitest: {checks} проверок, кадр {probe_i}',
-                             x=16, y=16, font='', scale=0.7, r=0.8, g=0.85, b=1, a=1)],
+        rule(actions=[action('render.textAligned', text='apitest: {checks} проверок, кадр {probe_i}',
+                             x=16, y=16, font='', scale=0.5, align='0x08', r=0.8, g=0.85, b=1, a=1)],
              name='видно, что живо'),
     ]
 

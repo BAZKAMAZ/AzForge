@@ -1,0 +1,124 @@
+[
+  {
+    "id": "inventory.slotEmptied",
+    "label": "mod.ev.invSlotEmptied",
+    "call": "Inventory.AddSlotHandler",
+    "filters": [
+      {
+        "key": "reason",
+        "label": "mod.p.invReason",
+        "kind": "enum",
+        "preset": "-1",
+        "optional": true,
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.inv.reason.any"
+          },
+          {
+            "value": "0",
+            "label": "mod.inv.reason.expired"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.reason.used"
+          }
+        ],
+        "test": "if (!inv_ev_matches_reason(%v%)) return;"
+      },
+      {
+        "key": "item",
+        "label": "mod.p.invFilterItem",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "totem",
+            "label": "mod.inv.item.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.inv.item.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.inv.item.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.inv.item.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.inv.item.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.inv.item.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.inv.item.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.inv.item.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.inv.item.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.inv.item.uniKey"
+          }
+        ],
+        "test": "if (!inv_ev_matches_item(\"%v%\")) return;"
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodInventoryEventInfo* iinfo, void* user)",
+    "subscribe": "if (API->inventory && API->inventory->AddSlotHandler) %token% = API->inventory->AddSlotHandler(SELF, inv_slot_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "inv_slot_event",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "hint": "mod.ev.invSlotEmptied.hint"
+  },
+  {
+    "id": "inventory.chainChanged",
+    "label": "mod.ev.invChainChanged",
+    "call": "Inventory.AddChainHandler",
+    "filters": [
+      {
+        "key": "change",
+        "label": "mod.p.invChainChange",
+        "kind": "enum",
+        "preset": "-1",
+        "optional": true,
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.inv.chain.any"
+          },
+          {
+            "value": "0",
+            "label": "mod.inv.chain.grew"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.chain.broke"
+          }
+        ],
+        "test": "if (!inv_chain_ev_matches(%v%)) return;"
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodChainEventInfo* cinfo, void* user)",
+    "subscribe": "if (API->inventory && API->inventory->AddChainHandler) %token% = API->inventory->AddChainHandler(SELF, inv_chain_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "inv_chain_event",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "hint": "mod.ev.invChainChanged.hint"
+  }
+]

@@ -75,11 +75,11 @@ def interpolate(text, kinds, complaints, where):
         open_at = text.find('{', at)
         close_at = text.find('}', open_at + 1) if open_at >= 0 else -1
         if open_at < 0 or close_at < 0:
-            out += text[at:]
+            out += text[at:].replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%')
             break
         inner = text.find('{', open_at + 1)
         if 0 <= inner < close_at:          # a script block, not a value
-            out += text[at:inner]
+            out += text[at:inner].replace('\\', '\\\\').replace('"', '\\"').replace('%', '%%')
             at = inner
             continue
 
@@ -108,16 +108,56 @@ def interpolate(text, kinds, complaints, where):
     return '=mod_text("' + out + '"' + ''.join(', ' + a for a in args) + ')'
 
 
+def is_when_matched(param, all_params, args):
+    when = param.get('when')
+    if not isinstance(when, dict) or not when.get('param'):
+        return True
+    ctrl_key = when['param']
+    ctrl_def = next((p for p in all_params if p['key'] == ctrl_key), None)
+    val = args.get(ctrl_key, ctrl_def.get('preset', '') if ctrl_def else '')
+    vals = list(when.get('in', []) or [])
+    if 'equals' in when:
+        vals.append(when['equals'])
+    negate = False
+    if 'notIn' in when:
+        negate = True
+        vals = list(when.get('notIn', []) or [])
+    in_list = val in vals
+    is_custom = False
+    if not in_list and when.get('custom') and ctrl_def and ctrl_def.get('options'):
+        is_custom = all(o.get('value') != val for o in ctrl_def['options'])
+    return (not in_list) if negate else (in_list or is_custom)
+
+
+def is_auto_when_matched(param, all_params, args):
+    aw = param.get('autoWhen')
+    if not isinstance(aw, dict) or not aw.get('param'):
+        return False
+    ctrl_key = aw['param']
+    ctrl_def = next((p for p in all_params if p['key'] == ctrl_key), None)
+    val = args.get(ctrl_key, ctrl_def.get('preset', '') if ctrl_def else '')
+    return val in (aw.get('in', []) or [])
+
+
+def is_param_active(param, all_params, args):
+    if not is_when_matched(param, all_params, args):
+        return False
+    if not param.get('optional', False):
+        return True
+    return (param['key'] in args) or is_auto_when_matched(param, all_params, args)
+
+
 def typed(item, args, complaints, where, kinds=None):
     """Parameters filled in as the sheet filled them; an argument nobody asked for is a mistake."""
-    keys = {p['key'] for p in item.get('params', [])}
+    all_params = item.get('params', [])
+    keys = {p['key'] for p in all_params}
     for key in args:
         if key not in keys:
             complaints.append('%s: "%s" takes no argument "%s"' % (where, item['id'], key))
     out = []
-    for param in item.get('params', []):
+    for param in all_params:
         copy = dict(param)
-        if param['key'] in args:
+        if param['key'] in args and is_param_active(param, all_params, args):
             copy['preset'] = args[param['key']]
         value = copy.get('preset', '')
         if (kinds is not None and copy.get('kind') != 'number' and '{' in value
@@ -173,7 +213,8 @@ def body(rule, book, used, complaints, where, depth, states, kinds):
 
         # "only once" is not an ordinary condition: it wraps the rest of them, because it has
         # to remember whether they held on the previous frame
-        if '%state%' in item.get('emit', '') and not item.get('state'):
+        has_state_param = any(p.get('key') == 'state' for p in item.get('params', []))
+        if '%state%' in item.get('emit', '') and not item.get('state') and not has_state_param:
             once = True
             continue
 

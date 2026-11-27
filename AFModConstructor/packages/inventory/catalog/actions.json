@@ -1,0 +1,495 @@
+[
+  {
+    "id": "inventory.give",
+    "label": "mod.act.invGive",
+    "call": "Inventory.FindFreeSlot + PutItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.invItemName",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "totem",
+            "label": "mod.inv.item.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.inv.item.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.inv.item.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.inv.item.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.inv.item.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.inv.item.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.inv.item.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.inv.item.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.inv.item.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.inv.item.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.invSlotOrFree",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "time",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "timerMode",
+        "label": "mod.p.invTimerMode",
+        "kind": "enum",
+        "preset": "AMOD_BONUS_TIMER_GAME",
+        "options": [
+          {
+            "value": "AMOD_BONUS_TIMER_GAME",
+            "label": "mod.inv.timer.game"
+          },
+          {
+            "value": "AMOD_BONUS_TIMER_NONE",
+            "label": "mod.inv.timer.none"
+          },
+          {
+            "value": "AMOD_BONUS_TIMER_MOD",
+            "label": "mod.inv.timer.mod"
+          }
+        ],
+        "optional": true
+      }
+    ],
+    "emit": "inv_put_item((int)(%slot%), \"%name%\", (float)(%time%), %timerMode%);",
+    "hint": "mod.act.invGive.hint"
+  },
+  {
+    "id": "inventory.selectSlot",
+    "label": "mod.act.invSelectSlot",
+    "call": "Inventory.GetItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "inv_select_slot((int)(%slot%));"
+  },
+  {
+    "id": "inventory.clear",
+    "label": "mod.act.invClear",
+    "call": "Inventory.ClearItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.invClearBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.clr.slot"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.clr.name"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.clr.all"
+          }
+        ]
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "name",
+        "label": "mod.p.invItemName",
+        "kind": "text",
+        "preset": "key_a",
+        "options": [
+          {
+            "value": "totem",
+            "label": "mod.inv.item.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.inv.item.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.inv.item.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.inv.item.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.inv.item.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.inv.item.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.inv.item.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.inv.item.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.inv.item.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.inv.item.uniKey"
+          }
+        ],
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%by% == 0) inv_clear_slot((int)(%slot%)); else if (%by% == 1) inv_clear_by_name(\"%name%\"); else inv_clear_all();",
+    "hint": "mod.act.invClear.hint"
+  },
+  {
+    "id": "inventory.moveItem",
+    "label": "mod.act.invMoveItem",
+    "call": "Inventory.MoveItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "fromSlot",
+        "label": "mod.p.invFromSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "toSlot",
+        "label": "mod.p.invToSlot",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "inv_move_item((int)(%fromSlot%), (int)(%toSlot%));",
+    "hint": "mod.act.invMoveItem.hint"
+  },
+  {
+    "id": "inventory.swapItems",
+    "label": "mod.act.invSwapItems",
+    "call": "Inventory.SwapItems",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "first",
+        "label": "mod.p.first",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "second",
+        "label": "mod.p.second",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "inv_swap_items((int)(%first%), (int)(%second%));"
+  },
+  {
+    "id": "inventory.setSlotCount",
+    "label": "mod.act.invSetSlotCount",
+    "call": "Inventory.SetSlotCount",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "8"
+      }
+    ],
+    "emit": "inv_set_slot_count((int)(%count%));",
+    "hint": "mod.act.invSetSlotCount.hint"
+  },
+  {
+    "id": "inventory.setSlotIcon",
+    "label": "mod.act.invSetIcon",
+    "call": "Inventory.SetIcon",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "icon",
+        "label": "mod.p.invIcon",
+        "kind": "text",
+        "preset": "textures/bonus/megakey_icon.png"
+      }
+    ],
+    "emit": "inv_set_icon((int)(%slot%), \"%icon%\");",
+    "hint": "mod.act.invSetIcon.hint"
+  },
+  {
+    "id": "inventory.setTimeLeft",
+    "label": "mod.act.invSetTimeLeft",
+    "call": "Inventory.SetTimeLeft",
+    "group": "inventory",
+    "section": "mod.sec.invTimers",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "10"
+      }
+    ],
+    "emit": "inv_set_time_left((int)(%slot%), (float)(%seconds%));",
+    "hint": "mod.act.invSetTimeLeft.hint"
+  },
+  {
+    "id": "inventory.addTimeLeft",
+    "label": "mod.act.invAddTimeLeft",
+    "call": "Inventory.SetTimeLeft + SetItemProperty",
+    "group": "inventory",
+    "section": "mod.sec.invTimers",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "delta",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "5"
+      }
+    ],
+    "emit": "inv_add_time_left((int)(%slot%), (float)(%delta%));",
+    "hint": "mod.act.invAddTimeLeft.hint"
+  },
+  {
+    "id": "inventory.setTicking",
+    "label": "mod.act.invSetTicking",
+    "call": "Inventory.IsTicking + SetTicking",
+    "group": "inventory",
+    "section": "mod.sec.invTimers",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.invTickMode",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.tick.pauseSlot"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.tick.resumeSlot"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.tick.toggleSlot"
+          },
+          {
+            "value": "3",
+            "label": "mod.inv.tick.pauseAll"
+          },
+          {
+            "value": "4",
+            "label": "mod.inv.tick.resumeAll"
+          }
+        ]
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "mode",
+          "in": [
+            "0",
+            "1",
+            "2"
+          ]
+        }
+      }
+    ],
+    "emit": "if (%mode% == 0) inv_set_ticking((int)(%slot%), 0); else if (%mode% == 1) inv_set_ticking((int)(%slot%), 1); else if (%mode% == 2) inv_toggle_ticking((int)(%slot%)); else if (%mode% == 3) inv_set_all_ticking(0); else inv_set_all_ticking(1);",
+    "hint": "mod.act.invSetTicking.hint"
+  },
+  {
+    "id": "inventory.setItemPropNumber",
+    "label": "mod.act.invSetPropNum",
+    "call": "Inventory.SetItemProperty",
+    "group": "inventory",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "pts_out",
+        "options": [
+          {
+            "value": "pts_out",
+            "label": "mod.inv.ip.ptsOut"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.inv.ip.timeLeft"
+          },
+          {
+            "value": "time_total",
+            "label": "mod.inv.ip.timeTotal"
+          },
+          {
+            "value": "burn_time",
+            "label": "mod.inv.ip.burnTime"
+          },
+          {
+            "value": "flags",
+            "label": "mod.inv.ip.flags"
+          },
+          {
+            "value": "has_timer",
+            "label": "mod.inv.ip.hasTimer"
+          },
+          {
+            "value": "timer_is_mine",
+            "label": "mod.inv.ip.timerMine"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "500"
+      }
+    ],
+    "emit": "inv_set_item_prop_num((int)(%slot%), \"%key%\", (float)(%value%));"
+  },
+  {
+    "id": "inventory.setItemPropAsset",
+    "label": "mod.act.invSetPropAsset",
+    "call": "Inventory.SetItemProperty",
+    "group": "inventory",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "icon",
+        "options": [
+          {
+            "value": "icon",
+            "label": "mod.inv.ip.icon"
+          },
+          {
+            "value": "sound_use",
+            "label": "mod.inv.ip.soundUse"
+          }
+        ]
+      },
+      {
+        "key": "path",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "textures/bonus/fomka_icon.png"
+      }
+    ],
+    "emit": "inv_set_item_prop_str((int)(%slot%), \"%key%\", \"%path%\");"
+  },
+  {
+    "id": "inventory.cancel",
+    "label": "mod.act.invCancel",
+    "call": "Inventory.Cancel",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "token",
+    "params": [],
+    "emit": "inv_cancel(%token%);"
+  }
+]

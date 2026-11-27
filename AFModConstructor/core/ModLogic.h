@@ -59,6 +59,8 @@ Rule MakeRule(const std::string& eventId);
 Action MakeAction(const std::string& actionId);
 Condition MakeCondition(const std::string& conditionId);
 
+bool HasParam(const std::vector<Param>& params, const std::string& key);
+bool RemoveParam(std::vector<Param>& params, const std::string& key);
 std::string& ParamValue(std::vector<Param>& params, const std::string& key);
 std::string ParamValueOr(const std::vector<Param>& params, const std::string& key, const std::string& fallback = {});
 

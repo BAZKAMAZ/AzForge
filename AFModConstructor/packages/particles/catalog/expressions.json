@@ -1,0 +1,475 @@
+[
+  {
+    "id": "particles.isHere",
+    "label": "mod.expr.partHere",
+    "call": "Particles.IsHere",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "(API->particles ? API->particles->IsHere(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.countAll",
+    "label": "mod.expr.partCountAll",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count(-1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.countPool0",
+    "label": "mod.expr.partCountPool0",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count(AMOD_PARTICLE_KIND_POOL_0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.countPool1",
+    "label": "mod.expr.partCountPool1",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count(AMOD_PARTICLE_KIND_POOL_1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.countPool2",
+    "label": "mod.expr.partCountPool2",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count(AMOD_PARTICLE_KIND_POOL_2)",
+    "hint": "mod.expr.partCountPool2.hint"
+  },
+  {
+    "id": "particles.countUni",
+    "label": "mod.expr.partCountUni",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count(AMOD_PARTICLE_KIND_UNI)",
+    "hint": ""
+  },
+  {
+    "id": "particles.countTagged",
+    "label": "mod.expr.partCountTagged",
+    "call": "Particles.GetTag",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_count_tagged(1)",
+    "hint": "mod.expr.partCountTagged.hint"
+  },
+  {
+    "id": "particles.capacityAll",
+    "label": "mod.expr.partCapAll",
+    "call": "Particles.Capacity",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_capacity(-1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.capacityPool",
+    "label": "mod.expr.partCapPool",
+    "call": "Particles.Capacity",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_capacity(AMOD_PARTICLE_KIND_POOL_0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.capacityUni",
+    "label": "mod.expr.partCapUni",
+    "call": "Particles.Capacity",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_capacity(AMOD_PARTICLE_KIND_UNI)",
+    "hint": ""
+  },
+  {
+    "id": "particles.textFont",
+    "label": "mod.expr.partTextFont",
+    "call": "Particles.TextFont",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "int",
+    "text": "part_text_font()",
+    "hint": "mod.expr.partTextFont.hint"
+  },
+  {
+    "id": "particles.textScaleX",
+    "label": "mod.expr.partTextScaleX",
+    "call": "Particles.TextScale",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "float",
+    "text": "part_text_scale(0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.textScaleY",
+    "label": "mod.expr.partTextScaleY",
+    "call": "Particles.TextScale",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "kind": "float",
+    "text": "part_text_scale(1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.animId",
+    "label": "mod.expr.partAnimId",
+    "call": "Particles.CreateAnimation",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "kind": "int",
+    "text": "part_anim_id(\"pulse\")",
+    "hint": "mod.expr.partAnimId.hint"
+  },
+  {
+    "id": "particles.kind",
+    "label": "mod.expr.partKind",
+    "call": "Particles.KindOf",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "kind": "int",
+    "text": "part_kind_of()",
+    "hint": "mod.expr.partKind.hint"
+  },
+  {
+    "id": "particles.tag",
+    "label": "mod.expr.partTag",
+    "call": "Particles.GetTag",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "kind": "int",
+    "text": "((int)part_tag_of())",
+    "hint": ""
+  },
+  {
+    "id": "particles.posX",
+    "label": "mod.expr.partPosX",
+    "call": "Particles.Get",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.posY",
+    "label": "mod.expr.partPosY",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.posZ",
+    "label": "mod.expr.partPosZ",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(2)",
+    "hint": ""
+  },
+  {
+    "id": "particles.dirX",
+    "label": "mod.expr.partDirX",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(3)",
+    "hint": ""
+  },
+  {
+    "id": "particles.dirY",
+    "label": "mod.expr.partDirY",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(4)",
+    "hint": ""
+  },
+  {
+    "id": "particles.dirZ",
+    "label": "mod.expr.partDirZ",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(5)",
+    "hint": ""
+  },
+  {
+    "id": "particles.speed",
+    "label": "mod.expr.partSpeed",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(6)",
+    "hint": ""
+  },
+  {
+    "id": "particles.size",
+    "label": "mod.expr.partSize",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(7)",
+    "hint": ""
+  },
+  {
+    "id": "particles.life",
+    "label": "mod.expr.partLife",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(8)",
+    "hint": ""
+  },
+  {
+    "id": "particles.decay",
+    "label": "mod.expr.partDecay",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(9)",
+    "hint": ""
+  },
+  {
+    "id": "particles.r",
+    "label": "mod.expr.partR",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(10)",
+    "hint": ""
+  },
+  {
+    "id": "particles.g",
+    "label": "mod.expr.partG",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(11)",
+    "hint": ""
+  },
+  {
+    "id": "particles.b",
+    "label": "mod.expr.partB",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(12)",
+    "hint": ""
+  },
+  {
+    "id": "particles.a",
+    "label": "mod.expr.partA",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(13)",
+    "hint": ""
+  },
+  {
+    "id": "particles.gravX",
+    "label": "mod.expr.partGravX",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(14)",
+    "hint": ""
+  },
+  {
+    "id": "particles.gravY",
+    "label": "mod.expr.partGravY",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(15)",
+    "hint": ""
+  },
+  {
+    "id": "particles.gravZ",
+    "label": "mod.expr.partGravZ",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(16)",
+    "hint": ""
+  },
+  {
+    "id": "particles.speedGrow",
+    "label": "mod.expr.partSpeedGrow",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(17)",
+    "hint": ""
+  },
+  {
+    "id": "particles.sizeGrow",
+    "label": "mod.expr.partSizeGrow",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(18)",
+    "hint": ""
+  },
+  {
+    "id": "particles.angle",
+    "label": "mod.expr.partAngle",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(19)",
+    "hint": ""
+  },
+  {
+    "id": "particles.spin",
+    "label": "mod.expr.partSpin",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(20)",
+    "hint": ""
+  },
+  {
+    "id": "particles.glyphScaleX",
+    "label": "mod.expr.partGlyphScaleX",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(21)",
+    "hint": ""
+  },
+  {
+    "id": "particles.glyphScaleY",
+    "label": "mod.expr.partGlyphScaleY",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(22)",
+    "hint": ""
+  },
+  {
+    "id": "particles.waypoint",
+    "label": "mod.expr.partWaypoint",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "float",
+    "text": "part_num(23)",
+    "hint": ""
+  },
+  {
+    "id": "particles.shape",
+    "label": "mod.expr.partShape",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "part_int(0)",
+    "hint": ""
+  },
+  {
+    "id": "particles.model",
+    "label": "mod.expr.partModel",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "part_int(1)",
+    "hint": ""
+  },
+  {
+    "id": "particles.modelFrame",
+    "label": "mod.expr.partFrame",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "part_int(2)",
+    "hint": ""
+  },
+  {
+    "id": "particles.parent",
+    "label": "mod.expr.partParent",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "kind": "int",
+    "text": "part_int(3)",
+    "hint": ""
+  },
+  {
+    "id": "particles.birthKind",
+    "label": "mod.expr.partBirthKind",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "int",
+    "text": "part_ev_birth_kind()",
+    "needs": "particle_birth",
+    "hint": "mod.expr.partBirthKind.hint"
+  },
+  {
+    "id": "particles.thinkDelta",
+    "label": "mod.expr.partThinkDelta",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "float",
+    "text": "part_ev_think_dt()",
+    "needs": "particle_think",
+    "hint": "mod.expr.partThinkDelta.hint"
+  },
+  {
+    "id": "particles.trailX",
+    "label": "mod.expr.partTrailX",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "float",
+    "text": "part_ev_trail_num(0)",
+    "needs": "particle_trail",
+    "hint": "mod.expr.partTrailX.hint"
+  },
+  {
+    "id": "particles.trailY",
+    "label": "mod.expr.partTrailY",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "float",
+    "text": "part_ev_trail_num(1)",
+    "needs": "particle_trail",
+    "hint": "mod.expr.partTrailX.hint"
+  },
+  {
+    "id": "particles.trailZ",
+    "label": "mod.expr.partTrailZ",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "float",
+    "text": "part_ev_trail_num(2)",
+    "needs": "particle_trail",
+    "hint": "mod.expr.partTrailX.hint"
+  },
+  {
+    "id": "particles.trailWaypoint",
+    "label": "mod.expr.partTrailWaypoint",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "kind": "float",
+    "text": "part_ev_trail_num(3)",
+    "needs": "particle_trail",
+    "hint": "mod.expr.partTrailX.hint"
+  }
+]

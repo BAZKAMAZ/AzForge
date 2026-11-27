@@ -1,0 +1,288 @@
+[
+  {
+    "id": "bonuses.beforeTake",
+    "label": "mod.ev.bonusBeforeTake",
+    "call": "Bonuses.AddTakeHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "bonus",
+        "label": "mod.p.bonusFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ],
+        "test": "if (!bonuses_take_matches(\"%v%\")) return AMOD_BONUS_TAKE_DEFAULT;"
+      }
+    ],
+    "handler": "static AmodBonusTakeResult __cdecl %H%(const AmodBonusTakeInfo* tinfo, void* user)",
+    "subscribe": "if (API->bonuses && API->bonuses->AddTakeHandler) %token% = API->bonuses->AddTakeHandler(SELF, bonuses_take_relay, (void*)%H%);",
+    "retDefault": "return (AmodBonusTakeResult)bonuses_take_verdict();",
+    "retVeto": "return AMOD_BONUS_TAKE_REFUSE;",
+    "provides": "bonus_take",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "hint": "mod.ev.bonusBeforeTake.hint"
+  },
+  {
+    "id": "bonuses.beforeSpawn",
+    "label": "mod.ev.bonusBeforeSpawn",
+    "call": "Bonuses.AddSpawnHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "bonus",
+        "label": "mod.p.bonusFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ],
+        "test": "if (!bonuses_spawn_matches(\"%v%\")) return 1;"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodBonusSpawnInfo* sinfo, void* user)",
+    "subscribe": "if (API->bonuses && API->bonuses->AddSpawnHandler) %token% = API->bonuses->AddSpawnHandler(SELF, bonuses_spawn_relay, (void*)%H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "bonus_spawn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "hint": "mod.ev.bonusBeforeSpawn.hint"
+  },
+  {
+    "id": "bonuses.kindBuild",
+    "label": "mod.ev.bonusKindBuild",
+    "call": "Bonuses.RegisterKind(BUILD)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodBonusKindInfo* kinfo, void* user)",
+    "subscribe": "bonuses_bind_kind(\"%kindName%\", 0, %H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "bonus_body",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "hint": "mod.ev.bonusKindBuild.hint"
+  },
+  {
+    "id": "bonuses.kindUpdate",
+    "label": "mod.ev.bonusKindUpdate",
+    "call": "Bonuses.RegisterKind(UPDATE)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodBonusKindInfo* kinfo, void* user)",
+    "subscribe": "bonuses_bind_kind(\"%kindName%\", 1, %H%);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "bonus_body,bonus_kind_update",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "hint": "mod.ev.bonusKindUpdate.hint"
+  },
+  {
+    "id": "bonuses.kindTake",
+    "label": "mod.ev.bonusKindTake",
+    "call": "Bonuses.RegisterKind(TAKE)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodBonusKindInfo* kinfo, void* user)",
+    "subscribe": "bonuses_bind_kind(\"%kindName%\", 2, %H%);",
+    "retDefault": "return bonuses_take_verdict();",
+    "retVeto": "return AMOD_BONUS_TAKE_REFUSE;",
+    "provides": "bonus_take",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "hint": "mod.ev.bonusKindTake.hint"
+  }
+]

@@ -1,25 +1,191 @@
 [
   {
-    "id": "player.addScore",
-    "label": "mod.act.addScore",
-    "call": "Player.AddScore",
+    "id": "player.setPosition",
+    "label": "mod.act.playerSetPos",
+    "call": "Player.SetPosition",
     "group": "player",
+    "section": "mod.sec.playerMove",
     "params": [
       {
-        "key": "points",
-        "label": "mod.p.points",
+        "key": "x",
+        "label": "mod.p.x",
         "kind": "number",
-        "preset": "100"
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
       }
     ],
-    "emit": "if (API->player) API->player->AddScore(SELF, %points%, 0);",
-    "section": "mod.sec.score"
+    "emit": "player_set_pos((float)(%x%), (float)(%y%), (float)(%z%), 0);",
+    "hint": "mod.act.playerSetPos.hint"
+  },
+  {
+    "id": "player.nudgePosition",
+    "label": "mod.act.playerNudgePos",
+    "call": "Player.SetPositionOnly",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "player_set_pos((float)(%x%), (float)(%y%), (float)(%z%), 1);",
+    "hint": "mod.act.playerNudgePos.hint"
+  },
+  {
+    "id": "player.setFacing",
+    "label": "mod.act.playerSetFacing",
+    "call": "Player.SetFacing",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.playerFaceBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.player.faceBy.dir"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.faceBy.angle"
+          }
+        ]
+      },
+      {
+        "key": "dir",
+        "label": "mod.p.playerFacing",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_FACING_RIGHT",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        },
+        "options": [
+          {
+            "value": "AMOD_PLAYER_FACING_LEFT",
+            "label": "mod.player.face.left"
+          },
+          {
+            "value": "AMOD_PLAYER_FACING_RIGHT",
+            "label": "mod.player.face.right"
+          }
+        ]
+      },
+      {
+        "key": "angle",
+        "label": "mod.p.angle",
+        "kind": "number",
+        "preset": "-1.5708",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%by% == 0) player_set_facing((float)(%dir%)); else player_set_facing((float)(%angle%));"
+  },
+  {
+    "id": "player.setCollides",
+    "label": "mod.act.playerSetCollides",
+    "call": "Player.Collides + SetCollides",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.playerCollideMode",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.player.col.on"
+          },
+          {
+            "value": "0",
+            "label": "mod.player.col.off"
+          },
+          {
+            "value": "2",
+            "label": "mod.player.col.toggle"
+          }
+        ]
+      }
+    ],
+    "emit": "if (%mode% == 2) player_toggle_collides(); else player_set_collides(%mode%);",
+    "hint": "mod.act.playerSetCollides.hint"
+  },
+  {
+    "id": "player.kill",
+    "label": "mod.act.kill",
+    "call": "Player.Kill",
+    "group": "player",
+    "section": "mod.sec.life",
+    "params": [
+      {
+        "key": "crashed",
+        "label": "mod.p.playerCrashMode",
+        "kind": "enum",
+        "preset": "0",
+        "optional": true,
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.player.death.plain"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.death.crashed"
+          }
+        ]
+      }
+    ],
+    "emit": "player_kill(%crashed%);"
+  },
+  {
+    "id": "player.burn",
+    "label": "mod.act.burn",
+    "call": "Player.Burn",
+    "group": "player",
+    "section": "mod.sec.life",
+    "params": [],
+    "emit": "player_burn();"
   },
   {
     "id": "player.setLives",
     "label": "mod.act.setLives",
     "call": "Player.SetLives",
     "group": "player",
+    "section": "mod.sec.life",
     "params": [
       {
         "key": "lives",
@@ -28,23 +194,374 @@
         "preset": "3"
       }
     ],
-    "emit": "if (API->player) API->player->SetLives(SELF, %lives%);",
-    "section": "mod.sec.life"
+    "emit": "player_set_lives((int)(%lives%));"
   },
   {
-    "id": "player.burn",
-    "label": "mod.act.burn",
-    "call": "Player.Burn",
+    "id": "player.addLives",
+    "label": "mod.act.playerAddLives",
+    "call": "Player.GetLives + SetLives",
     "group": "player",
-    "emit": "if (API->player) API->player->Burn(SELF);",
-    "section": "mod.sec.life"
+    "section": "mod.sec.life",
+    "params": [
+      {
+        "key": "delta",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "player_add_lives((int)(%delta%));"
   },
   {
-    "id": "player.kill",
-    "label": "mod.act.kill",
-    "call": "Player.Kill",
+    "id": "player.addScore",
+    "label": "mod.act.addScore",
+    "call": "Player.AddScore",
     "group": "player",
-    "emit": "if (API->player) API->player->Kill(SELF, 0);",
-    "section": "mod.sec.life"
+    "section": "mod.sec.score",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "100"
+      },
+      {
+        "key": "where",
+        "label": "mod.p.playerScoreWhere",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.player.scoreAt.player"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.scoreAt.pos"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.35f",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%where% == 0) player_add_score((int)(%points%)); else player_add_score_at((int)(%points%), (float)(%x%), (float)(%y%), (float)(%z%));",
+    "hint": "mod.act.addScore.hint"
+  },
+  {
+    "id": "player.setScore",
+    "label": "mod.act.playerSetScore",
+    "call": "Player.SetScore",
+    "group": "player",
+    "section": "mod.sec.score",
+    "params": [
+      {
+        "key": "score",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "player_set_score((int)(%score%));",
+    "hint": "mod.act.playerSetScore.hint"
+  },
+  {
+    "id": "player.cancel",
+    "label": "mod.act.playerCancel",
+    "call": "Player.Cancel",
+    "group": "player",
+    "section": "mod.sec.life",
+    "params": [],
+    "emit": "player_cancel(%token%);",
+    "needs": "token"
+  },
+  {
+    "id": "player.setDriver",
+    "label": "mod.act.playerSetDriver",
+    "call": "Player.Drive",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.playerDriverMode",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_DRIVER_GAME",
+        "options": [
+          {
+            "value": "AMOD_PLAYER_DRIVER_GAME",
+            "label": "mod.player.drv.game"
+          },
+          {
+            "value": "AMOD_PLAYER_DRIVER_BOTH",
+            "label": "mod.player.drv.both"
+          },
+          {
+            "value": "AMOD_PLAYER_DRIVER_MOD",
+            "label": "mod.player.drv.mod"
+          },
+          {
+            "value": "AMOD_PLAYER_DRIVER_NOBODY",
+            "label": "mod.player.drv.nobody"
+          }
+        ]
+      }
+    ],
+    "emit": "player_set_driver(%mode%);"
+  },
+  {
+    "id": "player.releaseDriver",
+    "label": "mod.act.playerReleaseDriver",
+    "call": "Player.Release",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [],
+    "emit": "player_release_driver();"
+  },
+  {
+    "id": "player.step",
+    "label": "mod.act.playerStep",
+    "call": "Player.Step",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "dirX",
+        "label": "mod.p.playerDirX",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.player.dir.left"
+          },
+          {
+            "value": "0",
+            "label": "mod.player.dir.none"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.dir.right"
+          }
+        ]
+      },
+      {
+        "key": "dirY",
+        "label": "mod.p.playerDirY",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.player.dir.down"
+          },
+          {
+            "value": "0",
+            "label": "mod.player.dir.none"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.dir.up"
+          }
+        ]
+      },
+      {
+        "key": "jump",
+        "label": "mod.p.playerJump",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ]
+      },
+      {
+        "key": "delta",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "=mod_delta",
+        "optional": true
+      }
+    ],
+    "emit": "player_step((int)(%dirX%), (int)(%dirY%), (int)(%jump%), (float)(%delta%));",
+    "hint": "mod.act.playerStep.hint"
+  },
+  {
+    "id": "player.setMoveIntent",
+    "label": "mod.act.playerSetMoveIntent",
+    "call": "Player.SetMoveHandler",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "dirX",
+        "label": "mod.p.playerDirX",
+        "kind": "enum",
+        "preset": "99",
+        "options": [
+          {
+            "value": "99",
+            "label": "mod.player.dir.keep"
+          },
+          {
+            "value": "-1",
+            "label": "mod.player.dir.left"
+          },
+          {
+            "value": "0",
+            "label": "mod.player.dir.none"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.dir.right"
+          }
+        ]
+      },
+      {
+        "key": "dirY",
+        "label": "mod.p.playerDirY",
+        "kind": "enum",
+        "preset": "99",
+        "options": [
+          {
+            "value": "99",
+            "label": "mod.player.dir.keep"
+          },
+          {
+            "value": "-1",
+            "label": "mod.player.dir.down"
+          },
+          {
+            "value": "0",
+            "label": "mod.player.dir.none"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.dir.up"
+          }
+        ]
+      }
+    ],
+    "emit": "player_set_move_intent((int)(%dirX%), (int)(%dirY%));",
+    "needs": "player_move"
+  },
+  {
+    "id": "player.clearStateHandler",
+    "label": "mod.act.playerClearState",
+    "call": "Player.ClearStateHandler",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "state",
+        "label": "mod.p.playerState",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_STATE_ONFOOT",
+        "options": [
+          {
+            "value": "AMOD_PLAYER_STATE_ONFOOT",
+            "label": "mod.player.state.onfoot"
+          },
+          {
+            "value": "AMOD_PLAYER_STATE_LADDER",
+            "label": "mod.player.state.ladder"
+          },
+          {
+            "value": "AMOD_PLAYER_STATE_CHAIN",
+            "label": "mod.player.state.chain"
+          },
+          {
+            "value": "AMOD_PLAYER_STATE_PIPE",
+            "label": "mod.player.state.pipe"
+          }
+        ]
+      }
+    ],
+    "emit": "player_clear_state_hook(%state%);"
+  },
+  {
+    "id": "player.clearDeathHandler",
+    "label": "mod.act.playerClearDeath",
+    "call": "Player.ClearDeathHandler",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [],
+    "emit": "player_clear_death_hook();"
+  },
+  {
+    "id": "player.clearMoveHandler",
+    "label": "mod.act.playerClearMove",
+    "call": "Player.ClearMoveHandler",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [],
+    "emit": "player_clear_move_hook();"
+  },
+  {
+    "id": "player.rearmHooks",
+    "label": "mod.act.playerRearmHooks",
+    "call": "Player.SetMoveHandler + SetDeathHandler + SetStateHandler",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "which",
+        "label": "mod.p.playerHookKind",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.player.hook.all"
+          },
+          {
+            "value": "1",
+            "label": "mod.player.hook.move"
+          },
+          {
+            "value": "2",
+            "label": "mod.player.hook.death"
+          },
+          {
+            "value": "3",
+            "label": "mod.player.hook.states"
+          }
+        ]
+      }
+    ],
+    "emit": "player_rearm_hooks(%which%);"
   }
 ]

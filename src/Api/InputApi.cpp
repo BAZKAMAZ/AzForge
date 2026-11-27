@@ -54,6 +54,8 @@ namespace Forge
         std::vector<BindWas> g_whileWriting;
 
         uint8_t g_previous[kKeyTotal] = {};
+        uint8_t g_stalledKeys[kInputKeyCount] = {};
+        bool g_stalledActive = false;
 
         typedef SHORT(WINAPI* AsyncKeyRoutine)(int key);
         typedef void(__fastcall* ShowCursorRoutine)(void* input, void* unused, char show);
@@ -237,6 +239,10 @@ namespace Forge
             if (g_input == nullptr || !KeyInRange(key))
             {
                 return nullptr;
+            }
+            if (g_stalledActive && key < static_cast<int>(kInputKeyCount))
+            {
+                return &g_stalledKeys[key];
             }
 
             return key < kJoystickFirst
@@ -518,9 +524,8 @@ namespace Forge
             ApplyCommand(held.key, held.target.c_str(), static_cast<int>(extra.size()), extra.empty() ? nullptr : extra.data(), held.held);
         }
 
-        // Input_Update leaves the key table untouched whenever the state swallows - which every
-        // menu does - so it keeps whatever it last held and a mod sees every key up forever. This
-        // fills it instead, between the game's frame and the mods reading it.
+        // Input_Update skips KeyDown while swallowing, yet still fires KeyUp if g_input's key
+        // table is non-zero; FillKeysIfStalled keeps a separate shadow table for mods instead.
         void __cdecl FillStalledTick()
         {
             InputApi::FillKeysIfStalled();
@@ -535,7 +540,10 @@ namespace Forge
 
             if (g_input != nullptr)
             {
-                memcpy(g_previous, g_input + kInputKeyStateOffset, kInputKeyCount);
+                memcpy(g_previous,
+                       g_stalledActive ? g_stalledKeys : (g_input + kInputKeyStateOffset),
+                       kInputKeyCount);
+                g_previous[kInputKeyCount] = g_input[kInputKeyStateOffset + kInputKeyCount];
                 memcpy(g_previous + kJoystickFirst, g_input + kInputJoyStateOffset,
                        kInputJoyRecordCount);
             }
@@ -950,16 +958,17 @@ namespace Forge
         if (g_input == nullptr || !Swallowing() || console == nullptr ||
             console[GameAddress::kConsoleOpenOffset] != 0)
         {
+            g_stalledActive = false;
             return;
         }
 
+        g_stalledActive = true;
         for (int key = 0; key < static_cast<int>(GameAddress::kInputKeyCount); ++key)
         {
             const bool forced = IsForced(key);
             const SHORT state = (g_originalAsync != nullptr && !forced) ? g_originalAsync(key) : 0;
 
-            g_input[GameAddress::kInputKeyStateOffset + key] =
-                (forced || (state & 0x8000) != 0) ? 1 : 0;
+            g_stalledKeys[key] = (forced || (state & 0x8000) != 0) ? 1 : 0;
         }
     }
 

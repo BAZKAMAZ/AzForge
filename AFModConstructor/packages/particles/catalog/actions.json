@@ -1,0 +1,1290 @@
+[
+  {
+    "id": "particles.spawnSprite",
+    "label": "mod.act.partSpawnSprite",
+    "call": "Particles.Spawn",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          }
+        ]
+      },
+      {
+        "key": "shape",
+        "label": "mod.p.partShape",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_SHAPE_SPRITE",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_SHAPE_SPRITE",
+            "label": "mod.part.shape.sprite"
+          },
+          {
+            "value": "AMOD_PARTICLE_SHAPE_QUAD",
+            "label": "mod.part.shape.quad"
+          }
+        ]
+      },
+      {
+        "key": "texA",
+        "label": "mod.p.partTexA",
+        "kind": "text",
+        "preset": "textures/flare.bmp"
+      },
+      {
+        "key": "texB",
+        "label": "mod.p.partTexB",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.35f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      },
+      {
+        "key": "dx",
+        "label": "mod.p.partDirX",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "dy",
+        "label": "mod.p.partDirY",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "dz",
+        "label": "mod.p.partDirZ",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.6",
+        "optional": true
+      },
+      {
+        "key": "size",
+        "label": "mod.p.partSize",
+        "kind": "number",
+        "preset": "0.18",
+        "optional": true
+      },
+      {
+        "key": "life",
+        "label": "mod.p.partLife",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.6",
+        "optional": true
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85",
+        "optional": true
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.35",
+        "optional": true
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      }
+    ],
+    "emit": "part_spawn_sprite(%kind%, %shape%, \"%texA%\", \"%texB%\", (float)(%x%), (float)(%y%), (float)(%z%), (float)(%dx%), (float)(%dy%), (float)(%dz%), (float)(%speed%), (float)(%size%), (float)(%life%), (float)(%decay%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));",
+    "hint": "mod.act.partSpawnSprite.hint"
+  },
+  {
+    "id": "particles.spawnTrail",
+    "label": "mod.act.partSpawnTrail",
+    "call": "Particles.Spawn",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "shape",
+        "label": "mod.p.partShape",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_SHAPE_SPRITE",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_SHAPE_SPRITE",
+            "label": "mod.part.shape.sprite"
+          },
+          {
+            "value": "AMOD_PARTICLE_SHAPE_QUAD",
+            "label": "mod.part.shape.quad"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "texA",
+        "label": "mod.p.partTexA",
+        "kind": "text",
+        "preset": "textures/part_blue.jpg"
+      },
+      {
+        "key": "texB",
+        "label": "mod.p.partTexB",
+        "kind": "text",
+        "preset": "textures/flare.bmp",
+        "optional": true
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.35f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      },
+      {
+        "key": "waypoint",
+        "label": "mod.p.partWaypoint",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.35",
+        "optional": true
+      },
+      {
+        "key": "size",
+        "label": "mod.p.partSize",
+        "kind": "number",
+        "preset": "0.16",
+        "optional": true
+      },
+      {
+        "key": "life",
+        "label": "mod.p.partLife",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.5",
+        "optional": true
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "0.4",
+        "optional": true
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85",
+        "optional": true
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      }
+    ],
+    "emit": "part_spawn_trail(%shape%, \"%texA%\", \"%texB%\", (float)(%x%), (float)(%y%), (float)(%z%), (float)(%waypoint%), (float)(%speed%), (float)(%size%), (float)(%life%), (float)(%decay%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));",
+    "hint": "mod.act.partSpawnTrail.hint"
+  },
+  {
+    "id": "particles.spawnGlyph",
+    "label": "mod.act.partSpawnGlyph",
+    "call": "Particles.TextFont",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          }
+        ]
+      },
+      {
+        "key": "frame",
+        "label": "mod.p.partFrame",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1.5",
+        "optional": true
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.45f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      },
+      {
+        "key": "dx",
+        "label": "mod.p.partDirX",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "dy",
+        "label": "mod.p.partDirY",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "dz",
+        "label": "mod.p.partDirZ",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.35",
+        "optional": true
+      },
+      {
+        "key": "life",
+        "label": "mod.p.partLife",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.5",
+        "optional": true
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.9",
+        "optional": true
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3",
+        "optional": true
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      }
+    ],
+    "emit": "part_spawn_glyph(%kind%, (int)(%frame%), (float)(%scale%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%dx%), (float)(%dy%), (float)(%dz%), (float)(%speed%), (float)(%life%), (float)(%decay%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));",
+    "hint": "mod.act.partSpawnGlyph.hint"
+  },
+  {
+    "id": "particles.spawnModel",
+    "label": "mod.act.partSpawnModel",
+    "call": "Particles.Spawn",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          }
+        ]
+      },
+      {
+        "key": "model",
+        "label": "mod.p.partModel",
+        "kind": "number",
+        "preset": "=part_text_font()"
+      },
+      {
+        "key": "frame",
+        "label": "mod.p.partFrame",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scaleX",
+        "label": "mod.p.scaleX",
+        "kind": "number",
+        "preset": "=part_text_scale(0) * 1.5f",
+        "optional": true
+      },
+      {
+        "key": "scaleY",
+        "label": "mod.p.scaleY",
+        "kind": "number",
+        "preset": "=part_text_scale(1) * 1.5f",
+        "optional": true
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.4f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      },
+      {
+        "key": "dx",
+        "label": "mod.p.partDirX",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "dy",
+        "label": "mod.p.partDirY",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "dz",
+        "label": "mod.p.partDirZ",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.35",
+        "optional": true
+      },
+      {
+        "key": "life",
+        "label": "mod.p.partLife",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.5",
+        "optional": true
+      }
+    ],
+    "emit": "part_spawn_model(%kind%, (int)(%model%), (int)(%frame%), (float)(%scaleX%), (float)(%scaleY%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%dx%), (float)(%dy%), (float)(%dz%), (float)(%speed%), (float)(%life%), (float)(%decay%));"
+  },
+  {
+    "id": "particles.spawnText",
+    "label": "mod.act.partSpawnText",
+    "call": "Particles.SpawnText",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "+100"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.5f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      },
+      {
+        "key": "scaleX",
+        "label": "mod.p.scaleX",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "scaleY",
+        "label": "mod.p.scaleY",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.12",
+        "optional": true
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.5",
+        "optional": true
+      },
+      {
+        "key": "dx",
+        "label": "mod.p.partDirX",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "dy",
+        "label": "mod.p.partDirY",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "dz",
+        "label": "mod.p.partDirZ",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "gravity",
+        "label": "mod.p.partGravity",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      }
+    ],
+    "emit": "part_spawn_text(\"%text%\", (float)(%x%), (float)(%y%), (float)(%z%), (float)(%scaleX%), (float)(%scaleY%), (float)(%speed%), (float)(%decay%), (float)(%dx%), (float)(%dy%), (float)(%dz%), (float)(%gravity%));",
+    "hint": "mod.act.partSpawnText.hint"
+  },
+  {
+    "id": "particles.createAnimation",
+    "label": "mod.act.partCreateAnim",
+    "call": "Particles.CreateAnimation",
+    "group": "particles",
+    "section": "mod.sec.partSpawn",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.partAnim",
+        "kind": "text",
+        "preset": "pulse"
+      },
+      {
+        "key": "frames",
+        "label": "mod.p.partFrames",
+        "kind": "text",
+        "preset": "textures/part_red.jpg;textures/part_green.jpg;textures/part_blue.jpg;textures/flare.bmp"
+      }
+    ],
+    "emit": "part_anim_create(\"%name%\", \"%frames%\");",
+    "hint": "mod.act.partCreateAnim.hint"
+  },
+  {
+    "id": "particles.select",
+    "label": "mod.act.partSelect",
+    "call": "Particles.At / GetTag",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.partLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.part.by.store"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.by.tag"
+          }
+        ]
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        },
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.part.kind.all"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_UNI",
+            "label": "mod.part.kind.uni"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (%by% == 0) part_pick_at(%kind%, (int)(%index%)); else part_pick_tagged((uint32_t)(%tag%), (int)(%index%));",
+    "hint": "mod.act.partSelect.hint"
+  },
+  {
+    "id": "particles.setTag",
+    "label": "mod.act.partSetTag",
+    "call": "Particles.SetTag",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "part_set_tag((uint32_t)(%tag%));",
+    "hint": "mod.act.partSetTag.hint"
+  },
+  {
+    "id": "particles.kill",
+    "label": "mod.act.partKill",
+    "call": "Particles.Kill",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "scope",
+        "label": "mod.p.partScope",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.part.scope.picked"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.scope.tagged"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "scope",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%scope% == 0) part_kill(); else part_kill_tagged((uint32_t)(%tag%));"
+  },
+  {
+    "id": "particles.clear",
+    "label": "mod.act.partClear",
+    "call": "Particles.Clear",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.part.kind.all"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_UNI",
+            "label": "mod.part.kind.uni"
+          }
+        ]
+      }
+    ],
+    "emit": "part_clear(%kind%);"
+  },
+  {
+    "id": "particles.setPos",
+    "label": "mod.act.partSetPos",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.35f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      }
+    ],
+    "emit": "part_set_pos((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "particles.setVelocity",
+    "label": "mod.act.partSetVel",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "dx",
+        "label": "mod.p.partDirX",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "dy",
+        "label": "mod.p.partDirY",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "dz",
+        "label": "mod.p.partDirZ",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.6"
+      }
+    ],
+    "emit": "part_set_velocity((float)(%dx%), (float)(%dy%), (float)(%dz%), (float)(%speed%));"
+  },
+  {
+    "id": "particles.setSpeed",
+    "label": "mod.act.partSetSpeed",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "speed",
+        "label": "mod.p.partSpeed",
+        "kind": "number",
+        "preset": "0.6"
+      }
+    ],
+    "emit": "part_set_speed((float)(%speed%));"
+  },
+  {
+    "id": "particles.setWaypoint",
+    "label": "mod.act.partSetWaypoint",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "waypoint",
+        "label": "mod.p.partWaypoint",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "part_set_waypoint((float)(%waypoint%));"
+  },
+  {
+    "id": "particles.setSize",
+    "label": "mod.act.partSetSize",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "size",
+        "label": "mod.p.partSize",
+        "kind": "number",
+        "preset": "0.2"
+      }
+    ],
+    "emit": "part_set_size((float)(%size%));"
+  },
+  {
+    "id": "particles.setLife",
+    "label": "mod.act.partSetLife",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "life",
+        "label": "mod.p.partLife",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "decay",
+        "label": "mod.p.partDecay",
+        "kind": "number",
+        "preset": "0.5"
+      }
+    ],
+    "emit": "part_set_life((float)(%life%), (float)(%decay%));"
+  },
+  {
+    "id": "particles.setColour",
+    "label": "mod.act.partSetColour",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.8"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "part_set_colour((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));"
+  },
+  {
+    "id": "particles.setTextures",
+    "label": "mod.act.partSetTextures",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "texA",
+        "label": "mod.p.partTexA",
+        "kind": "text",
+        "preset": "textures/star.tga"
+      },
+      {
+        "key": "texB",
+        "label": "mod.p.partTexB",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      }
+    ],
+    "emit": "part_set_textures(\"%texA%\", \"%texB%\");"
+  },
+  {
+    "id": "particles.setShape",
+    "label": "mod.act.partSetShape",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "shape",
+        "label": "mod.p.partShape",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_SHAPE_SPRITE",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_SHAPE_SPRITE",
+            "label": "mod.part.shape.sprite"
+          },
+          {
+            "value": "AMOD_PARTICLE_SHAPE_QUAD",
+            "label": "mod.part.shape.quad"
+          },
+          {
+            "value": "AMOD_PARTICLE_SHAPE_MODEL",
+            "label": "mod.part.shape.model"
+          }
+        ]
+      }
+    ],
+    "emit": "part_set_shape(%shape%);"
+  },
+  {
+    "id": "particles.setModel",
+    "label": "mod.act.partSetModel",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.partModel",
+        "kind": "number",
+        "preset": "=part_text_font()"
+      },
+      {
+        "key": "frame",
+        "label": "mod.p.partFrame",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "part_set_model((int)(%model%), (int)(%frame%));"
+  },
+  {
+    "id": "particles.setParent",
+    "label": "mod.act.partSetParent",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "parent",
+        "label": "mod.p.partParent",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "part_set_parent((int)(%parent%));"
+  },
+  {
+    "id": "particles.setGravity",
+    "label": "mod.act.partSetGravity",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "gx",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "gy",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "-1.2"
+      },
+      {
+        "key": "gz",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "part_set_gravity((float)(%gx%), (float)(%gy%), (float)(%gz%));"
+  },
+  {
+    "id": "particles.setGrowth",
+    "label": "mod.act.partSetGrowth",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "speedGrow",
+        "label": "mod.p.partSpeedGrow",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "sizeGrow",
+        "label": "mod.p.partSizeGrow",
+        "kind": "number",
+        "preset": "-0.05"
+      }
+    ],
+    "emit": "part_set_growth((float)(%speedGrow%), (float)(%sizeGrow%));"
+  },
+  {
+    "id": "particles.setTurn",
+    "label": "mod.act.partSetTurn",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "angle",
+        "label": "mod.p.angle",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "spin",
+        "label": "mod.p.partSpin",
+        "kind": "number",
+        "preset": "4"
+      }
+    ],
+    "emit": "part_set_turn((float)(%angle%), (float)(%spin%));"
+  },
+  {
+    "id": "particles.setGlyphScale",
+    "label": "mod.act.partSetGlyphScale",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "scaleX",
+        "label": "mod.p.scaleX",
+        "kind": "number",
+        "preset": "=part_text_scale(0) * 1.5f"
+      },
+      {
+        "key": "scaleY",
+        "label": "mod.p.scaleY",
+        "kind": "number",
+        "preset": "=part_text_scale(1) * 1.5f"
+      }
+    ],
+    "emit": "part_set_glyph_scale((float)(%scaleX%), (float)(%scaleY%));"
+  },
+  {
+    "id": "particles.setAnimation",
+    "label": "mod.act.partSetAnim",
+    "call": "Particles.Set",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.partAnim",
+        "kind": "text",
+        "preset": "pulse"
+      },
+      {
+        "key": "fps",
+        "label": "mod.p.partFps",
+        "kind": "number",
+        "preset": "10"
+      }
+    ],
+    "emit": "part_set_anim(\"%name%\", (float)(%fps%));"
+  },
+  {
+    "id": "particles.setThink",
+    "label": "mod.act.partSetThink",
+    "call": "Particles.SetThink",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "params": [],
+    "emit": "part_attach_think();",
+    "hint": "mod.act.partSetThink.hint"
+  },
+  {
+    "id": "particles.clearThink",
+    "label": "mod.act.partClearThink",
+    "call": "Particles.ClearThink",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "params": [
+      {
+        "key": "scope",
+        "label": "mod.p.partScope",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.part.scope.picked"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.scope.tagged"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "scope",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%scope% == 0) part_detach_think(); else part_detach_think_tagged((uint32_t)(%tag%));"
+  },
+  {
+    "id": "particles.trailSetPos",
+    "label": "mod.act.partTrailSetPos",
+    "call": "Particles.SetSpawnHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.4f"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)"
+      }
+    ],
+    "emit": "part_trail_set_pos(trailDesc, (float)(%x%), (float)(%y%), (float)(%z%));",
+    "needs": "particle_trail"
+  },
+  {
+    "id": "particles.clearHandler",
+    "label": "mod.act.partClearHandler",
+    "call": "Particles.SetBirthHandler / SetSpawnHandler / SetDrawHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "params": [
+      {
+        "key": "which",
+        "label": "mod.p.partHandlerKind",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.part.hk.all"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.hk.birth"
+          },
+          {
+            "value": "2",
+            "label": "mod.part.hk.trail"
+          },
+          {
+            "value": "3",
+            "label": "mod.part.hk.draw"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->particles) { if (%which% == 0 || %which% == 1) API->particles->SetBirthHandler(SELF, 0, 0); if (%which% == 0 || %which% == 2) API->particles->SetSpawnHandler(SELF, 0, 0); if (%which% == 0 || %which% == 3) API->particles->SetDrawHandler(SELF, 0, 0); }"
+  },
+  {
+    "id": "particles.restoreHandlers",
+    "label": "mod.act.partRestoreHandlers",
+    "call": "Particles.SetBirthHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "params": [],
+    "emit": "part_restore_handlers();"
+  }
+]

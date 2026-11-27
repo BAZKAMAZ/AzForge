@@ -1891,27 +1891,27 @@
         "preset": ">",
         "options": [
           {
-            "value": "gt",
+            "value": ">",
             "label": "mod.op.gt"
           },
           {
-            "value": "ge",
+            "value": ">=",
             "label": "mod.op.ge"
           },
           {
-            "value": "lt",
+            "value": "<",
             "label": "mod.op.lt"
           },
           {
-            "value": "le",
+            "value": "<=",
             "label": "mod.op.le"
           },
           {
-            "value": "eq",
+            "value": "==",
             "label": "mod.op.eq"
           },
           {
-            "value": "ne",
+            "value": "!=",
             "label": "mod.op.ne"
           }
         ]

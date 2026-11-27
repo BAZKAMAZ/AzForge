@@ -321,36 +321,133 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
     const int vpW = std::max(540, viewport()->width());
     const int sx = splitX(vpW);
 
-    auto measurePills = [&](VisualLine& line, int startX, int maxRight) {
-        int x = startX;
-        const int cy = line.rect.top() + 3;
-        const int ph = line.rect.height() - 6;
+    auto splitTextTokens = [](const QString& text) {
+        std::vector<QString> out;
+        int i = 0;
+        const int n = text.size();
+        while (i < n) {
+            const int start = i;
+            while (i < n && text[i].isSpace()) ++i;
+            while (i < n && !text[i].isSpace()) ++i;
+            while (i < n && text[i].isSpace()) ++i;
+            out.push_back(text.mid(start, i - start));
+        }
+        return out;
+    };
+
+    auto layoutLine = [&](VisualLine& line, int colLeft, int colWidth, int topY, const std::vector<ModCatalog::ParamDef>* defs, const std::vector<ModLogic::Param>* args) {
+        const int invPad = line.inverted ? 16 : 0;
+        const int textStartX = colLeft + 2 + 6 + invPad + IconSize + 6;
+        const int maxRight = std::max(textStartX + 64, colLeft + colWidth - 6);
+        const int fullPillCap = std::clamp(maxRight - textStartX - 4, 56, 220);
         const QFontMetrics& fmText = (line.slot == UiFormat::Slot::Event) ? fmBold : fmReg;
 
-        for (const UiFormat::LineSegment& seg : line.segments) {
+        int x = textStartX;
+        int rowY = topY;
+
+        for (size_t sIdx = 0; sIdx < line.segments.size(); ++sIdx) {
+            const UiFormat::LineSegment& seg = line.segments[sIdx];
             if (!seg.isParam) {
-                x += fmText.horizontalAdvance(seg.text);
+                for (QString tok : splitTextTokens(seg.text)) {
+                    if (x == textStartX) {
+                        while (tok.startsWith(QLatin1Char(' '))) tok.remove(0, 1);
+                        if (tok.isEmpty()) continue;
+                    }
+                    int w = fmText.horizontalAdvance(tok);
+                    if (x > textStartX && x + w > maxRight) {
+                        rowY += LineH;
+                        x = textStartX;
+                        while (tok.startsWith(QLatin1Char(' '))) tok.remove(0, 1);
+                        if (tok.isEmpty()) continue;
+                        w = fmText.horizontalAdvance(tok);
+                    }
+                    line.textRuns.push_back({ QRect(x, rowY, w + 6, LineH), tok, false });
+                    x += w;
+                }
                 continue;
             }
-            const int avail = std::max(44, maxRight - x - 6);
+
             QString shown = seg.text;
-            const int maxPillW = std::min(avail, 220);
-            int textW = fmMono.horizontalAdvance(shown);
-            if (textW + 12 > maxPillW) {
-                shown = fmMono.elidedText(shown, Qt::ElideRight, std::max(28, maxPillW - 12));
-                textW = fmMono.horizontalAdvance(shown);
+            const int padW = seg.isEnum ? 24 : 12;
+            const QFontMetrics& fmPill = (seg.isEnum || seg.hasOptionLabel) ? fmReg : fmMono;
+            int textW = fmPill.horizontalAdvance(shown);
+            if (textW + padW > fullPillCap) {
+                shown = fmPill.elidedText(shown, Qt::ElideRight, std::max(28, fullPillCap - padW));
+                textW = fmPill.horizontalAdvance(shown);
             }
-            const int pw = std::max(24, textW + 12);
+            const int pw = std::max(24, textW + padW);
+
+            int tailW = 0;
+            if (sIdx + 1 < line.segments.size() && !line.segments[sIdx + 1].isParam) {
+                const QString& nextText = line.segments[sIdx + 1].text;
+                int pLen = 0;
+                while (pLen < nextText.size() && !nextText[pLen].isSpace() && pLen < 4) ++pLen;
+                if (pLen > 0) tailW = fmText.horizontalAdvance(nextText.left(pLen));
+            }
+
+            if (x > textStartX && x + pw + tailW > maxRight) {
+                rowY += LineH;
+                x = textStartX;
+            }
+
             PillHit phit;
-            phit.rect = QRect(x, cy, pw, ph);
+            phit.rect = QRect(x, rowY + 3, pw, LineH - 6);
             phit.paramKey = seg.paramKey;
             phit.rawValue = seg.rawValue;
             phit.displayText = shown;
             phit.paramLabel = seg.paramLabel;
             phit.isExpr = seg.isExpr;
+            phit.isEnum = seg.isEnum;
+            phit.hasOptionLabel = seg.hasOptionLabel;
+            phit.canRemove = seg.canRemove;
             line.pills.push_back(std::move(phit));
             x += pw + 3;
         }
+
+        if (defs && args && ModCatalog::HasAddableOptionalParams(*defs, *args)) {
+            const int pw = 20;
+            const int padLeft = (x > textStartX) ? 3 : 0;
+            if (x > textStartX && x + padLeft + pw > maxRight) {
+                rowY += LineH;
+                x = textStartX;
+            } else {
+                x += padLeft;
+            }
+            PillHit addHit;
+            addHit.rect = QRect(x, rowY + 3, pw, LineH - 6);
+            addHit.displayText = QStringLiteral("+");
+            addHit.paramLabel = UiFormat::Label("mod.addParam");
+            addHit.isAddParam = true;
+            line.pills.push_back(std::move(addHit));
+            x += pw + 3;
+        }
+
+        if (line.veto) {
+            const QString vt = QStringLiteral("[") + UiFormat::Label("mod.rule.veto") + QStringLiteral("]");
+            const int vw = fmReg.horizontalAdvance(vt);
+            int padLeft = (x > textStartX) ? 6 : 0;
+            if (x > textStartX && x + padLeft + vw > maxRight) {
+                rowY += LineH;
+                x = textStartX;
+                padLeft = 0;
+            }
+            line.textRuns.push_back({ QRect(x + padLeft, rowY, vw + 6, LineH), vt, true });
+            x += padLeft + vw + 2;
+        }
+
+        if (!line.warnKey.empty()) {
+            const QString wt = QStringLiteral("⚠");
+            const int ww = fmReg.horizontalAdvance(wt) + 4;
+            int padLeft = (x > textStartX) ? 6 : 0;
+            if (x > textStartX && x + padLeft + ww > maxRight) {
+                rowY += LineH;
+                x = textStartX;
+                padLeft = 0;
+            }
+            line.textRuns.push_back({ QRect(x + padLeft, rowY, ww + 6, LineH), wt, true });
+        }
+
+        line.rect = QRect(colLeft + 2, topY, std::max(40, colWidth - 4), (rowY - topY) + LineH);
     };
 
     for (int i = 0; i < static_cast<int>(rules.size()); ++i) {
@@ -407,18 +504,10 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
         }
         row.accentColor = UiFormat::SubsystemColor(leadGroup);
 
-        const int leftCount = (rule.event.empty() ? 0 : 1) + static_cast<int>(rule.conditions.size()) + 1; // +add button
-        const int rightCount = static_cast<int>(rule.actions.size()) + 1;
-        const int rowLines = std::max(leftCount, rightCount);
-        const int cardH = RowPadY * 2 + rowLines * LineH;
-
         const int condStart = std::max(cardLeft + NumW, OuterMarginX + NumW + indent);
         const int actualSplitX = std::max(condStart + 140, sx);
-
-        row.cardRect = QRect(cardLeft, yCursor, std::max(260, cardRight - cardLeft), cardH);
-        row.numRect = QRect(cardLeft + 3, yCursor, NumW - 3, cardH);
-        row.condColRect = QRect(condStart, yCursor, actualSplitX - condStart, cardH);
-        row.actColRect = QRect(actualSplitX, yCursor, cardRight - actualSplitX, cardH);
+        const int condColWActual = actualSplitX - condStart;
+        const int actColWActual = std::max(140, cardRight - actualSplitX);
 
         bool insideNonGroupRule = false;
         for (size_t d = 1; d < path.size(); ++d) {
@@ -432,7 +521,6 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
         if (!rule.event.empty()) {
             const ModCatalog::EventDef* def = ModCatalog::FindEvent(rule.event);
             VisualLine vl;
-            vl.rect = QRect(row.condColRect.left() + 2, ly, row.condColRect.width() - 4, LineH);
             vl.slot = UiFormat::Slot::Event;
             vl.index = -1;
             vl.entryId = rule.event;
@@ -442,21 +530,21 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
             vl.veto = def && def->canVeto && rule.veto;
             if (insideNonGroupRule) vl.warnKey = "app.problems.nestedEvent";
             if (def) {
+                if (vl.warnKey.empty()) vl.warnKey = UiFormat::MissingParamsContext(*m_sheet, path, rule.filters);
                 vl.segments = UiFormat::BuildSegments(def->label, def->filters, rule.filters);
             } else {
                 vl.segments = { { QString::fromStdString(rule.event) + QStringLiteral("  ") +
                                   UiFormat::Label("mod.unknown"), false, {}, {}, {}, false } };
             }
-            measurePills(vl, vl.rect.left() + 6 + IconSize + 6, vl.rect.right() - 4);
+            layoutLine(vl, condStart, condColWActual, ly, def ? &def->filters : nullptr, &rule.filters);
+            ly += vl.rect.height();
             row.leftLines.push_back(std::move(vl));
-            ly += LineH;
         }
 
         for (int c = 0; c < static_cast<int>(rule.conditions.size()); ++c) {
             const ModLogic::Condition& cond = rule.conditions[c];
             const ModCatalog::ConditionDef* cd = ModCatalog::FindCondition(cond.id);
             VisualLine vl;
-            vl.rect = QRect(row.condColRect.left() + 2, ly, row.condColRect.width() - 4, LineH);
             vl.slot = UiFormat::Slot::Condition;
             vl.index = c;
             vl.entryId = cond.id;
@@ -465,24 +553,24 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
             vl.enabled = rule.enabled && cond.enabled;
             vl.unknown = (cd == nullptr);
             if (cd) {
+                vl.warnKey = UiFormat::MissingConditionContext(*m_sheet, path, *cd, cond.args);
                 vl.segments = UiFormat::BuildSegments(cd->label, cd->params, cond.args);
             } else {
                 vl.segments = { { QString::fromStdString(cond.id) + QStringLiteral("  ") +
                                   UiFormat::Label("mod.unknown"), false, {}, {}, {}, false } };
             }
-            const int invPad = cond.inverted ? 16 : 0;
-            measurePills(vl, vl.rect.left() + 6 + invPad + IconSize + 6, vl.rect.right() - 4);
+            layoutLine(vl, condStart, condColWActual, ly, cd ? &cd->params : nullptr, &cond.args);
+            ly += vl.rect.height();
             row.leftLines.push_back(std::move(vl));
-            ly += LineH;
         }
-        row.addCondRect = QRect(row.condColRect.left() + 8, ly + 2, 100, LineH - 4);
+        row.addCondRect = QRect(condStart + 8, ly + 2, 100, LineH - 4);
+        ly += LineH;
 
         int ry = yCursor + RowPadY;
         for (int a = 0; a < static_cast<int>(rule.actions.size()); ++a) {
             const ModLogic::Action& act = rule.actions[a];
             const ModCatalog::ActionDef* ad = ModCatalog::FindAction(act.id);
             VisualLine vl;
-            vl.rect = QRect(row.actColRect.left() + 2, ry, row.actColRect.width() - 4, LineH);
             vl.slot = UiFormat::Slot::Action;
             vl.index = a;
             vl.entryId = act.id;
@@ -490,17 +578,24 @@ void EventSheetView::layoutRulesRecursive(const std::vector<ModLogic::Rule>& rul
             vl.enabled = rule.enabled && act.enabled;
             vl.unknown = (ad == nullptr);
             if (ad) {
-                vl.warnKey = UiFormat::MissingContext(*m_sheet, path, *ad);
+                vl.warnKey = UiFormat::MissingContext(*m_sheet, path, *ad, act.args);
                 vl.segments = UiFormat::BuildSegments(ad->label, ad->params, act.args);
             } else {
                 vl.segments = { { QString::fromStdString(act.id) + QStringLiteral("  ") +
                                   UiFormat::Label("mod.unknown"), false, {}, {}, {}, false } };
             }
-            measurePills(vl, vl.rect.left() + 6 + IconSize + 6, vl.rect.right() - 4);
+            layoutLine(vl, actualSplitX, actColWActual, ry, ad ? &ad->params : nullptr, &act.args);
+            ry += vl.rect.height();
             row.rightLines.push_back(std::move(vl));
-            ry += LineH;
         }
-        row.addActRect = QRect(row.actColRect.left() + 8, ry + 2, 100, LineH - 4);
+        row.addActRect = QRect(actualSplitX + 8, ry + 2, 100, LineH - 4);
+        ry += LineH;
+
+        const int cardH = std::max(ly, ry) - yCursor + RowPadY;
+        row.cardRect = QRect(cardLeft, yCursor, std::max(260, cardRight - cardLeft), cardH);
+        row.numRect = QRect(cardLeft + 3, yCursor, NumW - 3, cardH);
+        row.condColRect = QRect(condStart, yCursor, condColWActual, cardH);
+        row.actColRect = QRect(actualSplitX, yCursor, actColWActual, cardH);
 
         m_rows.push_back(std::move(row));
         yCursor += cardH + RowGap;
@@ -621,14 +716,14 @@ void EventSheetView::paintEvent(QPaintEvent* /*event*/) {
             p.setClipRect(vl.rect.adjusted(2, 0, -2, 0));
 
             int x = vl.rect.left() + 6;
-            const int midY = vl.rect.top() + (vl.rect.height() - IconSize) / 2;
+            const int midY = vl.rect.top() + (LineH - IconSize) / 2;
 
             if (vl.inverted) {
                 QFont xf = regFont;
                 xf.setBold(true);
                 p.setFont(xf);
                 p.setPen(c.danger);
-                p.drawText(QRect(x, vl.rect.top(), 14, vl.rect.height()), Qt::AlignVCenter | Qt::AlignLeft, QStringLiteral("✕"));
+                p.drawText(QRect(x, vl.rect.top(), 14, LineH), Qt::AlignVCenter | Qt::AlignLeft, QStringLiteral("✕"));
                 x += 16;
             }
 
@@ -638,7 +733,6 @@ void EventSheetView::paintEvent(QPaintEvent* /*event*/) {
                 p.drawPixmap(x, midY, iconPm);
                 p.setOpacity(1.0);
             }
-            x += IconSize + 6;
 
             QColor textCol = c.text;
             if (vl.unknown) textCol = c.danger;
@@ -650,49 +744,52 @@ void EventSheetView::paintEvent(QPaintEvent* /*event*/) {
             QFont lineFont = regFont;
             if (vl.slot == UiFormat::Slot::Event) lineFont.setBold(true);
             lineFont.setStrikeOut(!vl.enabled);
-            const QFontMetrics& fmLine = (vl.slot == UiFormat::Slot::Event) ? fmBold : fmReg;
 
-            int pillIdx = 0;
-            for (const UiFormat::LineSegment& seg : vl.segments) {
-                if (!seg.isParam) {
+            for (const TextRun& run : vl.textRuns) {
+                if (run.warningStyle) {
+                    p.setFont(regFont);
+                    p.setPen(c.warning);
+                } else {
                     p.setFont(lineFont);
                     p.setPen(textCol);
-                    const int w = fmLine.horizontalAdvance(seg.text);
-                    p.drawText(QRect(x, vl.rect.top(), w + 6, vl.rect.height()), Qt::AlignVCenter | Qt::AlignLeft, seg.text);
-                    x += w;
-                } else if (pillIdx < static_cast<int>(vl.pills.size())) {
-                    const PillHit& pill = vl.pills[pillIdx];
-                    const bool pillHovered = (m_hover.kind == HitResult::Kind::Pill &&
-                                              m_hover.rowIndex == rIdx &&
-                                              m_hover.slot == vl.slot &&
-                                              m_hover.lineIndex == lIdx &&
-                                              m_hover.pillIndex == pillIdx);
-                    p.setBrush(pillHovered ? c.pillHover : c.pillBg);
-                    p.setPen(QPen(pillHovered ? c.accent : c.pillBorder, 1));
-                    p.drawRoundedRect(pill.rect, 4, 4);
-
-                    QFont pf = monoFont;
-                    pf.setStrikeOut(!vl.enabled);
-                    p.setFont(pf);
-                    p.setPen(!vl.enabled ? c.textMuted : (pill.isExpr ? c.exprText : c.pillText));
-                    p.drawText(pill.rect, Qt::AlignCenter, pill.displayText);
-                    x = pill.rect.right() + 4;
-                    ++pillIdx;
                 }
+                p.drawText(run.rect, Qt::AlignVCenter | Qt::AlignLeft, run.text);
             }
 
-            if (vl.veto) {
-                p.setFont(regFont);
-                p.setPen(c.warning);
-                const QString vt = QStringLiteral("[") + UiFormat::Label("mod.rule.veto") + QStringLiteral("]");
-                const int vw = fmReg.horizontalAdvance(vt);
-                p.drawText(QRect(x + 6, vl.rect.top(), vw + 6, vl.rect.height()), Qt::AlignVCenter | Qt::AlignLeft, vt);
-                x += vw + 8;
-            }
-            if (!vl.warnKey.empty()) {
-                p.setFont(regFont);
-                p.setPen(c.warning);
-                p.drawText(QRect(x + 6, vl.rect.top(), 24, vl.rect.height()), Qt::AlignVCenter | Qt::AlignLeft, QStringLiteral("⚠"));
+            for (int pillIdx = 0; pillIdx < static_cast<int>(vl.pills.size()); ++pillIdx) {
+                const PillHit& pill = vl.pills[pillIdx];
+                const bool pillHovered = (m_hover.kind == HitResult::Kind::Pill &&
+                                          m_hover.rowIndex == rIdx &&
+                                          m_hover.slot == vl.slot &&
+                                          m_hover.lineIndex == lIdx &&
+                                          m_hover.pillIndex == pillIdx);
+                p.setBrush(pillHovered ? c.pillHover : c.pillBg);
+                QPen pillPen(pillHovered ? c.accent : c.pillBorder, 1);
+                if (pill.isAddParam && !pillHovered) pillPen.setStyle(Qt::DashLine);
+                p.setPen(pillPen);
+                p.drawRoundedRect(pill.rect, 4, 4);
+
+                QFont pf = (pill.isEnum || pill.hasOptionLabel || pill.isAddParam) ? regFont : monoFont;
+                if (pill.isAddParam) pf.setBold(true);
+                pf.setStrikeOut(!vl.enabled);
+                p.setFont(pf);
+                const QColor pillFg = !vl.enabled
+                    ? c.textMuted
+                    : (pill.isAddParam ? (pillHovered ? c.accent : c.textMuted) : (pill.isExpr ? c.exprText : c.pillText));
+                p.setPen(pillFg);
+                if (pill.isEnum) {
+                    const QRect textRect = pill.rect.adjusted(6, 0, -14, 0);
+                    p.drawText(textRect, Qt::AlignVCenter | Qt::AlignLeft, pill.displayText);
+                    const int cx = pill.rect.right() - 8;
+                    const int cyMid = pill.rect.center().y();
+                    QPen chevPen(pillHovered ? c.accent : c.textMuted, 1.5);
+                    chevPen.setCapStyle(Qt::RoundCap);
+                    p.setPen(chevPen);
+                    p.drawLine(QPointF(cx - 3.0, cyMid - 1.2), QPointF(cx, cyMid + 2.0));
+                    p.drawLine(QPointF(cx, cyMid + 2.0), QPointF(cx + 3.0, cyMid - 1.2));
+                } else {
+                    p.drawText(pill.rect, Qt::AlignCenter, pill.displayText);
+                }
             }
 
             p.restore();
@@ -1182,6 +1279,10 @@ bool EventSheetView::viewportEvent(QEvent* event) {
             const VisualRow& row = m_rows[hit.rowIndex];
             const auto& lines = (hit.slot == UiFormat::Slot::Action) ? row.rightLines : row.leftLines;
             const PillHit& pill = lines[hit.lineIndex].pills[hit.pillIndex];
+            if (pill.isAddParam) {
+                QToolTip::showText(he->globalPos(), QStringLiteral("+ ") + pill.paramLabel, viewport());
+                return true;
+            }
             const QString tip = QStringLiteral("<b>%1</b> (%2)<br><code>%3</code><br><span style='color:#8c93a8'>%4</span>")
                 .arg(pill.paramLabel.toHtmlEscaped(),
                      QString::fromStdString(pill.paramKey).toHtmlEscaped(),
@@ -1218,8 +1319,60 @@ void EventSheetView::startInlineEdit(const VisualRow& row, const VisualLine& lin
     closeInlineEdit(false);
     if (!m_sheet) return;
 
+    const auto* defs = UiFormat::ParamsOf(line.slot, line.entryId);
+    if (pill.isAddParam) {
+        if (!defs) return;
+        ModLogic::Rule* rule = UiFormat::RuleAt(*m_sheet, row.path);
+        if (!rule) return;
+        std::vector<ModLogic::Param>* args = nullptr;
+        if (line.slot == UiFormat::Slot::Event) args = &rule->filters;
+        else if (line.slot == UiFormat::Slot::Condition && line.index >= 0 && line.index < static_cast<int>(rule->conditions.size()))
+            args = &rule->conditions[line.index].args;
+        else if (line.slot == UiFormat::Slot::Action && line.index >= 0 && line.index < static_cast<int>(rule->actions.size()))
+            args = &rule->actions[line.index].args;
+        if (!args) return;
+
+        QMenu menu(viewport());
+        for (const ModCatalog::ParamDef& d : *defs) {
+            if (!ModCatalog::CanAddOptionalParam(d, *defs, *args)) continue;
+            const std::string effKey = ModCatalog::EffectiveParamLabelKey(d, *defs, *args);
+            const QString lbl = effKey.empty() ? QString::fromStdString(d.key) : UiFormat::Label(effKey);
+            QAction* act = menu.addAction(QStringLiteral("%1 (%2)").arg(lbl, QString::fromStdString(d.key)));
+            act->setData(QString::fromStdString(d.key));
+        }
+        if (menu.isEmpty()) return;
+        const std::vector<int> savedPath = row.path;
+        const UiFormat::Slot savedSlot = line.slot;
+        const int savedIdx = line.index;
+        QAction* chosen = menu.exec(viewport()->mapToGlobal(fromContent(pill.rect.bottomLeft()) + QPoint(0, 2)));
+        if (chosen && m_sheet) {
+            const std::string addKey = chosen->data().toString().toStdString();
+            std::string addPreset;
+            for (const ModCatalog::ParamDef& d : *defs) {
+                if (d.key == addKey) { addPreset = d.preset; break; }
+            }
+            if (ModLogic::Rule* r2 = UiFormat::RuleAt(*m_sheet, savedPath)) {
+                std::vector<ModLogic::Param>* args2 = nullptr;
+                if (savedSlot == UiFormat::Slot::Event) args2 = &r2->filters;
+                else if (savedSlot == UiFormat::Slot::Condition && savedIdx >= 0 && savedIdx < static_cast<int>(r2->conditions.size()))
+                    args2 = &r2->conditions[savedIdx].args;
+                else if (savedSlot == UiFormat::Slot::Action && savedIdx >= 0 && savedIdx < static_cast<int>(r2->actions.size()))
+                    args2 = &r2->actions[savedIdx].args;
+                if (args2) {
+                    emit aboutToEdit();
+                    ModLogic::ParamValue(*args2, addKey) = addPreset;
+                    rebuildLayout();
+                    viewport()->update();
+                    emit sheetEdited();
+                    emit selectionChanged(m_sel);
+                }
+            }
+        }
+        return;
+    }
+
     const ModCatalog::ParamDef* pdef = nullptr;
-    if (const auto* defs = UiFormat::ParamsOf(line.slot, line.entryId)) {
+    if (defs) {
         for (const auto& d : *defs) {
             if (d.key == pill.paramKey) { pdef = &d; break; }
         }
@@ -1242,15 +1395,50 @@ void EventSheetView::startInlineEdit(const VisualRow& row, const VisualLine& lin
     const int x = std::min(topLeft.x(), std::max(4, viewport()->width() - prefW - 8));
     const QRect edRect(x, topLeft.y() - 2, prefW, pill.rect.height() + 4);
 
+    if (pdef && !pdef->options.empty() && pdef->kind == "enum" && !pill.isExpr) {
+        QMenu menu(viewport());
+        for (const auto& opt : pdef->options) {
+            QAction* act = menu.addAction(UiFormat::OptionLabel(*pdef, opt.value));
+            act->setCheckable(true);
+            act->setChecked(opt.value == pill.rawValue);
+            act->setData(QString::fromStdString(opt.value));
+        }
+        QAction* chosen = menu.exec(viewport()->mapToGlobal(fromContent(pill.rect.bottomLeft()) + QPoint(0, 2)));
+        if (chosen && m_sheet) {
+            const std::string newVal = chosen->data().toString().toStdString();
+            if (ModLogic::Rule* rule = UiFormat::RuleAt(*m_sheet, m_inlinePath)) {
+                std::vector<ModLogic::Param>* args = nullptr;
+                if (m_inlineSlot == UiFormat::Slot::Event) args = &rule->filters;
+                else if (m_inlineSlot == UiFormat::Slot::Condition &&
+                         m_inlineIndex >= 0 && m_inlineIndex < static_cast<int>(rule->conditions.size()))
+                    args = &rule->conditions[m_inlineIndex].args;
+                else if (m_inlineSlot == UiFormat::Slot::Action &&
+                         m_inlineIndex >= 0 && m_inlineIndex < static_cast<int>(rule->actions.size()))
+                    args = &rule->actions[m_inlineIndex].args;
+                if (args) {
+                    std::string& slot = ModLogic::ParamValue(*args, m_inlineParamKey);
+                    if (slot != newVal) {
+                        emit aboutToEdit();
+                        slot = newVal;
+                        rebuildLayout();
+                        viewport()->update();
+                        emit sheetEdited();
+                        emit selectionChanged(m_sel);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
     if (pdef && !pdef->options.empty()) {
         auto* combo = new QComboBox(viewport());
         combo->setEditable(true);
         combo->setInsertPolicy(QComboBox::NoInsert);
         combo->setFont(Theme::MonoFont(9));
         for (const auto& opt : pdef->options) {
-            const QString lbl = UiFormat::Label(opt.label);
             const QString vq = QString::fromStdString(opt.value);
-            combo->addItem(lbl == vq ? vq : QStringLiteral("%1 (%2)").arg(lbl, vq), vq);
+            combo->addItem(UiFormat::OptionLabel(*pdef, opt.value), vq);
         }
         const int idx = combo->findData(QString::fromStdString(pill.rawValue));
         if (idx >= 0) combo->setCurrentIndex(idx);
@@ -1312,6 +1500,7 @@ void EventSheetView::closeInlineEdit(bool commit) {
                     rebuildLayout();
                     viewport()->update();
                     emit sheetEdited();
+                    emit selectionChanged(m_sel);
                 }
             }
         }
@@ -1402,6 +1591,76 @@ void EventSheetView::contextMenuEvent(QContextMenuEvent* event) {
         if (!isLinePicked(row.path, vl.slot, vl.index)) {
             pickLine(row.path, vl.slot, vl.index, false, false);
         }
+
+        const auto* lineDefs = UiFormat::ParamsOf(vl.slot, vl.entryId);
+        std::vector<ModLogic::Param>* lineArgs = nullptr;
+        if (vl.slot == UiFormat::Slot::Event) lineArgs = &rule->filters;
+        else if (vl.slot == UiFormat::Slot::Condition && vl.index >= 0 && vl.index < static_cast<int>(rule->conditions.size()))
+            lineArgs = &rule->conditions[vl.index].args;
+        else if (vl.slot == UiFormat::Slot::Action && vl.index >= 0 && vl.index < static_cast<int>(rule->actions.size()))
+            lineArgs = &rule->actions[vl.index].args;
+
+        bool addedParamMenu = false;
+        if (hit.kind == HitResult::Kind::Pill && hit.pillIndex >= 0 && hit.pillIndex < static_cast<int>(vl.pills.size())) {
+            const PillHit& ph = vl.pills[hit.pillIndex];
+            if (ph.canRemove) {
+                const std::string remKey = ph.paramKey;
+                menu.addAction(UiFormat::Label("mod.removeParam") + QStringLiteral(": ") + ph.paramLabel,
+                               this, [this, p = row.path, sl = vl.slot, idx = vl.index, remKey]() {
+                    if (!m_sheet) return;
+                    ModLogic::Rule* r = UiFormat::RuleAt(*m_sheet, p);
+                    if (!r) return;
+                    std::vector<ModLogic::Param>* a = nullptr;
+                    if (sl == UiFormat::Slot::Event) a = &r->filters;
+                    else if (sl == UiFormat::Slot::Condition && idx >= 0 && idx < static_cast<int>(r->conditions.size()))
+                        a = &r->conditions[idx].args;
+                    else if (sl == UiFormat::Slot::Action && idx >= 0 && idx < static_cast<int>(r->actions.size()))
+                        a = &r->actions[idx].args;
+                    if (a) {
+                        emit aboutToEdit();
+                        if (ModLogic::RemoveParam(*a, remKey)) {
+                            rebuildLayout();
+                            viewport()->update();
+                            emit sheetEdited();
+                            emit selectionChanged(m_sel);
+                        }
+                    }
+                });
+                addedParamMenu = true;
+            }
+        }
+        if (lineDefs && lineArgs && ModCatalog::HasAddableOptionalParams(*lineDefs, *lineArgs)) {
+            QMenu* addSub = menu.addMenu(QStringLiteral("+ ") + UiFormat::Label("mod.addParam"));
+            for (const ModCatalog::ParamDef& d : *lineDefs) {
+                if (!ModCatalog::CanAddOptionalParam(d, *lineDefs, *lineArgs)) continue;
+                const std::string effKey = ModCatalog::EffectiveParamLabelKey(d, *lineDefs, *lineArgs);
+                const QString lbl = effKey.empty() ? QString::fromStdString(d.key) : UiFormat::Label(effKey);
+                const std::string addKey = d.key;
+                const std::string addPreset = d.preset;
+                addSub->addAction(QStringLiteral("%1 (%2)").arg(lbl, QString::fromStdString(d.key)),
+                                  this, [this, p = row.path, sl = vl.slot, idx = vl.index, addKey, addPreset]() {
+                    if (!m_sheet) return;
+                    ModLogic::Rule* r = UiFormat::RuleAt(*m_sheet, p);
+                    if (!r) return;
+                    std::vector<ModLogic::Param>* a = nullptr;
+                    if (sl == UiFormat::Slot::Event) a = &r->filters;
+                    else if (sl == UiFormat::Slot::Condition && idx >= 0 && idx < static_cast<int>(r->conditions.size()))
+                        a = &r->conditions[idx].args;
+                    else if (sl == UiFormat::Slot::Action && idx >= 0 && idx < static_cast<int>(r->actions.size()))
+                        a = &r->actions[idx].args;
+                    if (a) {
+                        emit aboutToEdit();
+                        ModLogic::ParamValue(*a, addKey) = addPreset;
+                        rebuildLayout();
+                        viewport()->update();
+                        emit sheetEdited();
+                        emit selectionChanged(m_sel);
+                    }
+                });
+            }
+            addedParamMenu = true;
+        }
+        if (addedParamMenu && vl.slot != UiFormat::Slot::Event) menu.addSeparator();
 
         if (vl.slot == UiFormat::Slot::Condition) {
             QAction* inv = menu.addAction(invLabel);

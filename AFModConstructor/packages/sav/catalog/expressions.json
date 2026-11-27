@@ -136,7 +136,8 @@
     "group": "sav",
     "section": "mod.sec.savedByMod",
     "kind": "int",
-    "text": "slot",
+    "text": "sav_event_slot()",
+    "needs": "slot_event",
     "hint": "mod.expr.savSlotOfEvent.hint"
   },
   {

@@ -340,7 +340,8 @@
     "group": "camera",
     "section": "mod.sec.camControl",
     "kind": "float",
-    "text": "(camFrame ? camFrame->delta : 0.0f)",
+    "text": "cam_update_delta()",
+    "needs": "camera_update",
     "hint": "mod.expr.camUpdateDelta.hint"
   },
   {
@@ -349,7 +350,8 @@
     "group": "camera",
     "section": "mod.sec.camControl",
     "kind": "float",
-    "text": "(info ? info->point[0] : 0.0f)",
+    "text": "cam_place_num(0)",
+    "needs": "camera_place",
     "hint": "mod.expr.camPlaceX.hint"
   },
   {
@@ -358,7 +360,8 @@
     "group": "camera",
     "section": "mod.sec.camControl",
     "kind": "float",
-    "text": "(info ? info->point[1] : 0.0f)",
+    "text": "cam_place_num(1)",
+    "needs": "camera_place",
     "hint": "mod.expr.camPlaceX.hint"
   },
   {
@@ -367,7 +370,8 @@
     "group": "camera",
     "section": "mod.sec.camControl",
     "kind": "float",
-    "text": "(info ? info->point[2] : 0.0f)",
+    "text": "cam_place_num(2)",
+    "needs": "camera_place",
     "hint": "mod.expr.camPlaceX.hint"
   }
 ]

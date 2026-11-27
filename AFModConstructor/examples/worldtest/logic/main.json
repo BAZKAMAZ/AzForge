@@ -1,0 +1,2951 @@
+{
+    "name": "main",
+    "vars": [
+        {
+            "name": "hud_on",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "hud_page",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "frame_light_on",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "plr_hidden",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "plr_lantern",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "pause_flag",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "cancel_probe",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "ev_loaded_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_unloaded_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_room_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_timeup_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_last_kind",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_last_ridx",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_last_rid",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_last_prev",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_last_mx",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_last_my",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "scan_rooms",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_boxes",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_monsters",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_spawns",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_lights",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_tris",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_statics",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "scan_things",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "cond_flags",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "px",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "py",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "pz",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "static_mat",
+            "type": "list",
+            "value": "16"
+        },
+        {
+            "name": "st_lvl",
+            "type": "text",
+            "value": "MENU"
+        },
+        {
+            "name": "last_cmd",
+            "type": "text",
+            "value": "Ready: [1] Level 1  [2] Bonus Level  [F2] Cycle HUD pages"
+        }
+    ],
+    "rules": [
+        {
+            "event": "render.frame",
+            "filters": {},
+            "conditions": [],
+            "actions": [],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "var.set",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "0"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.isLevelLoaded",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_lvl",
+                                        "value": "LOADED"
+                                    }
+                                },
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "1"
+                                    }
+                                }
+                            ],
+                            "children": [
+                                {
+                                    "event": "",
+                                    "filters": {},
+                                    "conditions": [
+                                        {
+                                            "id": "world.hasPlayerEntity",
+                                            "args": {}
+                                        }
+                                    ],
+                                    "actions": [
+                                        {
+                                            "id": "world.selectPlayerEntity",
+                                            "args": {}
+                                        },
+                                        {
+                                            "id": "var.set",
+                                            "args": {
+                                                "name": "px",
+                                                "value": "=world_entity_num(0)"
+                                            }
+                                        },
+                                        {
+                                            "id": "var.set",
+                                            "args": {
+                                                "name": "py",
+                                                "value": "=world_entity_num(1)"
+                                            }
+                                        },
+                                        {
+                                            "id": "var.set",
+                                            "args": {
+                                                "name": "pz",
+                                                "value": "=world_entity_num(2)"
+                                            }
+                                        },
+                                        {
+                                            "id": "world.selectCell",
+                                            "args": {
+                                                "by": "1",
+                                                "x": "=px",
+                                                "y": "=py"
+                                            }
+                                        }
+                                    ],
+                                    "children": [],
+                                    "veto": false,
+                                    "enabled": true,
+                                    "group": false,
+                                    "name": "",
+                                    "collapsed": false
+                                }
+                            ],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.isLevelLoaded",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_lvl",
+                                        "value": "MENU"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.isPaused",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "2"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.isBonusLevel",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "4"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.isDemoLevel",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "8"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.timeLeftBelow",
+                                    "args": {
+                                        "seconds": "15"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "16"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.elapsedIs",
+                                    "args": {
+                                        "op": ">=",
+                                        "seconds": "5"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "32"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.levelStatIs",
+                                    "args": {
+                                        "counter": "0",
+                                        "half": "1",
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "64"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.room",
+                                    "args": {
+                                        "room": "1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "128"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.roomCountIs",
+                                    "args": {
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "world.roomExistsById",
+                                    "args": {
+                                        "roomId": "1"
+                                    }
+                                },
+                                {
+                                    "id": "world.mazeHasRoom",
+                                    "args": {
+                                        "x": "0",
+                                        "y": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "256"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.cellIs",
+                                    "args": {
+                                        "room": "-1",
+                                        "col": "20",
+                                        "row": "13",
+                                        "type": "87"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "512"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.cellByteIs",
+                                    "args": {
+                                        "room": "-1",
+                                        "col": "20",
+                                        "row": "13",
+                                        "slot": "0",
+                                        "op": "==",
+                                        "value": "42"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "1024"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.pointInBox",
+                                    "args": {
+                                        "room": "-1",
+                                        "box": "0",
+                                        "x": "=px",
+                                        "y": "=py",
+                                        "z": "=pz"
+                                    }
+                                },
+                                {
+                                    "id": "world.boxKindIs",
+                                    "args": {
+                                        "room": "-1",
+                                        "box": "0",
+                                        "kind": "AMOD_BOX_PUSHES"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "2048"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.entityIsHidden",
+                                    "args": {
+                                        "room": "-1",
+                                        "index": "-1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "4096"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.entityHasLight",
+                                    "args": {
+                                        "room": "-1",
+                                        "index": "-1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "8192"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.staticIsShown",
+                                    "args": {
+                                        "room": "-1",
+                                        "index": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "16384"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.roomIsSaved",
+                                    "args": {
+                                        "room": "-1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.add",
+                                    "args": {
+                                        "name": "cond_flags",
+                                        "value": "32768"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.on",
+                                    "args": {
+                                        "name": "frame_light_on"
+                                    }
+                                },
+                                {
+                                    "id": "world.isLevelLoaded",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "world.addFrameLight",
+                                    "args": {
+                                        "x": "=px",
+                                        "y": "=py + 0.2f",
+                                        "z": "=pz",
+                                        "r": "0.3",
+                                        "g": "0.85",
+                                        "b": "1.0",
+                                        "range": "1.4"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": true,
+                    "name": "Evaluate conditions & per-frame light",
+                    "collapsed": true
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "hud_on"
+                            }
+                        }
+                    ],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "render.rect",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "8",
+                                        "w": "620",
+                                        "h": "222",
+                                        "r": "0.05",
+                                        "g": "0.07",
+                                        "b": "0.11",
+                                        "a": "0.82"
+                                    }
+                                },
+                                {
+                                    "id": "render.outline",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "8",
+                                        "w": "620",
+                                        "h": "222",
+                                        "thickness": "1",
+                                        "r": "0.35",
+                                        "g": "0.72",
+                                        "b": "0.96",
+                                        "a": "0.92"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "WORLD API TEST [F1 HUD] [F2 Page {#hud_page + 1}/3]  [1]Lvl1 [2]Bonus [3]Time/Stat [4/P]Pause [5/6]Grid [0]Cross [Bksp]Leave",
+                                        "x": "16",
+                                        "y": "13",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.45",
+                                        "g": "0.88",
+                                        "b": "1.0",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.compare",
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "0"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Lvl:{st_lvl}({#(API->world ? API->world->IsLevelLoaded(SELF) : 0)})  Pause:{#(API->world && API->world->IsPaused ? API->world->IsPaused(SELF) : 0)}  No:{#world_level_int(0)}  Bonus:{#world_level_int(1)}(cnt:{#world_level_int(2)}/{~world_level_float(2)}s)  Demo:{#world_level_int(3)}/{#world_level_int(4)}",
+                                        "x": "16",
+                                        "y": "30",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Script:\"{$world_level_text(0)}\"  Name:\"{$world_level_text(1)}\"  Next:\"{$world_level_text(2)}\"",
+                                        "x": "16",
+                                        "y": "45",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Bg:\"{$world_level_text(3)}\"  Mus:\"{$world_level_text(4)}\"(@{~world_level_float(1)}s)  Castle:\"{$world_level_text(8)}\"",
+                                        "x": "16",
+                                        "y": "60",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Titles:\"{$world_level_text(5)}\" / \"{$world_level_text(6)}\"  StatMenu:\"{$world_level_text(7)}\"  TargetTime:{~world_level_float(0)}s",
+                                        "x": "16",
+                                        "y": "75",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Elapsed:{~(API->world ? API->world->GetElapsed(SELF) : 0.0f)}s  TimeLeft:{~(API->world ? API->world->GetTimeLeft(SELF) : 0.0f)}s  StartMaze:({#world_level_int(7)},{#world_level_int(8)}) StartCell:({~world_level_float(3)},{~world_level_float(4)})",
+                                        "x": "16",
+                                        "y": "90",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Stats Crys:{#world_stat_val(0, 0)}/{#world_stat_val(0, 1)}  Bon:{#world_stat_val(1, 0)}/{#world_stat_val(1, 1)}  Sup:{#world_stat_val(2, 0)}/{#world_stat_val(2, 1)}  Mon:{#world_stat_val(3, 0)}/{#world_stat_val(3, 1)}",
+                                        "x": "16",
+                                        "y": "105",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RoomsSeen Light:{#world_stat_val(4, 0)}/{#world_stat_val(4, 1)}  Dark:{#world_stat_val(5, 0)}/{#world_stat_val(5, 1)}  Secret:{#world_stat_val(6, 0)}/{#world_stat_val(6, 1)}  #8:{#world_stat_val(7, 0)}/{#world_stat_val(7, 1)}",
+                                        "x": "16",
+                                        "y": "120",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "CurRoom:{#(API->world ? API->world->GetCurrentRoom(SELF) : -1)} (prev:{#(API->world ? API->world->GetPreviousRoom(SELF) : -1)} / total:{#(API->world ? API->world->GetRoomCount(SELF) : 0)})  SelRoom idx:{#world_room_int(0)} id:{#world_room_int(1)} loaded:{#world_room_int(4)} backWall:{#world_room_int(5)}",
+                                        "x": "16",
+                                        "y": "135",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RoomFile:\"{$world_room_text(0)}\"  RoomMus:\"{$world_room_text(1)}\"  Tex(LM:{#world_room_tex(0)} Wall:{#world_room_tex(1)} Flr:{#world_room_tex(2)})",
+                                        "x": "16",
+                                        "y": "150",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Maze rows:{#world_level_int(6)} cur:({#world_maze_cursor(0)},{#world_maze_cursor(1)}) rowW:{#world_maze_row_width(-1)}  RoomMaze:({#world_room_int(2)},{#world_room_int(3)})  SelMaze id:{#world_maze_room_id(-1, -1)}->idx:{#world_maze_room_index(-1, -1)}",
+                                        "x": "16",
+                                        "y": "165",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Events L:{ev_loaded_cnt} U:{ev_unloaded_cnt} R:{ev_room_cnt} T:{ev_timeup_cnt}  Last(k:{ev_last_kind} idx:{ev_last_ridx} id:{ev_last_rid} prev:{ev_last_prev} m:{ev_last_mx},{ev_last_my})",
+                                        "x": "16",
+                                        "y": "180",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "HUD Page 1: Level, Stats, Rooms & Maze",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.compare",
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelCell:({#world_sel_col()}, {#world_sel_row()}) -> World:({~world_cell_x(-1)}, {~world_cell_y(-1)})  Code:{#world_cell_code(world_sel_room_idx(), -1, -1)} (\"{$world_cell_text()}\")",
+                                        "x": "16",
+                                        "y": "30",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Grid Totals  Walls(\"W\"):{#world_count_cells(world_sel_room_idx(), 87)}  Empty(\" \"):{#world_count_cells(world_sel_room_idx(), 32)}  ModBytes[0..1]:({#world_cell_free_byte(world_sel_room_idx(), -1, -1, 0)}, {#world_cell_free_byte(world_sel_room_idx(), -1, -1, 1)})",
+                                        "x": "16",
+                                        "y": "45",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Boxes:{#world_room_int(6)} (lastAdd:{#world_last_box()})  SelBox kind:{#world_box_kind(world_sel_room_idx(), -1)}",
+                                        "x": "16",
+                                        "y": "60",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelBox Min:({~world_box_num(0)}, {~world_box_num(1)}, {~world_box_num(2)})  Max:({~world_box_num(3)}, {~world_box_num(4)}, {~world_box_num(5)})",
+                                        "x": "16",
+                                        "y": "75",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Entities:{#world_entity_count(world_sel_room_idx())}  PlayerIdx:{#world_player_entity()}  SelEnt kind:{#world_entity_int(0)} name:\"{$world_entity_name()}\"",
+                                        "x": "16",
+                                        "y": "90",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelEnt Pos:({~world_entity_num(0)}, {~world_entity_num(1)}, {~world_entity_num(2)})  Prev:({~world_entity_num(3)}, {~world_entity_num(4)}, {~world_entity_num(5)})",
+                                        "x": "16",
+                                        "y": "105",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelEnt State:{#world_entity_int(1)}/{#world_entity_int(2)}  Flags:{#world_entity_int(3)}  Dead:{#world_entity_int(4)}  Hidden:{#world_is_entity_hidden(world_sel_room_idx(), -1)}",
+                                        "x": "16",
+                                        "y": "120",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Spawns:{#world_spawn_count(world_sel_room_idx())}  SelSpawn kind:{#world_spawn_int(0)} live:{#world_spawn_int(1)} name:\"{$world_spawn_name()}\"",
+                                        "x": "16",
+                                        "y": "135",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelSpawn Pos:({~world_spawn_num(0)}, {~world_spawn_num(1)}, {~world_spawn_num(2)})",
+                                        "x": "16",
+                                        "y": "150",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Loop Scan [M] -> Rooms:{scan_rooms} Boxes:{scan_boxes} Monsters:{scan_monsters} Spawns:{scan_spawns} Lights:{scan_lights}",
+                                        "x": "16",
+                                        "y": "165",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Loop Scan [M] -> LightTris:{scan_tris} Statics:{scan_statics} SavedThings:{scan_things}  CondMask:{cond_flags}",
+                                        "x": "16",
+                                        "y": "180",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "HUD Page 2: Grid, Boxes, Entities & Spawns",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "var.compare",
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "2"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RoomLights:{#world_light_count(world_sel_room_idx())} (lastAdd:{#world_last_light()})  FrameLight[9]:{frame_light_on}",
+                                        "x": "16",
+                                        "y": "30",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "SelLight Pos:({~world_light_num(0)}, {~world_light_num(1)}, {~world_light_num(2)})  RGB:({~world_light_num(3)}, {~world_light_num(4)}, {~world_light_num(5)})  Range:{~world_light_num(6)}",
+                                        "x": "16",
+                                        "y": "45",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "EntLight On:{#world_entity_has_light(world_sel_room_idx(), -1)}  RGB:({~world_entity_light_num(0)}, {~world_entity_light_num(1)}, {~world_entity_light_num(2)})  Range:{~world_entity_light_num(3)}",
+                                        "x": "16",
+                                        "y": "60",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "EntLight Offset:({~world_entity_light_num(4)}, {~world_entity_light_num(5)}, {~world_entity_light_num(6)})",
+                                        "x": "16",
+                                        "y": "75",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "LightTris:{#world_room_int(7)} (lastAdd:{#world_last_tri()})  P1:({~world_tri_num(0)}, {~world_tri_num(1)}, {~world_tri_num(2)})",
+                                        "x": "16",
+                                        "y": "90",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Tri P2:({~world_tri_num(3)}, {~world_tri_num(4)}, {~world_tri_num(5)})  P3:({~world_tri_num(6)}, {~world_tri_num(7)}, {~world_tri_num(8)})",
+                                        "x": "16",
+                                        "y": "105",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Statics:{#world_static_count(world_sel_room_idx())} (lastAdd:{#world_last_static()})  Shown:{#world_static_int(0)} Lit:{#world_static_int(1)} Trans:{#world_static_int(2)} Blend:{#world_static_int(3)}",
+                                        "x": "16",
+                                        "y": "120",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Static Model:{#world_static_int(4)} Tex:{#world_static_int(5)}  Pos:({~world_static_pos(0)}, {~world_static_pos(1)}, {~world_static_pos(2)})",
+                                        "x": "16",
+                                        "y": "135",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RoomThings:{#world_thing_count(world_sel_room_idx())}  SelThing tag:{#world_thing_int(0)} bytes:{#world_thing_int(1)} vals:({#world_thing_int(2)}, {#world_thing_int(3)}, {#world_thing_int(4)})",
+                                        "x": "16",
+                                        "y": "150",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "RoomMem saved:{#world_mem_int(world_sel_room_idx(), 0)} state:{#world_mem_int(world_sel_room_idx(), 1)} hasExtra:{#world_mem_int(world_sel_room_idx(), 2)} extra:{#world_mem_int(world_sel_room_idx(), 3)}  TotalSaveBytes:{#world_room_saved_size(world_sel_room_idx())}",
+                                        "x": "16",
+                                        "y": "165",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Hotkeys: [7]AddBox+Static [8]RemBox+Static/HidePlr [9]Lights+Tri [M]ScanLoops+SaveMem",
+                                        "x": "16",
+                                        "y": "180",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "HUD Page 3: Lights, Triangles, Statics & Save",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Status: {last_cmd}",
+                                        "x": "16",
+                                        "y": "198",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "1.0",
+                                        "g": "0.86",
+                                        "b": "0.42",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "PlayerPos:({px}, {py}, {pz})  CondFlags:{cond_flags}",
+                                        "x": "16",
+                                        "y": "213",
+                                        "font": "",
+                                        "scale": "0.42",
+                                        "align": "0x08",
+                                        "r": "0.68",
+                                        "g": "0.82",
+                                        "b": "0.95",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Draw HUD when enabled",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Frame update & 3-page HUD",
+            "collapsed": false
+        },
+        {
+            "event": "world.levelLoaded",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_loaded_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_kind",
+                        "value": "=world_event_int(0)"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Event: LEVEL_LOADED fired"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track level loaded",
+            "collapsed": false
+        },
+        {
+            "event": "world.levelUnloaded",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_unloaded_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_kind",
+                        "value": "=world_event_int(0)"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Event: LEVEL_UNLOADED fired"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track level unloaded",
+            "collapsed": false
+        },
+        {
+            "event": "world.roomChanged",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_room_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_kind",
+                        "value": "=world_event_int(0)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_ridx",
+                        "value": "=world_event_int(1)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_rid",
+                        "value": "=world_event_int(2)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_prev",
+                        "value": "=world_event_int(3)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_mx",
+                        "value": "=world_event_int(4)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_my",
+                        "value": "=world_event_int(5)"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Event: ROOM_CHANGED -> room #{ev_last_ridx} (id {ev_last_rid})"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track room changes & event info",
+            "collapsed": false
+        },
+        {
+            "event": "world.timeUp",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_timeup_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Event: TIME_UP fired!"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "cancel_probe"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.cancel",
+                            "args": {}
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Optional unsubscribe probe",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track bonus countdown time up",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "112"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "hud_on"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F1: Toggle HUD",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "113"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "hud_page",
+                        "value": "=(hud_page + 1) % 3"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F2: Cycle HUD Page (1..3)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "49"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.startLevel",
+                    "args": {
+                        "level": "levels/level_1.txt"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "1: Starting levels/level_1.txt"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "1: Start Level 1",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "50"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.startLevel",
+                    "args": {
+                        "level": "levels/level_2_1_b.txt"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "2: Starting bonus level levels/level_2_1_b.txt"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "2: Start Bonus Level",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "51"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.setTimeLeft",
+                    "args": {
+                        "seconds": "90"
+                    }
+                },
+                {
+                    "id": "world.setElapsed",
+                    "args": {
+                        "seconds": "0"
+                    }
+                },
+                {
+                    "id": "world.addLevelStat",
+                    "args": {
+                        "counter": "0",
+                        "delta": "5"
+                    }
+                },
+                {
+                    "id": "world.setLevelStat",
+                    "args": {
+                        "counter": "7",
+                        "taken": "3",
+                        "total": "10"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "3: Set TimeLeft=90s, Elapsed=0s, +5 crystals, stat#8=3/10"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "3: Set TimeLeft, Reset Stopwatch & Update Level Stats",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "52"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.setPaused",
+                    "args": {
+                        "mode": "2"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "4: Toggled game pause via world.setPaused(toggle)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "4: Toggle Game Pause",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "80"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "pause_flag"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "pause_flag"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setPaused",
+                            "args": {
+                                "mode": "1"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "P: Explicit world.setPaused = Pause"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "pause_flag"
+                            },
+                            "inverted": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setPaused",
+                            "args": {
+                                "mode": "0"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "P: Explicit world.setPaused = Resume"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "P: Explicit SetPaused Pause/Resume",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "53"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.snapshotCells",
+                    "args": {
+                        "slot": "0"
+                    }
+                },
+                {
+                    "id": "world.fillCellsRect",
+                    "args": {
+                        "col": "18",
+                        "row": "14",
+                        "w": "4",
+                        "h": "1",
+                        "type": "87"
+                    }
+                },
+                {
+                    "id": "world.setCell",
+                    "args": {
+                        "col": "20",
+                        "row": "13",
+                        "type": "87"
+                    }
+                },
+                {
+                    "id": "world.setCellByte",
+                    "args": {
+                        "col": "20",
+                        "row": "13",
+                        "slot": "0",
+                        "value": "42"
+                    }
+                },
+                {
+                    "id": "world.setCellByte",
+                    "args": {
+                        "col": "20",
+                        "row": "13",
+                        "slot": "1",
+                        "value": "7"
+                    }
+                },
+                {
+                    "id": "world.selectCell",
+                    "args": {
+                        "by": "0",
+                        "col": "20",
+                        "row": "13"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "5: Saved grid[0], built wall rect (18..21,14) + cell(20,13) bytes 42,7"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "5: Snapshot Grid, Build Wall Cells & Write Cell Mod Bytes",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "54"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.restoreCells",
+                    "args": {
+                        "slot": "0"
+                    }
+                },
+                {
+                    "id": "world.clearCellBytes",
+                    "args": {
+                        "col": "20",
+                        "row": "13"
+                    }
+                },
+                {
+                    "id": "world.selectCell",
+                    "args": {
+                        "by": "0",
+                        "col": "20",
+                        "row": "13"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "6: Restored room grid from slot 0 & cleared cell(20,13) mod bytes"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "6: Restore Room Grid & Clear Cell Mod Bytes",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "55"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.addBox",
+                    "args": {
+                        "room": "-1",
+                        "kind": "AMOD_BOX_PUSHES",
+                        "minX": "=px - 0.25f",
+                        "minY": "=py - 0.25f",
+                        "minZ": "-0.3",
+                        "maxX": "=px + 0.25f",
+                        "maxY": "=py - 0.12f",
+                        "maxZ": "0.3"
+                    }
+                },
+                {
+                    "id": "world.setBox",
+                    "args": {
+                        "room": "-1",
+                        "box": "-1",
+                        "kind": "AMOD_BOX_PUSHES",
+                        "minX": "=px - 0.30f",
+                        "minY": "=py - 0.22f",
+                        "minZ": "-0.3",
+                        "maxX": "=px + 0.30f",
+                        "maxY": "=py - 0.10f",
+                        "maxZ": "0.3"
+                    }
+                },
+                {
+                    "id": "world.addStatic",
+                    "args": {
+                        "room": "-1",
+                        "model": "0",
+                        "texture": "0",
+                        "x": "=px",
+                        "y": "=py + 0.25f",
+                        "z": "=pz",
+                        "scale": "1.0",
+                        "lit": "1",
+                        "translucent": "1",
+                        "blend": "AMOD_STATIC_BLEND_ADD"
+                    }
+                },
+                {
+                    "id": "world.setStaticStyle",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "lit": "1",
+                        "translucent": "1",
+                        "blend": "AMOD_STATIC_BLEND_ADD",
+                        "model": "0",
+                        "texture": "0"
+                    }
+                },
+                {
+                    "id": "world.setStaticPos",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "x": "=px",
+                        "y": "=py + 0.30f",
+                        "z": "=pz",
+                        "scale": "1.15"
+                    }
+                },
+                {
+                    "id": "world.setStaticVisible",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "shown": "1"
+                    }
+                },
+                {
+                    "id": "world.readStaticMatrix",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "list": "static_mat"
+                    }
+                },
+                {
+                    "id": "world.setStaticMatrix",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "list": "static_mat"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "7: Spawned platform box under player & cloned glowing static above"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "7: Add/Edit Collision Box & Clone/Transform Static Decoration",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "56"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.removeBox",
+                    "args": {
+                        "room": "-1",
+                        "box": "-1"
+                    }
+                },
+                {
+                    "id": "world.removeStatic",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1"
+                    }
+                },
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "plr_hidden"
+                    }
+                },
+                {
+                    "id": "world.selectPlayerEntity",
+                    "args": {}
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "plr_hidden"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setEntityHidden",
+                            "args": {
+                                "room": "-1",
+                                "index": "-1",
+                                "hidden": "1"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "8: Removed added box/static & hid player entity"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "plr_hidden"
+                            },
+                            "inverted": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setEntityHidden",
+                            "args": {
+                                "room": "-1",
+                                "index": "-1",
+                                "hidden": "0"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "8: Removed added box/static & unhid player entity"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "8: Remove Added Box/Static & Toggle Player Hidden",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "57"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "frame_light_on"
+                    }
+                },
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "plr_lantern"
+                    }
+                },
+                {
+                    "id": "world.selectPlayerEntity",
+                    "args": {}
+                },
+                {
+                    "id": "world.addRoomLight",
+                    "args": {
+                        "room": "-1",
+                        "x": "=px",
+                        "y": "=py + 0.3f",
+                        "z": "0",
+                        "r": "1.0",
+                        "g": "0.75",
+                        "b": "0.25",
+                        "range": "1.6"
+                    }
+                },
+                {
+                    "id": "world.setRoomLight",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "x": "=px",
+                        "y": "=py + 0.35f",
+                        "z": "0",
+                        "r": "1.0",
+                        "g": "0.82",
+                        "b": "0.30",
+                        "range": "1.8"
+                    }
+                },
+                {
+                    "id": "world.addLightTriangle",
+                    "args": {
+                        "room": "-1",
+                        "x1": "=px - 0.6f",
+                        "y1": "=py - 0.4f",
+                        "z1": "0",
+                        "x2": "=px + 0.6f",
+                        "y2": "=py - 0.4f",
+                        "z2": "0",
+                        "x3": "=px",
+                        "y3": "=py + 0.6f",
+                        "z3": "0"
+                    }
+                },
+                {
+                    "id": "world.setLightTriangle",
+                    "args": {
+                        "room": "-1",
+                        "index": "-1",
+                        "x1": "=px - 0.7f",
+                        "y1": "=py - 0.4f",
+                        "z1": "0",
+                        "x2": "=px + 0.7f",
+                        "y2": "=py - 0.4f",
+                        "z2": "0",
+                        "x3": "=px",
+                        "y3": "=py + 0.7f",
+                        "z3": "0"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "plr_lantern"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setEntityLight",
+                            "args": {
+                                "room": "-1",
+                                "index": "-1",
+                                "lit": "1",
+                                "offX": "0",
+                                "offY": "0.15",
+                                "offZ": "0",
+                                "r": "1.0",
+                                "g": "0.9",
+                                "b": "0.45",
+                                "range": "1.5"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "9: Added room light + light tri + player lantern ON"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "plr_lantern"
+                            },
+                            "inverted": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setEntityLight",
+                            "args": {
+                                "room": "-1",
+                                "index": "-1",
+                                "lit": "0",
+                                "offX": "0",
+                                "offY": "0",
+                                "offZ": "0",
+                                "r": "0",
+                                "g": "0",
+                                "b": "0",
+                                "range": "0"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "9: Added room light + light tri + player lantern OFF"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "9: Add Room Light, Light Triangle, Frame Light & Player Lantern",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "48"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.crossRoom",
+                    "args": {
+                        "side": "1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "0: Crossed into adjacent room on right (+X)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "0: Cross Room Right (+X)",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "8"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "world.leaveLevel",
+                    "args": {}
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Backspace: Leaving level back to main menu"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Backspace: Leave Current Level",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "77"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_rooms",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_boxes",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_monsters",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_spawns",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_lights",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_tris",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_statics",
+                        "value": "0"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "scan_things",
+                        "value": "0"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachRoom",
+                            "args": {
+                                "var": "r_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_rooms",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachBox",
+                            "args": {
+                                "room": "-1",
+                                "var": "box_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_boxes",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachEntity",
+                            "args": {
+                                "room": "-1",
+                                "var": "ent_idx"
+                            }
+                        },
+                        {
+                            "id": "world.entityKindIs",
+                            "args": {
+                                "kind": "AMOD_ENTITY_MONSTER"
+                            }
+                        },
+                        {
+                            "id": "world.entityIsDead",
+                            "args": {},
+                            "inverted": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_monsters",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachSpawn",
+                            "args": {
+                                "room": "-1",
+                                "var": "spw_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_spawns",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachLight",
+                            "args": {
+                                "room": "-1",
+                                "var": "lgt_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_lights",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachLightTri",
+                            "args": {
+                                "room": "-1",
+                                "var": "tri_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_tris",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachStatic",
+                            "args": {
+                                "room": "-1",
+                                "var": "stc_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_statics",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.forEachThing",
+                            "args": {
+                                "room": "-1",
+                                "var": "thg_idx"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "var.add",
+                            "args": {
+                                "name": "scan_things",
+                                "value": "1"
+                            }
+                        }
+                    ],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "world.thingTagIs",
+                                    "args": {
+                                        "tag": "9"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "world.setRoomThing",
+                                    "args": {
+                                        "room": "-1",
+                                        "index": "-1",
+                                        "v0": "=world_thing_int(2)",
+                                        "v1": "=world_thing_int(3)",
+                                        "v2": "=world_thing_int(4)"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "world.roomIsSaved",
+                            "args": {
+                                "room": "-1"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "world.setRoomMemory",
+                            "args": {
+                                "room": "-1",
+                                "state": "=world_mem_int(world_sel_room_idx(), 1)",
+                                "hasExtra": "1",
+                                "extra": "=world_mem_int(world_sel_room_idx(), 3)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [
+                        {
+                            "id": "world.selectRoom",
+                            "args": {
+                                "by": "1",
+                                "roomId": "1"
+                            }
+                        },
+                        {
+                            "id": "world.selectRoom",
+                            "args": {
+                                "by": "0",
+                                "room": "-1"
+                            }
+                        },
+                        {
+                            "id": "world.selectMazeCell",
+                            "args": {
+                                "x": "-1",
+                                "y": "-1"
+                            }
+                        },
+                        {
+                            "id": "world.selectBox",
+                            "args": {
+                                "box": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectEntity",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectPlayerEntity",
+                            "args": {}
+                        },
+                        {
+                            "id": "world.selectSpawn",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectLight",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectLightTriangle",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectStatic",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "world.selectThing",
+                            "args": {
+                                "index": "0"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "M: Scanned all 8 room/level loops & reset cursors to current room"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "M: Scan All 8 World Loops, Refresh Cursors & Probe Save State",
+            "collapsed": false
+        }
+    ]
+}

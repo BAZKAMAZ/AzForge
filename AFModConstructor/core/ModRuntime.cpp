@@ -18,6 +18,7 @@ namespace {
 const char* const Builtins =
     "const AmodApi* g_api = 0;\n"
     "float mod_delta = 0.0f;\n"
+    "float mod_elapsed = 0.0f;\n"
     "\n"
     "AmodValue as_value(const char* text) {\n"
     "    AmodValue v;\n"
@@ -65,6 +66,7 @@ const char* const BuiltinDeclarations =
     "#define SELF g_api->self\n"
     "\n"
     "extern float mod_delta;\n"
+    "extern float mod_elapsed;\n"
     "\n"
     "AmodValue as_value(const char* text);\n"
     "int ctrl_index(const char* name);\n"

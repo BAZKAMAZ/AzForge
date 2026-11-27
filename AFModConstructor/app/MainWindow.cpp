@@ -117,8 +117,14 @@ namespace {
                     }
                 }
                 for (const auto& c : r.conditions) {
-                    if (!ModCatalog::FindCondition(c.id)) {
+                    const auto* cd = ModCatalog::FindCondition(c.id);
+                    if (!cd) {
                         addIssue(UiFormat::Label("app.problems.unknownCond").arg(QString::fromStdString(c.id)), true);
+                    } else {
+                        const std::string miss = UiFormat::MissingConditionContext(sheet, path, *cd, c.args);
+                        if (!miss.empty()) {
+                            addIssue(QStringLiteral("%1 — %2").arg(UiFormat::Label(cd->label), UiFormat::Label(miss)), false);
+                        }
                     }
                 }
                 for (const auto& a : r.actions) {
@@ -126,7 +132,7 @@ namespace {
                     if (!ad) {
                         addIssue(UiFormat::Label("app.problems.unknownAct").arg(QString::fromStdString(a.id)), true);
                     } else {
-                        const std::string miss = UiFormat::MissingContext(sheet, path, *ad);
+                        const std::string miss = UiFormat::MissingContext(sheet, path, *ad, a.args);
                         if (!miss.empty()) {
                             addIssue(QStringLiteral("%1 — %2").arg(UiFormat::Label(ad->label), UiFormat::Label(miss)), false);
                         }
@@ -450,7 +456,10 @@ void MainWindow::setupCentral() {
         rebuildSheetTabs();
         rebuildOutlineTree();
         rebuildProblems();
-        m_inspector->setContext(currentSheet(), m_sheetView->selection());
+        QWidget* fw = QApplication::focusWidget();
+        if (!fw || !m_inspector->isAncestorOf(fw)) {
+            m_inspector->setContext(currentSheet(), m_sheetView->selection());
+        }
         updateWindowTitle();
         updateToolbarState();
     });

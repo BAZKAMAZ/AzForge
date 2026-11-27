@@ -37,6 +37,9 @@ namespace UiFormat {
         std::string rawValue;
         QString paramLabel;
         bool isExpr = false;
+        bool isEnum = false;
+        bool hasOptionLabel = false;
+        bool canRemove = false;
     };
 
     QString Label(const std::string& key);
@@ -55,7 +58,9 @@ namespace UiFormat {
 
     const std::vector<ModCatalog::ParamDef>* ParamsOf(Slot slot, const std::string& id);
     std::string GroupOf(Slot slot, const std::string& id);
-    std::string MissingContext(const ModLogic::Sheet& sheet, const std::vector<int>& path, const ModCatalog::ActionDef& def);
+    std::string MissingParamsContext(const ModLogic::Sheet& sheet, const std::vector<int>& path, const std::vector<ModLogic::Param>& args);
+    std::string MissingConditionContext(const ModLogic::Sheet& sheet, const std::vector<int>& path, const ModCatalog::ConditionDef& def, const std::vector<ModLogic::Param>& args);
+    std::string MissingContext(const ModLogic::Sheet& sheet, const std::vector<int>& path, const ModCatalog::ActionDef& def, const std::vector<ModLogic::Param>& args = {});
     bool IsRuleBroken(const ModLogic::Rule& rule);
     bool IsValidIdentifier(const std::string& name);
 

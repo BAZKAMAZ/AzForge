@@ -15,13 +15,12 @@
             "problemMatcher": []
         },
         {
-            "label": "CMake: Build (Release)",
+            "label": "CMake: Build",
             "type": "shell",
             "command": "C:/Qt/Tools/CMake_64/bin/cmake.exe",
             "args": [
                 "--build",
-                "--preset",
-                "mingw-release",
+                "build",
                 "--parallel"
             ],
             "options": {

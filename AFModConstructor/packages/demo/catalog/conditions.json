@@ -1,0 +1,159 @@
+[
+  {
+    "id": "demo.isPlaying",
+    "label": "mod.cond.demoPlaying",
+    "call": "Demo.IsPlaying",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "params": [],
+    "emit": "(API->demo && API->demo->IsPlaying(SELF) != 0)"
+  },
+  {
+    "id": "demo.countIs",
+    "label": "mod.cond.demoCount",
+    "call": "Demo.Count",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
+      { "key": "value", "label": "mod.p.value", "kind": "number", "preset": "0" }
+    ],
+    "emit": "((API->demo ? API->demo->Count(SELF) : 0) %op% (int)(%value%))"
+  },
+  {
+    "id": "demo.currentIs",
+    "label": "mod.cond.demoCurrent",
+    "call": "Demo.Current",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
+      { "key": "value", "label": "mod.p.value", "kind": "number", "preset": "0" }
+    ],
+    "emit": "((API->demo ? API->demo->Current(SELF) : -1) %op% (int)(%value%))"
+  },
+  {
+    "id": "demo.elapsedIs",
+    "label": "mod.cond.demoElapsed",
+    "call": "Demo.Elapsed",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
+      { "key": "seconds", "label": "mod.p.seconds", "kind": "number", "preset": "1" }
+    ],
+    "emit": "((API->demo ? API->demo->Elapsed(SELF) : 0.0f) %op% (float)(%seconds%))"
+  },
+  {
+    "id": "demo.moveCountIs",
+    "label": "mod.cond.demoMoveCount",
+    "call": "Demo.MoveCount",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
+      { "key": "value", "label": "mod.p.value", "kind": "number", "preset": "0" }
+    ],
+    "emit": "(demo_move_count((int)(%script%)) %op% (int)(%value%))"
+  },
+  {
+    "id": "demo.moveIndexIs",
+    "label": "mod.cond.demoMoveIndex",
+    "call": "Demo.MoveIndex",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
+      { "key": "value", "label": "mod.p.value", "kind": "number", "preset": "0" }
+    ],
+    "emit": "((API->demo ? API->demo->MoveIndex(SELF) : -1) %op% (int)(%value%))"
+  },
+  {
+    "id": "demo.hasCameraStart",
+    "label": "mod.cond.demoHasCamStart",
+    "call": "Demo.GetCameraStart",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" }
+    ],
+    "emit": "demo_has_cam_start((int)(%script%))"
+  },
+  {
+    "id": "demo.hasPlace",
+    "label": "mod.cond.demoHasPlace",
+    "call": "Demo.GetPlace",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" }
+    ],
+    "emit": "demo_has_place((int)(%script%))"
+  }
+]

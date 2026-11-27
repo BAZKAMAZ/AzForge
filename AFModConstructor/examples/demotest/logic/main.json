@@ -1,0 +1,1325 @@
+{
+    "name": "main",
+    "vars": [
+        {
+            "name": "hud_on",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "override_in",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "suppress_on",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "cancel_probe",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "ev_state_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_last_kind",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_last_scr",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_move_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_last_mv",
+            "type": "int",
+            "value": "-1"
+        },
+        {
+            "name": "ev_in_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "in_x",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "in_y",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "in_z",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "in_h",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "in_v",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "in_j",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "in_dt",
+            "type": "float",
+            "value": "0.0"
+        },
+        {
+            "name": "st_play",
+            "type": "text",
+            "value": "NO"
+        },
+        {
+            "name": "st_has_cam",
+            "type": "text",
+            "value": "no"
+        },
+        {
+            "name": "st_has_plc",
+            "type": "text",
+            "value": "no"
+        },
+        {
+            "name": "st_elap",
+            "type": "text",
+            "value": "<=1s"
+        },
+        {
+            "name": "last_cmd",
+            "type": "text",
+            "value": "Ready - press 1 to author & play a demo"
+        }
+    ],
+    "rules": [
+        {
+            "event": "render.frame",
+            "filters": {},
+            "conditions": [],
+            "actions": [],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.isPlaying",
+                                    "args": {}
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_play",
+                                        "value": "PLAYING"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.isPlaying",
+                                    "args": {},
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_play",
+                                        "value": "idle"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.countIs",
+                                    "args": {
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "demo.hasCameraStart",
+                                    "args": {
+                                        "script": "-1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_has_cam",
+                                        "value": "YES"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.hasCameraStart",
+                                    "args": {
+                                        "script": "-1"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_has_cam",
+                                        "value": "no"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.countIs",
+                                    "args": {
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "demo.hasPlace",
+                                    "args": {
+                                        "script": "-1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_has_plc",
+                                        "value": "YES"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.hasPlace",
+                                    "args": {
+                                        "script": "-1"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_has_plc",
+                                        "value": "no"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.currentIs",
+                                    "args": {
+                                        "op": ">=",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "demo.moveCountIs",
+                                    "args": {
+                                        "script": "-1",
+                                        "op": ">",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "demo.moveIndexIs",
+                                    "args": {
+                                        "op": ">=",
+                                        "value": "0"
+                                    }
+                                },
+                                {
+                                    "id": "demo.elapsedIs",
+                                    "args": {
+                                        "op": ">",
+                                        "seconds": "1"
+                                    }
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_elap",
+                                        "value": ">1s"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        },
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [
+                                {
+                                    "id": "demo.elapsedIs",
+                                    "args": {
+                                        "op": ">",
+                                        "seconds": "1"
+                                    },
+                                    "inverted": true
+                                }
+                            ],
+                            "actions": [
+                                {
+                                    "id": "var.setText",
+                                    "args": {
+                                        "name": "st_elap",
+                                        "value": "<=1s"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": true,
+                    "name": "Evaluate conditions",
+                    "collapsed": true
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "hud_on"
+                            }
+                        }
+                    ],
+                    "actions": [],
+                    "children": [
+                        {
+                            "event": "",
+                            "filters": {},
+                            "conditions": [],
+                            "actions": [
+                                {
+                                    "id": "render.rect",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "10",
+                                        "w": "620",
+                                        "h": "222",
+                                        "r": "0.05",
+                                        "g": "0.07",
+                                        "b": "0.11",
+                                        "a": "0.78"
+                                    }
+                                },
+                                {
+                                    "id": "render.outline",
+                                    "args": {
+                                        "x": "10",
+                                        "y": "10",
+                                        "w": "620",
+                                        "h": "222",
+                                        "thickness": "1",
+                                        "r": "0.35",
+                                        "g": "0.68",
+                                        "b": "0.95",
+                                        "a": "0.9"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "DEMO API TEST [F1 HUD]  State:{st_play}({#(API->demo ? API->demo->IsPlaying(SELF) : 0)})  Scripts:{#(API->demo ? API->demo->Count(SELF) : 0)}  Cur:{#(API->demo ? API->demo->Current(SELF) : -1)}  LastAdd:{#demo_last_added()}",
+                                        "x": "18",
+                                        "y": "15",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.45",
+                                        "g": "0.86",
+                                        "b": "1.0",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Elapsed:{~(API->demo ? API->demo->Elapsed(SELF) : 0.0f)}({st_elap})  Break:{~demo_break_time(-1)}s  Move:{#(API->demo ? API->demo->MoveIndex(SELF) : -1)}/{#demo_move_count(-1)}",
+                                        "x": "18",
+                                        "y": "31",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "MoveCmd pause:{~demo_move_num(0)} end:{~demo_move_num(1)} H:{#demo_move_int(0)} V:{#demo_move_int(1)} J:{#demo_move_int(2)} lists(T:{#demo_move_int(3)} V:{#demo_move_int(4)} C:{#demo_move_int(5)})",
+                                        "x": "18",
+                                        "y": "47",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "CamCmd pos:({~demo_cam_num(0, 0)}, {~demo_cam_num(0, 1)}, {~demo_cam_num(0, 2)}) spd:({~demo_cam_num(0, 3)}, {~demo_cam_num(0, 4)}, {~demo_cam_num(0, 5)}) t:{~demo_cam_num(0, 6)} auto:{#demo_cam_auto(0)}",
+                                        "x": "18",
+                                        "y": "63",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "ViewCmd pos:({~demo_cam_num(1, 0)}, {~demo_cam_num(1, 1)}, {~demo_cam_num(1, 2)}) spd:({~demo_cam_num(1, 3)}, {~demo_cam_num(1, 4)}, {~demo_cam_num(1, 5)}) t:{~demo_cam_num(1, 6)} auto:{#demo_cam_auto(1)}",
+                                        "x": "18",
+                                        "y": "79",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "TimeCmd pause:{~demo_time_num(0)} factor:{~demo_time_num(1)} dur:{~demo_time_num(2)}  CamStart({st_has_cam}):({~demo_cam_start_num(0, 0)}, {~demo_cam_start_num(0, 1)}, {~demo_cam_start_num(0, 2)})",
+                                        "x": "18",
+                                        "y": "95",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "StartView:({~demo_cam_start_num(1, 0)}, {~demo_cam_start_num(1, 1)}, {~demo_cam_start_num(1, 2)})  Place({st_has_plc}):plr({#demo_place_int(0)}, {#demo_place_int(1)}) rm({#demo_place_int(2)}, {#demo_place_int(3)})",
+                                        "x": "18",
+                                        "y": "111",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Callbacks State:{ev_state_cnt}(kind:{ev_last_kind} scr:{ev_last_scr})  Move:{ev_move_cnt}(mv:{ev_last_mv})  Input:{ev_in_cnt}",
+                                        "x": "18",
+                                        "y": "127",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "StepInput pos:({in_x}, {in_y}, {in_z}) H:{in_h} V:{in_v} J:{in_j} dt:{in_dt}  Override[7]:{override_in} Suppress[8]:{suppress_on}",
+                                        "x": "18",
+                                        "y": "143",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.9",
+                                        "g": "0.94",
+                                        "b": "0.99",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "[1]Build+PlayDemo [2]Load demo_003 [3]PlayLast [4]Next [5]Stop",
+                                        "x": "18",
+                                        "y": "163",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.75",
+                                        "g": "0.92",
+                                        "b": "0.78",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "[6]EditScript0 [7]OverrideInput [8]SuppressToggle [9]RemoveAdded [0]Cursor0",
+                                        "x": "18",
+                                        "y": "179",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "0.75",
+                                        "g": "0.92",
+                                        "b": "0.78",
+                                        "a": "1"
+                                    }
+                                },
+                                {
+                                    "id": "render.textAligned",
+                                    "args": {
+                                        "text": "Last: {last_cmd}",
+                                        "x": "18",
+                                        "y": "213",
+                                        "font": "",
+                                        "scale": "0.45",
+                                        "align": "0x08",
+                                        "r": "1.0",
+                                        "g": "0.88",
+                                        "b": "0.45",
+                                        "a": "1"
+                                    }
+                                }
+                            ],
+                            "children": [],
+                            "veto": false,
+                            "enabled": true,
+                            "group": false,
+                            "name": "Draw telemetry HUD",
+                            "collapsed": false
+                        }
+                    ],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "HUD when enabled",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Frame update & HUD",
+            "collapsed": false
+        },
+        {
+            "event": "demo.stateChanged",
+            "filters": {
+                "which": "0"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_state_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_kind",
+                        "value": "=demo_ev_int(0)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_scr",
+                        "value": "=demo_ev_int(1)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "cancel_probe"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "demo.cancel",
+                            "args": {}
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Optional unsubscribe probe",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track demo started / ended / broken",
+            "collapsed": false
+        },
+        {
+            "event": "demo.moveStarted",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_move_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "ev_last_mv",
+                        "value": "=demo_ev_int(2)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Track $move_cmd transitions",
+            "collapsed": false
+        },
+        {
+            "event": "demo.input",
+            "filters": {},
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.add",
+                    "args": {
+                        "name": "ev_in_cnt",
+                        "value": "1"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_x",
+                        "value": "=demo_in_num(0)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_y",
+                        "value": "=demo_in_num(1)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_z",
+                        "value": "=demo_in_num(2)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_h",
+                        "value": "=demo_in_int(0)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_v",
+                        "value": "=demo_in_int(1)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_j",
+                        "value": "=demo_in_int(2)"
+                    }
+                },
+                {
+                    "id": "var.set",
+                    "args": {
+                        "name": "in_dt",
+                        "value": "=demo_in_num(3)"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "override_in"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "demo.setInput",
+                            "args": {
+                                "horz": "1",
+                                "vert": "0",
+                                "jump": "1"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "Override step input when toggle 7 is on",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "Inspect & optionally override demo step input",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "112"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "hud_on"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "F1: Toggle HUD",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "49"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.create",
+                    "args": {}
+                },
+                {
+                    "id": "demo.setBreakTime",
+                    "args": {
+                        "script": "-1",
+                        "seconds": "0.25"
+                    }
+                },
+                {
+                    "id": "demo.setCameraStart",
+                    "args": {
+                        "script": "-1",
+                        "cx": "=player_position(0)",
+                        "cy": "=player_position(1) + 0.8f",
+                        "cz": "=player_position(2) + 4.2f",
+                        "vx": "=player_position(0)",
+                        "vy": "=player_position(1)",
+                        "vz": "=player_position(2)"
+                    }
+                },
+                {
+                    "id": "demo.addMove",
+                    "args": {
+                        "script": "-1",
+                        "pause": "0.4",
+                        "horz": "1",
+                        "vert": "0",
+                        "jump": "0",
+                        "endCoord": "=player_position(0) + 0.65f"
+                    }
+                },
+                {
+                    "id": "demo.addCamera",
+                    "args": {
+                        "script": "-1",
+                        "move": "-1",
+                        "x": "=player_position(0) + 0.6f",
+                        "y": "=player_position(1) + 1.1f",
+                        "z": "=player_position(2) + 3.8f",
+                        "sx": "0",
+                        "sy": "0",
+                        "sz": "0",
+                        "time": "1.8",
+                        "giveBack": "1"
+                    }
+                },
+                {
+                    "id": "demo.addView",
+                    "args": {
+                        "script": "-1",
+                        "move": "-1",
+                        "x": "=player_position(0) + 0.3f",
+                        "y": "=player_position(1) + 0.1f",
+                        "z": "=player_position(2)",
+                        "sx": "0",
+                        "sy": "0",
+                        "sz": "0",
+                        "time": "1.8",
+                        "giveBack": "1"
+                    }
+                },
+                {
+                    "id": "demo.addTime",
+                    "args": {
+                        "script": "-1",
+                        "move": "-1",
+                        "pause": "0.0",
+                        "factor": "0.75",
+                        "time": "1.2"
+                    }
+                },
+                {
+                    "id": "demo.addMove",
+                    "args": {
+                        "script": "-1",
+                        "pause": "0.2",
+                        "horz": "-1",
+                        "vert": "0",
+                        "jump": "1",
+                        "endCoord": "=player_position(0) - 0.35f"
+                    }
+                },
+                {
+                    "id": "demo.play",
+                    "args": {
+                        "script": "-1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "1: Created runtime demo (2 moves + cam/view/time) & started"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "1: Author Runtime Demo & Play",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "50"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.add",
+                    "args": {
+                        "path": "levels/rooms_0/demo_003.txt"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "2: Added levels/rooms_0/demo_003.txt"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "2: Load Built-in demo_003.txt",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "51"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.play",
+                    "args": {
+                        "script": "-1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "3: Playing selected / last-added demo script"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "3: Play Selected / Last-Added Script",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "52"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.next",
+                    "args": {}
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "4: Advanced to next demo script"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "4: Next Demo Script",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "53"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.stop",
+                    "args": {}
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "5: Stopped running demo"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "5: Stop Running Demo",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "54"
+            },
+            "conditions": [
+                {
+                    "id": "demo.countIs",
+                    "args": {
+                        "op": ">",
+                        "value": "0"
+                    }
+                }
+            ],
+            "actions": [
+                {
+                    "id": "demo.setMove",
+                    "args": {
+                        "script": "-1",
+                        "move": "0",
+                        "pause": "0.3",
+                        "horz": "1",
+                        "vert": "0",
+                        "jump": "1",
+                        "endCoord": "=player_position(0) + 0.5f"
+                    }
+                },
+                {
+                    "id": "demo.setCamera",
+                    "args": {
+                        "script": "-1",
+                        "move": "0",
+                        "index": "0",
+                        "x": "=player_position(0)",
+                        "y": "=player_position(1) + 1.2f",
+                        "z": "=player_position(2) + 4.5f",
+                        "sx": "0",
+                        "sy": "0",
+                        "sz": "0",
+                        "time": "2.0",
+                        "giveBack": "1"
+                    }
+                },
+                {
+                    "id": "demo.setView",
+                    "args": {
+                        "script": "-1",
+                        "move": "0",
+                        "index": "0",
+                        "x": "=player_position(0)",
+                        "y": "=player_position(1)",
+                        "z": "=player_position(2)",
+                        "sx": "0",
+                        "sy": "0",
+                        "sz": "0",
+                        "time": "2.0",
+                        "giveBack": "1"
+                    }
+                },
+                {
+                    "id": "demo.setTime",
+                    "args": {
+                        "script": "-1",
+                        "move": "0",
+                        "index": "0",
+                        "pause": "0",
+                        "factor": "0.6",
+                        "time": "1.2"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "6: Edited move[0] + cam[0]/view[0]/time[0] of selected script"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "6: Edit Move/Camera/View/Time Records in Place",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "55"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "override_in"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "7: Toggled live OnInput override (jump + move right)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "7: Toggle OnInput Override",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "56"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "var.toggle",
+                    "args": {
+                        "name": "suppress_on"
+                    }
+                }
+            ],
+            "children": [
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "suppress_on"
+                            }
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "demo.suppressLevelDemos",
+                            "args": {
+                                "suppress": "1"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "8: SuppressLevelDemos = ON (applies on next level load)"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                },
+                {
+                    "event": "",
+                    "filters": {},
+                    "conditions": [
+                        {
+                            "id": "var.on",
+                            "args": {
+                                "name": "suppress_on"
+                            },
+                            "inverted": true
+                        }
+                    ],
+                    "actions": [
+                        {
+                            "id": "demo.suppressLevelDemos",
+                            "args": {
+                                "suppress": "0"
+                            }
+                        },
+                        {
+                            "id": "var.setText",
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "8: SuppressLevelDemos = OFF"
+                            }
+                        }
+                    ],
+                    "children": [],
+                    "veto": false,
+                    "enabled": true,
+                    "group": false,
+                    "name": "",
+                    "collapsed": false
+                }
+            ],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "8: Toggle SuppressLevelDemos",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "57"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.remove",
+                    "args": {
+                        "script": "-1"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "9: Removed last mod-added demo script"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "9: Remove Last Mod-Added Demo Script",
+            "collapsed": false
+        },
+        {
+            "event": "input.key",
+            "filters": {
+                "key": "48"
+            },
+            "conditions": [],
+            "actions": [
+                {
+                    "id": "demo.selectCursor",
+                    "args": {
+                        "script": "0",
+                        "move": "0",
+                        "index": "0"
+                    }
+                },
+                {
+                    "id": "var.setText",
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "0: Selected cursor (script 0, move 0, item 0)"
+                    }
+                }
+            ],
+            "children": [],
+            "veto": false,
+            "enabled": true,
+            "group": false,
+            "name": "0: Reset Inspection Cursor to Script 0",
+            "collapsed": false
+        }
+    ]
+}

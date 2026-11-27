@@ -1,0 +1,1930 @@
+[
+  {
+    "id": "monsters.count",
+    "label": "mod.expr.monsterCount",
+    "kind": "int",
+    "text": "monsters_live_count()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.killedCount",
+    "label": "mod.expr.monsterKilledCount",
+    "kind": "int",
+    "text": "monsters_killed_count()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.typeCount",
+    "label": "mod.expr.monsterTypeCount",
+    "kind": "int",
+    "text": "monsters_type_count()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePropCount",
+    "label": "mod.expr.monsterTypePropCount",
+    "kind": "int",
+    "text": "monsters_type_prop_count()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePropNameAt",
+    "label": "mod.expr.monsterTypePropNameAt",
+    "kind": "text",
+    "text": "monsters_type_prop_name_at(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.propCount",
+    "label": "mod.expr.monsterPropCount",
+    "kind": "int",
+    "text": "monsters_prop_count()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.propNameAt",
+    "label": "mod.expr.monsterPropNameAt",
+    "kind": "text",
+    "text": "monsters_prop_name_at(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.idAt",
+    "label": "mod.expr.monsterIdAt",
+    "kind": "int",
+    "text": "(int)monsters_id_at(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.indexOf",
+    "label": "mod.expr.monsterIndexOf",
+    "kind": "int",
+    "text": "monsters_index_of(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.monsterId",
+        "kind": "number",
+        "preset": "1"
+      }
+    ]
+  },
+  {
+    "id": "monsters.findId",
+    "label": "mod.expr.monsterFindId",
+    "kind": "int",
+    "text": "(int)monsters_find_id(\"skull\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.monsterKey",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.idOfDraw",
+    "label": "mod.expr.monsterIdOfDraw",
+    "kind": "int",
+    "text": "(int)monsters_id_of_draw(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "drawItem",
+        "label": "mod.p.drawItem",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.placedCount",
+    "label": "mod.expr.monsterPlacedCount",
+    "kind": "int",
+    "text": "monsters_placed_count(-1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ]
+  },
+  {
+    "id": "monsters.findPlaced",
+    "label": "mod.expr.monsterFindPlaced",
+    "kind": "int",
+    "text": "monsters_find_placed(-1, \"skull\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.monsterKey",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.kindId",
+    "label": "mod.expr.monsterKindId",
+    "kind": "int",
+    "text": "monsters_kind_id_of(\"sentinel\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "params": [
+      {
+        "key": "kindName",
+        "label": "mod.p.monsterKindName",
+        "kind": "text",
+        "preset": "sentinel"
+      }
+    ]
+  },
+  {
+    "id": "monsters.typeExistsFlag",
+    "label": "mod.expr.monsterSelTypeOk",
+    "kind": "int",
+    "text": "monsters_sel_type_ok()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeName",
+    "label": "mod.expr.monsterSelTypeName",
+    "kind": "text",
+    "text": "monsters_sel_type_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeModel",
+    "label": "mod.expr.monsterSelTypeModel",
+    "kind": "text",
+    "text": "monsters_sel_type_model()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeSpeed",
+    "label": "mod.expr.monsterSelTypeSpeed",
+    "kind": "float",
+    "text": "monsters_sel_type_speed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeSpeedUp",
+    "label": "mod.expr.monsterSelTypeSpeedUp",
+    "kind": "float",
+    "text": "monsters_sel_type_speed_up()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeVertSpeed",
+    "label": "mod.expr.monsterSelTypeVertSpeed",
+    "kind": "float",
+    "text": "monsters_sel_type_vert_speed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePartR",
+    "label": "mod.expr.monsterSelTypePartR",
+    "kind": "float",
+    "text": "monsters_sel_type_part(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePartG",
+    "label": "mod.expr.monsterSelTypePartG",
+    "kind": "float",
+    "text": "monsters_sel_type_part(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePartB",
+    "label": "mod.expr.monsterSelTypePartB",
+    "kind": "float",
+    "text": "monsters_sel_type_part(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typePartA",
+    "label": "mod.expr.monsterSelTypePartA",
+    "kind": "float",
+    "text": "monsters_sel_type_part(3)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeHardR",
+    "label": "mod.expr.monsterSelTypeHardR",
+    "kind": "float",
+    "text": "monsters_sel_type_part_hard(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeHardG",
+    "label": "mod.expr.monsterSelTypeHardG",
+    "kind": "float",
+    "text": "monsters_sel_type_part_hard(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeHardB",
+    "label": "mod.expr.monsterSelTypeHardB",
+    "kind": "float",
+    "text": "monsters_sel_type_part_hard(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeHardA",
+    "label": "mod.expr.monsterSelTypeHardA",
+    "kind": "float",
+    "text": "monsters_sel_type_part_hard(3)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes"
+  },
+  {
+    "id": "monsters.typeNumProp",
+    "label": "mod.expr.monsterTypeNumProp",
+    "kind": "float",
+    "text": "monsters_get_type_num(\"skull\", \"speed\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "speed",
+        "options": [
+          {
+            "value": "speed",
+            "label": "mod.monsters.tp.speed"
+          },
+          {
+            "value": "speed_up",
+            "label": "mod.monsters.tp.speedUp"
+          },
+          {
+            "value": "vert_speed",
+            "label": "mod.monsters.tp.vertSpeed"
+          },
+          {
+            "value": "jump",
+            "label": "mod.monsters.tp.jump"
+          },
+          {
+            "value": "jump_factor",
+            "label": "mod.monsters.tp.jumpFactor"
+          },
+          {
+            "value": "fall",
+            "label": "mod.monsters.tp.fall"
+          },
+          {
+            "value": "tex_easy",
+            "label": "mod.monsters.tp.texEasy"
+          },
+          {
+            "value": "tex_hard",
+            "label": "mod.monsters.tp.texHard"
+          },
+          {
+            "value": "model",
+            "label": "mod.monsters.tp.model"
+          },
+          {
+            "value": "animation",
+            "label": "mod.monsters.tp.animation"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.typeColorComp",
+    "label": "mod.expr.monsterTypeColorComp",
+    "kind": "float",
+    "text": "monsters_get_type_color(\"skull\", \"part_color\", 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "part_color",
+        "options": [
+          {
+            "value": "part_color",
+            "label": "mod.monsters.tp.partColor"
+          },
+          {
+            "value": "part_color_hard",
+            "label": "mod.monsters.tp.partColorHard"
+          }
+        ]
+      },
+      {
+        "key": "comp",
+        "label": "mod.p.colorComp",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.p.r"
+          },
+          {
+            "value": "1",
+            "label": "mod.p.g"
+          },
+          {
+            "value": "2",
+            "label": "mod.p.b"
+          },
+          {
+            "value": "3",
+            "label": "mod.p.a"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.typeNameProp",
+    "label": "mod.expr.monsterTypeNameProp",
+    "kind": "text",
+    "text": "monsters_get_type_name_prop(\"skull\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.selExists",
+    "label": "mod.expr.monsterSelExists",
+    "kind": "int",
+    "text": "monsters_sel_exists()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selId",
+    "label": "mod.expr.monsterSelId",
+    "kind": "int",
+    "text": "monsters_sel_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selIndex",
+    "label": "mod.expr.monsterSelIndex",
+    "kind": "int",
+    "text": "monsters_sel_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selPlacedIndex",
+    "label": "mod.expr.monsterSelPlaced",
+    "kind": "int",
+    "text": "monsters_sel_placed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selName",
+    "label": "mod.expr.monsterSelName",
+    "kind": "text",
+    "text": "monsters_sel_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selTag",
+    "label": "mod.expr.monsterSelTag",
+    "kind": "text",
+    "text": "monsters_sel_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selMoves",
+    "label": "mod.expr.monsterSelMoves",
+    "kind": "text",
+    "text": "monsters_sel_moves()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selX",
+    "label": "mod.expr.monsterSelX",
+    "kind": "float",
+    "text": "monsters_sel_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selY",
+    "label": "mod.expr.monsterSelY",
+    "kind": "float",
+    "text": "monsters_sel_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selZ",
+    "label": "mod.expr.monsterSelZ",
+    "kind": "float",
+    "text": "monsters_sel_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selLevel",
+    "label": "mod.expr.monsterSelLevel",
+    "kind": "int",
+    "text": "monsters_sel_level()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selFacing",
+    "label": "mod.expr.monsterSelFacing",
+    "kind": "int",
+    "text": "monsters_sel_facing()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selSpeed",
+    "label": "mod.expr.monsterSelSpeed",
+    "kind": "float",
+    "text": "monsters_sel_speed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selHasState",
+    "label": "mod.expr.monsterSelHasState",
+    "kind": "int",
+    "text": "monsters_sel_has_state()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selState",
+    "label": "mod.expr.monsterSelState",
+    "kind": "int",
+    "text": "monsters_sel_state()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selTimeLeft",
+    "label": "mod.expr.monsterSelTimeLeft",
+    "kind": "float",
+    "text": "monsters_sel_time_left()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selIsHard",
+    "label": "mod.expr.monsterSelIsHard",
+    "kind": "int",
+    "text": "monsters_sel_is_hard()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selIsDecor",
+    "label": "mod.expr.monsterSelIsDecor",
+    "kind": "int",
+    "text": "monsters_sel_is_decor()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimId",
+    "label": "mod.expr.monsterSelAnimId",
+    "kind": "int",
+    "text": "monsters_sel_anim_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selFrameset",
+    "label": "mod.expr.monsterSelFrameset",
+    "kind": "text",
+    "text": "monsters_sel_frameset()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selFrameA",
+    "label": "mod.expr.monsterSelFrameA",
+    "kind": "int",
+    "text": "monsters_sel_frame_a()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selFrameB",
+    "label": "mod.expr.monsterSelFrameB",
+    "kind": "int",
+    "text": "monsters_sel_frame_b()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimBlend",
+    "label": "mod.expr.monsterSelAnimBlend",
+    "kind": "float",
+    "text": "monsters_sel_anim_blend()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimSpeed",
+    "label": "mod.expr.monsterSelAnimSpeed",
+    "kind": "float",
+    "text": "monsters_sel_anim_speed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimBackwards",
+    "label": "mod.expr.monsterSelAnimBackwards",
+    "kind": "int",
+    "text": "monsters_sel_anim_backwards()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimStopped",
+    "label": "mod.expr.monsterSelAnimStopped",
+    "kind": "int",
+    "text": "monsters_sel_anim_stopped()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.selAnimFinished",
+    "label": "mod.expr.monsterSelAnimFinished",
+    "kind": "int",
+    "text": "monsters_sel_anim_finished()",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive"
+  },
+  {
+    "id": "monsters.liveNumProp",
+    "label": "mod.expr.monsterLiveNumProp",
+    "kind": "float",
+    "text": "monsters_get_live_num(0, \"speed\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "speed",
+        "options": [
+          {
+            "value": "speed",
+            "label": "mod.monsters.ep.speed"
+          },
+          {
+            "value": "speed_min",
+            "label": "mod.monsters.ep.speedMin"
+          },
+          {
+            "value": "speed_max",
+            "label": "mod.monsters.ep.speedMax"
+          },
+          {
+            "value": "facing",
+            "label": "mod.monsters.ep.facing"
+          },
+          {
+            "value": "hard",
+            "label": "mod.monsters.ep.hard"
+          },
+          {
+            "value": "x",
+            "label": "mod.monsters.ep.x"
+          },
+          {
+            "value": "y",
+            "label": "mod.monsters.ep.y"
+          },
+          {
+            "value": "z",
+            "label": "mod.monsters.ep.z"
+          },
+          {
+            "value": "accel",
+            "label": "mod.monsters.ep.accel"
+          },
+          {
+            "value": "gravity",
+            "label": "mod.monsters.ep.gravity"
+          },
+          {
+            "value": "fall_speed",
+            "label": "mod.monsters.ep.fallSpeed"
+          },
+          {
+            "value": "velocity",
+            "label": "mod.monsters.ep.velocity"
+          },
+          {
+            "value": "vert_velocity",
+            "label": "mod.monsters.ep.vertVelocity"
+          },
+          {
+            "value": "height",
+            "label": "mod.monsters.ep.height"
+          },
+          {
+            "value": "move_state",
+            "label": "mod.monsters.ep.moveState"
+          },
+          {
+            "value": "pitch",
+            "label": "mod.monsters.ep.pitch"
+          },
+          {
+            "value": "yaw",
+            "label": "mod.monsters.ep.yaw"
+          },
+          {
+            "value": "roll",
+            "label": "mod.monsters.ep.roll"
+          },
+          {
+            "value": "pitch_to",
+            "label": "mod.monsters.ep.pitchTo"
+          },
+          {
+            "value": "yaw_to",
+            "label": "mod.monsters.ep.yawTo"
+          },
+          {
+            "value": "turns",
+            "label": "mod.monsters.ep.turns"
+          },
+          {
+            "value": "blend",
+            "label": "mod.monsters.ep.blend"
+          },
+          {
+            "value": "spawn_speed",
+            "label": "mod.monsters.mp.spawnSpeed"
+          },
+          {
+            "value": "state",
+            "label": "mod.monsters.mp.state"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.monsters.mp.timeLeft"
+          },
+          {
+            "value": "level",
+            "label": "mod.monsters.mp.level"
+          },
+          {
+            "value": "dir",
+            "label": "mod.monsters.mp.dir"
+          },
+          {
+            "value": "radius",
+            "label": "mod.monsters.mp.radius"
+          },
+          {
+            "value": "phase",
+            "label": "mod.monsters.mp.phase"
+          },
+          {
+            "value": "attack_dist",
+            "label": "mod.monsters.mp.attackDist"
+          },
+          {
+            "value": "walk_state",
+            "label": "mod.monsters.mp.walkState"
+          },
+          {
+            "value": "walk_left",
+            "label": "mod.monsters.mp.walkLeft"
+          },
+          {
+            "value": "pos_lerp",
+            "label": "mod.monsters.mp.posLerp"
+          },
+          {
+            "value": "live",
+            "label": "mod.monsters.mp.live"
+          },
+          {
+            "value": "decor",
+            "label": "mod.monsters.mp.decor"
+          },
+          {
+            "value": "model",
+            "label": "mod.monsters.ep.model"
+          },
+          {
+            "value": "texture",
+            "label": "mod.monsters.ep.texture"
+          },
+          {
+            "value": "model2",
+            "label": "mod.monsters.ep.model2"
+          },
+          {
+            "value": "texture2",
+            "label": "mod.monsters.ep.texture2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.liveVecComp",
+    "label": "mod.expr.monsterLiveVecComp",
+    "kind": "float",
+    "text": "monsters_get_live_vec(0, \"scale\", 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "scale",
+        "options": [
+          {
+            "value": "attack_time",
+            "label": "mod.monsters.mp.attackTime"
+          },
+          {
+            "value": "bluff_time",
+            "label": "mod.monsters.mp.bluffTime"
+          },
+          {
+            "value": "walk_time",
+            "label": "mod.monsters.mp.walkTime"
+          },
+          {
+            "value": "walk_wait",
+            "label": "mod.monsters.mp.walkWait"
+          },
+          {
+            "value": "sit_time",
+            "label": "mod.monsters.mp.sitTime"
+          },
+          {
+            "value": "wait_time",
+            "label": "mod.monsters.mp.waitTime"
+          },
+          {
+            "value": "scale",
+            "label": "mod.monsters.ep.scale"
+          },
+          {
+            "value": "axis",
+            "label": "mod.monsters.mp.axis"
+          }
+        ]
+      },
+      {
+        "key": "comp",
+        "label": "mod.p.vecComp",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.monsters.comp.0"
+          },
+          {
+            "value": "1",
+            "label": "mod.monsters.comp.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.monsters.comp.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.liveTagProp",
+    "label": "mod.expr.monsterLiveTagProp",
+    "kind": "text",
+    "text": "monsters_get_live_tag_prop(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.plExists",
+    "label": "mod.expr.monsterPlExists",
+    "kind": "int",
+    "text": "monsters_pl_exists()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plRoom",
+    "label": "mod.expr.monsterPlRoom",
+    "kind": "int",
+    "text": "monsters_pl_room()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plIndex",
+    "label": "mod.expr.monsterPlIndex",
+    "kind": "int",
+    "text": "monsters_pl_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plLiveIndex",
+    "label": "mod.expr.monsterPlLiveIndex",
+    "kind": "int",
+    "text": "monsters_pl_live_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plName",
+    "label": "mod.expr.monsterPlName",
+    "kind": "text",
+    "text": "monsters_pl_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plTag",
+    "label": "mod.expr.monsterPlTag",
+    "kind": "text",
+    "text": "monsters_pl_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plX",
+    "label": "mod.expr.monsterPlX",
+    "kind": "float",
+    "text": "monsters_pl_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plY",
+    "label": "mod.expr.monsterPlY",
+    "kind": "float",
+    "text": "monsters_pl_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plZ",
+    "label": "mod.expr.monsterPlZ",
+    "kind": "float",
+    "text": "monsters_pl_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plLevel",
+    "label": "mod.expr.monsterPlLevel",
+    "kind": "int",
+    "text": "monsters_pl_level()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plFacing",
+    "label": "mod.expr.monsterPlFacing",
+    "kind": "int",
+    "text": "monsters_pl_facing()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plSpeed",
+    "label": "mod.expr.monsterPlSpeed",
+    "kind": "float",
+    "text": "monsters_pl_speed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plIsHard",
+    "label": "mod.expr.monsterPlIsHard",
+    "kind": "int",
+    "text": "monsters_pl_is_hard()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.plIsDecor",
+    "label": "mod.expr.monsterPlIsDecor",
+    "kind": "int",
+    "text": "monsters_pl_is_decor()",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced"
+  },
+  {
+    "id": "monsters.placedNumProp",
+    "label": "mod.expr.monsterPlacedNumProp",
+    "kind": "float",
+    "text": "monsters_get_placed_num(-1, 0, \"spawn_speed\")",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "spawn_speed",
+        "options": [
+          {
+            "value": "spawn_speed",
+            "label": "mod.monsters.mp.spawnSpeed"
+          },
+          {
+            "value": "state",
+            "label": "mod.monsters.mp.state"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.monsters.mp.timeLeft"
+          },
+          {
+            "value": "level",
+            "label": "mod.monsters.mp.level"
+          },
+          {
+            "value": "dir",
+            "label": "mod.monsters.mp.dir"
+          },
+          {
+            "value": "radius",
+            "label": "mod.monsters.mp.radius"
+          },
+          {
+            "value": "phase",
+            "label": "mod.monsters.mp.phase"
+          },
+          {
+            "value": "attack_dist",
+            "label": "mod.monsters.mp.attackDist"
+          },
+          {
+            "value": "walk_state",
+            "label": "mod.monsters.mp.walkState"
+          },
+          {
+            "value": "walk_left",
+            "label": "mod.monsters.mp.walkLeft"
+          },
+          {
+            "value": "pos_lerp",
+            "label": "mod.monsters.mp.posLerp"
+          },
+          {
+            "value": "live",
+            "label": "mod.monsters.mp.live"
+          },
+          {
+            "value": "decor",
+            "label": "mod.monsters.mp.decor"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.placedVecComp",
+    "label": "mod.expr.monsterPlacedVecComp",
+    "kind": "float",
+    "text": "monsters_get_placed_vec(-1, 0, \"walk_time\", 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "walk_time",
+        "options": [
+          {
+            "value": "attack_time",
+            "label": "mod.monsters.mp.attackTime"
+          },
+          {
+            "value": "bluff_time",
+            "label": "mod.monsters.mp.bluffTime"
+          },
+          {
+            "value": "walk_time",
+            "label": "mod.monsters.mp.walkTime"
+          },
+          {
+            "value": "walk_wait",
+            "label": "mod.monsters.mp.walkWait"
+          },
+          {
+            "value": "sit_time",
+            "label": "mod.monsters.mp.sitTime"
+          },
+          {
+            "value": "wait_time",
+            "label": "mod.monsters.mp.waitTime"
+          },
+          {
+            "value": "axis",
+            "label": "mod.monsters.mp.axis"
+          }
+        ]
+      },
+      {
+        "key": "comp",
+        "label": "mod.p.vecComp",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.monsters.comp.0"
+          },
+          {
+            "value": "1",
+            "label": "mod.monsters.comp.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.monsters.comp.2"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "monsters.placedTagProp",
+    "label": "mod.expr.monsterPlacedTagProp",
+    "kind": "text",
+    "text": "monsters_get_placed_tag(-1, 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ]
+  },
+  {
+    "id": "monsters.boxMinX",
+    "label": "mod.expr.monsterBoxMinX",
+    "kind": "float",
+    "text": "monsters_box_min(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.boxMinY",
+    "label": "mod.expr.monsterBoxMinY",
+    "kind": "float",
+    "text": "monsters_box_min(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.boxMinZ",
+    "label": "mod.expr.monsterBoxMinZ",
+    "kind": "float",
+    "text": "monsters_box_min(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.boxMaxX",
+    "label": "mod.expr.monsterBoxMaxX",
+    "kind": "float",
+    "text": "monsters_box_max(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.boxMaxY",
+    "label": "mod.expr.monsterBoxMaxY",
+    "kind": "float",
+    "text": "monsters_box_max(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.boxMaxZ",
+    "label": "mod.expr.monsterBoxMaxZ",
+    "kind": "float",
+    "text": "monsters_box_max(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes"
+  },
+  {
+    "id": "monsters.killId",
+    "label": "mod.expr.monsterKillId",
+    "kind": "int",
+    "text": "monsters_kill_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killName",
+    "label": "mod.expr.monsterKillName",
+    "kind": "text",
+    "text": "monsters_kill_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killTag",
+    "label": "mod.expr.monsterKillTag",
+    "kind": "text",
+    "text": "monsters_kill_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killLevel",
+    "label": "mod.expr.monsterKillLevel",
+    "kind": "int",
+    "text": "monsters_kill_level()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killIsDecor",
+    "label": "mod.expr.monsterKillDecor",
+    "kind": "int",
+    "text": "monsters_kill_is_decor()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killX",
+    "label": "mod.expr.monsterKillX",
+    "kind": "float",
+    "text": "monsters_kill_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killY",
+    "label": "mod.expr.monsterKillY",
+    "kind": "float",
+    "text": "monsters_kill_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.killZ",
+    "label": "mod.expr.monsterKillZ",
+    "kind": "float",
+    "text": "monsters_kill_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_kill"
+  },
+  {
+    "id": "monsters.touchId",
+    "label": "mod.expr.monsterTouchId",
+    "kind": "int",
+    "text": "monsters_touch_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchIndex",
+    "label": "mod.expr.monsterTouchIndex",
+    "kind": "int",
+    "text": "monsters_touch_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchName",
+    "label": "mod.expr.monsterTouchName",
+    "kind": "text",
+    "text": "monsters_touch_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchTag",
+    "label": "mod.expr.monsterTouchTag",
+    "kind": "text",
+    "text": "monsters_touch_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchIsPlayerVal",
+    "label": "mod.expr.monsterTouchIsPlayer",
+    "kind": "int",
+    "text": "monsters_touch_is_player()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.toucherKind",
+    "label": "mod.expr.monsterToucherKind",
+    "kind": "int",
+    "text": "monsters_toucher_kind()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchSide",
+    "label": "mod.expr.monsterTouchSide",
+    "kind": "int",
+    "text": "monsters_touch_side()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchX",
+    "label": "mod.expr.monsterTouchX",
+    "kind": "float",
+    "text": "monsters_touch_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchY",
+    "label": "mod.expr.monsterTouchY",
+    "kind": "float",
+    "text": "monsters_touch_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.touchZ",
+    "label": "mod.expr.monsterTouchZ",
+    "kind": "float",
+    "text": "monsters_touch_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_touch"
+  },
+  {
+    "id": "monsters.spawnId",
+    "label": "mod.expr.monsterSpawnId",
+    "kind": "int",
+    "text": "monsters_spawn_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnIndex",
+    "label": "mod.expr.monsterSpawnIndex",
+    "kind": "int",
+    "text": "monsters_spawn_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnPlaced",
+    "label": "mod.expr.monsterSpawnPlaced",
+    "kind": "int",
+    "text": "monsters_spawn_placed()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnName",
+    "label": "mod.expr.monsterSpawnName",
+    "kind": "text",
+    "text": "monsters_spawn_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnTag",
+    "label": "mod.expr.monsterSpawnTag",
+    "kind": "text",
+    "text": "monsters_spawn_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnLevel",
+    "label": "mod.expr.monsterSpawnLevel",
+    "kind": "int",
+    "text": "monsters_spawn_level()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnIsDecor",
+    "label": "mod.expr.monsterSpawnDecor",
+    "kind": "int",
+    "text": "monsters_spawn_is_decor()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnX",
+    "label": "mod.expr.monsterSpawnX",
+    "kind": "float",
+    "text": "monsters_spawn_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnY",
+    "label": "mod.expr.monsterSpawnY",
+    "kind": "float",
+    "text": "monsters_spawn_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.spawnZ",
+    "label": "mod.expr.monsterSpawnZ",
+    "kind": "float",
+    "text": "monsters_spawn_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_spawn"
+  },
+  {
+    "id": "monsters.placeRoom",
+    "label": "mod.expr.monsterPlaceRoom",
+    "kind": "int",
+    "text": "monsters_place_room()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeName",
+    "label": "mod.expr.monsterPlaceName",
+    "kind": "text",
+    "text": "monsters_place_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeTag",
+    "label": "mod.expr.monsterPlaceTag",
+    "kind": "text",
+    "text": "monsters_place_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeLevel",
+    "label": "mod.expr.monsterPlaceLevel",
+    "kind": "int",
+    "text": "monsters_place_level()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeIsDecor",
+    "label": "mod.expr.monsterPlaceDecor",
+    "kind": "int",
+    "text": "monsters_place_is_decor()",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeX",
+    "label": "mod.expr.monsterPlaceX",
+    "kind": "float",
+    "text": "monsters_place_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeY",
+    "label": "mod.expr.monsterPlaceY",
+    "kind": "float",
+    "text": "monsters_place_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.placeZ",
+    "label": "mod.expr.monsterPlaceZ",
+    "kind": "float",
+    "text": "monsters_place_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "needs": "monster_place"
+  },
+  {
+    "id": "monsters.thinkId",
+    "label": "mod.expr.monsterThinkId",
+    "kind": "int",
+    "text": "monsters_think_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkIndex",
+    "label": "mod.expr.monsterThinkIndex",
+    "kind": "int",
+    "text": "monsters_think_index()",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkDelta",
+    "label": "mod.expr.monsterThinkDelta",
+    "kind": "float",
+    "text": "monsters_think_delta()",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkFacing",
+    "label": "mod.expr.monsterThinkFacing",
+    "kind": "int",
+    "text": "monsters_think_facing()",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkX",
+    "label": "mod.expr.monsterThinkX",
+    "kind": "float",
+    "text": "monsters_think_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkY",
+    "label": "mod.expr.monsterThinkY",
+    "kind": "float",
+    "text": "monsters_think_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.thinkZ",
+    "label": "mod.expr.monsterThinkZ",
+    "kind": "float",
+    "text": "monsters_think_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "needs": "monster_think"
+  },
+  {
+    "id": "monsters.bodyKindId",
+    "label": "mod.expr.monsterBodyKindId",
+    "kind": "int",
+    "text": "monsters_body_kind_id()",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyName",
+    "label": "mod.expr.monsterBodyName",
+    "kind": "text",
+    "text": "monsters_body_name()",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyTag",
+    "label": "mod.expr.monsterBodyTag",
+    "kind": "text",
+    "text": "monsters_body_tag()",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyFacing",
+    "label": "mod.expr.monsterBodyFacing",
+    "kind": "int",
+    "text": "monsters_body_facing()",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyX",
+    "label": "mod.expr.monsterBodyX",
+    "kind": "float",
+    "text": "monsters_body_pos(0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyY",
+    "label": "mod.expr.monsterBodyY",
+    "kind": "float",
+    "text": "monsters_body_pos(1)",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  },
+  {
+    "id": "monsters.bodyZ",
+    "label": "mod.expr.monsterBodyZ",
+    "kind": "float",
+    "text": "monsters_body_pos(2)",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "needs": "monster_body"
+  }
+]

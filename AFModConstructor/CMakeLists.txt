@@ -88,6 +88,8 @@ add_custom_command(TARGET AFModConstructor POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/assets/fonts $<TARGET_FILE_DIR:AFModConstructor>/fonts
     COMMAND ${CMAKE_COMMAND} -E copy_directory
+        ${CMAKE_CURRENT_SOURCE_DIR}/assets/icons $<TARGET_FILE_DIR:AFModConstructor>/icons
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/assets/lang $<TARGET_FILE_DIR:AFModConstructor>/lang
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         ${CMAKE_CURRENT_SOURCE_DIR}/assets/themes $<TARGET_FILE_DIR:AFModConstructor>/themes

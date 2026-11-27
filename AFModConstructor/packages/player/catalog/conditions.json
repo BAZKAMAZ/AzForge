@@ -1,24 +1,176 @@
 [
   {
-    "id": "player.scoreAtLeast",
-    "label": "mod.cond.scoreAtLeast",
+    "id": "player.isHere",
+    "label": "mod.cond.playerIsHere",
+    "call": "Player.IsHere",
     "group": "player",
-    "params": [
-      {
-        "key": "points",
-        "label": "mod.p.points",
-        "kind": "number",
-        "preset": "1000"
-      }
-    ],
-    "emit": "(API->player && API->player->GetScore(SELF) >= %points%)",
-    "section": "mod.sec.score"
+    "section": "mod.sec.playerPresence",
+    "params": [],
+    "emit": "(player_is_here() != 0)"
   },
   {
-    "id": "player.livesAtMost",
-    "label": "mod.cond.livesAtMost",
+    "id": "player.isDead",
+    "label": "mod.cond.playerIsDead",
+    "call": "Player.Get",
     "group": "player",
+    "section": "mod.sec.playerPresence",
+    "params": [],
+    "emit": "(player_flag(0) != 0)"
+  },
+  {
+    "id": "player.isCrashed",
+    "label": "mod.cond.playerIsCrashed",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "params": [],
+    "emit": "(player_flag(1) != 0)"
+  },
+  {
+    "id": "player.isOnFire",
+    "label": "mod.cond.playerIsOnFire",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "params": [],
+    "emit": "(player_flag(2) != 0)"
+  },
+  {
+    "id": "player.isShocked",
+    "label": "mod.cond.playerIsShocked",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "params": [],
+    "emit": "(player_flag(3) != 0)"
+  },
+  {
+    "id": "player.stateIs",
+    "label": "mod.cond.playerStateIs",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
     "params": [
+      {
+        "key": "state",
+        "label": "mod.p.playerState",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_STATE_ONFOOT",
+        "options": [
+          { "value": "AMOD_PLAYER_STATE_ONFOOT", "label": "mod.player.state.onfoot" },
+          { "value": "AMOD_PLAYER_STATE_LADDER", "label": "mod.player.state.ladder" },
+          { "value": "AMOD_PLAYER_STATE_CHAIN", "label": "mod.player.state.chain" },
+          { "value": "AMOD_PLAYER_STATE_PIPE", "label": "mod.player.state.pipe" }
+        ]
+      }
+    ],
+    "emit": "(player_is_here() != 0 && player_int(1) == (int)(%state%))"
+  },
+  {
+    "id": "player.subStateIs",
+    "label": "mod.cond.playerSubStateIs",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "params": [
+      {
+        "key": "subState",
+        "label": "mod.p.playerSubState",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_SUB_STILL",
+        "options": [
+          { "value": "AMOD_PLAYER_SUB_STILL", "label": "mod.player.sub.still" },
+          { "value": "AMOD_PLAYER_SUB_FALLING", "label": "mod.player.sub.falling" },
+          { "value": "AMOD_PLAYER_SUB_WALK_LEFT", "label": "mod.player.sub.walkLeft" },
+          { "value": "AMOD_PLAYER_SUB_WALK_RIGHT", "label": "mod.player.sub.walkRight" },
+          { "value": "AMOD_PLAYER_SUB_CLIMB_UP", "label": "mod.player.sub.climbUp" },
+          { "value": "AMOD_PLAYER_SUB_CLIMB_DOWN", "label": "mod.player.sub.climbDown" },
+          { "value": "AMOD_PLAYER_SUB_DROPPED", "label": "mod.player.sub.dropped" }
+        ]
+      }
+    ],
+    "emit": "(player_is_here() != 0 && player_int(2) == (int)(%subState%))"
+  },
+  {
+    "id": "player.facingIs",
+    "label": "mod.cond.playerFacingIs",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [
+      {
+        "key": "dir",
+        "label": "mod.p.playerFacing",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "0", "label": "mod.player.face.left" },
+          { "value": "1", "label": "mod.player.face.right" }
+        ]
+      }
+    ],
+    "emit": "(player_is_here() != 0 && player_facing_dir() == (int)(%dir%))"
+  },
+  {
+    "id": "player.collides",
+    "label": "mod.cond.playerCollides",
+    "call": "Player.Collides",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [],
+    "emit": "(player_collides() != 0)"
+  },
+  {
+    "id": "player.fallSpeedIs",
+    "label": "mod.cond.playerFallSpeed",
+    "call": "Player.Get",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" }
+        ]
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.playerFallSpeed",
+        "kind": "number",
+        "preset": "0.05"
+      }
+    ],
+    "emit": "(player_num(7) %op% (float)(%speed%))"
+  },
+  {
+    "id": "player.livesCompare",
+    "label": "mod.cond.playerLivesCmp",
+    "call": "Player.GetLives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "<=",
+        "options": [
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": ">=", "label": "mod.op.ge" }
+        ]
+      },
       {
         "key": "lives",
         "label": "mod.p.lives",
@@ -26,7 +178,149 @@
         "preset": "1"
       }
     ],
-    "emit": "(API->player && API->player->GetLives(SELF) <= %lives%)",
-    "section": "mod.sec.life"
+    "emit": "(API->player && API->player->GetLives(SELF) %op% (int)(%lives%))"
+  },
+  {
+    "id": "player.deathKindIs",
+    "label": "mod.cond.playerDeathKind",
+    "call": "Player.SetDeathHandler",
+    "group": "player",
+    "section": "mod.sec.life",
+    "needs": "player_death",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.playerDeathKind",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_DEATH_PLAIN",
+        "options": [
+          { "value": "AMOD_PLAYER_DEATH_PLAIN", "label": "mod.player.death.plain" },
+          { "value": "AMOD_PLAYER_DEATH_CRASHED", "label": "mod.player.death.crashed" },
+          { "value": "AMOD_PLAYER_DEATH_AT_ONCE", "label": "mod.player.death.atOnce" }
+        ]
+      }
+    ],
+    "emit": "(player_death_int(0) == (int)(%kind%))"
+  },
+  {
+    "id": "player.scoreCompare",
+    "label": "mod.cond.playerScoreCmp",
+    "call": "Player.GetScore",
+    "group": "player",
+    "section": "mod.sec.score",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          { "value": ">=", "label": "mod.op.ge" },
+          { "value": ">", "label": "mod.op.gt" },
+          { "value": "<=", "label": "mod.op.le" },
+          { "value": "<", "label": "mod.op.lt" },
+          { "value": "==", "label": "mod.op.eq" },
+          { "value": "!=", "label": "mod.op.ne" }
+        ]
+      },
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "1000"
+      }
+    ],
+    "emit": "(API->player && API->player->GetScore(SELF) %op% (int)(%points%))"
+  },
+  {
+    "id": "player.driverIs",
+    "label": "mod.cond.playerDriverIs",
+    "call": "Player.Driver",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.playerDriverMode",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_DRIVER_GAME",
+        "options": [
+          { "value": "AMOD_PLAYER_DRIVER_GAME", "label": "mod.player.drv.game" },
+          { "value": "AMOD_PLAYER_DRIVER_MOD", "label": "mod.player.drv.mod" },
+          { "value": "AMOD_PLAYER_DRIVER_BOTH", "label": "mod.player.drv.both" },
+          { "value": "AMOD_PLAYER_DRIVER_NOBODY", "label": "mod.player.drv.nobody" }
+        ]
+      }
+    ],
+    "emit": "(player_driver() == (int)(%mode%))"
+  },
+  {
+    "id": "player.placeCellIs",
+    "label": "mod.cond.playerPlaceCellIs",
+    "call": "Player.GetPlace",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "params": [
+      {
+        "key": "col",
+        "label": "mod.p.playerPlaceCol",
+        "kind": "number",
+        "preset": "2"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.playerPlaceRow",
+        "kind": "number",
+        "preset": "4"
+      },
+      {
+        "key": "type",
+        "label": "mod.p.playerCellType",
+        "kind": "enum",
+        "preset": "32",
+        "options": [
+          { "value": "32", "label": "mod.player.cell.empty" },
+          { "value": "87", "label": "mod.player.cell.wall" },
+          { "value": "119", "label": "mod.player.cell.wallDecor" },
+          { "value": "45", "label": "mod.player.cell.ladder" },
+          { "value": "61", "label": "mod.player.cell.ladderAlt" },
+          { "value": "67", "label": "mod.player.cell.ladderCross" },
+          { "value": "73", "label": "mod.player.cell.chain" },
+          { "value": "105", "label": "mod.player.cell.chainAlt" },
+          { "value": "80", "label": "mod.player.cell.chainCross" },
+          { "value": "124", "label": "mod.player.cell.pipe" },
+          { "value": "70", "label": "mod.player.cell.fire" },
+          { "value": "65", "label": "mod.player.cell.doorWhite" },
+          { "value": "66", "label": "mod.player.cell.doorBlue" },
+          { "value": "68", "label": "mod.player.cell.doorGreen" },
+          { "value": "69", "label": "mod.player.cell.exit" },
+          { "value": "49", "label": "mod.player.cell.bonusFloor" }
+        ]
+      }
+    ],
+    "emit": "(player_place_cell((int)(%col%), (int)(%row%)) == (int)(%type%))"
+  },
+  {
+    "id": "player.ask",
+    "label": "mod.cond.playerAsk",
+    "call": "Player.Ask",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "params": [
+      {
+        "key": "question",
+        "label": "mod.p.playerQuestion",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_ASK_FOOTING",
+        "options": [
+          { "value": "AMOD_PLAYER_ASK_FOOTING", "label": "mod.player.ask.footing" },
+          { "value": "AMOD_PLAYER_ASK_CLIMB", "label": "mod.player.ask.climb" },
+          { "value": "AMOD_PLAYER_ASK_LEFT", "label": "mod.player.ask.left" },
+          { "value": "AMOD_PLAYER_ASK_RIGHT", "label": "mod.player.ask.right" },
+          { "value": "AMOD_PLAYER_ASK_PIPE", "label": "mod.player.ask.pipe" }
+        ]
+      }
+    ],
+    "emit": "(player_ask(%question%) > 0)"
   }
 ]

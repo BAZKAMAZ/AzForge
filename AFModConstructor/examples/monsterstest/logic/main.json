@@ -1,0 +1,2810 @@
+{
+    "name": "main",
+    "rules": [
+        {
+            "actions": [
+                {
+                    "args": {
+                        "basedOn": "skull",
+                        "name": "frost_skull",
+                        "speed": "0.75",
+                        "speedUp": "0.75",
+                        "texEasy": "textures/monster/cherv_hard.jpg",
+                        "texHard": "textures/monster/cherv_hard.jpg"
+                    },
+                    "enabled": true,
+                    "id": "monsters.defineType"
+                },
+                {
+                    "args": {
+                        "key": "speed",
+                        "name": "frost_skull",
+                        "value": "0.80"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setTypeNumberProp"
+                },
+                {
+                    "args": {
+                        "b": "1.0",
+                        "g": "0.85",
+                        "key": "part_color",
+                        "name": "frost_skull",
+                        "r": "0.25"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setTypeColorProp"
+                },
+                {
+                    "args": {
+                        "key": "tex_easy",
+                        "name": "frost_skull",
+                        "path": "textures/monster/cherv_hard.jpg"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setTypeAssetProp"
+                },
+                {
+                    "args": {
+                        "maxX": "0.06",
+                        "maxY": "0.15",
+                        "maxZ": "0.06",
+                        "minX": "-0.06",
+                        "minY": "0.0",
+                        "minZ": "-0.06",
+                        "name": "frost_skull",
+                        "which": "AMOD_MONSTER_BOX_OBJECT"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setTypeBox"
+                },
+                {
+                    "args": {
+                        "movesLike": "AMOD_MONSTER_MOVES_SKULL",
+                        "name": "frost_skull"
+                    },
+                    "enabled": true,
+                    "id": "monsters.defineKind"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "system.modInit",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "0"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        },
+                        {
+                            "args": {
+                                "name": "loop_live_cnt",
+                                "value": "0"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        },
+                        {
+                            "args": {
+                                "name": "loop_pl_cnt",
+                                "value": "0"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        },
+                        {
+                            "args": {
+                                "name": "first_id",
+                                "value": "=(int)monsters_id_at(0)"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        }
+                    ],
+                    "conditions": [],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "st_here",
+                                "value": "IN ROOM"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        },
+                        {
+                            "args": {
+                                "name": "p_col",
+                                "value": "=(int)((player_position(0) + 2.0f) / 0.1f)"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        },
+                        {
+                            "args": {
+                                "name": "p_row",
+                                "value": "=(int)((1.45f - player_position(1)) / 0.1f)"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        },
+                        {
+                            "args": {
+                                "name": "sp_col",
+                                "value": "=(p_col < 35 ? p_col + 2 : p_col - 2)"
+                            },
+                            "enabled": true,
+                            "id": "var.set"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "player.isHere",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "st_here",
+                                "value": "MENU"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "player.isHere",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "1"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "count": "0",
+                                "op": ">"
+                            },
+                            "enabled": true,
+                            "id": "monsters.countCompare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "2"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "count": "0",
+                                "op": ">"
+                            },
+                            "enabled": true,
+                            "id": "monsters.killedCountCompare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "4"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "count": "10",
+                                "op": ">="
+                            },
+                            "enabled": true,
+                            "id": "monsters.typeCountCompare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "8"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "frost_skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.typeExists",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "16"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "key": "speed",
+                                "name": "skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.typeHasProp",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "32"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "by": "0",
+                                "index": "0"
+                            },
+                            "enabled": true,
+                            "id": "monsters.liveAlive",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "64"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "by": "1",
+                                "id": "=first_id"
+                            },
+                            "enabled": true,
+                            "id": "monsters.liveAlive",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "128"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "by": "2",
+                                "key": "skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.liveAlive",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "256"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "index": "0",
+                                "key": "speed"
+                            },
+                            "enabled": true,
+                            "id": "monsters.liveHasProp",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "512"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "index": "0",
+                                "key": "speed",
+                                "op": ">=",
+                                "value": "0"
+                            },
+                            "enabled": true,
+                            "id": "monsters.liveNumPropCompare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "1024"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "count": "0",
+                                "op": ">"
+                            },
+                            "enabled": true,
+                            "id": "monsters.placedCountCompare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "2048"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "key": "skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.placedKeyExists",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "loop_live_cnt",
+                                "value": "1"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "var": "m_lv_i"
+                            },
+                            "enabled": true,
+                            "id": "monsters.forEachLive",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "loop_pl_cnt",
+                                "value": "1"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "var": "m_pl_i"
+                            },
+                            "enabled": true,
+                            "id": "monsters.forEachPlaced",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "by": "0",
+                                "name": "frost_skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectType"
+                        },
+                        {
+                            "args": {
+                                "by": "1",
+                                "index": "=type_cursor"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectType"
+                        },
+                        {
+                            "args": {
+                                "name": "skull",
+                                "which": "AMOD_MONSTER_BOX_MAIN"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectTypeBox"
+                        },
+                        {
+                            "args": {
+                                "by": "2",
+                                "key": "frost_skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectLive"
+                        },
+                        {
+                            "args": {
+                                "by": "1",
+                                "id": "=first_id"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectLive"
+                        },
+                        {
+                            "args": {
+                                "by": "0",
+                                "index": "0"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectLive"
+                        },
+                        {
+                            "args": {
+                                "index": "0",
+                                "which": "AMOD_MONSTER_BOX_OBJECT"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectLiveBox"
+                        },
+                        {
+                            "args": {
+                                "index": "0"
+                            },
+                            "enabled": true,
+                            "id": "monsters.selectPlaced"
+                        },
+                        {
+                            "args": {
+                                "name": "probe_misc",
+                                "value": "fnd:{#(int)monsters_find_id(\"skull\")} idx:{#monsters_index_of(1)} fpl:{#monsters_find_placed(-1, \"skull\")} drw:{#(int)monsters_id_of_draw(0)} kid:{#monsters_kind_id_of(\"sentinel\")}"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "cond_mask",
+                                "value": "4096"
+                            },
+                            "enabled": true,
+                            "id": "var.add"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "monsters.boxLoaded",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [],
+                    "children": [
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.4",
+                                        "font": "",
+                                        "g": "0.88",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "=== MONSTERS SHOWCASE [Page 1/3: Live Room & Spawner] ([F1] HUD [F2] Page [F3] Type) ===",
+                                        "x": "16",
+                                        "y": "14"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "State: {st_here} | Cell:({p_col},{p_row}) | Live:{#monsters_live_count()} (loop:{loop_live_cnt}) | Killed:{#monsters_killed_count()} | Placed:{#monsters_placed_count(-1)} (loop:{loop_pl_cnt}) | Mask:{cond_mask}",
+                                        "x": "16",
+                                        "y": "34"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "1.0",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "0.75",
+                                        "scale": "0.42",
+                                        "text": "Live #0 ok={#monsters_sel_exists()} id={#monsters_sel_id()} idx={#monsters_sel_index()} pl={#monsters_sel_placed()} name={$monsters_sel_name()} tag={$monsters_sel_tag()} moves={$monsters_sel_moves()}",
+                                        "x": "16",
+                                        "y": "52"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Pos:({~monsters_sel_pos(0)}, {~monsters_sel_pos(1)}, {~monsters_sel_pos(2)}) lvl={#monsters_sel_level()} dir={#monsters_sel_facing()} spd={~monsters_sel_speed()} hard={#monsters_sel_is_hard()} decor={#monsters_sel_is_decor()}",
+                                        "x": "16",
+                                        "y": "70"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Cycle: has={#monsters_sel_has_state()} st={#monsters_sel_state()} left={~monsters_sel_time_left()} | Anim id={#monsters_sel_anim_id()} set={$monsters_sel_frameset()} fr={#monsters_sel_frame_a()}->{#monsters_sel_frame_b()} b={~monsters_sel_anim_blend()}",
+                                        "x": "16",
+                                        "y": "88"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Anim spd={~monsters_sel_anim_speed()} rev={#monsters_sel_anim_backwards()} stop={#monsters_sel_anim_stopped()} fin={#monsters_sel_anim_finished()} | Box:({~monsters_box_min(0)},{~monsters_box_min(1)},{~monsters_box_min(2)})..({~monsters_box_max(0)},{~monsters_box_max(1)},{~monsters_box_max(2)})",
+                                        "x": "16",
+                                        "y": "106"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.78",
+                                        "font": "",
+                                        "g": "1.0",
+                                        "r": "0.72",
+                                        "scale": "0.42",
+                                        "text": "[1] Level1/Spider [2] frost_skull [3] sentinel Kind [4] mummy2 (+opts) [5] Mutate #0",
+                                        "x": "16",
+                                        "y": "126"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.78",
+                                        "font": "",
+                                        "g": "1.0",
+                                        "r": "0.72",
+                                        "scale": "0.42",
+                                        "text": "[6] Borrow #0 [7] Return #0 [8] KillMode:{kill_mode} [9] TouchMode:{touch_mode} [0] Kill #0 [K] KillKey/ID [R] Rm/KillIn",
+                                        "x": "16",
+                                        "y": "144"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.65",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "Last: {last_cmd}",
+                                        "x": "16",
+                                        "y": "164"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "0"
+                                    },
+                                    "enabled": true,
+                                    "id": "var.compare",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        },
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.4",
+                                        "font": "",
+                                        "g": "0.88",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "=== MONSTERS SHOWCASE [Page 2/3: Types, Properties & Placements] ([F3] Cursor #{type_cursor}) ===",
+                                        "x": "16",
+                                        "y": "14"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Types:{#monsters_type_count()} | TypeProps:{#monsters_type_prop_count()} [0]={$monsters_type_prop_name_at(0)} | LiveProps:{#monsters_prop_count()} [0]={$monsters_prop_name_at(0)}",
+                                        "x": "16",
+                                        "y": "34"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "1.0",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "0.75",
+                                        "scale": "0.42",
+                                        "text": "Type[{type_cursor}] ok={#monsters_sel_type_ok()} name={$monsters_sel_type_name()} (prop={$monsters_get_type_name_prop(\"skull\")}) mdl={$monsters_sel_type_model()}",
+                                        "x": "16",
+                                        "y": "52"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Speeds: floor={~monsters_sel_type_speed()} up={~monsters_sel_type_speed_up()} vert={~monsters_sel_type_vert_speed()} propSpd={~monsters_get_type_num(\"skull\", \"speed\")} colR={~monsters_get_type_color(\"skull\", \"part_color\", 0)}",
+                                        "x": "16",
+                                        "y": "70"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Blast Easy:({~monsters_sel_type_part(0)},{~monsters_sel_type_part(1)},{~monsters_sel_type_part(2)},{~monsters_sel_type_part(3)}) Hard:({~monsters_sel_type_part_hard(0)},{~monsters_sel_type_part_hard(1)},{~monsters_sel_type_part_hard(2)},{~monsters_sel_type_part_hard(3)})",
+                                        "x": "16",
+                                        "y": "88"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "LiveProp #0: spd={~monsters_get_live_num(0, \"speed\")} sclX={~monsters_get_live_vec(0, \"scale\", 0)} tag={$monsters_get_live_tag_prop(0)} | {probe_misc}",
+                                        "x": "16",
+                                        "y": "106"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "1.0",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "0.75",
+                                        "scale": "0.42",
+                                        "text": "Placed[0] ok={#monsters_pl_exists()} rm={#monsters_pl_room()} idx={#monsters_pl_index()} live={#monsters_pl_live_index()} {$monsters_pl_name()} tag={$monsters_pl_tag()}",
+                                        "x": "16",
+                                        "y": "124"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Placed Pos:({~monsters_pl_pos(0)},{~monsters_pl_pos(1)},{~monsters_pl_pos(2)}) lvl={#monsters_pl_level()} dir={#monsters_pl_facing()} spd={~monsters_pl_speed()} hard={#monsters_pl_is_hard()} dec={#monsters_pl_is_decor()}",
+                                        "x": "16",
+                                        "y": "142"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.65",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "PlacedProp[0]: spd={~monsters_get_placed_num(-1, 0, \"spawn_speed\")} wlk0={~monsters_get_placed_vec(-1, 0, \"walk_time\", 0)} tag={$monsters_get_placed_tag(-1, 0)} | {last_cmd}",
+                                        "x": "16",
+                                        "y": "160"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "1"
+                                    },
+                                    "enabled": true,
+                                    "id": "var.compare",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        },
+                        {
+                            "actions": [
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.4",
+                                        "font": "",
+                                        "g": "0.88",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "=== MONSTERS SHOWCASE [Page 3/3: Events, Behaviours & Custom Kind] ===",
+                                        "x": "16",
+                                        "y": "14"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Counts -> Kill:{ev_kill_cnt} Touch:{ev_touch_cnt} Spawn:{ev_spawn_cnt} Place:{ev_place_cnt} DefAI:{ev_def_cnt} Behav:{ev_behav_cnt} Borrow:{ev_borrow_cnt}",
+                                        "x": "16",
+                                        "y": "34"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "1.0",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "0.75",
+                                        "scale": "0.42",
+                                        "text": "Custom Kind \"sentinel\" -> Build:{ev_kbuild_cnt} Update:{ev_kupdate_cnt} Touch:{ev_ktouch_cnt} | [B] Behav:{behav_active} [V] BlockPlace:{block_place} [U] UnsubProbe:{cancel_probe}",
+                                        "x": "16",
+                                        "y": "52"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Kill Ev: {last_kill_info}",
+                                        "x": "16",
+                                        "y": "70"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Touch Ev: {last_touch_info}",
+                                        "x": "16",
+                                        "y": "88"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Spawn Ev: {last_spawn_info}",
+                                        "x": "16",
+                                        "y": "106"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Place Ev: {last_place_info}",
+                                        "x": "16",
+                                        "y": "124"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.99",
+                                        "font": "",
+                                        "g": "0.94",
+                                        "r": "0.9",
+                                        "scale": "0.42",
+                                        "text": "Think / Body: {last_think_info} | {last_body_info}",
+                                        "x": "16",
+                                        "y": "142"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                },
+                                {
+                                    "args": {
+                                        "a": "1",
+                                        "align": "0x08",
+                                        "b": "0.65",
+                                        "font": "",
+                                        "g": "0.95",
+                                        "r": "1.0",
+                                        "scale": "0.42",
+                                        "text": "Last: {last_cmd}",
+                                        "x": "16",
+                                        "y": "162"
+                                    },
+                                    "enabled": true,
+                                    "id": "render.textAligned"
+                                }
+                            ],
+                            "conditions": [
+                                {
+                                    "args": {
+                                        "name": "hud_page",
+                                        "op": "==",
+                                        "value": "2"
+                                    },
+                                    "enabled": true,
+                                    "id": "var.compare",
+                                    "inverted": false
+                                }
+                            ],
+                            "enabled": true,
+                            "event": "",
+                            "filters": {},
+                            "veto": false
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "hud_on"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "render.frame",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_kill_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "name": "last_kill_info",
+                        "value": "id={#monsters_kill_id()} {$monsters_kill_name()} tag={$monsters_kill_tag()} lvl={#monsters_kill_level()} dec={#monsters_kill_is_decor()} @({~monsters_kill_pos(0)},{~monsters_kill_pos(1)},{~monsters_kill_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "result": "AMOD_MONSTER_KILL_DEFAULT"
+                            },
+                            "enabled": true,
+                            "id": "monsters.setKillResult"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "kill_mode",
+                                "op": "==",
+                                "value": "0"
+                            },
+                            "enabled": true,
+                            "id": "var.compare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "result": "AMOD_MONSTER_KILL_HANDLED"
+                            },
+                            "enabled": true,
+                            "id": "monsters.setKillResult"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "kill_mode",
+                                "op": "==",
+                                "value": "1"
+                            },
+                            "enabled": true,
+                            "id": "var.compare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "result": "AMOD_MONSTER_KILL_REFUSE"
+                            },
+                            "enabled": true,
+                            "id": "monsters.setKillResult"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "kill_mode",
+                                "op": "==",
+                                "value": "2"
+                            },
+                            "enabled": true,
+                            "id": "var.compare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.beforeKill",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_touch_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "name": "last_touch_info",
+                        "value": "id={#monsters_touch_id()} #{#monsters_touch_index()} {$monsters_touch_name()} tag={$monsters_touch_tag()} pl={#monsters_touch_is_player()} kind={#monsters_toucher_kind()} side={#monsters_touch_side()} @({~monsters_touch_pos(0)},{~monsters_touch_pos(1)},{~monsters_touch_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "result": "AMOD_MONSTER_TOUCH_HANDLED"
+                            },
+                            "enabled": true,
+                            "id": "monsters.setTouchResult"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "monsters.touchIsPlayer",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "op": ">=",
+                                "side": "1"
+                            },
+                            "enabled": true,
+                            "id": "monsters.touchSideIs",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "name": "touch_mode",
+                                "op": "==",
+                                "value": "1"
+                            },
+                            "enabled": true,
+                            "id": "var.compare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "result": "AMOD_MONSTER_TOUCH_REFUSE"
+                            },
+                            "enabled": true,
+                            "id": "monsters.setTouchResult"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "monsters.touchIsPlayer",
+                            "inverted": false
+                        },
+                        {
+                            "args": {
+                                "name": "touch_mode",
+                                "op": "==",
+                                "value": "2"
+                            },
+                            "enabled": true,
+                            "id": "var.compare",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.beforeTouch",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_spawn_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "name": "last_spawn_info",
+                        "value": "id={#monsters_spawn_id()} #{#monsters_spawn_index()} pl={#monsters_spawn_placed()} {$monsters_spawn_name()} tag={$monsters_spawn_tag()} lvl={#monsters_spawn_level()} dec={#monsters_spawn_is_decor()} @({~monsters_spawn_pos(0)},{~monsters_spawn_pos(1)},{~monsters_spawn_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.spawned",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {},
+                    "enabled": true,
+                    "id": "monsters.unsubscribe"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Unsubscribed auxiliary spawn listener via monsters.unsubscribe!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "name": "cancel_probe"
+                    },
+                    "enabled": true,
+                    "id": "var.on",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "monsters.spawned",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_place_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "name": "last_place_info",
+                        "value": "BLOCKED rm={#monsters_place_room()} {$monsters_place_name()} tag={$monsters_place_tag()} lvl={#monsters_place_level()} dec={#monsters_place_is_decor()} @({~monsters_place_pos(0)},{~monsters_place_pos(1)},{~monsters_place_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "name": "block_place"
+                    },
+                    "enabled": true,
+                    "id": "var.on",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "monsters.beforePlace",
+            "filters": {},
+            "veto": true
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_place_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "name": "last_place_info",
+                        "value": "OK rm={#monsters_place_room()} {$monsters_place_name()} tag={$monsters_place_tag()} lvl={#monsters_place_level()} dec={#monsters_place_is_decor()} @({~monsters_place_pos(0)},{~monsters_place_pos(1)},{~monsters_place_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "name": "block_place"
+                    },
+                    "enabled": true,
+                    "id": "var.on",
+                    "inverted": true
+                }
+            ],
+            "enabled": true,
+            "event": "monsters.beforePlace",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_def_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "dirX": "=monsters_think_facing()",
+                        "dirY": "0",
+                        "index": "=monsters_think_index()"
+                    },
+                    "enabled": true,
+                    "id": "monsters.moveStep"
+                },
+                {
+                    "args": {
+                        "name": "last_think_info",
+                        "value": "def id={#monsters_think_id()} #{#monsters_think_index()} dt={~monsters_think_delta()} dir={#monsters_think_facing()} @({~monsters_think_pos(0)},{~monsters_think_pos(1)},{~monsters_think_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.definedThink",
+            "filters": {
+                "monsterName": "frost_skull"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_behav_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "mode": "AMOD_MONSTER_ALSO_GAME"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setThinkMode"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.behaviourTick",
+            "filters": {
+                "monsterName": "skull"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_borrow_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "mode": "AMOD_MONSTER_INSTEAD_OF_GAME"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setThinkMode"
+                },
+                {
+                    "args": {
+                        "dirX": "=(player_position(0) >= monsters_think_pos(0) ? 1 : -1)",
+                        "dirY": "0",
+                        "index": "=monsters_think_index()"
+                    },
+                    "enabled": true,
+                    "id": "monsters.moveStep"
+                },
+                {
+                    "args": {
+                        "name": "last_think_info",
+                        "value": "borrow id={#monsters_think_id()} #{#monsters_think_index()} dt={~monsters_think_delta()} dir={#monsters_think_facing()} @({~monsters_think_pos(0)},{~monsters_think_pos(1)},{~monsters_think_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.borrowedTick",
+            "filters": {},
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_kbuild_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "actsLike": "spider",
+                        "animatedLike": "spider",
+                        "frameset": "move"
+                    },
+                    "enabled": true,
+                    "id": "monsters.bodySpecies"
+                },
+                {
+                    "args": {
+                        "modelId": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.bodyHandles"
+                },
+                {
+                    "args": {
+                        "facing": "1",
+                        "x": "=monsters_body_pos(0)",
+                        "y": "=monsters_body_pos(1)",
+                        "z": "=monsters_body_pos(2)"
+                    },
+                    "enabled": true,
+                    "id": "monsters.bodyPose"
+                },
+                {
+                    "args": {
+                        "maxX": "0.05",
+                        "maxY": "0.12",
+                        "maxZ": "0.05",
+                        "minX": "-0.05",
+                        "minY": "0.0",
+                        "minZ": "-0.05"
+                    },
+                    "enabled": true,
+                    "id": "monsters.bodyBox"
+                },
+                {
+                    "args": {
+                        "keepHitBox": "1",
+                        "maxX": "0.06",
+                        "maxY": "0.14",
+                        "maxZ": "0.06",
+                        "minX": "-0.06",
+                        "minY": "0.0",
+                        "minZ": "-0.06"
+                    },
+                    "enabled": true,
+                    "id": "monsters.bodyHitBox"
+                },
+                {
+                    "args": {
+                        "name": "last_body_info",
+                        "value": "kind={#monsters_body_kind_id()} {$monsters_body_name()} tag={$monsters_body_tag()} dir={#monsters_body_facing()} @({~monsters_body_pos(0)},{~monsters_body_pos(1)},{~monsters_body_pos(2)})"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.kindBuild",
+            "filters": {
+                "kindName": "sentinel"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_kupdate_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "index": "=monsters_think_index()",
+                        "key": "yaw",
+                        "value": "=mod_elapsed * 2.5f"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveNumProp"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "monsters.kindUpdate",
+            "filters": {
+                "kindName": "sentinel"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "ev_ktouch_cnt",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.add"
+                },
+                {
+                    "args": {
+                        "result": "AMOD_MONSTER_TOUCH_REFUSE"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setTouchResult"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "Touched friendly custom kind \"sentinel\" (contact refused)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {},
+                    "enabled": true,
+                    "id": "monsters.touchIsPlayer",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "monsters.kindTouch",
+            "filters": {
+                "kindName": "sentinel"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "hud_on"
+                    },
+                    "enabled": true,
+                    "id": "var.toggle"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "112"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "hud_page",
+                        "value": "=(hud_page + 1) % 3"
+                    },
+                    "enabled": true,
+                    "id": "var.set"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "113"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "type_cursor",
+                        "value": "=(monsters_type_count() > 0 ? (type_cursor + 1) % monsters_type_count() : 0)"
+                    },
+                    "enabled": true,
+                    "id": "var.set"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "114"
+            },
+            "veto": false
+        },
+        {
+            "actions": [],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "level": "levels/level_1.txt"
+                            },
+                            "enabled": true,
+                            "id": "world.startLevel"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[1] Starting levels/level_1.txt..."
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "player.isHere",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "col": "=sp_col",
+                                "name": "spider",
+                                "row": "=p_row"
+                            },
+                            "enabled": true,
+                            "id": "monsters.place"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[1] Spawned spider (minimal 3-param form)!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {},
+                            "enabled": true,
+                            "id": "player.isHere",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "49"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "col": "=sp_col",
+                        "facing": "1",
+                        "level": "1",
+                        "name": "frost_skull",
+                        "pos3": "3",
+                        "pos4": "3",
+                        "row": "=p_row",
+                        "tag": "frosty"
+                    },
+                    "enabled": true,
+                    "id": "monsters.place"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[2] Spawned custom frost_skull with patrol pos3/pos4 & +tag!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {},
+                    "enabled": true,
+                    "id": "player.isHere",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "50"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "col": "=sp_col",
+                        "kindName": "sentinel",
+                        "row": "=p_row",
+                        "tag": "guard_orb"
+                    },
+                    "enabled": true,
+                    "id": "monsters.placeKind"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[3] Spawned custom RegisterKind \"sentinel\"!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {},
+                    "enabled": true,
+                    "id": "player.isHere",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "51"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "col": "=sp_col",
+                        "facing": "-1",
+                        "name": "mummy2",
+                        "pos3": "2",
+                        "pos4": "2",
+                        "room": "-1",
+                        "row": "=p_row",
+                        "tag": "room_mummy"
+                    },
+                    "enabled": true,
+                    "id": "monsters.place"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "spawn_speed",
+                        "value": "0.85"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setPlacedNumProp"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "walk_time",
+                        "maxVal": "8",
+                        "minVal": "4"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setPlacedRangeProp"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "x": "1",
+                        "y": "0",
+                        "z": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setPlacedAxis"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[4] Spawned mummy2 with dynamic patrol & tuned placement #0!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {},
+                    "enabled": true,
+                    "id": "player.isHere",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "52"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "index": "0",
+                        "movesLike": "AMOD_MONSTER_MOVES_JUMP_SKULL"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setMovement"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "speed",
+                        "value": "1.15"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveNumProp"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "walk_time",
+                        "maxVal": "6",
+                        "minVal": "3"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveRangeProp"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "scale",
+                        "x": "1.3",
+                        "y": "1.3",
+                        "z": "1.3"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveVec3Prop"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "key": "texture",
+                        "path": "textures/monster/cherv_hard.jpg"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveAssetProp"
+                },
+                {
+                    "args": {
+                        "index": "0",
+                        "maxX": "0.08",
+                        "maxY": "0.18",
+                        "maxZ": "0.08",
+                        "minX": "-0.08",
+                        "minY": "0.0",
+                        "minZ": "-0.08",
+                        "which": "AMOD_MONSTER_BOX_OBJECT"
+                    },
+                    "enabled": true,
+                    "id": "monsters.setLiveBox"
+                },
+                {
+                    "args": {
+                        "frameset": "move",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.playAnim"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[5] Mutated live monster #0 (j_skull movement, 1.3x scale, speed, box, anim)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "by": "0",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.liveAlive",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "53"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.borrow"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[6] Borrowed monster #0 (now follows player X via BorrowedTick)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "by": "0",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.liveAlive",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "54"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.returnMonster"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[7] Returned monster #0 to game AI!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "by": "0",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.liveAlive",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "55"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "kill_mode",
+                        "value": "=(kill_mode + 1) % 3"
+                    },
+                    "enabled": true,
+                    "id": "var.set"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[8] Cycled kill_mode (0=Default, 1=Silent Handled, 2=Refuse/Immortal)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "56"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "touch_mode",
+                        "value": "=(touch_mode + 1) % 3"
+                    },
+                    "enabled": true,
+                    "id": "var.set"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[9] Cycled touch_mode (0=Default, 1=Handled, 2=Refuse/Godmode vs Monsters)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "57"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "by": "0",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.kill"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[0] Killed live monster #0!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [
+                {
+                    "args": {
+                        "by": "0",
+                        "index": "0"
+                    },
+                    "enabled": true,
+                    "id": "monsters.liveAlive",
+                    "inverted": false
+                }
+            ],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "48"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "kill_key_toggle"
+                    },
+                    "enabled": true,
+                    "id": "var.toggle"
+                }
+            ],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "by": "2",
+                                "key": "frost_skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.kill"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[K] Killed monster by key \"frost_skull\"!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "kill_key_toggle"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "by": "1",
+                                "id": "=first_id"
+                            },
+                            "enabled": true,
+                            "id": "monsters.kill"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[K] Killed monster by ID (first_id)!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "kill_key_toggle"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "75"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "remove_toggle"
+                    },
+                    "enabled": true,
+                    "id": "var.toggle"
+                }
+            ],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "by": "3",
+                                "index": "0",
+                                "room": "-1"
+                            },
+                            "enabled": true,
+                            "id": "monsters.kill"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[R] Killed placement #0 in room -1!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "remove_toggle"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "index": "0"
+                            },
+                            "enabled": true,
+                            "id": "monsters.removePlaced"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[R] Removed placement #0 silently!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "remove_toggle"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "82"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "behav_active"
+                    },
+                    "enabled": true,
+                    "id": "var.toggle"
+                }
+            ],
+            "children": [
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.enableBehaviour"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[B] Enabled SetBehaviour(\"skull\")!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "behav_active"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": false
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                },
+                {
+                    "actions": [
+                        {
+                            "args": {
+                                "name": "skull"
+                            },
+                            "enabled": true,
+                            "id": "monsters.clearBehaviour"
+                        },
+                        {
+                            "args": {
+                                "name": "last_cmd",
+                                "value": "[B] Cleared SetBehaviour(\"skull\")!"
+                            },
+                            "enabled": true,
+                            "id": "var.setText"
+                        }
+                    ],
+                    "conditions": [
+                        {
+                            "args": {
+                                "name": "behav_active"
+                            },
+                            "enabled": true,
+                            "id": "var.on",
+                            "inverted": true
+                        }
+                    ],
+                    "enabled": true,
+                    "event": "",
+                    "filters": {},
+                    "veto": false
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "66"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "block_place"
+                    },
+                    "enabled": true,
+                    "id": "var.toggle"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[V] Toggled BeforePlace veto (block_place)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "86"
+            },
+            "veto": false
+        },
+        {
+            "actions": [
+                {
+                    "args": {
+                        "name": "cancel_probe",
+                        "value": "1"
+                    },
+                    "enabled": true,
+                    "id": "var.set"
+                },
+                {
+                    "args": {
+                        "name": "last_cmd",
+                        "value": "[U] Armed cancel_probe (next spawn unsubscribes auxiliary listener)!"
+                    },
+                    "enabled": true,
+                    "id": "var.setText"
+                }
+            ],
+            "conditions": [],
+            "enabled": true,
+            "event": "input.key",
+            "filters": {
+                "key": "85"
+            },
+            "veto": false
+        }
+    ],
+    "vars": [
+        {
+            "name": "hud_on",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "hud_page",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "type_cursor",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "kill_mode",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "touch_mode",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "behav_active",
+            "type": "bool",
+            "value": "1"
+        },
+        {
+            "name": "block_place",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "cancel_probe",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "remove_toggle",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "kill_key_toggle",
+            "type": "bool",
+            "value": "0"
+        },
+        {
+            "name": "p_col",
+            "type": "int",
+            "value": "14"
+        },
+        {
+            "name": "p_row",
+            "type": "int",
+            "value": "10"
+        },
+        {
+            "name": "sp_col",
+            "type": "int",
+            "value": "16"
+        },
+        {
+            "name": "cond_mask",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "loop_live_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "loop_pl_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "first_id",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_kill_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_touch_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_spawn_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_place_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_def_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_behav_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_borrow_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_kbuild_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_kupdate_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "ev_ktouch_cnt",
+            "type": "int",
+            "value": "0"
+        },
+        {
+            "name": "last_kill_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "last_touch_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "last_spawn_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "last_place_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "last_think_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "last_body_info",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "probe_misc",
+            "type": "text",
+            "value": "-"
+        },
+        {
+            "name": "st_here",
+            "type": "text",
+            "value": "MENU"
+        },
+        {
+            "name": "last_cmd",
+            "type": "text",
+            "value": "Ready: [1] Start Level 1 (menu) / Spawn Spider (room)  [F2] HUD Page"
+        }
+    ]
+}

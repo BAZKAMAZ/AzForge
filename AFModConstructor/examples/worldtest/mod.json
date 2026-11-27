@@ -1,0 +1,16 @@
+{
+    "api_version": 1,
+    "author": "AFModConstructor",
+    "capabilities": [],
+    "description": "Interactive 3-page showcase of all 67 WorldApi calls",
+    "entry": "bin/worldtest.dll",
+    "game_version": "1.0",
+    "id": "worldtest",
+    "name": "worldtest",
+    "requires": [
+        "input",
+        "render",
+        "world"
+    ],
+    "version": "1.0.0"
+}

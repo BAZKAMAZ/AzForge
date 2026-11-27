@@ -1,0 +1,19 @@
+{
+  "api_version": 1,
+  "author": "AFModConstructor",
+  "capabilities": [],
+  "description": "Interactive BonusesApi showcase (custom types, combo chain, magnet borrow, custom orb kind)",
+  "entry": "bin/bonusestest.dll",
+  "game_version": "1.0",
+  "id": "bonusestest",
+  "name": "Bonuses Showcase",
+  "requires": [
+    "bonuses",
+    "fonts",
+    "input",
+    "player",
+    "render",
+    "world"
+  ],
+  "version": "1.0.0"
+}

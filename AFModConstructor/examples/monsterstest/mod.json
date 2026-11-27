@@ -1,0 +1,18 @@
+{
+  "api_version": 1,
+  "author": "AFModConstructor",
+  "capabilities": [],
+  "description": "Interactive MonstersApi showcase (types, behaviours, borrow, custom sentinel kind, boxes, rooms)",
+  "entry": "bin/monsterstest.dll",
+  "game_version": "1.0",
+  "id": "monsterstest",
+  "name": "Monsters Showcase",
+  "requires": [
+    "input",
+    "monsters",
+    "player",
+    "render",
+    "world"
+  ],
+  "version": "1.0.0"
+}

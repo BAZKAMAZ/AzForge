@@ -1,0 +1,70 @@
+[
+  {
+    "id": "demo.stateChanged",
+    "label": "mod.ev.demoState",
+    "call": "Demo.OnDemo",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "values": [
+      "demoEvent",
+      "demoScript"
+    ],
+    "filters": [
+      {
+        "key": "which",
+        "label": "mod.p.demoEvent",
+        "kind": "enum",
+        "preset": "0",
+        "test": "if ((%v%) != 0 && (int)demoEvent != (%v%)) return;",
+        "options": [
+          { "value": "0", "label": "common.all" },
+          { "value": "AMOD_DEMO_STARTED", "label": "mod.demo.ev.started" },
+          { "value": "AMOD_DEMO_ENDED", "label": "mod.demo.ev.ended" },
+          { "value": "AMOD_DEMO_BROKEN", "label": "mod.demo.ev.broken" }
+        ]
+      }
+    ],
+    "handler": "static void __cdecl %H%(AmodDemoEvent demoEvent, int demoScript, void* user)",
+    "subscribe": "if (API->demo) %token% = API->demo->OnDemo(SELF, demo_state_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "demo_state",
+    "hint": "mod.ev.demoState.hint"
+  },
+  {
+    "id": "demo.moveStarted",
+    "label": "mod.ev.demoMove",
+    "call": "Demo.OnMove",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "values": [
+      "demoScript",
+      "demoMove"
+    ],
+    "handler": "static void __cdecl %H%(int demoScript, int demoMove, void* user)",
+    "subscribe": "if (API->demo) %token% = API->demo->OnMove(SELF, demo_move_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "demo_move",
+    "hint": "mod.ev.demoMove.hint"
+  },
+  {
+    "id": "demo.input",
+    "label": "mod.ev.demoInput",
+    "call": "Demo.OnInput",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "canVeto": true,
+    "values": [
+      "demoPos",
+      "demoHorz",
+      "demoVert",
+      "demoJump",
+      "demoSeconds"
+    ],
+    "handler": "static int __cdecl %H%(const float* demoPos, int* demoHorz, int* demoVert, int* demoJump, float demoSeconds, void* user)",
+    "subscribe": "if (API->demo) %token% = API->demo->OnInput(SELF, demo_input_relay, (void*)%H%);",
+    "retDefault": "return demo_take_input_dirty();",
+    "retVeto": "return (demo_take_input_dirty() | 1);",
+    "provides": "demo_input",
+    "hint": "mod.ev.demoInput.hint"
+  }
+]

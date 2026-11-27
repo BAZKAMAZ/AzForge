@@ -93,18 +93,18 @@
     "id": "frame.delta",
     "label": "mod.expr.delta",
     "group": "system",
-    "section": "mod.sec.general",
+    "section": "mod.sec.time",
     "kind": "float",
-    "text": "frame->delta",
+    "text": "mod_delta",
     "hint": "mod.expr.delta.hint"
   },
   {
     "id": "frame.elapsed",
     "label": "mod.expr.elapsedFrames",
     "group": "system",
-    "section": "mod.sec.general",
+    "section": "mod.sec.time",
     "kind": "float",
-    "text": "frame->elapsed",
+    "text": "mod_elapsed",
     "hint": "mod.expr.delta.hint"
   },
   {
@@ -178,15 +178,6 @@
     "kind": "text",
     "text": "mod_text(\"%s%s\", \"\", \"\")",
     "hint": ""
-  },
-  {
-    "id": "system.delta",
-    "label": "mod.expr.delta",
-    "group": "system",
-    "section": "mod.sec.time",
-    "kind": "float",
-    "text": "mod_delta",
-    "hint": "mod.expr.delta.hint"
   },
   {
     "id": "list.at",

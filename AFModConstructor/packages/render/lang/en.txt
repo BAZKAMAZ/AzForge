@@ -4,6 +4,7 @@ mod.act.renderSpritePart=Draw part of a picture
 mod.act.renderStyleColor=Set the item colour
 mod.act.renderStyleScale=Set the item scale
 mod.act.renderText=Draw text
+mod.act.renderText.hint=Centers text around (x, y); use "Draw text with alignment" (Top left / Left) to align by an edge
 mod.act.renderTextAligned=Draw text with alignment
 mod.align.game=As the game does
 mod.align.top=Top centre

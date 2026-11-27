@@ -147,9 +147,11 @@ def body(package):
             continue
         # A condition that asks for %state% without declaring one is the "only once" wrapper:
         # the generator folds it around the other conditions instead of emitting it
-        if '%state%' in text and not item.get('state'):
+        has_state_param = any(p.get('key') == 'state' for p in item.get('params', []))
+        if '%state%' in text and not item.get('state') and not has_state_param:
             continue
-        text = fill(text, item.get('params', []), {'state': 'state_%d' % at}, variables)
+        extra = {'state': 'state_%d' % at} if item.get('state') else None
+        text = fill(text, item.get('params', []), extra, variables)
         lines.append('    if (%s) { (void)0; }   /* condition %s */' % (text, item['id']))
 
     for item in read(package, 'actions.json'):

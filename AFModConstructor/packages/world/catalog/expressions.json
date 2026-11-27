@@ -1,21 +1,195 @@
 [
   {
-    "id": "world.room",
-    "label": "mod.expr.room",
+    "id": "world.levelLoaded",
+    "label": "mod.expr.worldLevelLoaded",
     "group": "world",
     "section": "mod.sec.level",
     "kind": "int",
-    "text": "API->world->GetCurrentRoom(SELF)",
-    "hint": ""
+    "text": "(API->world ? API->world->IsLevelLoaded(SELF) : 0)"
   },
   {
-    "id": "world.rooms",
-    "label": "mod.expr.rooms",
+    "id": "world.paused",
+    "label": "mod.expr.worldPaused",
     "group": "world",
     "section": "mod.sec.level",
     "kind": "int",
-    "text": "API->world->GetRoomCount(SELF)",
-    "hint": ""
+    "text": "(API->world && API->world->IsPaused ? API->world->IsPaused(SELF) : 0)"
+  },
+  {
+    "id": "world.levelScript",
+    "label": "mod.expr.worldLevelScript",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(0)"
+  },
+  {
+    "id": "world.levelName",
+    "label": "mod.expr.worldLevelName",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(1)"
+  },
+  {
+    "id": "world.levelNext",
+    "label": "mod.expr.worldLevelNext",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(2)"
+  },
+  {
+    "id": "world.levelBackground",
+    "label": "mod.expr.worldLevelBg",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(3)"
+  },
+  {
+    "id": "world.levelMusic",
+    "label": "mod.expr.worldLevelMusic",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(4)"
+  },
+  {
+    "id": "world.levelStartTitle",
+    "label": "mod.expr.worldLevelStartTitle",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(5)"
+  },
+  {
+    "id": "world.levelEndTitle",
+    "label": "mod.expr.worldLevelEndTitle",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(6)"
+  },
+  {
+    "id": "world.levelMenuStat",
+    "label": "mod.expr.worldLevelMenuStat",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(7)"
+  },
+  {
+    "id": "world.levelCastle",
+    "label": "mod.expr.worldLevelCastle",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "text",
+    "text": "world_level_text(8)"
+  },
+  {
+    "id": "world.levelNumber",
+    "label": "mod.expr.worldLevelNumber",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(0)"
+  },
+  {
+    "id": "world.levelIsBonus",
+    "label": "mod.expr.worldLevelIsBonus",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(1)"
+  },
+  {
+    "id": "world.levelBonusCount",
+    "label": "mod.expr.worldLevelBonusCount",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(2)"
+  },
+  {
+    "id": "world.levelIsDemo",
+    "label": "mod.expr.worldLevelIsDemo",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(3)"
+  },
+  {
+    "id": "world.levelUseForDemo",
+    "label": "mod.expr.worldLevelUseDemo",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(4)"
+  },
+  {
+    "id": "world.levelMazeRows",
+    "label": "mod.expr.worldLevelMazeRows",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(6)"
+  },
+  {
+    "id": "world.levelStartMazeX",
+    "label": "mod.expr.worldStartMazeX",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(7)"
+  },
+  {
+    "id": "world.levelStartMazeY",
+    "label": "mod.expr.worldStartMazeY",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "int",
+    "text": "world_level_int(8)"
+  },
+  {
+    "id": "world.levelTime",
+    "label": "mod.expr.worldLevelTime",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "float",
+    "text": "world_level_float(0)"
+  },
+  {
+    "id": "world.levelMusicStart",
+    "label": "mod.expr.worldMusicStart",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "float",
+    "text": "world_level_float(1)"
+  },
+  {
+    "id": "world.levelBonusTime",
+    "label": "mod.expr.worldBonusTime",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "float",
+    "text": "world_level_float(2)"
+  },
+  {
+    "id": "world.levelStartCellX",
+    "label": "mod.expr.worldStartCellX",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "float",
+    "text": "world_level_float(3)"
+  },
+  {
+    "id": "world.levelStartCellY",
+    "label": "mod.expr.worldStartCellY",
+    "group": "world",
+    "section": "mod.sec.level",
+    "kind": "float",
+    "text": "world_level_float(4)"
   },
   {
     "id": "world.timeLeft",
@@ -23,7 +197,7 @@
     "group": "world",
     "section": "mod.sec.time",
     "kind": "float",
-    "text": "API->world->GetTimeLeft(SELF)",
+    "text": "(API->world ? API->world->GetTimeLeft(SELF) : 0.0f)",
     "hint": "mod.expr.timeLeft.hint"
   },
   {
@@ -32,7 +206,1074 @@
     "group": "world",
     "section": "mod.sec.time",
     "kind": "float",
-    "text": "API->world->GetElapsed(SELF)",
-    "hint": ""
+    "text": "(API->world ? API->world->GetElapsed(SELF) : 0.0f)"
+  },
+  {
+    "id": "world.crystalsTaken",
+    "label": "mod.expr.worldCrystalsTaken",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(0, 0)"
+  },
+  {
+    "id": "world.crystalsTotal",
+    "label": "mod.expr.worldCrystalsTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(0, 1)"
+  },
+  {
+    "id": "world.bonusesTaken",
+    "label": "mod.expr.worldBonusesTaken",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(1, 0)"
+  },
+  {
+    "id": "world.bonusesTotal",
+    "label": "mod.expr.worldBonusesTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(1, 1)"
+  },
+  {
+    "id": "world.superTaken",
+    "label": "mod.expr.worldSuperTaken",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(2, 0)"
+  },
+  {
+    "id": "world.superTotal",
+    "label": "mod.expr.worldSuperTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(2, 1)"
+  },
+  {
+    "id": "world.monstersKilled",
+    "label": "mod.expr.worldMonstersKilled",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(3, 0)"
+  },
+  {
+    "id": "world.monstersTotal",
+    "label": "mod.expr.worldMonstersTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(3, 1)"
+  },
+  {
+    "id": "world.lightRoomsSeen",
+    "label": "mod.expr.worldLightRoomsSeen",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(4, 0)"
+  },
+  {
+    "id": "world.lightRoomsTotal",
+    "label": "mod.expr.worldLightRoomsTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(4, 1)"
+  },
+  {
+    "id": "world.darkRoomsSeen",
+    "label": "mod.expr.worldDarkRoomsSeen",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(5, 0)"
+  },
+  {
+    "id": "world.darkRoomsTotal",
+    "label": "mod.expr.worldDarkRoomsTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(5, 1)"
+  },
+  {
+    "id": "world.secretRoomsSeen",
+    "label": "mod.expr.worldSecretRoomsSeen",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(6, 0)"
+  },
+  {
+    "id": "world.secretRoomsTotal",
+    "label": "mod.expr.worldSecretRoomsTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(6, 1)"
+  },
+  {
+    "id": "world.eighthTaken",
+    "label": "mod.expr.worldEighthTaken",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(7, 0)"
+  },
+  {
+    "id": "world.eighthTotal",
+    "label": "mod.expr.worldEighthTotal",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "kind": "int",
+    "text": "world_stat_val(7, 1)"
+  },
+  {
+    "id": "world.room",
+    "label": "mod.expr.room",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "(API->world ? API->world->GetCurrentRoom(SELF) : -1)"
+  },
+  {
+    "id": "world.previousRoom",
+    "label": "mod.expr.worldPrevRoom",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "(API->world ? API->world->GetPreviousRoom(SELF) : -1)"
+  },
+  {
+    "id": "world.rooms",
+    "label": "mod.expr.rooms",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "(API->world ? API->world->GetRoomCount(SELF) : 0)"
+  },
+  {
+    "id": "world.roomIndex",
+    "label": "mod.expr.worldRoomIndex",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(0)"
+  },
+  {
+    "id": "world.roomId",
+    "label": "mod.expr.worldRoomId",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(1)"
+  },
+  {
+    "id": "world.roomFile",
+    "label": "mod.expr.worldRoomFile",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "text",
+    "text": "world_room_text(0)"
+  },
+  {
+    "id": "world.roomMusic",
+    "label": "mod.expr.worldRoomMusic",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "text",
+    "text": "world_room_text(1)"
+  },
+  {
+    "id": "world.roomMazeX",
+    "label": "mod.expr.worldRoomMazeX",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(2)"
+  },
+  {
+    "id": "world.roomMazeY",
+    "label": "mod.expr.worldRoomMazeY",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(3)"
+  },
+  {
+    "id": "world.roomIsLoaded",
+    "label": "mod.expr.worldRoomLoaded",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(4)"
+  },
+  {
+    "id": "world.roomHasBackWall",
+    "label": "mod.expr.worldRoomBackWall",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(5)"
+  },
+  {
+    "id": "world.roomBoxCount",
+    "label": "mod.expr.worldRoomBoxCount",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(6)"
+  },
+  {
+    "id": "world.roomTriCount",
+    "label": "mod.expr.worldRoomTriCount",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_int(7)"
+  },
+  {
+    "id": "world.roomLightmap",
+    "label": "mod.expr.worldRoomLightmap",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_tex(0)"
+  },
+  {
+    "id": "world.roomWallTex",
+    "label": "mod.expr.worldRoomWallTex",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_tex(1)"
+  },
+  {
+    "id": "world.roomFloorTex",
+    "label": "mod.expr.worldRoomFloorTex",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_room_tex(2)"
+  },
+  {
+    "id": "world.mazeX",
+    "label": "mod.expr.worldMazeX",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_maze_cursor(0)"
+  },
+  {
+    "id": "world.mazeY",
+    "label": "mod.expr.worldMazeY",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_maze_cursor(1)"
+  },
+  {
+    "id": "world.mazeRowWidth",
+    "label": "mod.expr.worldMazeRowWidth",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_maze_row_width(-1)"
+  },
+  {
+    "id": "world.mazeCellRoomId",
+    "label": "mod.expr.worldMazeCellId",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_maze_room_id(-1, -1)"
+  },
+  {
+    "id": "world.mazeCellRoomIndex",
+    "label": "mod.expr.worldMazeCellIdx",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_maze_room_index(-1, -1)"
+  },
+  {
+    "id": "world.eventKind",
+    "label": "mod.expr.worldEventKind",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(0)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.eventRoomIndex",
+    "label": "mod.expr.worldEventRoomIdx",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(1)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.eventRoomId",
+    "label": "mod.expr.worldEventRoomId",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(2)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.eventPrevRoom",
+    "label": "mod.expr.worldEventPrevRoom",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(3)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.eventMazeX",
+    "label": "mod.expr.worldEventMazeX",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(4)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.eventMazeY",
+    "label": "mod.expr.worldEventMazeY",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "kind": "int",
+    "text": "world_event_int(5)",
+    "needs": "world_event",
+    "hint": "mod.expr.worldEvent.hint"
+  },
+  {
+    "id": "world.cellCol",
+    "label": "mod.expr.worldCellCol",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_sel_col()"
+  },
+  {
+    "id": "world.cellRow",
+    "label": "mod.expr.worldCellRow",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_sel_row()"
+  },
+  {
+    "id": "world.cellWorldX",
+    "label": "mod.expr.worldCellWorldX",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "float",
+    "text": "world_cell_x(-1)"
+  },
+  {
+    "id": "world.cellWorldY",
+    "label": "mod.expr.worldCellWorldY",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "float",
+    "text": "world_cell_y(-1)"
+  },
+  {
+    "id": "world.cellCode",
+    "label": "mod.expr.worldCellCode",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_cell_code(world_sel_room_idx(), -1, -1)"
+  },
+  {
+    "id": "world.cellText",
+    "label": "mod.expr.worldCellText",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "text",
+    "text": "world_cell_text()"
+  },
+  {
+    "id": "world.wallCellCount",
+    "label": "mod.expr.worldWallCells",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_count_cells(world_sel_room_idx(), 87)"
+  },
+  {
+    "id": "world.emptyCellCount",
+    "label": "mod.expr.worldEmptyCells",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_count_cells(world_sel_room_idx(), 32)"
+  },
+  {
+    "id": "world.cellByte0",
+    "label": "mod.expr.worldCellByte0",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_cell_free_byte(world_sel_room_idx(), -1, -1, 0)"
+  },
+  {
+    "id": "world.cellByte1",
+    "label": "mod.expr.worldCellByte1",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "kind": "int",
+    "text": "world_cell_free_byte(world_sel_room_idx(), -1, -1, 1)"
+  },
+  {
+    "id": "world.lastAddedBox",
+    "label": "mod.expr.worldLastBox",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "int",
+    "text": "world_last_box()"
+  },
+  {
+    "id": "world.boxKind",
+    "label": "mod.expr.worldBoxKind",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "int",
+    "text": "world_box_kind(world_sel_room_idx(), -1)"
+  },
+  {
+    "id": "world.boxMinX",
+    "label": "mod.expr.worldBoxMinX",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(0)"
+  },
+  {
+    "id": "world.boxMinY",
+    "label": "mod.expr.worldBoxMinY",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(1)"
+  },
+  {
+    "id": "world.boxMinZ",
+    "label": "mod.expr.worldBoxMinZ",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(2)"
+  },
+  {
+    "id": "world.boxMaxX",
+    "label": "mod.expr.worldBoxMaxX",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(3)"
+  },
+  {
+    "id": "world.boxMaxY",
+    "label": "mod.expr.worldBoxMaxY",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(4)"
+  },
+  {
+    "id": "world.boxMaxZ",
+    "label": "mod.expr.worldBoxMaxZ",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "kind": "float",
+    "text": "world_box_num(5)"
+  },
+  {
+    "id": "world.roomEntityCount",
+    "label": "mod.expr.worldEntityCount",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_count(world_sel_room_idx())"
+  },
+  {
+    "id": "world.playerEntity",
+    "label": "mod.expr.worldPlayerEntity",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_player_entity()"
+  },
+  {
+    "id": "world.entityKind",
+    "label": "mod.expr.worldEntityKind",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_int(0)"
+  },
+  {
+    "id": "world.entityName",
+    "label": "mod.expr.worldEntityName",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "text",
+    "text": "world_entity_name()"
+  },
+  {
+    "id": "world.entityX",
+    "label": "mod.expr.worldEntityX",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(0)"
+  },
+  {
+    "id": "world.entityY",
+    "label": "mod.expr.worldEntityY",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(1)"
+  },
+  {
+    "id": "world.entityZ",
+    "label": "mod.expr.worldEntityZ",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(2)"
+  },
+  {
+    "id": "world.entityPrevX",
+    "label": "mod.expr.worldEntityPrevX",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(3)"
+  },
+  {
+    "id": "world.entityPrevY",
+    "label": "mod.expr.worldEntityPrevY",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(4)"
+  },
+  {
+    "id": "world.entityPrevZ",
+    "label": "mod.expr.worldEntityPrevZ",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_entity_num(5)"
+  },
+  {
+    "id": "world.entityState",
+    "label": "mod.expr.worldEntityState",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_int(1)"
+  },
+  {
+    "id": "world.entitySubState",
+    "label": "mod.expr.worldEntitySubState",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_int(2)"
+  },
+  {
+    "id": "world.entityFlags",
+    "label": "mod.expr.worldEntityFlags",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_int(3)"
+  },
+  {
+    "id": "world.entityIsDead",
+    "label": "mod.expr.worldEntityDead",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_entity_int(4)"
+  },
+  {
+    "id": "world.entityHidden",
+    "label": "mod.expr.worldEntityHidden",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_is_entity_hidden(world_sel_room_idx(), -1)"
+  },
+  {
+    "id": "world.roomSpawnCount",
+    "label": "mod.expr.worldSpawnCount",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_spawn_count(world_sel_room_idx())"
+  },
+  {
+    "id": "world.spawnKind",
+    "label": "mod.expr.worldSpawnKind",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_spawn_int(0)"
+  },
+  {
+    "id": "world.spawnName",
+    "label": "mod.expr.worldSpawnName",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "text",
+    "text": "world_spawn_name()"
+  },
+  {
+    "id": "world.spawnX",
+    "label": "mod.expr.worldSpawnX",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_spawn_num(0)"
+  },
+  {
+    "id": "world.spawnY",
+    "label": "mod.expr.worldSpawnY",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_spawn_num(1)"
+  },
+  {
+    "id": "world.spawnZ",
+    "label": "mod.expr.worldSpawnZ",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "float",
+    "text": "world_spawn_num(2)"
+  },
+  {
+    "id": "world.spawnIsLive",
+    "label": "mod.expr.worldSpawnLive",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "kind": "int",
+    "text": "world_spawn_int(1)"
+  },
+  {
+    "id": "world.roomLightCount",
+    "label": "mod.expr.worldLightCount",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "int",
+    "text": "world_light_count(world_sel_room_idx())"
+  },
+  {
+    "id": "world.lastAddedLight",
+    "label": "mod.expr.worldLastLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "int",
+    "text": "world_last_light()"
+  },
+  {
+    "id": "world.lightX",
+    "label": "mod.expr.worldLightX",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(0)"
+  },
+  {
+    "id": "world.lightY",
+    "label": "mod.expr.worldLightY",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(1)"
+  },
+  {
+    "id": "world.lightZ",
+    "label": "mod.expr.worldLightZ",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(2)"
+  },
+  {
+    "id": "world.lightR",
+    "label": "mod.expr.worldLightR",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(3)"
+  },
+  {
+    "id": "world.lightG",
+    "label": "mod.expr.worldLightG",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(4)"
+  },
+  {
+    "id": "world.lightB",
+    "label": "mod.expr.worldLightB",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(5)"
+  },
+  {
+    "id": "world.lightRange",
+    "label": "mod.expr.worldLightRange",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_light_num(6)"
+  },
+  {
+    "id": "world.entityLightOn",
+    "label": "mod.expr.worldEntityLightOn",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "int",
+    "text": "world_entity_has_light(world_sel_room_idx(), -1)"
+  },
+  {
+    "id": "world.entityLightR",
+    "label": "mod.expr.worldEntityLightR",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(0)"
+  },
+  {
+    "id": "world.entityLightG",
+    "label": "mod.expr.worldEntityLightG",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(1)"
+  },
+  {
+    "id": "world.entityLightB",
+    "label": "mod.expr.worldEntityLightB",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(2)"
+  },
+  {
+    "id": "world.entityLightRange",
+    "label": "mod.expr.worldEntityLightRange",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(3)"
+  },
+  {
+    "id": "world.entityLightOffX",
+    "label": "mod.expr.worldEntityLightOffX",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(4)"
+  },
+  {
+    "id": "world.entityLightOffY",
+    "label": "mod.expr.worldEntityLightOffY",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(5)"
+  },
+  {
+    "id": "world.entityLightOffZ",
+    "label": "mod.expr.worldEntityLightOffZ",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_entity_light_num(6)"
+  },
+  {
+    "id": "world.lastAddedTri",
+    "label": "mod.expr.worldLastTri",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "int",
+    "text": "world_last_tri()"
+  },
+  {
+    "id": "world.triX1",
+    "label": "mod.expr.worldTriX1",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(0)"
+  },
+  {
+    "id": "world.triY1",
+    "label": "mod.expr.worldTriY1",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(1)"
+  },
+  {
+    "id": "world.triZ1",
+    "label": "mod.expr.worldTriZ1",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(2)"
+  },
+  {
+    "id": "world.triX2",
+    "label": "mod.expr.worldTriX2",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(3)"
+  },
+  {
+    "id": "world.triY2",
+    "label": "mod.expr.worldTriY2",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(4)"
+  },
+  {
+    "id": "world.triZ2",
+    "label": "mod.expr.worldTriZ2",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(5)"
+  },
+  {
+    "id": "world.triX3",
+    "label": "mod.expr.worldTriX3",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(6)"
+  },
+  {
+    "id": "world.triY3",
+    "label": "mod.expr.worldTriY3",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(7)"
+  },
+  {
+    "id": "world.triZ3",
+    "label": "mod.expr.worldTriZ3",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "kind": "float",
+    "text": "world_tri_num(8)"
+  },
+  {
+    "id": "world.roomStaticCount",
+    "label": "mod.expr.worldStaticCount",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_count(world_sel_room_idx())"
+  },
+  {
+    "id": "world.lastAddedStatic",
+    "label": "mod.expr.worldLastStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_last_static()"
+  },
+  {
+    "id": "world.staticShown",
+    "label": "mod.expr.worldStaticShown",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(0)"
+  },
+  {
+    "id": "world.staticLit",
+    "label": "mod.expr.worldStaticLit",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(1)"
+  },
+  {
+    "id": "world.staticTranslucent",
+    "label": "mod.expr.worldStaticTrans",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(2)"
+  },
+  {
+    "id": "world.staticBlend",
+    "label": "mod.expr.worldStaticBlend",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(3)"
+  },
+  {
+    "id": "world.staticModel",
+    "label": "mod.expr.worldStaticModel",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(4)"
+  },
+  {
+    "id": "world.staticTexture",
+    "label": "mod.expr.worldStaticTex",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "int",
+    "text": "world_static_int(5)"
+  },
+  {
+    "id": "world.staticX",
+    "label": "mod.expr.worldStaticX",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "float",
+    "text": "world_static_pos(0)"
+  },
+  {
+    "id": "world.staticY",
+    "label": "mod.expr.worldStaticY",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "float",
+    "text": "world_static_pos(1)"
+  },
+  {
+    "id": "world.staticZ",
+    "label": "mod.expr.worldStaticZ",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "kind": "float",
+    "text": "world_static_pos(2)"
+  },
+  {
+    "id": "world.roomThingCount",
+    "label": "mod.expr.worldThingCount",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_count(world_sel_room_idx())"
+  },
+  {
+    "id": "world.thingTag",
+    "label": "mod.expr.worldThingTag",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_int(0)"
+  },
+  {
+    "id": "world.thingSavedBytes",
+    "label": "mod.expr.worldThingSaved",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_int(1)"
+  },
+  {
+    "id": "world.thingVal0",
+    "label": "mod.expr.worldThingVal0",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_int(2)"
+  },
+  {
+    "id": "world.thingVal1",
+    "label": "mod.expr.worldThingVal1",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_int(3)"
+  },
+  {
+    "id": "world.thingVal2",
+    "label": "mod.expr.worldThingVal2",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_thing_int(4)"
+  },
+  {
+    "id": "world.roomMemSaved",
+    "label": "mod.expr.worldMemSaved",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_mem_int(world_sel_room_idx(), 0)"
+  },
+  {
+    "id": "world.roomMemState",
+    "label": "mod.expr.worldMemState",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_mem_int(world_sel_room_idx(), 1)"
+  },
+  {
+    "id": "world.roomMemHasExtra",
+    "label": "mod.expr.worldMemHasExtra",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_mem_int(world_sel_room_idx(), 2)"
+  },
+  {
+    "id": "world.roomMemExtra",
+    "label": "mod.expr.worldMemExtra",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_mem_int(world_sel_room_idx(), 3)"
+  },
+  {
+    "id": "world.roomSavedSize",
+    "label": "mod.expr.worldSavedSize",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "kind": "int",
+    "text": "world_room_saved_size(world_sel_room_idx())"
   }
 ]

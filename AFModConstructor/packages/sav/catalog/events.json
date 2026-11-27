@@ -9,7 +9,7 @@
       "slot"
     ],
     "handler": "static void __cdecl %H%(int slot, void* user)",
-    "subscribe": "if (API->sav) %token% = API->sav->OnSlotSave(SELF, %H%, 0);",
+    "subscribe": "if (API->sav) %token% = API->sav->OnSlotSave(SELF, sav_save_relay, (void*)%H%);",
     "provides": "slot_save"
   },
   {
@@ -24,7 +24,7 @@
       "size"
     ],
     "handler": "static void __cdecl %H%(int slot, const void* bytes, int size, void* user)",
-    "subscribe": "if (API->sav) %token% = API->sav->OnSlotLoad(SELF, %H%, 0);",
+    "subscribe": "if (API->sav) %token% = API->sav->OnSlotLoad(SELF, sav_load_relay, (void*)%H%);",
     "provides": "slot_load"
   }
 ]

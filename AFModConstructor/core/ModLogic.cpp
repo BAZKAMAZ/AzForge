@@ -204,7 +204,11 @@ ModLogic::Rule ModLogic::MakeRule(const std::string& eventId) {
     Rule rule;
     rule.event = eventId;
     if (const ModCatalog::EventDef* def = ModCatalog::FindEvent(eventId)) {
-        for (const ModCatalog::ParamDef& p : def->filters) rule.filters.push_back({ p.key, p.preset });
+        for (const ModCatalog::ParamDef& p : def->filters) {
+            if (!p.optional && ModCatalog::IsWhenMatched(p, def->filters, rule.filters)) {
+                rule.filters.push_back({ p.key, p.preset });
+            }
+        }
     }
     return rule;
 }
@@ -213,7 +217,11 @@ ModLogic::Condition ModLogic::MakeCondition(const std::string& conditionId) {
     Condition condition;
     condition.id = conditionId;
     if (const ModCatalog::ConditionDef* def = ModCatalog::FindCondition(conditionId)) {
-        for (const ModCatalog::ParamDef& p : def->params) condition.args.push_back({ p.key, p.preset });
+        for (const ModCatalog::ParamDef& p : def->params) {
+            if (!p.optional && ModCatalog::IsWhenMatched(p, def->params, condition.args)) {
+                condition.args.push_back({ p.key, p.preset });
+            }
+        }
     }
     return condition;
 }
@@ -222,9 +230,30 @@ ModLogic::Action ModLogic::MakeAction(const std::string& actionId) {
     Action action;
     action.id = actionId;
     if (const ModCatalog::ActionDef* def = ModCatalog::FindAction(actionId)) {
-        for (const ModCatalog::ParamDef& p : def->params) action.args.push_back({ p.key, p.preset });
+        for (const ModCatalog::ParamDef& p : def->params) {
+            if (!p.optional && ModCatalog::IsWhenMatched(p, def->params, action.args)) {
+                action.args.push_back({ p.key, p.preset });
+            }
+        }
     }
     return action;
+}
+
+bool ModLogic::HasParam(const std::vector<Param>& params, const std::string& key) {
+    for (const Param& p : params) {
+        if (p.key == key) return true;
+    }
+    return false;
+}
+
+bool ModLogic::RemoveParam(std::vector<Param>& params, const std::string& key) {
+    for (auto it = params.begin(); it != params.end(); ++it) {
+        if (it->key == key) {
+            params.erase(it);
+            return true;
+        }
+    }
+    return false;
 }
 
 std::string& ModLogic::ParamValue(std::vector<Param>& params, const std::string& key) {

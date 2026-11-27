@@ -1,1 +1,214 @@
 mod.sys.inventory=Inventory
+mod.sec.invSlots=Slots & carried items
+mod.sec.invSelected=Selected slot inspection
+mod.sec.invTimers=Item timers & pause
+mod.sec.invChain=Combo chain state
+mod.sec.invLevel=Remaining level bonuses
+mod.sec.invEvents=Slot & chain events
+
+mod.ev.invSlotEmptied=Inventory slot emptied
+mod.ev.invSlotEmptied.line=Inventory slot emptied
+mod.ev.invSlotEmptied.hint=Fires right after an item expires or is used/cleared; add reason or item filter via +
+mod.ev.invChainChanged=Combo chain grew or broke
+mod.ev.invChainChanged.line=Combo chain changed
+mod.ev.invChainChanged.hint=Fires whenever the diamond combo chain grows in length or expires back to 0
+
+mod.cond.invAvailable=Player inventory is available
+mod.cond.invAvailable.line=Inventory is available (player in room)
+mod.cond.invCarrying=Player is carrying item
+mod.cond.invCarrying.line=Carrying %name%
+mod.cond.invHasFreeSlot=Inventory has a free slot
+mod.cond.invHasFreeSlot.line=Inventory has at least one free slot
+mod.cond.invCountCmp=Compare inventory slot count
+mod.cond.invCountCmp.line=Inventory %mode% %op% %count%
+mod.cond.invSlotFilled=Inventory slot is occupied
+mod.cond.invSlotFilled.line=Inventory slot #%slot% is occupied
+mod.cond.invSlotItemIs=Inventory slot holds item
+mod.cond.invSlotItemIs.line=Inventory slot #%slot% holds %name%
+mod.cond.invSlotTimeCmp=Compare slot timer value
+mod.cond.invSlotTimeCmp.line=Slot #%slot% %field% %op% %value%
+mod.cond.invSlotTicking=Inventory slot timer is ticking
+mod.cond.invSlotTicking.line=Slot #%slot% timer is ticking
+mod.cond.invHasItemProp=Carried item in slot has property
+mod.cond.invHasItemProp.line=Slot #%slot% has property %key%
+mod.cond.invItemPropCmp=Compare carried item property
+mod.cond.invItemPropCmp.line=Slot #%slot% %key% %op% %value%
+mod.cond.invForEachSlot=For each inventory slot
+mod.cond.invForEachSlot.line=For each inventory slot (%var%)
+mod.cond.invForEachSlot.hint=Automatically selects each slot so Selected slot expressions read its item and timer
+mod.cond.invChainCmp=Compare active combo chain
+mod.cond.invChainCmp.line=Combo chain %field% %op% %value%
+mod.cond.invLevelLeftCmp=Compare remaining bonuses on level
+mod.cond.invLevelLeftCmp.line=Remaining %which% on level %op% %count%
+mod.cond.invEvReason=Emptied slot reason is
+mod.cond.invEvReason.line=Slot emptied because: %reason%
+mod.cond.invChainEvBroke=Combo chain just expired (broke)
+mod.cond.invChainEvBroke.line=Combo chain broke (timer ran out)
+
+mod.act.invGive=Give item to inventory
+mod.act.invGive.line=Give %name% to inventory
+mod.act.invGive.hint=Places any standard or custom carried item in the first free slot; use + to pick a specific slot, duration, or timer mode
+mod.act.invSelectSlot=Select inventory slot
+mod.act.invSelectSlot.line=Select inventory slot #%slot%
+mod.act.invClear=Clear inventory
+mod.act.invClear.line=Clear inventory (%by%)
+mod.act.invClear.hint=Clears a single slot, all carried items of a given ID/type, or every occupied slot
+mod.act.invMoveItem=Move item to an empty slot
+mod.act.invMoveItem.line=Move item from slot #%fromSlot% to empty slot #%toSlot%
+mod.act.invMoveItem.hint=Preserves custom per-slot icon and timer; fails if destination slot is occupied (use Swap instead)
+mod.act.invSwapItems=Swap two inventory slots
+mod.act.invSwapItems.line=Swap inventory slots #%first% and #%second%
+mod.act.invSetSlotCount=Set inventory capacity (1..32 slots)
+mod.act.invSetSlotCount.line=Set inventory capacity = %count% slots
+mod.act.invSetSlotCount.hint=Default is 5; values 6..32 dynamically relocate the slot array out of the player entity
+mod.act.invSetIcon=Override HUD icon of inventory slot
+mod.act.invSetIcon.line=Set slot #%slot% HUD icon = "%icon%"
+mod.act.invSetIcon.hint=Changes only this slot's icon without altering the underlying bonus type
+mod.act.invSetTimeLeft=Set remaining seconds on slot timer
+mod.act.invSetTimeLeft.line=Set slot #%slot% time left = %seconds% s
+mod.act.invSetTimeLeft.hint=Clamped between 0 and the slot's total duration
+mod.act.invAddTimeLeft=Add or subtract seconds on slot timer
+mod.act.invAddTimeLeft.line=Add %delta% s to slot #%slot% timer
+mod.act.invAddTimeLeft.hint=Automatically expands time_total if the new time exceeds the slot's previous maximum
+mod.act.invSetTicking=Control slot countdown timers
+mod.act.invSetTicking.line=Inventory timers: %mode%
+mod.act.invSetTicking.hint=Pause, resume, or toggle a single slot's countdown ring or all carried timers at once
+mod.act.invSetPropNum=Set numeric/flag property of slot item
+mod.act.invSetPropNum.line=Slot #%slot% %key% = %value%
+mod.act.invSetPropAsset=Set icon/sound property of slot item
+mod.act.invSetPropAsset.line=Slot #%slot% %key% = "%path%"
+mod.act.invCancel=Cancel inventory/chain event subscription
+mod.act.invCancel.line=Unsubscribe from this inventory event
+
+mod.expr.invAvailable=1 if player inventory is available
+mod.expr.invSlotCount=Current inventory capacity (slots)
+mod.expr.invUsedCount=Number of occupied inventory slots
+mod.expr.invFreeCount=Number of empty inventory slots
+mod.expr.invFreeSlot=First empty slot index (-1 if full)
+mod.expr.invSlotOf=Slot index holding item (-1 if not carried)
+mod.expr.invLastPutSlot=Slot index written by last Give (-1 if failed)
+mod.expr.invSlotName=Item behaviour name in slot
+mod.expr.invSlotResId=Item resource ID in slot
+mod.expr.invSlotTimeLeft=Remaining timer seconds in slot
+mod.expr.invSlotTimeTotal=Total timer duration in slot
+mod.expr.invSlotFraction=Remaining timer fraction (0..1) in slot
+mod.expr.invSlotTicking=1 if slot timer is actively counting down
+
+mod.expr.invSelSlotIdx=Selected slot: index
+mod.expr.invSelFilled=Selected slot: 1 if occupied
+mod.expr.invSelName=Selected slot: item behaviour name
+mod.expr.invSelResId=Selected slot: item resource ID ($res_id)
+mod.expr.invSelTimeLeft=Selected slot: seconds remaining
+mod.expr.invSelTimeTotal=Selected slot: total duration seconds
+mod.expr.invSelFraction=Selected slot: remaining fraction (0..1)
+mod.expr.invSelBurn=Selected slot: torch burn-in time
+mod.expr.invSelTotem=Selected slot: 1 if timed totem
+mod.expr.invSelTorch=Selected slot: 1 if torch
+mod.expr.invSelPtsOut=Selected slot: points on run out ($pts_out)
+
+mod.expr.invBonusesLeft=Remaining standard gems on level
+mod.expr.invMegaLeft=Remaining mega-bonuses (crowns) on level
+mod.expr.invOtherLeft=Remaining other bonuses on level
+mod.expr.invTotalLeft=Total remaining non-decor bonuses on level
+
+mod.expr.invChainLen=Combo chain: current length
+mod.expr.invChainPts=Combo chain: total points scored
+mod.expr.invChainTime=Combo chain: window seconds left
+mod.expr.invChainWindow=Combo chain: full window duration (s)
+mod.expr.invChainFrac=Combo chain: remaining window fraction (0..1)
+
+mod.expr.invPropCnt=Number of slot item property keys
+mod.expr.invPropName=Slot item property key name by index
+mod.expr.invPropInt=Read integer property of slot item
+mod.expr.invPropNum=Read float property of slot item
+mod.expr.invPropText=Read text property of slot item
+
+mod.expr.invEvReason=Slot event: reason (0 expired, 1 used)
+mod.expr.invEvSlot=Slot event: emptied slot index
+mod.expr.invEvPtsOut=Slot event: item pointsOnRunOut
+mod.expr.invEvTimeLeft=Slot event: remaining seconds when emptied
+mod.expr.invEvName=Slot event: item behaviour name
+mod.expr.invEvResId=Slot event: item resource ID
+
+mod.expr.invChainEvLen=Chain event: new chain length (0 if broke)
+mod.expr.invChainEvPts=Chain event: points scored in chain
+mod.expr.invChainEvBroke=Chain event: 1 if chain broke, 0 if grew
+
+mod.p.invSlot=Slot index (0..)
+mod.p.invSlotOrFree=Slot index (-1 = first free)
+mod.p.invFromSlot=Source slot
+mod.p.invToSlot=Target empty slot
+mod.p.invItemName=Item
+mod.p.invClearBy=Target
+mod.p.invTickMode=Action
+mod.p.invFilterItem=Item filter
+mod.p.invReason=Reason
+mod.p.invChainChange=Chain event
+mod.p.invCountMode=What to count
+mod.p.invTimeField=Timer field
+mod.p.invChainField=Chain field
+mod.p.invLeftKind=Bonus category
+mod.p.invOnlyFilled=Occupied slots only
+mod.p.invTimerMode=Timer mode
+mod.p.invIcon=HUD icon texture
+
+mod.inv.clr.slot=by slot index
+mod.inv.clr.name=by item ID / name
+mod.inv.clr.all=all occupied slots
+
+mod.inv.tick.pauseSlot=pause slot
+mod.inv.tick.resumeSlot=resume slot
+mod.inv.tick.toggleSlot=toggle slot
+mod.inv.tick.pauseAll=pause all slots
+mod.inv.tick.resumeAll=resume all slots
+
+mod.inv.item.totem=Protection totem ("totem")
+mod.inv.item.torch=Torch ("torch")
+mod.inv.item.knife=Dagger ("knife")
+mod.inv.item.fomka=Crowbar ("fomka")
+mod.inv.item.keyA=White key ("key_a")
+mod.inv.item.keyB=Blue key ("key_b")
+mod.inv.item.keyC=Red key ("key_c")
+mod.inv.item.keyD=Green key ("key_d")
+mod.inv.item.keyE=Purple key ("key_e")
+mod.inv.item.uniKey=Master skeleton key ("uni_key")
+
+mod.inv.timer.game=Game countdown (clears on 0)
+mod.inv.timer.none=No timer (stays until used)
+mod.inv.timer.mod=Mod-controlled timer ring
+
+mod.inv.reason.any=Any reason (expired or used)
+mod.inv.reason.expired=Timer expired (0)
+mod.inv.reason.used=Used / cleared with time left (1)
+
+mod.inv.chain.any=Grew or broke
+mod.inv.chain.grew=Chain grew (+1)
+mod.inv.chain.broke=Chain broke (expired)
+
+mod.inv.cnt.used=Occupied slots
+mod.inv.cnt.free=Free slots
+mod.inv.cnt.capacity=Total slot capacity
+
+mod.inv.tf.left=Seconds left (timeLeft)
+mod.inv.tf.total=Total duration (timeTotal)
+mod.inv.tf.fraction=Remaining fraction 0..1
+
+mod.inv.cf.length=Combo length
+mod.inv.cf.points=Combo points
+mod.inv.cf.timeLeft=Window seconds left
+
+mod.inv.left.bonuses=Standard gems (BonusesLeft)
+mod.inv.left.mega=Mega crowns (MegaBonusesLeft)
+mod.inv.left.other=Other items (OtherBonusesLeft)
+mod.inv.left.total=All counted bonuses combined
+
+mod.inv.ip.ptsOut=Points on expire/use (pts_out)
+mod.inv.ip.timeLeft=Seconds left (time_left)
+mod.inv.ip.timeTotal=Total duration seconds (time_total)
+mod.inv.ip.burnTime=Torch burn-in seconds (burn_time)
+mod.inv.ip.flags=Raw slot flags (flags)
+mod.inv.ip.hasTimer=Has timer ring flag (has_timer)
+mod.inv.ip.timerMine=Mod owns timer flag (timer_is_mine)
+mod.inv.ip.icon=Slot HUD icon texture (icon)
+mod.inv.ip.soundUse=Slot use/expire sound (sound_use)
+mod.inv.ip.name=Item name (name)

@@ -1,0 +1,17 @@
+{
+    "api_version": 1,
+    "author": "AFModConstructor",
+    "capabilities": [],
+    "description": "Interactive showcase of all DemoApi events, conditions, actions and expressions",
+    "entry": "bin/demotest.dll",
+    "game_version": "1.0",
+    "id": "demotest",
+    "name": "demotest",
+    "requires": [
+        "demo",
+        "input",
+        "player",
+        "render"
+    ],
+    "version": "1.0.0"
+}

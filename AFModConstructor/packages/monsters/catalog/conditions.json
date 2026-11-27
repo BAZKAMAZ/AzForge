@@ -1,0 +1,1118 @@
+[
+  {
+    "id": "monsters.countCompare",
+    "label": "mod.cond.monsterCount",
+    "call": "Monsters.GetCount",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(monsters_live_count() %op% (int)(%count%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterCount.hint"
+  },
+  {
+    "id": "monsters.killedCountCompare",
+    "label": "mod.cond.monsterKilledCount",
+    "call": "Monsters.GetKilledCount",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(monsters_killed_count() %op% (int)(%count%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterKilledCount.hint"
+  },
+  {
+    "id": "monsters.typeCountCompare",
+    "label": "mod.cond.monsterTypeCount",
+    "call": "Monsters.GetTypeCount",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "10"
+      }
+    ],
+    "emit": "(monsters_type_count() %op% (int)(%count%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "hint": "mod.cond.monsterTypeCount.hint"
+  },
+  {
+    "id": "monsters.typeExists",
+    "label": "mod.cond.monsterTypeExists",
+    "call": "Monsters.FindType",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      }
+    ],
+    "emit": "(monsters_type_exists(\"%name%\") != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "hint": "mod.cond.monsterTypeExists.hint"
+  },
+  {
+    "id": "monsters.typeHasProp",
+    "label": "mod.cond.monsterTypeHasProp",
+    "call": "Monsters.HasTypeProperty",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "speed",
+        "options": [
+          {
+            "value": "speed",
+            "label": "mod.monsters.tp.speed"
+          },
+          {
+            "value": "speed_up",
+            "label": "mod.monsters.tp.speedUp"
+          },
+          {
+            "value": "vert_speed",
+            "label": "mod.monsters.tp.vertSpeed"
+          },
+          {
+            "value": "jump",
+            "label": "mod.monsters.tp.jump"
+          },
+          {
+            "value": "jump_factor",
+            "label": "mod.monsters.tp.jumpFactor"
+          },
+          {
+            "value": "fall",
+            "label": "mod.monsters.tp.fall"
+          },
+          {
+            "value": "part_color",
+            "label": "mod.monsters.tp.partColor"
+          },
+          {
+            "value": "part_color_hard",
+            "label": "mod.monsters.tp.partColorHard"
+          },
+          {
+            "value": "tex_easy",
+            "label": "mod.monsters.tp.texEasy"
+          },
+          {
+            "value": "tex_hard",
+            "label": "mod.monsters.tp.texHard"
+          },
+          {
+            "value": "model",
+            "label": "mod.monsters.tp.model"
+          },
+          {
+            "value": "animation",
+            "label": "mod.monsters.tp.animation"
+          },
+          {
+            "value": "name",
+            "label": "mod.monsters.tp.name"
+          }
+        ]
+      }
+    ],
+    "emit": "(monsters_type_has_prop(\"%name%\", \"%key%\") != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterTypes",
+    "hint": "mod.cond.monsterTypeHasProp.hint"
+  },
+  {
+    "id": "monsters.liveAlive",
+    "label": "mod.cond.monsterLiveAlive",
+    "call": "Monsters.Get / IndexOf / Find",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.lookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.monsters.by.index"
+          },
+          {
+            "value": "1",
+            "label": "mod.monsters.by.id"
+          },
+          {
+            "value": "2",
+            "label": "mod.monsters.by.key"
+          }
+        ]
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "id",
+        "label": "mod.p.monsterId",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "key",
+        "label": "mod.p.monsterKey",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "when": {
+          "param": "by",
+          "equals": "2"
+        }
+      }
+    ],
+    "emit": "((%by% == 0 ? monsters_live_exists_at((int)(%index%)) : (%by% == 1 ? (monsters_index_of((uint32_t)(%id%)) >= 0) : (monsters_find_id(\"%key%\") != AMOD_MONSTER_NONE))) != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterLiveAlive.hint"
+  },
+  {
+    "id": "monsters.liveHasProp",
+    "label": "mod.cond.monsterLiveHasProp",
+    "call": "Monsters.HasProperty",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "speed",
+        "options": [
+          {
+            "value": "speed",
+            "label": "mod.monsters.ep.speed"
+          },
+          {
+            "value": "speed_min",
+            "label": "mod.monsters.ep.speedMin"
+          },
+          {
+            "value": "speed_max",
+            "label": "mod.monsters.ep.speedMax"
+          },
+          {
+            "value": "facing",
+            "label": "mod.monsters.ep.facing"
+          },
+          {
+            "value": "hard",
+            "label": "mod.monsters.ep.hard"
+          },
+          {
+            "value": "x",
+            "label": "mod.monsters.ep.x"
+          },
+          {
+            "value": "y",
+            "label": "mod.monsters.ep.y"
+          },
+          {
+            "value": "z",
+            "label": "mod.monsters.ep.z"
+          },
+          {
+            "value": "accel",
+            "label": "mod.monsters.ep.accel"
+          },
+          {
+            "value": "gravity",
+            "label": "mod.monsters.ep.gravity"
+          },
+          {
+            "value": "fall_speed",
+            "label": "mod.monsters.ep.fallSpeed"
+          },
+          {
+            "value": "velocity",
+            "label": "mod.monsters.ep.velocity"
+          },
+          {
+            "value": "vert_velocity",
+            "label": "mod.monsters.ep.vertVelocity"
+          },
+          {
+            "value": "height",
+            "label": "mod.monsters.ep.height"
+          },
+          {
+            "value": "move_state",
+            "label": "mod.monsters.ep.moveState"
+          },
+          {
+            "value": "pitch",
+            "label": "mod.monsters.ep.pitch"
+          },
+          {
+            "value": "yaw",
+            "label": "mod.monsters.ep.yaw"
+          },
+          {
+            "value": "roll",
+            "label": "mod.monsters.ep.roll"
+          },
+          {
+            "value": "pitch_to",
+            "label": "mod.monsters.ep.pitchTo"
+          },
+          {
+            "value": "yaw_to",
+            "label": "mod.monsters.ep.yawTo"
+          },
+          {
+            "value": "turns",
+            "label": "mod.monsters.ep.turns"
+          },
+          {
+            "value": "blend",
+            "label": "mod.monsters.ep.blend"
+          },
+          {
+            "value": "spawn_speed",
+            "label": "mod.monsters.mp.spawnSpeed"
+          },
+          {
+            "value": "state",
+            "label": "mod.monsters.mp.state"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.monsters.mp.timeLeft"
+          },
+          {
+            "value": "level",
+            "label": "mod.monsters.mp.level"
+          },
+          {
+            "value": "dir",
+            "label": "mod.monsters.mp.dir"
+          },
+          {
+            "value": "radius",
+            "label": "mod.monsters.mp.radius"
+          },
+          {
+            "value": "phase",
+            "label": "mod.monsters.mp.phase"
+          },
+          {
+            "value": "attack_dist",
+            "label": "mod.monsters.mp.attackDist"
+          },
+          {
+            "value": "walk_state",
+            "label": "mod.monsters.mp.walkState"
+          },
+          {
+            "value": "walk_left",
+            "label": "mod.monsters.mp.walkLeft"
+          },
+          {
+            "value": "pos_lerp",
+            "label": "mod.monsters.mp.posLerp"
+          },
+          {
+            "value": "live",
+            "label": "mod.monsters.mp.live"
+          },
+          {
+            "value": "decor",
+            "label": "mod.monsters.mp.decor"
+          },
+          {
+            "value": "attack_time",
+            "label": "mod.monsters.mp.attackTime"
+          },
+          {
+            "value": "bluff_time",
+            "label": "mod.monsters.mp.bluffTime"
+          },
+          {
+            "value": "walk_time",
+            "label": "mod.monsters.mp.walkTime"
+          },
+          {
+            "value": "walk_wait",
+            "label": "mod.monsters.mp.walkWait"
+          },
+          {
+            "value": "sit_time",
+            "label": "mod.monsters.mp.sitTime"
+          },
+          {
+            "value": "wait_time",
+            "label": "mod.monsters.mp.waitTime"
+          },
+          {
+            "value": "scale",
+            "label": "mod.monsters.ep.scale"
+          },
+          {
+            "value": "axis",
+            "label": "mod.monsters.mp.axis"
+          },
+          {
+            "value": "model",
+            "label": "mod.monsters.ep.model"
+          },
+          {
+            "value": "texture",
+            "label": "mod.monsters.ep.texture"
+          },
+          {
+            "value": "model2",
+            "label": "mod.monsters.ep.model2"
+          },
+          {
+            "value": "texture2",
+            "label": "mod.monsters.ep.texture2"
+          },
+          {
+            "value": "tag",
+            "label": "mod.monsters.mp.tag"
+          }
+        ]
+      }
+    ],
+    "emit": "(monsters_live_has_prop((int)(%index%), \"%key%\") != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterLiveHasProp.hint"
+  },
+  {
+    "id": "monsters.liveNumPropCompare",
+    "label": "mod.cond.monsterLiveNumProp",
+    "call": "Monsters.GetProperty",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "speed",
+        "options": [
+          {
+            "value": "speed",
+            "label": "mod.monsters.ep.speed"
+          },
+          {
+            "value": "speed_min",
+            "label": "mod.monsters.ep.speedMin"
+          },
+          {
+            "value": "speed_max",
+            "label": "mod.monsters.ep.speedMax"
+          },
+          {
+            "value": "facing",
+            "label": "mod.monsters.ep.facing"
+          },
+          {
+            "value": "hard",
+            "label": "mod.monsters.ep.hard"
+          },
+          {
+            "value": "x",
+            "label": "mod.monsters.ep.x"
+          },
+          {
+            "value": "y",
+            "label": "mod.monsters.ep.y"
+          },
+          {
+            "value": "z",
+            "label": "mod.monsters.ep.z"
+          },
+          {
+            "value": "accel",
+            "label": "mod.monsters.ep.accel"
+          },
+          {
+            "value": "gravity",
+            "label": "mod.monsters.ep.gravity"
+          },
+          {
+            "value": "fall_speed",
+            "label": "mod.monsters.ep.fallSpeed"
+          },
+          {
+            "value": "velocity",
+            "label": "mod.monsters.ep.velocity"
+          },
+          {
+            "value": "vert_velocity",
+            "label": "mod.monsters.ep.vertVelocity"
+          },
+          {
+            "value": "height",
+            "label": "mod.monsters.ep.height"
+          },
+          {
+            "value": "move_state",
+            "label": "mod.monsters.ep.moveState"
+          },
+          {
+            "value": "pitch",
+            "label": "mod.monsters.ep.pitch"
+          },
+          {
+            "value": "yaw",
+            "label": "mod.monsters.ep.yaw"
+          },
+          {
+            "value": "roll",
+            "label": "mod.monsters.ep.roll"
+          },
+          {
+            "value": "pitch_to",
+            "label": "mod.monsters.ep.pitchTo"
+          },
+          {
+            "value": "yaw_to",
+            "label": "mod.monsters.ep.yawTo"
+          },
+          {
+            "value": "turns",
+            "label": "mod.monsters.ep.turns"
+          },
+          {
+            "value": "blend",
+            "label": "mod.monsters.ep.blend"
+          },
+          {
+            "value": "spawn_speed",
+            "label": "mod.monsters.mp.spawnSpeed"
+          },
+          {
+            "value": "state",
+            "label": "mod.monsters.mp.state"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.monsters.mp.timeLeft"
+          },
+          {
+            "value": "level",
+            "label": "mod.monsters.mp.level"
+          },
+          {
+            "value": "dir",
+            "label": "mod.monsters.mp.dir"
+          },
+          {
+            "value": "radius",
+            "label": "mod.monsters.mp.radius"
+          },
+          {
+            "value": "phase",
+            "label": "mod.monsters.mp.phase"
+          },
+          {
+            "value": "attack_dist",
+            "label": "mod.monsters.mp.attackDist"
+          },
+          {
+            "value": "walk_state",
+            "label": "mod.monsters.mp.walkState"
+          },
+          {
+            "value": "walk_left",
+            "label": "mod.monsters.mp.walkLeft"
+          },
+          {
+            "value": "pos_lerp",
+            "label": "mod.monsters.mp.posLerp"
+          },
+          {
+            "value": "live",
+            "label": "mod.monsters.mp.live"
+          },
+          {
+            "value": "decor",
+            "label": "mod.monsters.mp.decor"
+          },
+          {
+            "value": "model",
+            "label": "mod.monsters.ep.model"
+          },
+          {
+            "value": "texture",
+            "label": "mod.monsters.ep.texture"
+          },
+          {
+            "value": "model2",
+            "label": "mod.monsters.ep.model2"
+          },
+          {
+            "value": "texture2",
+            "label": "mod.monsters.ep.texture2"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(monsters_get_live_num((int)(%index%), \"%key%\") %op% (float)(%value%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterLiveNumProp.hint"
+  },
+  {
+    "id": "monsters.forEachLive",
+    "label": "mod.cond.monsterForEachLive",
+    "call": "Monsters.GetCount",
+    "params": [
+      {
+        "key": "var",
+        "label": "mod.p.loopVar",
+        "kind": "text",
+        "preset": "m_lv_i"
+      }
+    ],
+    "loop": "for (int %var% = 0; %var% < monsters_live_count() && monsters_select_live_iter(%var%); ++%var%)",
+    "group": "monsters",
+    "section": "mod.sec.monsterLive",
+    "hint": "mod.cond.monsterForEachLive.hint"
+  },
+  {
+    "id": "monsters.placedCountCompare",
+    "label": "mod.cond.monsterPlacedCount",
+    "call": "Monsters.GetPlacedCount",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(monsters_placed_count((int)(%room%)) %op% (int)(%count%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "hint": "mod.cond.monsterPlacedCount.hint"
+  },
+  {
+    "id": "monsters.placedKeyExists",
+    "label": "mod.cond.monsterPlacedKeyExists",
+    "call": "Monsters.FindPlaced",
+    "params": [
+      {
+        "key": "key",
+        "label": "mod.p.monsterKey",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(monsters_find_placed((int)(%room%), \"%key%\") >= 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "hint": "mod.cond.monsterPlacedKeyExists.hint"
+  },
+  {
+    "id": "monsters.forEachPlaced",
+    "label": "mod.cond.monsterForEachPlaced",
+    "call": "Monsters.GetPlacedCount",
+    "params": [
+      {
+        "key": "var",
+        "label": "mod.p.loopVar",
+        "kind": "text",
+        "preset": "m_pl_i"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "loop": "for (int %var% = 0; %var% < monsters_placed_count((int)(%room%)) && monsters_select_placed_iter((int)(%room%), %var%); ++%var%)",
+    "group": "monsters",
+    "section": "mod.sec.monsterPlaced",
+    "hint": "mod.cond.monsterForEachPlaced.hint"
+  },
+  {
+    "id": "monsters.boxLoaded",
+    "label": "mod.cond.monsterBoxLoaded",
+    "call": "Monsters.GetBox",
+    "params": [],
+    "emit": "(monsters_box_loaded() != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterBoxes",
+    "hint": "mod.cond.monsterBoxLoaded.hint"
+  },
+  {
+    "id": "monsters.touchIsPlayer",
+    "label": "mod.cond.monsterTouchIsPlayer",
+    "call": "AmodMonsterTouchInfo.isPlayer",
+    "needs": "monster_touch",
+    "params": [],
+    "emit": "(monsters_touch_is_player() != 0)",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.cond.monsterTouchIsPlayer.hint"
+  },
+  {
+    "id": "monsters.touchSideIs",
+    "label": "mod.cond.monsterTouchSide",
+    "call": "AmodMonsterTouchInfo.side",
+    "needs": "monster_touch",
+    "params": [
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "side",
+        "label": "mod.p.touchSide",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.monsters.side.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.monsters.side.2"
+          },
+          {
+            "value": "3",
+            "label": "mod.monsters.side.3"
+          },
+          {
+            "value": "4",
+            "label": "mod.monsters.side.4"
+          }
+        ]
+      }
+    ],
+    "emit": "(monsters_touch_side() %op% (int)(%side%))",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.cond.monsterTouchSide.hint"
+  }
+]

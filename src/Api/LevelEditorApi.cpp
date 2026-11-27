@@ -3,6 +3,7 @@
 #include "src/Api/LevelEditorApi.h"
 #include "src/Api/ApiRead.h"
 #include "src/Api/FrameApi.h"
+#include "src/Api/InputApi.h"
 #include "src/Api/RenderApi.h"
 #include "src/Api/TextureApi.h"
 #include "src/Api/ModContext.h"
@@ -284,16 +285,7 @@ namespace Forge
 
         void HoldKeys()
         {
-            if (g_input == nullptr || g_input[GameAddress::kInputSwallowingOffset] == 0)
-            {
-                return;
-            }
-
-            for (int key = 0; key < static_cast<int>(GameAddress::kInputKeyCount); ++key)
-            {
-                g_input[GameAddress::kInputKeyStateOffset + key] =
-                    (GetAsyncKeyState(key) & 0x8000) != 0 ? 1 : 0;
-            }
+            InputApi::FillKeysIfStalled();
         }
 
         void HoldSwallow()

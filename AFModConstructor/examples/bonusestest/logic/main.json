@@ -1,0 +1,2697 @@
+{
+  "name": "main",
+  "vars": [
+    {
+      "name": "hud_on",
+      "type": "bool",
+      "value": "1"
+    },
+    {
+      "name": "hud_page",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "type_cursor",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "take_mode",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "magnet_on",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "cancel_probe",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "skin_toggle",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "loop_live_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "first_live_idx",
+      "type": "int",
+      "value": "-1"
+    },
+    {
+      "name": "cond_mask",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_take_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_spawn_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_kbuild_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_kupdate_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_ktake_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_take_name",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_take_res",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_take_tag",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_take_col",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_take_row",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_take_pts",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_take_decor",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_take_x",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_take_y",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_take_z",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_sp_name",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_sp_res",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_sp_tag",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_sp_x",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_sp_y",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_sp_z",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_sp_hastype",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_sp_live",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_sp_kind",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_bd_name",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_bd_tag",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_bd_x",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_bd_y",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_bd_z",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_bd_amp",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_bd_spd",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_bd_hid",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_bd_pts",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_bd_mdl",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_bd_tex",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_k_dt",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "p_col",
+      "type": "int",
+      "value": "20"
+    },
+    {
+      "name": "p_row",
+      "type": "int",
+      "value": "14"
+    },
+    {
+      "name": "dx",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "dy",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "st_here",
+      "type": "text",
+      "value": "MENU"
+    },
+    {
+      "name": "last_cmd",
+      "type": "text",
+      "value": "Ready: [1] Start Level 1 (in menu) / Place Totem (in room)  [F2] HUD Page"
+    }
+  ],
+  "rules": [
+    {
+      "event": "system.modInit",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "bonuses.beginType",
+          "args": {
+            "id": "ruby_gem",
+            "basedOn": "bonus_1",
+            "behavesAs": "bonus",
+            "pointsTake": "250"
+          }
+        },
+        {
+          "id": "bonuses.commitType",
+          "args": {}
+        },
+        {
+          "id": "bonuses.beginType",
+          "args": {
+            "id": "solar_relic",
+            "basedOn": "totem",
+            "behavesAs": "bonus",
+            "pointsTake": "500",
+            "pointsOut": "100"
+          }
+        },
+        {
+          "id": "bonuses.typeAssets",
+          "args": {
+            "model": "models/bonus/corona.mmd",
+            "texture": "textures/bonus/cor_quest.jpg",
+            "icon": "textures/bonus/totem_icon.png",
+            "soundTake": "sounds/mega_take.wav"
+          }
+        },
+        {
+          "id": "bonuses.typeTimerAndTrain",
+          "args": {
+            "time": "12",
+            "timerMode": "AMOD_BONUS_TIMER_GAME",
+            "makesTrain": "1",
+            "trainIndex": "6"
+          }
+        },
+        {
+          "id": "bonuses.typeGlow",
+          "args": {
+            "r": "1.0",
+            "g": "0.9",
+            "b": "0.3",
+            "a": "1.0",
+            "r2": "1.0",
+            "g2": "0.35",
+            "b2": "0.1",
+            "a2": "1.0"
+          }
+        },
+        {
+          "id": "bonuses.typeRockingAndLight",
+          "args": {
+            "amp": "0.5",
+            "speed": "4.0",
+            "axisX": "1.0",
+            "axisY": "1.0",
+            "axisZ": "0.0",
+            "lr": "1.0",
+            "lg": "0.8",
+            "lb": "0.4",
+            "radius": "0.5"
+          }
+        },
+        {
+          "id": "bonuses.commitType",
+          "args": {}
+        },
+        {
+          "id": "bonuses.registerKind",
+          "args": {
+            "kindName": "orb"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Mod Init: Define ruby_gem & solar_relic types + register \"orb\" kind",
+      "collapsed": false
+    },
+    {
+      "event": "render.frame",
+      "filters": {},
+      "conditions": [],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [],
+          "actions": [],
+          "children": [
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "0"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "loop_live_cnt",
+                    "value": "0"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "first_live_idx",
+                    "value": "-1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "player.isHere",
+                  "args": {}
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.setText",
+                  "args": {
+                    "name": "st_here",
+                    "value": "IN ROOM"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "p_col",
+                    "value": "=(int)((player_position(0) + 2.0f) / 0.1f)"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "p_row",
+                    "value": "=(int)((1.45f - player_position(1)) / 0.1f)"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "player.isHere",
+                  "args": {},
+                  "inverted": true
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.setText",
+                  "args": {
+                    "name": "st_here",
+                    "value": "MENU"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.typeExists",
+                  "args": {
+                    "name": "solar_relic"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.typeFlagIs",
+                  "args": {
+                    "name": "totem",
+                    "flag": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "2"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.typeCompare",
+                  "args": {
+                    "name": "totem",
+                    "field": "0",
+                    "op": ">=",
+                    "value": "50"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "4"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.hasTypeProperty",
+                  "args": {
+                    "name": "torch",
+                    "key": "light_radius"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "8"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.roomCountCompare",
+                  "args": {
+                    "mode": "0",
+                    "op": ">",
+                    "count": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "16"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.namedCountCompare",
+                  "args": {
+                    "name": "bonus",
+                    "op": ">",
+                    "count": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "32"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.taggedExists",
+                  "args": {
+                    "tag": "gift"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "64"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.cellHasBonus",
+                  "args": {
+                    "col": "=p_col",
+                    "row": "=p_row"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "128"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.placementIsLive",
+                  "args": {
+                    "index": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "256"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.placementMatches",
+                  "args": {
+                    "index": "0",
+                    "text": "bonus"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "512"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.placementPropCompare",
+                  "args": {
+                    "index": "0",
+                    "key": "is_live",
+                    "op": "==",
+                    "value": "1"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "1024"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "bonuses.forEachPlacement",
+                  "args": {
+                    "var": "b_idx"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "loop_live_cnt",
+                    "value": "1"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "event": "",
+                  "filters": {},
+                  "conditions": [
+                    {
+                      "id": "var.compare",
+                      "args": {
+                        "name": "first_live_idx",
+                        "op": "<",
+                        "value": "0"
+                      }
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "id": "var.set",
+                      "args": {
+                        "name": "first_live_idx",
+                        "value": "=b_idx"
+                      }
+                    }
+                  ],
+                  "children": [],
+                  "veto": false,
+                  "enabled": true,
+                  "group": false,
+                  "name": "",
+                  "collapsed": false
+                }
+              ],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "first_live_idx",
+                    "op": ">=",
+                    "value": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "bonuses.selectPlacement",
+                  "args": {
+                    "index": "=first_live_idx"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "bonuses.selectType",
+                  "args": {
+                    "by": "1",
+                    "index": "=type_cursor"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            }
+          ],
+          "veto": false,
+          "enabled": true,
+          "group": true,
+          "name": "Evaluate all Bonuses room & type conditions",
+          "collapsed": true
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "hud_on"
+              }
+            }
+          ],
+          "actions": [],
+          "children": [
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "render.rect",
+                  "args": {
+                    "x": "8",
+                    "y": "8",
+                    "w": "624",
+                    "h": "190",
+                    "r": "0.04",
+                    "g": "0.06",
+                    "b": "0.11",
+                    "a": "0.84"
+                  }
+                },
+                {
+                  "id": "render.outline",
+                  "args": {
+                    "x": "8",
+                    "y": "8",
+                    "w": "624",
+                    "h": "190",
+                    "thickness": "1",
+                    "r": "0.96",
+                    "g": "0.76",
+                    "b": "0.32",
+                    "a": "0.9"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "BONUSES API TEST [{st_here}] Page {#hud_page + 1}/3 ([F1] HUD [F2] Page)",
+                    "x": "16",
+                    "y": "16",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "1.0",
+                    "g": "0.9",
+                    "b": "0.45",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last: {last_cmd}",
+                    "x": "16",
+                    "y": "170",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.98",
+                    "g": "0.86",
+                    "b": "0.46",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Room Bonuses -> Live:{#bonuses_room_count(-1, 0)} (loop:{loop_live_cnt})  Total:{#bonuses_room_count(-1, 1)}  Slots:{#bonuses_placement_slots(-1)}  Types:{#bonuses_type_count()}",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Lookups -> Tag\"gift\"Idx:{#bonuses_index_of_tag(\"gift\", 0)}  At(20,14):{#bonuses_index_at_cell(20, 14)}  OrbKindId:{#bonuses_find_kind_id(\"orb\")}  LastChainPts:{#bonuses_last_chain_points()}",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.88",
+                    "g": "0.92",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Selected Pl #{#bonuses_sel_pl_int(0)} -> name:\"{$bonuses_sel_pl_text(0)}\" res:\"{$bonuses_sel_pl_text(1)}\" tag:\"{$bonuses_sel_pl_text(2)}\" cell:({#bonuses_sel_pl_int(1)},{#bonuses_sel_pl_int(2)})",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.88",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Pl Pos:({~bonuses_sel_pl_num(0)}, {~bonuses_sel_pl_num(1)}, {~bonuses_sel_pl_num(2)})  live:{#bonuses_sel_pl_int(3)} hasType:{#bonuses_sel_pl_int(4)} kind:{#bonuses_sel_pl_int(5)}",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "[1]Start/PlaceTotem [2]PlaceCustom(ruby+solar) [3]MutateTypeSkin [4]SpawnOrbKind [5]MagnetBorrow:{magnet_on}",
+                    "x": "16",
+                    "y": "124",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.72",
+                    "g": "0.84",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "[6]ComboChain+Award [7]TakeMode:{take_mode}(0=Def,1=2x,2=Lock) [8]EditPl0 [9]CleanGifts [0]NextType",
+                    "x": "16",
+                    "y": "144",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.72",
+                    "g": "0.84",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 1: Room Counts, Placements & Hotkeys",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "1"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Type[#{type_cursor}] -> res:\"{$bonuses_sel_type_text(1)}\" behaves:\"{$bonuses_sel_type_text(0)}\" pts:{#bonuses_sel_type_int(0)}/{#bonuses_sel_type_int(1)} time:{~bonuses_sel_type_num(0)}s",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Flags -> totem:{#bonuses_sel_type_int(2)} torch:{#bonuses_sel_type_int(3)} train:{#bonuses_sel_type_int(4)}(#{#bonuses_sel_type_int(5)}) burn:{~bonuses_sel_type_num(1)}s lightR:{~bonuses_sel_type_num(2)}/{~bonuses_sel_type_num(3)}",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.9",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "IDs -> mdl:{#bonuses_sel_type_int(6)} tex:{#bonuses_sel_type_int(7)} icon:{#bonuses_sel_type_int(8)}  Glow:({~bonuses_sel_type_num(4)}, {~bonuses_sel_type_num(5)}, {~bonuses_sel_type_num(6)}, {~bonuses_sel_type_num(7)})",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "TypeProps({#bonuses_type_prop_count()}, [0]=\"{$bonuses_type_prop_name(0)}\") -> totem pts={#bonuses_type_prop_int(\"totem\", \"pts_take\")} time={~bonuses_type_prop_num(\"totem\", \"time\", 0)} name=\"{$bonuses_type_prop_text(\"totem\", \"name\")}\"",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.88",
+                    "g": "0.86",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "PlProps({#bonuses_pl_prop_count()}, [0]=\"{$bonuses_pl_prop_name(0)}\") -> Pl#0 time={~bonuses_pl_prop_num(-1, 0, \"time\", 0)} tag=\"{$bonuses_pl_prop_text(-1, 0, \"tag\")}\"  CondMask:{cond_mask}",
+                    "x": "16",
+                    "y": "124",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.88",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 2: Selected Type & Property Reflection",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "2"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Event Counts -> Take:{ev_take_cnt}  Spawn:{ev_spawn_cnt}  KindBuild:{ev_kbuild_cnt}  KindUpdate:{ev_kupdate_cnt}  KindTake:{ev_ktake_cnt}",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last Take -> \"{$last_take_res}\" (\"{$last_take_name}\", tag:\"{$last_take_tag}\") cell:({last_take_col},{last_take_row}) pts:{last_take_pts} decor:{last_take_decor} ({last_take_x},{last_take_y},{last_take_z})",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.9",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last Spawn -> \"{$last_sp_res}\" (\"{$last_sp_name}\", tag:\"{$last_sp_tag}\") pos:({last_sp_x},{last_sp_y},{last_sp_z}) type:{last_sp_hastype} live:{last_sp_live} kind:{last_sp_kind}",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.96",
+                    "g": "0.84",
+                    "b": "0.78",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Orb Body -> \"{$last_bd_name}\" tag:\"{$last_bd_tag}\" pos:({last_bd_x},{last_bd_y},{last_bd_z}) sway:({last_bd_amp},{last_bd_spd})",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Orb IDs -> hidden:{last_bd_hid} pts:{last_bd_pts} mdl:{last_bd_mdl} tex:{last_bd_tex} dt:{last_k_dt}",
+                    "x": "16",
+                    "y": "124",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.88",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 3: Take, Spawn & Custom Kind Telemetry",
+              "collapsed": false
+            }
+          ],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "Draw 3-page BonusesApi HUD",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Frame Update & 3-Page Telemetry HUD",
+      "collapsed": false
+    },
+    {
+      "event": "bonuses.beforeTake",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_take_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_take_name",
+            "value": "{$bonuses_take_text(0)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_take_res",
+            "value": "{$bonuses_take_text(1)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_take_tag",
+            "value": "{$bonuses_take_text(2)}"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_col",
+            "value": "=bonuses_take_int(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_row",
+            "value": "=bonuses_take_int(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_pts",
+            "value": "=bonuses_take_int(2)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_decor",
+            "value": "=bonuses_take_int(3)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_x",
+            "value": "=bonuses_take_num(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_y",
+            "value": "=bonuses_take_num(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_take_z",
+            "value": "=bonuses_take_num(2)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.compare",
+              "args": {
+                "name": "take_mode",
+                "op": "==",
+                "value": "1"
+              }
+            },
+            {
+              "id": "bonuses.takeMatches",
+              "args": {
+                "text": "bonus"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.awardPoints",
+              "args": {
+                "points": "200",
+                "where": "1",
+                "x": "=bonuses_take_num(0)",
+                "y": "=bonuses_take_num(1)",
+                "z": "=bonuses_take_num(2)"
+              }
+            },
+            {
+              "id": "bonuses.takeChainLink",
+              "args": {
+                "points": "20",
+                "where": "0"
+              }
+            },
+            {
+              "id": "bonuses.setTakeResult",
+              "args": {
+                "result": "AMOD_BONUS_TAKE_HANDLED"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "TakeMode 1 (HANDLED): Custom +200 + ChainLink for diamond!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.compare",
+              "args": {
+                "name": "take_mode",
+                "op": "==",
+                "value": "2"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.setTakeResult",
+              "args": {
+                "result": "AMOD_BONUS_TAKE_REFUSE"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "TakeMode 2 (REFUSE): Bonus pickup refused — press 7 to unlock!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "bonuses.takeIsDecor",
+              "args": {}
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Picked up a decorative ($decor) bonus!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "cancel_probe"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.cancel",
+              "args": {}
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Before Bonus Taken",
+      "collapsed": false
+    },
+    {
+      "event": "bonuses.beforeSpawn",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_spawn_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_sp_name",
+            "value": "{$bonuses_spawn_text(0)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_sp_res",
+            "value": "{$bonuses_spawn_text(1)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_sp_tag",
+            "value": "{$bonuses_spawn_text(2)}"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_x",
+            "value": "=bonuses_spawn_num(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_y",
+            "value": "=bonuses_spawn_num(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_z",
+            "value": "=bonuses_spawn_num(2)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_hastype",
+            "value": "=bonuses_spawn_int(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_live",
+            "value": "=bonuses_spawn_int(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_sp_kind",
+            "value": "=bonuses_spawn_int(2)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "bonuses.spawnIsLive",
+              "args": {}
+            },
+            {
+              "id": "bonuses.spawnMatches",
+              "args": {
+                "text": "solar_relic"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Spawned custom solar_relic in room!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Before Bonus Spawns in Room",
+      "collapsed": false
+    },
+    {
+      "event": "bonuses.kindBuild",
+      "filters": {
+        "kindName": "orb"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_kbuild_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "bonuses.bodySetLook",
+          "args": {
+            "model": "models/bonus/corona.mmd",
+            "texture": "textures/bonus/cor_quest.jpg"
+          }
+        },
+        {
+          "id": "bonuses.bodySetGlow",
+          "args": {
+            "r": "0.4",
+            "g": "0.95",
+            "b": "1.0",
+            "a": "1.0"
+          }
+        },
+        {
+          "id": "bonuses.bodySetGlow2",
+          "args": {
+            "r": "1.0",
+            "g": "0.5",
+            "b": "0.9",
+            "a": "1.0"
+          }
+        },
+        {
+          "id": "bonuses.bodySetRocking",
+          "args": {
+            "amp": "0.6",
+            "speed": "5.0",
+            "axisX": "0.0",
+            "axisY": "1.0",
+            "axisZ": "0.0"
+          }
+        },
+        {
+          "id": "bonuses.bodySetLight",
+          "args": {
+            "r": "0.4",
+            "g": "0.9",
+            "b": "1.0",
+            "radius": "0.5"
+          }
+        },
+        {
+          "id": "bonuses.bodySetBox",
+          "args": {
+            "minX": "-0.09",
+            "minY": "-0.09",
+            "minZ": "-0.10",
+            "maxX": "0.09",
+            "maxY": "0.09",
+            "maxZ": "0.10"
+          }
+        },
+        {
+          "id": "bonuses.bodySetPoints",
+          "args": {
+            "points": "350"
+          }
+        },
+        {
+          "id": "bonuses.bodySetHidden",
+          "args": {
+            "hidden": "0"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Kind \"orb\" Build",
+      "collapsed": false
+    },
+    {
+      "event": "bonuses.kindUpdate",
+      "filters": {
+        "kindName": "orb"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_kupdate_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_k_dt",
+            "value": "=bonuses_kind_dt()"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_bd_name",
+            "value": "{$bonuses_body_text(0)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_bd_tag",
+            "value": "{$bonuses_body_text(1)}"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_x",
+            "value": "=bonuses_body_num(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_y",
+            "value": "=bonuses_body_num(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_z",
+            "value": "=bonuses_body_num(2)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_amp",
+            "value": "=bonuses_body_num(3)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_spd",
+            "value": "=bonuses_body_num(4)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_hid",
+            "value": "=bonuses_body_int(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_pts",
+            "value": "=bonuses_body_int(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_mdl",
+            "value": "=bonuses_body_int(2)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_bd_tex",
+            "value": "=bonuses_body_int(3)"
+          }
+        },
+        {
+          "id": "bonuses.bodySetIds",
+          "args": {
+            "modelId": "0",
+            "textureId": "0"
+          }
+        },
+        {
+          "id": "bonuses.bodySetGlow",
+          "args": {
+            "r": "=0.55f + 0.45f * sinf(mod_elapsed * 4.0f)",
+            "g": "=0.75f + 0.25f * cosf(mod_elapsed * 3.0f)",
+            "b": "1.0",
+            "a": "1.0"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "player.isHere",
+              "args": {}
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.set",
+              "args": {
+                "name": "dx",
+                "value": "=player_position(0) - bonuses_body_num(0)"
+              }
+            },
+            {
+              "id": "var.set",
+              "args": {
+                "name": "dy",
+                "value": "=player_position(1) - bonuses_body_num(1)"
+              }
+            }
+          ],
+          "children": [
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "expr",
+                  "args": {
+                    "text": "(dx * dx + dy * dy) < 0.64f"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "bonuses.bodySetPos",
+                  "args": {
+                    "x": "=bonuses_body_num(0) + dx * 3.2f * bonuses_kind_dt()",
+                    "y": "=bonuses_body_num(1) + dy * 3.2f * bonuses_kind_dt()",
+                    "z": "=bonuses_body_num(2)"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            }
+          ],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "Magnetize toward player within 0.8 world units",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Kind \"orb\" Per-Frame Update (Rainbow Glow + Magnet Pull)",
+      "collapsed": false
+    },
+    {
+      "event": "bonuses.kindTake",
+      "filters": {
+        "kindName": "orb"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_ktake_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "bonuses.takeChainLink",
+          "args": {
+            "points": "30",
+            "where": "1",
+            "x": "=bonuses_take_num(0)",
+            "y": "=bonuses_take_num(1)",
+            "z": "=bonuses_take_num(2)"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "Collected an \"orb\" / magnetized bonus (+ChainLink)!"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Kind \"orb\" Take",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "112"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "hud_on"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "F1: Toggle HUD",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "113"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.set",
+          "args": {
+            "name": "hud_page",
+            "value": "=(hud_page + 1) % 3"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "F2: Cycle HUD Page",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "49"
+      },
+      "conditions": [],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "player.isHere",
+              "args": {},
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "world.startLevel",
+              "args": {
+                "level": "levels/level_1.txt"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "1: Started levels/level_1.txt"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "player.isHere",
+              "args": {}
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.place",
+              "args": {
+                "name": "totem",
+                "col": "=p_col + 1",
+                "row": "=p_row"
+              }
+            },
+            {
+              "id": "bonuses.selectType",
+              "args": {
+                "by": "0",
+                "name": "totem"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "1: Placed Protection Totem at player cell + 1"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "1: Start Level 1 (in menu) or Place Built-in Totem (in room)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "50"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.place",
+          "args": {
+            "name": "ruby_gem",
+            "col": "=p_col - 1",
+            "row": "=p_row"
+          }
+        },
+        {
+          "id": "bonuses.place",
+          "args": {
+            "name": "solar_relic",
+            "col": "=p_col + 2",
+            "row": "=p_row",
+            "tag": "gift",
+            "time": "15",
+            "decor": "1"
+          }
+        },
+        {
+          "id": "bonuses.place",
+          "args": {
+            "room": "1",
+            "name": "ruby_gem",
+            "col": "20",
+            "row": "14",
+            "tag": "room1_gift",
+            "decor": "1"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "2: Placed custom ruby_gem + solar_relic (tag \"gift\") near player"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "2: Place Custom Defined Bonus Types (ruby_gem & solar_relic)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "51"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "skin_toggle"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "skin_toggle"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.setTypeTexture",
+              "args": {
+                "id": "ruby_gem",
+                "texture": "textures/bonus/d_8.jpg"
+              }
+            },
+            {
+              "id": "bonuses.setTypeIcon",
+              "args": {
+                "id": "solar_relic",
+                "icon": "textures/bonus/megakey_icon.png"
+              }
+            },
+            {
+              "id": "bonuses.setTypePropNumber",
+              "args": {
+                "id": "ruby_gem",
+                "key": "pts_take",
+                "value": "777"
+              }
+            },
+            {
+              "id": "bonuses.setTypePropColor",
+              "args": {
+                "id": "ruby_gem",
+                "key": "glow_color",
+                "r": "1.0",
+                "g": "0.35",
+                "b": "0.85",
+                "a": "1.0"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "3: Mutated ruby_gem -> white brilliant texture + 777 pts + magenta glow"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "skin_toggle"
+              },
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.setTypePropAsset",
+              "args": {
+                "id": "ruby_gem",
+                "key": "texture",
+                "path": "textures/bonus/d_6.jpg"
+              }
+            },
+            {
+              "id": "bonuses.setTypePropNumber",
+              "args": {
+                "id": "ruby_gem",
+                "key": "pts_take",
+                "value": "250"
+              }
+            },
+            {
+              "id": "bonuses.setTypePropColor",
+              "args": {
+                "id": "ruby_gem",
+                "key": "glow_color",
+                "r": "0.3",
+                "g": "1.0",
+                "b": "0.6",
+                "a": "1.0"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "3: Mutated ruby_gem -> emerald texture + 250 pts + mint glow"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "3: Live-Mutate Mod-Defined Bonus Type Texture, Icon, Points & Glow",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "52"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.placeKind",
+          "args": {
+            "kindName": "orb",
+            "col": "=p_col",
+            "row": "=p_row - 1",
+            "tag": "orb_1",
+            "decor": "1"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "4: Spawned custom \"orb\" bonus kind above player"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "4: Spawn Custom Registered Bonus Kind (\"orb\")",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "53"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "magnet_on"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "magnet_on"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.borrowPlacement",
+              "args": {
+                "kindName": "orb",
+                "index": "=first_live_idx"
+              }
+            },
+            {
+              "id": "bonuses.borrowAllInRoom",
+              "args": {
+                "kindName": "orb"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "5: Borrowed all room bonuses into Magnet \"orb\" kind! Walk near gems!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "magnet_on"
+              },
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.returnPlacement",
+              "args": {
+                "index": "0"
+              }
+            },
+            {
+              "id": "bonuses.returnAllInRoom",
+              "args": {}
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "5: Returned all borrowed bonuses back to normal game control"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "5: Toggle Borrow / Return Room Bonuses into Magnet \"orb\" Kind",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "54"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.takeChainLink",
+          "args": {
+            "points": "25",
+            "where": "0"
+          }
+        },
+        {
+          "id": "bonuses.takeChainLink",
+          "args": {
+            "points": "25",
+            "where": "1",
+            "x": "=player_position(0)",
+            "y": "=player_position(1) + 0.28f",
+            "z": "=player_position(2)"
+          }
+        },
+        {
+          "id": "bonuses.awardPoints",
+          "args": {
+            "points": "100",
+            "where": "0"
+          }
+        },
+        {
+          "id": "bonuses.awardPoints",
+          "args": {
+            "points": "150",
+            "where": "1",
+            "x": "=player_position(0)",
+            "y": "=player_position(1) + 0.42f",
+            "z": "=player_position(2)"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "6: Triggered 2x TakeChainLink + AwardPoints popups! Press 6 fast for Combo!"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "6: Trigger Combo Chain Links & Floating Bonus Points",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "55"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.set",
+          "args": {
+            "name": "take_mode",
+            "value": "=(take_mode + 1) % 3"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "7: Cycled Take Mode (0=Default, 1=Custom 2x HANDLED, 2=Locked REFUSE)"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "7: Cycle Before-Take Verdict Mode (DEFAULT -> HANDLED -> REFUSE)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "56"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        },
+        {
+          "id": "var.compare",
+          "args": {
+            "name": "first_live_idx",
+            "op": ">=",
+            "value": "0"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.selectPlacement",
+          "args": {
+            "index": "=first_live_idx"
+          }
+        },
+        {
+          "id": "bonuses.setPlacementText",
+          "args": {
+            "index": "=first_live_idx",
+            "key": "tag",
+            "text": "gift"
+          }
+        },
+        {
+          "id": "bonuses.setPlacementNumber",
+          "args": {
+            "index": "=first_live_idx",
+            "key": "decor",
+            "value": "1"
+          }
+        },
+        {
+          "id": "bonuses.setPlacementPos",
+          "args": {
+            "index": "=first_live_idx",
+            "x": "=bonuses_sel_pl_num(0)",
+            "y": "=bonuses_sel_pl_num(1) + 0.06f",
+            "z": "=bonuses_sel_pl_num(2)"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "8: Tagged first live bonus as \"gift\", marked decor=1, nudged Y +0.06"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "8: Edit First Live Bonus Placement Properties",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "57"
+      },
+      "conditions": [
+        {
+          "id": "player.isHere",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.remove",
+          "args": {
+            "by": "1",
+            "tag": "gift"
+          }
+        },
+        {
+          "id": "bonuses.remove",
+          "args": {
+            "by": "2",
+            "name": "ruby_gem"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "9: Removed live \"gift\"-tagged & ruby_gem bonuses (Shift+9 removes first live)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            },
+            {
+              "id": "var.compare",
+              "args": {
+                "name": "first_live_idx",
+                "op": ">=",
+                "value": "0"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "bonuses.remove",
+              "args": {
+                "by": "0",
+                "index": "=first_live_idx"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "9: Remove Tagged / Named / Indexed Bonuses",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "48"
+      },
+      "conditions": [
+        {
+          "id": "expr",
+          "args": {
+            "text": "bonuses_type_count() > 0"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "var.set",
+          "args": {
+            "name": "type_cursor",
+            "value": "=(type_cursor + 1) % bonuses_type_count()"
+          }
+        },
+        {
+          "id": "bonuses.selectType",
+          "args": {
+            "by": "1",
+            "index": "=type_cursor"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "0: Selected next bonus type (check HUD Page 2 with F2)"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "0: Cycle Selected Bonus Type Index",
+      "collapsed": false
+    }
+  ]
+}

@@ -230,18 +230,27 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to kill");
             }
 
-            // Same bits Player_Update sets: dead blocks input, crashed picks "crash" anim.
             uint32_t flags = Read<uint32_t>(player, GameAddress::kPlayerFlagsOffset);
-            flags |= GameAddress::kPlayerFlagDead;
+            if ((flags & GameAddress::kPlayerFlagDead) != 0)
+            {
+                return 0;
+            }
+
+            const DieRoutine die = Read<DieRoutine>(player, GameAddress::kEntityDieOffset);
+            if (die == nullptr)
+            {
+                return Fail(mod, AMOD_FAIL_NOT_HERE, "the player has no kill slot to go through");
+            }
+
             if (crashed != 0)
             {
                 flags |= GameAddress::kPlayerFlagCrashed;
+                memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
             }
-            memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
+
+            die(player, crashed != 0 ? GameAddress::kPlayerDieKindCrashed : GameAddress::kPlayerDieKindPlain);
             return 1;
         }
-
-        typedef void(__cdecl* DieRoutine)(void* entity, int kind);
 
         int __cdecl ApiBurn(AmodMod mod)
         {
@@ -285,15 +294,10 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to revive");
             }
 
-            // Clear the four flags; does not undo mid-animation.
             uint32_t flags = Read<uint32_t>(player, GameAddress::kPlayerFlagsOffset);
             flags &= ~(GameAddress::kPlayerFlagDead | GameAddress::kPlayerFlagCrashed |
                        GameAddress::kPlayerFlagOnFire | GameAddress::kPlayerFlagShocked);
             memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
-
-            uint32_t entityFlags = Read<uint32_t>(player, GameAddress::kEntityFlagsOffset);
-            entityFlags &= ~GameAddress::kEntityHiddenFlag;
-            memcpy(player + GameAddress::kEntityFlagsOffset, &entityFlags, sizeof(entityFlags));
             return 1;
         }
 
@@ -448,7 +452,7 @@ namespace Forge
         void __cdecl DieThunk(void* self, int kind)
         {
             const Dying dying = g_dying;
-            const uint8_t* const player = static_cast<const uint8_t*>(self);
+            uint8_t* const player = static_cast<uint8_t*>(self);
 
             if (dying.owner != nullptr && dying.handler != nullptr)
             {
@@ -464,6 +468,12 @@ namespace Forge
 
                 if (dying.handler(&info, dying.user) != 0)
                 {
+                    uint32_t flags = Read<uint32_t>(player, GameAddress::kPlayerFlagsOffset);
+                    flags &= ~(GameAddress::kPlayerFlagCrashed | GameAddress::kPlayerFlagOnFire | GameAddress::kPlayerFlagShocked);
+                    memcpy(player + GameAddress::kPlayerFlagsOffset, &flags, sizeof(flags));
+                    const float zero = 0.0f;
+                    memcpy(player + GameAddress::kPlayerFadeTimerOffset, &zero, sizeof(zero));
+                    memcpy(player + GameAddress::kPlayerFallSpeedOffset, &zero, sizeof(zero));
                     return;
                 }
             }
@@ -522,18 +532,15 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_REFUSED, "another mod is already standing in front of it");
             }
 
-            uint8_t* const player = Player();
-            if (player == nullptr)
-            {
-                return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to keep alive");
-            }
-
             const bool fresh = g_dying.owner == nullptr;
 
             g_dying.owner = caller;
             g_dying.handler = handler;
             g_dying.user = user;
-            TakeDieSlot(player);
+            if (uint8_t* const player = Player())
+            {
+                TakeDieSlot(player);
+            }
 
             if (fresh)
             {
@@ -612,19 +619,16 @@ namespace Forge
                 return Fail(mod, AMOD_FAIL_REFUSED, "another mod is already driving the player");
             }
 
-            uint8_t* const player = Player();
-            if (player == nullptr)
-            {
-                return Fail(mod, AMOD_FAIL_NOT_HERE, "there is no player to drive");
-            }
-
             const bool fresh = g_driving.owner == nullptr;
 
             g_driving.owner = caller;
             g_driving.driver = driver;
             g_driving.handler = handler;
             g_driving.user = user;
-            TakeSlot(player);
+            if (uint8_t* const player = Player())
+            {
+                TakeSlot(player);
+            }
 
             if (fresh)
             {

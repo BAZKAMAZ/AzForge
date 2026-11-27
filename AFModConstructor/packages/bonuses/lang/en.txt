@@ -1,1 +1,355 @@
 mod.sys.bonuses=Bonuses
+mod.sec.bonusPlace=Placing & room placements
+mod.sec.bonusRoom=Room counts & lookups
+mod.sec.bonusTypes=Bonus types & custom definitions
+mod.sec.bonusScore=Bonus points & combo chain
+mod.sec.bonusEvents=Take & spawn events
+mod.sec.bonusKind=Custom bonus kinds & borrowing
+
+mod.ev.bonusBeforeTake=Before bonus is taken
+mod.ev.bonusBeforeTake.line=Before bonus is taken
+mod.ev.bonusBeforeTake.hint=Add a bonus filter via + to match one ID or tag; enable "Instead of the game" to refuse pickup or use "Set bonus take verdict"
+mod.ev.bonusBeforeSpawn=Before bonus spawns in room
+mod.ev.bonusBeforeSpawn.line=Before bonus spawns in room
+mod.ev.bonusBeforeSpawn.hint=Enable "Instead of the game" on this rule to skip spawning this bonus placement
+mod.ev.bonusKindBuild=Build custom bonus kind
+mod.ev.bonusKindBuild.line=Build bonus kind "%kindName%"
+mod.ev.bonusKindBuild.hint=Configure model, texture, glow, light, box, and points when "%kindName%" spawns; enable "Instead of the game" to cancel build
+mod.ev.bonusKindUpdate=Update custom / borrowed bonus kind
+mod.ev.bonusKindUpdate.line=Update bonus kind "%kindName%"
+mod.ev.bonusKindUpdate.hint=Runs each frame for "%kindName%" (placed or borrowed); enable "Instead of the game" on borrowed bonuses to skip the game's sway tick
+mod.ev.bonusKindTake=Take custom / borrowed bonus kind
+mod.ev.bonusKindTake.line=Player touches bonus kind "%kindName%"
+mod.ev.bonusKindTake.hint=Enable "Instead of the game" to refuse pickup, or use "Set bonus take verdict" for custom handling
+
+mod.cond.bonusTypeExists=Bonus type exists
+mod.cond.bonusTypeExists.line=Bonus type %name% exists
+mod.cond.bonusTypeFlag=Bonus type flag is enabled
+mod.cond.bonusTypeFlag.line=Bonus %name% has flag: %flag%
+mod.cond.bonusTypeCmp=Compare bonus type field
+mod.cond.bonusTypeCmp.line=Bonus %name% %field% %op% %value%
+mod.cond.bonusHasTypeProp=Bonus type has property
+mod.cond.bonusHasTypeProp.line=Bonus %name% has property %key%
+mod.cond.bonusRoomCountCmp=Compare bonus count in room
+mod.cond.bonusRoomCountCmp.line=Bonuses in room (%mode%) %op% %count%
+mod.cond.bonusNamedCountCmp=Compare live bonuses of type in room
+mod.cond.bonusNamedCountCmp.line=Live %name% bonuses in room %op% %count%
+mod.cond.bonusTaggedExists=Live bonus with tag exists in room
+mod.cond.bonusTaggedExists.line=Live bonus with tag "%tag%" exists
+mod.cond.bonusCellHas=Cell has a live bonus
+mod.cond.bonusCellHas.line=Cell (%col%, %row%) has a live bonus
+mod.cond.bonusPlLive=Bonus placement is live (uncollected)
+mod.cond.bonusPlLive.line=Bonus placement #%index% is live
+mod.cond.bonusPlMatches=Bonus placement matches ID, type, or tag
+mod.cond.bonusPlMatches.line=Bonus placement #%index% matches %text%
+mod.cond.bonusPlPropCmp=Compare bonus placement property
+mod.cond.bonusPlPropCmp.line=Placement #%index% %key% %op% %value%
+mod.cond.bonusForEachPl=For each bonus placement in room
+mod.cond.bonusForEachPl.line=For each bonus placement (%var%)
+mod.cond.bonusForEachPl.hint=Automatically selects each placement so Selected placement expressions read its fields (use + for room or live-only filter)
+mod.cond.bonusTakeMatches=Taken bonus matches ID, type, or tag
+mod.cond.bonusTakeMatches.line=Taken bonus matches %text%
+mod.cond.bonusTakeDecor=Taken bonus is decorative ($decor)
+mod.cond.bonusTakeDecor.line=Taken bonus is decorative
+mod.cond.bonusSpawnMatches=Spawning bonus matches ID, type, or tag
+mod.cond.bonusSpawnMatches.line=Spawning bonus matches %text%
+mod.cond.bonusSpawnLive=Spawning bonus is still uncollected
+mod.cond.bonusSpawnLive.line=Spawning bonus is uncollected
+
+mod.act.bonusPlace=Spawn bonus
+mod.act.bonusPlace.line=Spawn %name% at (%col%, %row%)
+mod.act.bonusPlace.hint=Spawns any built-in or custom bonus; click + to target another room or set tag, timer, decor, model, or texture
+mod.act.bonusSelectPl=Select bonus placement
+mod.act.bonusSelectPl.line=Select bonus placement #%index%
+mod.act.bonusRemove=Remove bonus
+mod.act.bonusRemove.line=Remove bonus (%by%)
+mod.act.bonusRemove.hint=Silently removes bonus placements by slot index, tag, or bonus ID/type (add room via + for another room)
+mod.act.bonusSetPlNum=Set numeric property of bonus placement
+mod.act.bonusSetPlNum.line=Placement #%index% %key% = %value%
+mod.act.bonusSetPlPos=Set world position of bonus placement
+mod.act.bonusSetPlPos.line=Placement #%index% pos = (%x%, %y%, %z%)
+mod.act.bonusSetPlText=Set text/asset property of bonus placement
+mod.act.bonusSetPlText.line=Placement #%index% %key% = "%text%"
+mod.act.bonusSelectType=Select bonus type
+mod.act.bonusSelectType.line=Select bonus type (%by%)
+mod.act.bonusDefine.hint=Call in "Mod started" or in the menu before a level is loaded (DefineType is refused while inside a level)
+mod.act.bonusBeginType=1. Begin custom bonus type
+mod.act.bonusBeginType.line=Begin bonus type "%id%" based on %basedOn% (%behavesAs%, +%pointsTake% pts)
+mod.act.bonusTypeAssets=2. Set staged bonus assets
+mod.act.bonusTypeAssets.line=Staged bonus assets: model "%model%", tex "%texture%"
+mod.act.bonusTypeTimer=3. Set staged bonus timer & trail
+mod.act.bonusTypeTimer.line=Staged bonus timer: %time% s (%timerMode%)
+mod.act.bonusTypeGlow=4. Set staged bonus glow colours
+mod.act.bonusTypeGlow.line=Staged bonus glow RGBA(%r%, %g%, %b%, %a%)
+mod.act.bonusTypeRockLight=5. Set staged bonus rocking & light
+mod.act.bonusTypeRockLight.line=Staged bonus sway: amp %amp%, speed %speed%
+mod.act.bonusCommitType=6. Register staged bonus type
+mod.act.bonusCommitType.line=Commit staged bonus type (DefineType)
+mod.act.bonusSetTypeTex=Set texture of mod-defined bonus type
+mod.act.bonusSetTypeTex.line=Bonus type "%id%" texture = "%texture%"
+mod.act.bonusOwnedType.hint=Applies to bonus types defined by this mod via DefineType; SetTexture updates live bonuses in the room immediately
+mod.act.bonusSetTypeIcon=Set HUD icon of mod-defined bonus type
+mod.act.bonusSetTypeIcon.line=Bonus type "%id%" HUD icon = "%icon%"
+mod.act.bonusSetTypeNum=Set numeric/flag property of mod-defined bonus type
+mod.act.bonusSetTypeNum.line=Bonus type "%id%" %key% = %value%
+mod.act.bonusSetTypeVec=Set colour/axis property of mod-defined bonus type
+mod.act.bonusSetTypeVec.line=Bonus type "%id%" %key% = (%r%, %g%, %b%, %a%)
+mod.act.bonusSetTypeAsset=Set asset property of mod-defined bonus type
+mod.act.bonusSetTypeAsset.line=Bonus type "%id%" %key% = "%path%"
+mod.act.bonusAwardPts=Award bonus points
+mod.act.bonusAwardPts.line=Award +%points% bonus points (%where%)
+mod.act.bonusChainLink=Advance diamond combo chain
+mod.act.bonusChainLink.line=Combo chain link +%points% pts (%where%)
+mod.act.bonusChainLink.hint=Advances Azangara's combo counter ("5 combo".."Excellent!"), plays rising combo sound, and stores total link score in Last combo chain points
+mod.act.bonusSetTakeRes=Set bonus take verdict
+mod.act.bonusSetTakeRes.line=Bonus take result = %result%
+mod.act.bonusSetTakeRes.hint=DEFAULT runs game pickup; HANDLED consumes the bonus without vanilla reward; REFUSE leaves it on the floor
+mod.act.bonusRegKind=Register custom bonus kind
+mod.act.bonusRegKind.line=Register custom bonus kind "%kindName%"
+mod.act.bonusPlaceKind=Spawn custom bonus kind
+mod.act.bonusPlaceKind.line=Spawn bonus kind "%kindName%" at (%col%, %row%)
+mod.act.bonusBorrowPl=Borrow level bonus placement into custom kind
+mod.act.bonusBorrowPl.line=Borrow placement #%index% as kind "%kindName%"
+mod.act.bonusBorrowPl.hint=Lets your "%kindName%" Update and Take events drive an existing game bonus while preserving room persistence
+mod.act.bonusBorrowAll=Borrow all live bonuses in room into custom kind
+mod.act.bonusBorrowAll.line=Borrow live bonuses in room as "%kindName%"
+mod.act.bonusBorrowAll.hint=Add tag filter via + to borrow only tagged bonuses in the current room
+mod.act.bonusReturnPl=Return borrowed bonus placement to game
+mod.act.bonusReturnPl.line=Return borrowed placement #%index% to game
+mod.act.bonusReturnAll=Return all borrowed bonuses in room to game
+mod.act.bonusReturnAll.line=Return all borrowed bonuses in room to game
+mod.act.bonusBodyLook=Set custom bonus body model & texture
+mod.act.bonusBodyLook.line=Bonus body model = "%model%"
+mod.act.bonusBodyIds=Set custom bonus body modelId / textureId
+mod.act.bonusBodyIds.line=Bonus body modelId = %modelId%
+mod.act.bonusBodyPos=Set custom / borrowed bonus body position
+mod.act.bonusBodyPos.line=Bonus body position = (%x%, %y%, %z%)
+mod.act.bonusBodyGlow=Set custom / borrowed bonus primary glow
+mod.act.bonusBodyGlow.line=Bonus body glow 1 RGB(%r%, %g%, %b%)
+mod.act.bonusBodyGlow2=Set custom / borrowed bonus secondary glow
+mod.act.bonusBodyGlow2.line=Bonus body glow 2 RGB(%r%, %g%, %b%)
+mod.act.bonusBodyRock=Set custom bonus rocking sway
+mod.act.bonusBodyRock.line=Bonus body sway: amp %amp%, speed %speed%
+mod.act.bonusBodyLight=Set custom bonus point light
+mod.act.bonusBodyLight.line=Bonus body light: RGB(%r%, %g%, %b%), radius %radius%
+mod.act.bonusBodyBox=Set custom bonus touch box
+mod.act.bonusBodyBox.line=Bonus body box: (%minX%, %minY%, %minZ%) .. (%maxX%, %maxY%, %maxZ%)
+mod.act.bonusBodyPts=Set custom / borrowed bonus points on take
+mod.act.bonusBodyPts.line=Bonus body points on take = %points%
+mod.act.bonusBodyHidden=Set custom / borrowed bonus hidden state
+mod.act.bonusBodyHidden.line=Bonus body hidden = %hidden%
+mod.act.bonusCancel=Cancel bonus event subscription
+mod.act.bonusCancel.line=Unsubscribe from this bonus event
+
+mod.expr.bonusTypeCount=Registered bonus type count
+mod.expr.bonusLiveCount=Live uncollected bonuses in current room
+mod.expr.bonusTotalPl=Total bonus placements in current room
+mod.expr.bonusSlotCount=Total spawn slots in current room (PlacementCount)
+mod.expr.bonusIdxTag=Placement index of tagged live bonus (-1 if none)
+mod.expr.bonusIdxCell=Placement index of live bonus at cell (-1 if none)
+mod.expr.bonusLastChainPts=Points awarded by last combo chain link
+mod.expr.bonusKindId=Numeric ID of registered bonus kind
+
+mod.expr.bonusSelTypeName=Selected type: behaviour name ($name)
+mod.expr.bonusSelTypeRes=Selected type: resource ID ($res_id)
+mod.expr.bonusSelTypePtsTake=Selected type: points on take
+mod.expr.bonusSelTypePtsOut=Selected type: points on run out
+mod.expr.bonusSelTypeTotem=Selected type: 1 if totem timer
+mod.expr.bonusSelTypeTorch=Selected type: 1 if torch
+mod.expr.bonusSelTypeTrain=Selected type: 1 if spawns particle trail
+mod.expr.bonusSelTypeTrainIdx=Selected type: trail preset index
+mod.expr.bonusSelTypeModelId=Selected type: model ID
+mod.expr.bonusSelTypeTexId=Selected type: texture ID
+mod.expr.bonusSelTypeIconId=Selected type: HUD icon texture ID
+mod.expr.bonusSelTypeTime=Selected type: duration seconds ($time)
+mod.expr.bonusSelTypeBurn=Selected type: torch burn-in seconds
+mod.expr.bonusSelTypeLightR=Selected type: carried light radius
+mod.expr.bonusSelTypeBLightR=Selected type: standing bonus light radius
+mod.expr.bonusSelTypeGlowR=Selected type: glow Red
+mod.expr.bonusSelTypeGlowG=Selected type: glow Green
+mod.expr.bonusSelTypeGlowB=Selected type: glow Blue
+mod.expr.bonusSelTypeGlowA=Selected type: glow Alpha
+
+mod.expr.bonusTypePropCnt=Number of bonus type property keys
+mod.expr.bonusTypePropName=Bonus type property key name by index
+mod.expr.bonusTypePropInt=Read integer property of bonus type
+mod.expr.bonusTypePropNum=Read float property of bonus type
+mod.expr.bonusTypePropText=Read text property of bonus type
+mod.expr.bonusPlPropCnt=Number of bonus placement property keys
+mod.expr.bonusPlPropName=Bonus placement property key name by index
+mod.expr.bonusPlPropNum=Read numeric property of bonus placement
+mod.expr.bonusPlPropText=Read text property of bonus placement
+
+mod.expr.bonusSelPlIdx=Selected placement: slot index
+mod.expr.bonusSelPlName=Selected placement: type/kind name
+mod.expr.bonusSelPlRes=Selected placement: resource ID
+mod.expr.bonusSelPlTag=Selected placement: tag ($tag)
+mod.expr.bonusSelPlX=Selected placement: X
+mod.expr.bonusSelPlY=Selected placement: Y
+mod.expr.bonusSelPlZ=Selected placement: Z
+mod.expr.bonusSelPlCol=Selected placement: grid column
+mod.expr.bonusSelPlRow=Selected placement: grid row
+mod.expr.bonusSelPlLive=Selected placement: 1 if live (uncollected)
+mod.expr.bonusSelPlHasType=Selected placement: 1 if type resolved
+mod.expr.bonusSelPlKind=Selected placement: custom kind ID (0 = vanilla)
+
+mod.expr.bonusTakeName=Take event: behaviour name ($name)
+mod.expr.bonusTakeRes=Take event: resource ID ($res_id)
+mod.expr.bonusTakeTag=Take event: placement tag ($tag)
+mod.expr.bonusTakeCol=Take event: grid column
+mod.expr.bonusTakeRow=Take event: grid row
+mod.expr.bonusTakePts=Take event: base points on take
+mod.expr.bonusTakeDecor=Take event: 1 if decorative ($decor)
+mod.expr.bonusTakeX=Take event: X
+mod.expr.bonusTakeY=Take event: Y
+mod.expr.bonusTakeZ=Take event: Z
+
+mod.expr.bonusSpawnName=Spawn event: placement name
+mod.expr.bonusSpawnRes=Spawn event: resource ID
+mod.expr.bonusSpawnTag=Spawn event: placement tag
+mod.expr.bonusSpawnX=Spawn event: X
+mod.expr.bonusSpawnY=Spawn event: Y
+mod.expr.bonusSpawnZ=Spawn event: Z
+mod.expr.bonusSpawnHasType=Spawn event: 1 if type exists
+mod.expr.bonusSpawnLive=Spawn event: 1 if uncollected
+mod.expr.bonusSpawnKind=Spawn event: custom kind ID (0 = vanilla)
+
+mod.expr.bonusBodyName=Bonus body: name
+mod.expr.bonusBodyTag=Bonus body: tag
+mod.expr.bonusBodyX=Bonus body: X
+mod.expr.bonusBodyY=Bonus body: Y
+mod.expr.bonusBodyZ=Bonus body: Z
+mod.expr.bonusBodyRockAmp=Bonus body: rocking amplitude
+mod.expr.bonusBodyRockSpd=Bonus body: rocking speed
+mod.expr.bonusBodyHidden=Bonus body: 1 if hidden
+mod.expr.bonusBodyPts=Bonus body: points on take
+mod.expr.bonusBodyModelId=Bonus body: model ID
+mod.expr.bonusBodyTexId=Bonus body: texture ID
+mod.expr.bonusKindDt=Kind update: frame delta seconds
+
+mod.p.points=Points
+mod.p.bonusId=Bonus
+mod.p.bonusLookupBy=Target by
+mod.p.bonusPopupWhere=Popup position
+mod.p.bonusFilter=Filter (ID, type, or tag)
+mod.p.bonusKindName=Custom kind name
+mod.p.bonusFlag=Type flag
+mod.p.bonusField=Type parameter
+mod.p.bonusCountMode=What to count
+mod.p.bonusTag=Tag ($tag)
+mod.p.bonusCol=Column (0..39)
+mod.p.bonusRow=Row (0..29)
+mod.p.bonusOnlyLive=Only live bonuses
+mod.p.bonusDecor=Decorative ($decor)
+mod.p.bonusModel=Model (.mmd)
+mod.p.bonusIcon=HUD icon
+mod.p.bonusSoundTake=Pickup sound
+mod.p.bonusSoundUse=Expire / use sound
+mod.p.bonusBasedOn=Base bonus
+mod.p.bonusBehavesAs=Pickup behaviour
+mod.p.bonusPointsOut=Points when used / expired
+mod.p.bonusTimerMode=Timer owner
+mod.p.bonusTrain=Fly-to-HUD particle trail
+mod.p.bonusTrainIdx=Trail preset index
+mod.p.bonusR2=Glow 2 Red
+mod.p.bonusG2=Glow 2 Green
+mod.p.bonusB2=Glow 2 Blue
+mod.p.bonusA2=Glow 2 Alpha
+mod.p.bonusRockAmp=Rocking amplitude
+mod.p.bonusRockSpeed=Rocking speed
+mod.p.bonusLightRad=Light radius
+mod.p.bonusTakeResult=Take verdict
+mod.p.bonusModelId=Model ID
+mod.p.bonusTextureId=Texture ID
+mod.p.bonusMinZ=Min Z
+mod.p.bonusMaxZ=Max Z
+mod.p.bonusHidden=Hidden
+
+mod.bonuses.by.name=by ID / name
+mod.bonuses.by.index=by table index
+mod.bonuses.rm.index=by placement index
+mod.bonuses.rm.tag=by tag
+mod.bonuses.rm.name=by bonus type / ID
+mod.bonuses.at.player=over player
+mod.bonuses.at.pos=at world (X, Y, Z)
+
+mod.bonuses.id.bonus=Gold diamond ("bonus")
+mod.bonuses.id.bonusT=Blue diamond ("bonus_t")
+mod.bonuses.id.bonus0=Amber diamond ("bonus_0")
+mod.bonuses.id.bonus1=Sky crystal ("bonus_1")
+mod.bonuses.id.bonus2=Lime diamond ("bonus_2")
+mod.bonuses.id.bonus3=Emerald gem ("bonus_3")
+mod.bonuses.id.bonus4=Sapphire shard ("bonus_4")
+mod.bonuses.id.bonus5=White brilliant ("bonus_5")
+mod.bonuses.id.mega=Royal crown — 5000 pts ("mega_bonus")
+mod.bonuses.id.life=Extra life heart ("life")
+mod.bonuses.id.quest=Quest artifact ("quest")
+mod.bonuses.id.totem=Protection totem ("totem")
+mod.bonuses.id.torch=Torch ("torch")
+mod.bonuses.id.knife=Dagger ("knife")
+mod.bonuses.id.fomka=Crowbar ("fomka")
+mod.bonuses.id.keyA=White key ("key_a")
+mod.bonuses.id.keyB=Blue key ("key_b")
+mod.bonuses.id.keyC=Red key ("key_c")
+mod.bonuses.id.keyD=Green key ("key_d")
+mod.bonuses.id.keyE=Purple key ("key_e")
+mod.bonuses.id.uniKey=Master skeleton key ("uni_key")
+
+mod.bonuses.like.scored=Scored gem ("bonus", counts in level gems)
+mod.bonuses.like.mega=Mega crown ("mega_bonus")
+mod.bonuses.like.life=Extra life ("life", +1 life)
+mod.bonuses.like.quest=Quest relic ("quest")
+mod.bonuses.like.silent=Silent pickup ("sys")
+mod.bonuses.like.slot=Carried in inventory slot (custom)
+
+mod.bonuses.timer.none=No timer (stays until used)
+mod.bonuses.timer.game=Game countdown (clears on 0, like totem)
+mod.bonuses.timer.mod=Mod-controlled timer ring
+
+mod.bonuses.take.default=Normal game pickup (DEFAULT)
+mod.bonuses.take.handled=Consume silently — mod handles reward (HANDLED)
+mod.bonuses.take.refuse=Refuse pickup — leave bonus lying (REFUSE)
+
+mod.bonuses.flag.totem=Timed totem (isTotem)
+mod.bonuses.flag.torch=Light-emitting torch (isTorch)
+mod.bonuses.flag.train=Spawns HUD trail on pickup (makesTrain)
+mod.bonuses.flag.modTimer=Mod-controlled slot timer (timer_is_mine)
+
+mod.bonuses.cnt.live=Live uncollected bonuses
+mod.bonuses.cnt.all=All bonus placements
+mod.bonuses.cnt.slots=All room spawn slots
+
+mod.bonuses.tp.ptsTake=Points on take (pts_take)
+mod.bonuses.tp.ptsOut=Points on use/expire (pts_out)
+mod.bonuses.tp.time=Duration seconds (time)
+mod.bonuses.tp.burnTime=Torch burn-in seconds (burn_time)
+mod.bonuses.tp.lightRadius=Player light radius (light_radius)
+mod.bonuses.tp.bonusLightRadius=Standing bonus light radius (bonus_light_radius)
+mod.bonuses.tp.rockAmp=Rocking amplitude (rocking_amp)
+mod.bonuses.tp.rockSpeed=Rocking speed (rocking_speed)
+mod.bonuses.tp.trainIdx=Trail preset index (train_idx)
+mod.bonuses.tp.flags=Raw bitflags (flags)
+mod.bonuses.tp.isTotem=Is totem flag (is_totem)
+mod.bonuses.tp.isTorch=Is torch flag (is_torch)
+mod.bonuses.tp.makesTrain=Spawns HUD trail (makes_train)
+mod.bonuses.tp.timerMine=Mod owns slot timer (timer_is_mine)
+mod.bonuses.tp.glowColor=Primary glow RGBA (glow_color)
+mod.bonuses.tp.glowColor2=Secondary glow RGBA (glow_color2)
+mod.bonuses.tp.lightColor=Point light RGB (light_color)
+mod.bonuses.tp.rockAxis=Rocking axis XYZ (rocking_axis)
+mod.bonuses.tp.texture=Model texture (texture)
+mod.bonuses.tp.model=3D model (model)
+mod.bonuses.tp.icon=HUD icon texture (icon)
+mod.bonuses.tp.soundTake=Pickup sound (sound_take)
+mod.bonuses.tp.soundUse=Expire/use sound (sound_use)
+mod.bonuses.tp.name=Behaviour name (name)
+mod.bonuses.tp.resId=Resource ID (res_id)
+
+mod.bonuses.pp.time=Timer override seconds (time)
+mod.bonuses.pp.decor=Decorative flag 0/1 (decor)
+mod.bonuses.pp.isLive=Uncollected flag 0/1 (is_live)
+mod.bonuses.pp.phase=Rocking phase radians (phase)
+mod.bonuses.pp.ownLook=Custom model/texture flag 0/1 (own_look)
+mod.bonuses.pp.tag=Placement tag (tag)
+mod.bonuses.pp.model=Placement model override (model)
+mod.bonuses.pp.texture=Placement texture override (texture)

@@ -8,7 +8,38 @@
       "crashed"
     ],
     "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
-    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_DIED, %H%, 0);",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_DIED, player_event_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "player_event",
+    "group": "player",
+    "section": "mod.sec.life"
+  },
+  {
+    "id": "player.revived",
+    "label": "mod.ev.playerRevived",
+    "call": "Player.AddEventHandler(REVIVED)",
+    "values": [
+      "lives"
+    ],
+    "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_REVIVED, player_event_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "player_event",
+    "group": "player",
+    "section": "mod.sec.life"
+  },
+  {
+    "id": "player.livesChanged",
+    "label": "mod.ev.playerLives",
+    "call": "Player.AddEventHandler(LIVES_CHANGED)",
+    "values": [
+      "lives",
+      "wasLives"
+    ],
+    "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_LIVES_CHANGED, player_event_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "player_event",
     "group": "player",
     "section": "mod.sec.life"
   },
@@ -21,8 +52,88 @@
       "wasScore"
     ],
     "handler": "static void __cdecl %H%(const AmodPlayerEventInfo* info, void* user)",
-    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_SCORE_CHANGED, %H%, 0);",
+    "subscribe": "if (API->player) %token% = API->player->AddEventHandler(SELF, AMOD_PLAYER_EVENT_SCORE_CHANGED, player_event_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "player_event",
     "group": "player",
     "section": "mod.sec.score"
+  },
+  {
+    "id": "player.beforeDeath",
+    "label": "mod.ev.playerBeforeDeath",
+    "call": "Player.SetDeathHandler",
+    "canVeto": true,
+    "handler": "static int __cdecl %H%(const AmodPlayerDeathInfo* dinfo, void* user)",
+    "subscribe": "player_add_death_hook(%H%);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "player_death",
+    "group": "player",
+    "section": "mod.sec.life",
+    "hint": "mod.ev.playerBeforeDeath.hint"
+  },
+  {
+    "id": "player.drive",
+    "label": "mod.ev.playerDrive",
+    "call": "Player.Drive",
+    "filters": [
+      {
+        "key": "mode",
+        "label": "mod.p.playerDriverMode",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_DRIVER_BOTH",
+        "options": [
+          { "value": "AMOD_PLAYER_DRIVER_BOTH", "label": "mod.player.drv.both" },
+          { "value": "AMOD_PLAYER_DRIVER_MOD", "label": "mod.player.drv.mod" }
+        ]
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodPlayerFrame* pframe, void* user)",
+    "subscribe": "player_add_drive(%mode%, %H%);",
+    "retDefault": "return;",
+    "provides": "player_frame",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "hint": "mod.ev.playerDrive.hint"
+  },
+  {
+    "id": "player.onState",
+    "label": "mod.ev.playerOnState",
+    "call": "Player.SetStateHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "state",
+        "label": "mod.p.playerState",
+        "kind": "enum",
+        "preset": "AMOD_PLAYER_STATE_ONFOOT",
+        "options": [
+          { "value": "AMOD_PLAYER_STATE_ONFOOT", "label": "mod.player.state.onfoot" },
+          { "value": "AMOD_PLAYER_STATE_LADDER", "label": "mod.player.state.ladder" },
+          { "value": "AMOD_PLAYER_STATE_CHAIN", "label": "mod.player.state.chain" },
+          { "value": "AMOD_PLAYER_STATE_PIPE", "label": "mod.player.state.pipe" }
+        ]
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodPlayerFrame* pframe, void* user)",
+    "subscribe": "player_add_state_hook(%state%, %H%);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "player_frame",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "hint": "mod.ev.playerOnState.hint"
+  },
+  {
+    "id": "player.onMove",
+    "label": "mod.ev.playerOnMove",
+    "call": "Player.SetMoveHandler",
+    "handler": "static void __cdecl %H%(AmodPlayerMove* move, void* user)",
+    "subscribe": "player_add_move_hook(%H%);",
+    "retDefault": "return;",
+    "provides": "player_move",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "hint": "mod.ev.playerOnMove.hint"
   }
 ]

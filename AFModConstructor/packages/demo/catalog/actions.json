@@ -1,0 +1,423 @@
+[
+  {
+    "id": "demo.play",
+    "label": "mod.act.demoPlay",
+    "call": "Demo.Play",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "0" }
+    ],
+    "emit": "demo_play((int)(%script%));",
+    "hint": "mod.act.demoPlay.hint"
+  },
+  {
+    "id": "demo.stop",
+    "label": "mod.act.demoStop",
+    "call": "Demo.Stop",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [],
+    "emit": "if (API->demo) API->demo->Stop(SELF);"
+  },
+  {
+    "id": "demo.next",
+    "label": "mod.act.demoNext",
+    "call": "Demo.Next",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [],
+    "emit": "if (API->demo) API->demo->Next(SELF);"
+  },
+  {
+    "id": "demo.add",
+    "label": "mod.act.demoAdd",
+    "call": "Demo.Add",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [
+      { "key": "path", "label": "mod.p.gameFile", "kind": "text", "preset": "levels/rooms_0/demo_003.txt" }
+    ],
+    "emit": "demo_add_file(\"%path%\");",
+    "hint": "mod.act.demoAdd.hint"
+  },
+  {
+    "id": "demo.remove",
+    "label": "mod.act.demoRemove",
+    "call": "Demo.Remove",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" }
+    ],
+    "emit": "demo_remove((int)(%script%));",
+    "hint": "mod.act.demoRemove.hint"
+  },
+  {
+    "id": "demo.suppressLevelDemos",
+    "label": "mod.act.demoSuppress",
+    "call": "Demo.SuppressLevelDemos",
+    "group": "demo",
+    "section": "mod.sec.demoPlayback",
+    "params": [
+      {
+        "key": "suppress",
+        "label": "mod.p.demoSuppress",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "if (API->demo) API->demo->SuppressLevelDemos(SELF, %suppress%);",
+    "hint": "mod.act.demoSuppress.hint"
+  },
+  {
+    "id": "demo.selectCursor",
+    "label": "mod.act.demoSelect",
+    "call": "Demo.GetMove",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "0" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "0" },
+      { "key": "index", "label": "mod.p.index", "kind": "number", "preset": "0" }
+    ],
+    "emit": "demo_select_cursor((int)(%script%), (int)(%move%), (int)(%index%));",
+    "hint": "mod.act.demoSelect.hint"
+  },
+  {
+    "id": "demo.setBreakTime",
+    "label": "mod.act.demoSetBreak",
+    "call": "Demo.SetBreakTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "seconds", "label": "mod.p.seconds", "kind": "number", "preset": "0.3" }
+    ],
+    "emit": "demo_set_break_time((int)(%script%), (float)(%seconds%));"
+  },
+  {
+    "id": "demo.setCameraStart",
+    "label": "mod.act.demoSetCamStart",
+    "call": "Demo.SetCameraStart",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "cx", "label": "mod.p.x", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "cy", "label": "mod.p.y", "kind": "number", "preset": "=player_position(1) + 0.6f" },
+      { "key": "cz", "label": "mod.p.z", "kind": "number", "preset": "=player_position(2) + 3.5f" },
+      { "key": "vx", "label": "mod.p.demoViewX", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "vy", "label": "mod.p.demoViewY", "kind": "number", "preset": "=player_position(1)" },
+      { "key": "vz", "label": "mod.p.demoViewZ", "kind": "number", "preset": "=player_position(2)" }
+    ],
+    "emit": "demo_set_cam_start((int)(%script%), (float)(%cx%), (float)(%cy%), (float)(%cz%), (float)(%vx%), (float)(%vy%), (float)(%vz%));"
+  },
+  {
+    "id": "demo.setMove",
+    "label": "mod.act.demoSetMove",
+    "call": "Demo.SetMove",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "pause", "label": "mod.p.demoPause", "kind": "number", "preset": "0.5" },
+      {
+        "key": "horz",
+        "label": "mod.p.demoHorz",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "-1", "label": "mod.demo.horz.left" },
+          { "value": "0", "label": "mod.demo.horz.none" },
+          { "value": "1", "label": "mod.demo.horz.right" }
+        ]
+      },
+      {
+        "key": "vert",
+        "label": "mod.p.demoVert",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "-1", "label": "mod.demo.vert.down" },
+          { "value": "0", "label": "mod.demo.vert.none" },
+          { "value": "1", "label": "mod.demo.vert.up" }
+        ]
+      },
+      {
+        "key": "jump",
+        "label": "mod.p.demoJump",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "0", "label": "common.no" },
+          { "value": "1", "label": "common.yes" }
+        ]
+      },
+      { "key": "endCoord", "label": "mod.p.demoEndCoord", "kind": "number", "preset": "=player_position(0) + 0.8f" }
+    ],
+    "emit": "demo_set_move((int)(%script%), (int)(%move%), (float)(%pause%), %horz%, %vert%, %jump%, (float)(%endCoord%));"
+  },
+  {
+    "id": "demo.setCamera",
+    "label": "mod.act.demoSetCam",
+    "call": "Demo.SetCamera",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "index", "label": "mod.p.index", "kind": "number", "preset": "0" },
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=player_position(1) + 0.8f" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=player_position(2) + 3.5f" },
+      { "key": "sx", "label": "mod.p.demoSpeedX", "kind": "number", "preset": "0" },
+      { "key": "sy", "label": "mod.p.demoSpeedY", "kind": "number", "preset": "0" },
+      { "key": "sz", "label": "mod.p.demoSpeedZ", "kind": "number", "preset": "0" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" },
+      {
+        "key": "giveBack",
+        "label": "mod.p.demoGiveBack",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "demo_write_cam(0, (int)(%script%), (int)(%move%), (int)(%index%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%sx%), (float)(%sy%), (float)(%sz%), (float)(%time%), %giveBack%);"
+  },
+  {
+    "id": "demo.setView",
+    "label": "mod.act.demoSetView",
+    "call": "Demo.SetView",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "index", "label": "mod.p.index", "kind": "number", "preset": "0" },
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=player_position(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=player_position(2)" },
+      { "key": "sx", "label": "mod.p.demoSpeedX", "kind": "number", "preset": "0" },
+      { "key": "sy", "label": "mod.p.demoSpeedY", "kind": "number", "preset": "0" },
+      { "key": "sz", "label": "mod.p.demoSpeedZ", "kind": "number", "preset": "0" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" },
+      {
+        "key": "giveBack",
+        "label": "mod.p.demoGiveBack",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "demo_write_cam(1, (int)(%script%), (int)(%move%), (int)(%index%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%sx%), (float)(%sy%), (float)(%sz%), (float)(%time%), %giveBack%);"
+  },
+  {
+    "id": "demo.setTime",
+    "label": "mod.act.demoSetTime",
+    "call": "Demo.SetTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "index", "label": "mod.p.index", "kind": "number", "preset": "0" },
+      { "key": "pause", "label": "mod.p.demoPause", "kind": "number", "preset": "0" },
+      { "key": "factor", "label": "mod.p.demoFactor", "kind": "number", "preset": "0.5" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" }
+    ],
+    "emit": "demo_set_time((int)(%script%), (int)(%move%), (int)(%index%), (float)(%pause%), (float)(%factor%), (float)(%time%));"
+  },
+  {
+    "id": "demo.create",
+    "label": "mod.act.demoCreate",
+    "call": "Demo.Create",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "params": [],
+    "emit": "demo_create_empty();",
+    "hint": "mod.act.demoCreate.hint"
+  },
+  {
+    "id": "demo.addMove",
+    "label": "mod.act.demoAddMove",
+    "call": "Demo.AddMove",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "pause", "label": "mod.p.demoPause", "kind": "number", "preset": "0.6" },
+      {
+        "key": "horz",
+        "label": "mod.p.demoHorz",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "-1", "label": "mod.demo.horz.left" },
+          { "value": "0", "label": "mod.demo.horz.none" },
+          { "value": "1", "label": "mod.demo.horz.right" }
+        ]
+      },
+      {
+        "key": "vert",
+        "label": "mod.p.demoVert",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "-1", "label": "mod.demo.vert.down" },
+          { "value": "0", "label": "mod.demo.vert.none" },
+          { "value": "1", "label": "mod.demo.vert.up" }
+        ]
+      },
+      {
+        "key": "jump",
+        "label": "mod.p.demoJump",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "0", "label": "common.no" },
+          { "value": "1", "label": "common.yes" }
+        ]
+      },
+      { "key": "endCoord", "label": "mod.p.demoEndCoord", "kind": "number", "preset": "=player_position(0) + 0.6f" }
+    ],
+    "emit": "demo_append_move((int)(%script%), (float)(%pause%), %horz%, %vert%, %jump%, (float)(%endCoord%));"
+  },
+  {
+    "id": "demo.addCamera",
+    "label": "mod.act.demoAddCam",
+    "call": "Demo.AddCamera",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=player_position(1) + 0.8f" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=player_position(2) + 3.5f" },
+      { "key": "sx", "label": "mod.p.demoSpeedX", "kind": "number", "preset": "0" },
+      { "key": "sy", "label": "mod.p.demoSpeedY", "kind": "number", "preset": "0" },
+      { "key": "sz", "label": "mod.p.demoSpeedZ", "kind": "number", "preset": "0" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" },
+      {
+        "key": "giveBack",
+        "label": "mod.p.demoGiveBack",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "demo_append_cam(0, (int)(%script%), (int)(%move%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%sx%), (float)(%sy%), (float)(%sz%), (float)(%time%), %giveBack%);"
+  },
+  {
+    "id": "demo.addView",
+    "label": "mod.act.demoAddView",
+    "call": "Demo.AddView",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "x", "label": "mod.p.x", "kind": "number", "preset": "=player_position(0)" },
+      { "key": "y", "label": "mod.p.y", "kind": "number", "preset": "=player_position(1)" },
+      { "key": "z", "label": "mod.p.z", "kind": "number", "preset": "=player_position(2)" },
+      { "key": "sx", "label": "mod.p.demoSpeedX", "kind": "number", "preset": "0" },
+      { "key": "sy", "label": "mod.p.demoSpeedY", "kind": "number", "preset": "0" },
+      { "key": "sz", "label": "mod.p.demoSpeedZ", "kind": "number", "preset": "0" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" },
+      {
+        "key": "giveBack",
+        "label": "mod.p.demoGiveBack",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "1", "label": "common.yes" },
+          { "value": "0", "label": "common.no" }
+        ]
+      }
+    ],
+    "emit": "demo_append_cam(1, (int)(%script%), (int)(%move%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%sx%), (float)(%sy%), (float)(%sz%), (float)(%time%), %giveBack%);"
+  },
+  {
+    "id": "demo.addTime",
+    "label": "mod.act.demoAddTime",
+    "call": "Demo.AddTime",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "params": [
+      { "key": "script", "label": "mod.p.demoScript", "kind": "number", "preset": "-1" },
+      { "key": "move", "label": "mod.p.demoMove", "kind": "number", "preset": "-1" },
+      { "key": "pause", "label": "mod.p.demoPause", "kind": "number", "preset": "0" },
+      { "key": "factor", "label": "mod.p.demoFactor", "kind": "number", "preset": "0.5" },
+      { "key": "time", "label": "mod.p.seconds", "kind": "number", "preset": "1.5" }
+    ],
+    "emit": "demo_append_time((int)(%script%), (int)(%move%), (float)(%pause%), (float)(%factor%), (float)(%time%));"
+  },
+  {
+    "id": "demo.setInput",
+    "label": "mod.act.demoSetInput",
+    "call": "Demo.OnInput",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "params": [
+      {
+        "key": "horz",
+        "label": "mod.p.demoHorz",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          { "value": "-1", "label": "mod.demo.horz.left" },
+          { "value": "0", "label": "mod.demo.horz.none" },
+          { "value": "1", "label": "mod.demo.horz.right" }
+        ]
+      },
+      {
+        "key": "vert",
+        "label": "mod.p.demoVert",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "-1", "label": "mod.demo.vert.down" },
+          { "value": "0", "label": "mod.demo.vert.none" },
+          { "value": "1", "label": "mod.demo.vert.up" }
+        ]
+      },
+      {
+        "key": "jump",
+        "label": "mod.p.demoJump",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          { "value": "0", "label": "common.no" },
+          { "value": "1", "label": "common.yes" }
+        ]
+      }
+    ],
+    "emit": "demo_set_input(demoHorz, demoVert, demoJump, %horz%, %vert%, %jump%);",
+    "needs": "demo_input"
+  },
+  {
+    "id": "demo.cancel",
+    "label": "mod.act.demoCancel",
+    "call": "Demo.Cancel",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "params": [],
+    "emit": "if (API->demo) { API->demo->Cancel(SELF, %token%); %token% = 0; }",
+    "needs": "token"
+  }
+]

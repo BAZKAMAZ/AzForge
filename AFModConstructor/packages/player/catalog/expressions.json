@@ -1,27 +1,25 @@
 [
   {
-    "id": "player.score",
-    "label": "mod.expr.score",
+    "id": "player.isHere",
+    "label": "mod.expr.playerIsHere",
     "group": "player",
-    "section": "mod.sec.score",
+    "section": "mod.sec.playerPresence",
     "kind": "int",
-    "text": "player_score()",
-    "hint": ""
+    "text": "player_is_here()"
   },
   {
-    "id": "player.lives",
-    "label": "mod.expr.lives",
+    "id": "player.entity",
+    "label": "mod.expr.playerEntity",
     "group": "player",
-    "section": "mod.sec.life",
+    "section": "mod.sec.playerPresence",
     "kind": "int",
-    "text": "player_lives()",
-    "hint": ""
+    "text": "player_int(0)"
   },
   {
     "id": "player.x",
     "label": "mod.expr.playerX",
     "group": "player",
-    "section": "mod.sec.general",
+    "section": "mod.sec.playerMove",
     "kind": "float",
     "text": "player_position(0)",
     "hint": "mod.expr.playerPos.hint"
@@ -30,7 +28,7 @@
     "id": "player.y",
     "label": "mod.expr.playerY",
     "group": "player",
-    "section": "mod.sec.general",
+    "section": "mod.sec.playerMove",
     "kind": "float",
     "text": "player_position(1)",
     "hint": "mod.expr.playerPos.hint"
@@ -39,9 +37,443 @@
     "id": "player.z",
     "label": "mod.expr.playerZ",
     "group": "player",
-    "section": "mod.sec.general",
+    "section": "mod.sec.playerMove",
     "kind": "float",
     "text": "player_position(2)",
     "hint": "mod.expr.playerPos.hint"
+  },
+  {
+    "id": "player.prevX",
+    "label": "mod.expr.playerPrevX",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "float",
+    "text": "player_num(3)"
+  },
+  {
+    "id": "player.prevY",
+    "label": "mod.expr.playerPrevY",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "float",
+    "text": "player_num(4)"
+  },
+  {
+    "id": "player.prevZ",
+    "label": "mod.expr.playerPrevZ",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "float",
+    "text": "player_num(5)"
+  },
+  {
+    "id": "player.facing",
+    "label": "mod.expr.playerFacing",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "float",
+    "text": "player_num(6)"
+  },
+  {
+    "id": "player.facingDir",
+    "label": "mod.expr.playerFacingDir",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "int",
+    "text": "player_facing_dir()"
+  },
+  {
+    "id": "player.fallSpeed",
+    "label": "mod.expr.playerFallSpeed",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "float",
+    "text": "player_num(7)"
+  },
+  {
+    "id": "player.collides",
+    "label": "mod.expr.playerCollides",
+    "group": "player",
+    "section": "mod.sec.playerMove",
+    "kind": "int",
+    "text": "player_collides()"
+  },
+  {
+    "id": "player.state",
+    "label": "mod.expr.playerState",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_int(1)"
+  },
+  {
+    "id": "player.subState",
+    "label": "mod.expr.playerSubState",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_int(2)"
+  },
+  {
+    "id": "player.isDead",
+    "label": "mod.expr.playerIsDead",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_flag(0)"
+  },
+  {
+    "id": "player.isCrashed",
+    "label": "mod.expr.playerIsCrashed",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_flag(1)"
+  },
+  {
+    "id": "player.isOnFire",
+    "label": "mod.expr.playerIsOnFire",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_flag(2)"
+  },
+  {
+    "id": "player.isShocked",
+    "label": "mod.expr.playerIsShocked",
+    "group": "player",
+    "section": "mod.sec.playerPresence",
+    "kind": "int",
+    "text": "player_flag(3)"
+  },
+  {
+    "id": "player.lives",
+    "label": "mod.expr.lives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_lives()"
+  },
+  {
+    "id": "player.score",
+    "label": "mod.expr.score",
+    "group": "player",
+    "section": "mod.sec.score",
+    "kind": "int",
+    "text": "player_score()"
+  },
+  {
+    "id": "player.eventKind",
+    "label": "mod.expr.playerEventKind",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_event_int(0)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.eventLives",
+    "label": "mod.expr.playerEventLives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_event_int(1)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.eventWasLives",
+    "label": "mod.expr.playerEventWasLives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_event_int(2)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.eventScore",
+    "label": "mod.expr.playerEventScore",
+    "group": "player",
+    "section": "mod.sec.score",
+    "kind": "int",
+    "text": "player_event_int(3)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.eventWasScore",
+    "label": "mod.expr.playerEventWasScore",
+    "group": "player",
+    "section": "mod.sec.score",
+    "kind": "int",
+    "text": "player_event_int(4)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.eventCrashed",
+    "label": "mod.expr.playerEventCrashed",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_event_int(5)",
+    "needs": "player_event",
+    "hint": "mod.expr.playerEvent.hint"
+  },
+  {
+    "id": "player.deathKind",
+    "label": "mod.expr.playerDeathKind",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_death_int(0)",
+    "needs": "player_death"
+  },
+  {
+    "id": "player.deathLives",
+    "label": "mod.expr.playerDeathLives",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "int",
+    "text": "player_death_int(1)",
+    "needs": "player_death"
+  },
+  {
+    "id": "player.deathX",
+    "label": "mod.expr.playerDeathX",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "float",
+    "text": "player_death_pos(0)",
+    "needs": "player_death"
+  },
+  {
+    "id": "player.deathY",
+    "label": "mod.expr.playerDeathY",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "float",
+    "text": "player_death_pos(1)",
+    "needs": "player_death"
+  },
+  {
+    "id": "player.deathZ",
+    "label": "mod.expr.playerDeathZ",
+    "group": "player",
+    "section": "mod.sec.life",
+    "kind": "float",
+    "text": "player_death_pos(2)",
+    "needs": "player_death"
+  },
+  {
+    "id": "player.driver",
+    "label": "mod.expr.playerDriver",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_driver()"
+  },
+  {
+    "id": "player.lastStepExit",
+    "label": "mod.expr.playerLastStepExit",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_last_step_exit()"
+  },
+  {
+    "id": "player.frameDelta",
+    "label": "mod.expr.playerFrameDelta",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "float",
+    "text": "player_frame_num(0)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameX",
+    "label": "mod.expr.playerFrameX",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "float",
+    "text": "player_frame_num(1)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameY",
+    "label": "mod.expr.playerFrameY",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "float",
+    "text": "player_frame_num(2)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameZ",
+    "label": "mod.expr.playerFrameZ",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "float",
+    "text": "player_frame_num(3)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameFall",
+    "label": "mod.expr.playerFrameFall",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "float",
+    "text": "player_frame_num(4)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameState",
+    "label": "mod.expr.playerFrameState",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_frame_int(0)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.frameSubState",
+    "label": "mod.expr.playerFrameSubState",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_frame_int(1)",
+    "needs": "player_frame"
+  },
+  {
+    "id": "player.moveDirX",
+    "label": "mod.expr.playerMoveDirX",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_move_dir(0)",
+    "needs": "player_move"
+  },
+  {
+    "id": "player.moveDirY",
+    "label": "mod.expr.playerMoveDirY",
+    "group": "player",
+    "section": "mod.sec.playerDrive",
+    "kind": "int",
+    "text": "player_move_dir(1)",
+    "needs": "player_move"
+  },
+  {
+    "id": "player.placeCol",
+    "label": "mod.expr.playerPlaceCol",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(0)"
+  },
+  {
+    "id": "player.placeRow",
+    "label": "mod.expr.playerPlaceRow",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(1)"
+  },
+  {
+    "id": "player.placeAtCol",
+    "label": "mod.expr.playerPlaceAtCol",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(2)"
+  },
+  {
+    "id": "player.placeAtRow",
+    "label": "mod.expr.playerPlaceAtRow",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(3)"
+  },
+  {
+    "id": "player.placeCols",
+    "label": "mod.expr.playerPlaceCols",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(4)"
+  },
+  {
+    "id": "player.placeRows",
+    "label": "mod.expr.playerPlaceRows",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_int(5)"
+  },
+  {
+    "id": "player.placeStandingCode",
+    "label": "mod.expr.playerPlaceHereCode",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_offset_code(0, 0)"
+  },
+  {
+    "id": "player.placeStandingText",
+    "label": "mod.expr.playerPlaceHereText",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "text",
+    "text": "player_place_here_text()"
+  },
+  {
+    "id": "player.placeUnderCode",
+    "label": "mod.expr.playerPlaceUnderCode",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_place_offset_code(0, 1)"
+  },
+  {
+    "id": "player.askLeft",
+    "label": "mod.expr.playerAskLeft",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_ask(AMOD_PLAYER_ASK_LEFT)"
+  },
+  {
+    "id": "player.askRight",
+    "label": "mod.expr.playerAskRight",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_ask(AMOD_PLAYER_ASK_RIGHT)"
+  },
+  {
+    "id": "player.askClimb",
+    "label": "mod.expr.playerAskClimb",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_ask(AMOD_PLAYER_ASK_CLIMB)"
+  },
+  {
+    "id": "player.askFooting",
+    "label": "mod.expr.playerAskFooting",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_ask(AMOD_PLAYER_ASK_FOOTING)"
+  },
+  {
+    "id": "player.askPipe",
+    "label": "mod.expr.playerAskPipe",
+    "group": "player",
+    "section": "mod.sec.playerPlace",
+    "kind": "int",
+    "text": "player_ask(AMOD_PLAYER_ASK_PIPE)"
   }
 ]

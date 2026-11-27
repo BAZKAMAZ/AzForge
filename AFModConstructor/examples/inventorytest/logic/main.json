@@ -1,0 +1,2151 @@
+{
+  "name": "main",
+  "vars": [
+    {
+      "name": "hud_on",
+      "type": "bool",
+      "value": "1"
+    },
+    {
+      "name": "hud_page",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "slot_cursor",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "timers_paused",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "expanded_bag",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "cancel_probe",
+      "type": "bool",
+      "value": "0"
+    },
+    {
+      "name": "loop_used_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "first_used_slot",
+      "type": "int",
+      "value": "-1"
+    },
+    {
+      "name": "cond_mask",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_slot_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_expired_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_used_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_chain_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "ev_chain_broke_cnt",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_ev_reason",
+      "type": "int",
+      "value": "-1"
+    },
+    {
+      "name": "last_ev_slot",
+      "type": "int",
+      "value": "-1"
+    },
+    {
+      "name": "last_ev_pts_out",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_ev_time",
+      "type": "float",
+      "value": "0.0"
+    },
+    {
+      "name": "last_ev_name",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_ev_res",
+      "type": "text",
+      "value": "-"
+    },
+    {
+      "name": "last_ch_len",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_ch_pts",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "last_ch_broke",
+      "type": "int",
+      "value": "0"
+    },
+    {
+      "name": "st_here",
+      "type": "text",
+      "value": "MENU"
+    },
+    {
+      "name": "last_cmd",
+      "type": "text",
+      "value": "Ready: [1] Start Level 1 (menu) / Give Totem (room)  [F2] HUD Page"
+    }
+  ],
+  "rules": [
+    {
+      "event": "system.modInit",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "bonuses.beginType",
+          "args": {
+            "id": "ancient_amulet",
+            "basedOn": "totem",
+            "behavesAs": "",
+            "pointsTake": "150",
+            "pointsOut": "500"
+          }
+        },
+        {
+          "id": "bonuses.typeAssets",
+          "args": {
+            "model": "models/bonus/corona.mmd",
+            "texture": "textures/bonus/cor_quest.jpg",
+            "icon": "textures/bonus/megakey_icon.png",
+            "soundTake": "sounds/totem_take.wav",
+            "soundUse": "sounds/totem_timeend.wav"
+          }
+        },
+        {
+          "id": "bonuses.typeTimerAndTrain",
+          "args": {
+            "time": "15",
+            "timerMode": "AMOD_BONUS_TIMER_GAME",
+            "makesTrain": "1",
+            "trainIndex": "5"
+          }
+        },
+        {
+          "id": "bonuses.commitType",
+          "args": {}
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Mod Init: Define custom carried item \"ancient_amulet\"",
+      "collapsed": false
+    },
+    {
+      "event": "render.frame",
+      "filters": {},
+      "conditions": [],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [],
+          "actions": [],
+          "children": [
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "0"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "loop_used_cnt",
+                    "value": "0"
+                  }
+                },
+                {
+                  "id": "var.set",
+                  "args": {
+                    "name": "first_used_slot",
+                    "value": "-1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.isAvailable",
+                  "args": {}
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.setText",
+                  "args": {
+                    "name": "st_here",
+                    "value": "IN ROOM"
+                  }
+                },
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.isAvailable",
+                  "args": {},
+                  "inverted": true
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.setText",
+                  "args": {
+                    "name": "st_here",
+                    "value": "MENU"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.isCarrying",
+                  "args": {
+                    "name": "ancient_amulet"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "2"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.isCarrying",
+                  "args": {
+                    "name": "totem"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "4"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.hasFreeSlot",
+                  "args": {}
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "8"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.countCompare",
+                  "args": {
+                    "mode": "0",
+                    "op": ">",
+                    "count": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "16"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.slotHasItem",
+                  "args": {
+                    "slot": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "32"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.slotItemIs",
+                  "args": {
+                    "slot": "0",
+                    "name": "totem"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "64"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.slotTimeCompare",
+                  "args": {
+                    "slot": "0",
+                    "field": "0",
+                    "op": ">",
+                    "value": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "128"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.slotIsTicking",
+                  "args": {
+                    "slot": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "256"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.hasItemProperty",
+                  "args": {
+                    "slot": "0",
+                    "key": "time_left"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "512"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.itemPropCompare",
+                  "args": {
+                    "slot": "0",
+                    "key": "pts_out",
+                    "op": ">=",
+                    "value": "100"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "1024"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.chainCompare",
+                  "args": {
+                    "field": "0",
+                    "op": ">=",
+                    "value": "2"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "2048"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.levelLeftCompare",
+                  "args": {
+                    "which": "0",
+                    "op": ">",
+                    "count": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "cond_mask",
+                    "value": "4096"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "inventory.forEachSlot",
+                  "args": {
+                    "var": "s_idx"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "var.add",
+                  "args": {
+                    "name": "loop_used_cnt",
+                    "value": "1"
+                  }
+                }
+              ],
+              "children": [
+                {
+                  "event": "",
+                  "filters": {},
+                  "conditions": [
+                    {
+                      "id": "var.compare",
+                      "args": {
+                        "name": "first_used_slot",
+                        "op": "<",
+                        "value": "0"
+                      }
+                    }
+                  ],
+                  "actions": [
+                    {
+                      "id": "var.set",
+                      "args": {
+                        "name": "first_used_slot",
+                        "value": "=s_idx"
+                      }
+                    }
+                  ],
+                  "children": [],
+                  "veto": false,
+                  "enabled": true,
+                  "group": false,
+                  "name": "",
+                  "collapsed": false
+                }
+              ],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "inventory.selectSlot",
+                  "args": {
+                    "slot": "=slot_cursor"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            }
+          ],
+          "veto": false,
+          "enabled": true,
+          "group": true,
+          "name": "Evaluate all Inventory conditions",
+          "collapsed": true
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "hud_on"
+              }
+            }
+          ],
+          "actions": [],
+          "children": [
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [],
+              "actions": [
+                {
+                  "id": "render.rect",
+                  "args": {
+                    "x": "8",
+                    "y": "8",
+                    "w": "624",
+                    "h": "190",
+                    "r": "0.04",
+                    "g": "0.06",
+                    "b": "0.11",
+                    "a": "0.84"
+                  }
+                },
+                {
+                  "id": "render.outline",
+                  "args": {
+                    "x": "8",
+                    "y": "8",
+                    "w": "624",
+                    "h": "190",
+                    "thickness": "1",
+                    "r": "0.42",
+                    "g": "0.88",
+                    "b": "0.68",
+                    "a": "0.9"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "INVENTORY API TEST [{st_here}] Page {#hud_page + 1}/3 ([F1] HUD [F2] Page)  Avail:{#inv_available()}",
+                    "x": "16",
+                    "y": "16",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.55",
+                    "g": "0.98",
+                    "b": "0.78",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last: {last_cmd}",
+                    "x": "16",
+                    "y": "170",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.98",
+                    "g": "0.86",
+                    "b": "0.46",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "0"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Slots -> Used:{#inv_used_count()}/{#inv_slot_count()} (Free:{#inv_free_count()}, NextFree:{#inv_free_slot()}, Loop:{loop_used_cnt})  TotemAt:{#inv_find_slot(\"totem\")}  LastPut:{#inv_last_put_slot()}",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Slot#0 -> \"{$inv_slot_name(0, 0)}\" (res:\"{$inv_slot_name(0, 1)}\")  Time:{~inv_slot_num(0, 0)}/{~inv_slot_num(0, 1)}s (frac:{~inv_slot_num(0, 2)})  Ticking:{#inv_is_ticking(0)}",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.88",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Level Left -> Gems:{#inv_bonuses_left(0)}  Mega:{#inv_bonuses_left(1)}  Other:{#inv_bonuses_left(2)}  Total:{#inv_bonuses_left(3)}",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Combo Chain -> Len:{#inv_chain_int(0)}  Pts:{#inv_chain_int(1)}  Timer:{~inv_chain_num(0)}/{~inv_chain_num(1)}s (frac:{~inv_chain_num(2)})",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.88",
+                    "g": "0.9",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "[1]Start/GiveTotem [2]GiveTorch+KeyA [3]GiveAmulet+Icon [4]PauseTimers:{timers_paused} [5]+5s/BoostSlot0",
+                    "x": "16",
+                    "y": "124",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.72",
+                    "g": "0.84",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "[6]Swap0<->1(Shift:Move0->2) [7]8-SlotBag:{expanded_bag} [8]ChainLink [9]ClearSlot(Shift:All) [0]NextSlot",
+                    "x": "16",
+                    "y": "144",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.72",
+                    "g": "0.84",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 1: Slots, Level Counts, Combo & Hotkeys",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "1"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Selected Slot[#{#inv_sel_int(0)}] -> filled:{#inv_sel_int(1)}  name:\"{$inv_sel_text(0)}\"  res:\"{$inv_sel_text(1)}\"",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Selected Timer -> left:{~inv_sel_num(0)}s  total:{~inv_sel_num(1)}s  frac:{~inv_sel_num(2)}  burn:{~inv_sel_num(3)}s",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.9",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Selected Flags -> totem:{#inv_sel_int(2)}  torch:{#inv_sel_int(3)}  ptsOut:{#inv_sel_int(4)}",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "ItemProps({#inv_item_prop_count()}, [0]=\"{$inv_item_prop_name(0)}\") -> Slot#0 pts_out={#inv_item_prop_int(0, \"pts_out\")} time_left={~inv_item_prop_num(0, \"time_left\")} name=\"{$inv_item_prop_text(0, \"name\")}\"",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.88",
+                    "g": "0.86",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Active Conditions Bitmask: {cond_mask}   (Press [0] to inspect slots 0..{#inv_slot_count() - 1})",
+                    "x": "16",
+                    "y": "124",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.88",
+                    "b": "0.98",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 2: Selected Slot & Item Property Reflection",
+              "collapsed": false
+            },
+            {
+              "event": "",
+              "filters": {},
+              "conditions": [
+                {
+                  "id": "var.compare",
+                  "args": {
+                    "name": "hud_page",
+                    "op": "==",
+                    "value": "2"
+                  }
+                }
+              ],
+              "actions": [
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Slot Events -> Total:{ev_slot_cnt}  Expired:{ev_expired_cnt}  Used/Cleared:{ev_used_cnt}",
+                    "x": "16",
+                    "y": "40",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.82",
+                    "g": "0.95",
+                    "b": "1.0",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last Slot Emptied -> slot:#{last_ev_slot} reason:{last_ev_reason} \"{$last_ev_res}\" (\"{$last_ev_name}\") timeLeft:{last_ev_time}s ptsOut:{last_ev_pts_out}",
+                    "x": "16",
+                    "y": "60",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.95",
+                    "g": "0.9",
+                    "b": "0.74",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Chain Events -> Total:{ev_chain_cnt}  Broken:{ev_chain_broke_cnt}",
+                    "x": "16",
+                    "y": "80",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.78",
+                    "g": "0.96",
+                    "b": "0.84",
+                    "a": "1"
+                  }
+                },
+                {
+                  "id": "render.textAligned",
+                  "args": {
+                    "text": "Last Chain Event -> len:{last_ch_len}  pts:{last_ch_pts}  broke:{last_ch_broke}   (Press [8] repeatedly then wait 0.5s!)",
+                    "x": "16",
+                    "y": "100",
+                    "font": "",
+                    "scale": "0.42",
+                    "align": "0x08",
+                    "r": "0.96",
+                    "g": "0.84",
+                    "b": "0.78",
+                    "a": "1"
+                  }
+                }
+              ],
+              "children": [],
+              "veto": false,
+              "enabled": true,
+              "group": false,
+              "name": "HUD Page 3: Slot Emptied & Chain Event Telemetry",
+              "collapsed": false
+            }
+          ],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "Draw 3-page InventoryApi HUD",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "Frame Update & 3-Page Telemetry HUD",
+      "collapsed": false
+    },
+    {
+      "event": "inventory.slotEmptied",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_slot_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ev_reason",
+            "value": "=inv_ev_int(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ev_slot",
+            "value": "=inv_ev_int(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ev_pts_out",
+            "value": "=inv_ev_int(2)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ev_time",
+            "value": "=inv_ev_time_left()"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_ev_name",
+            "value": "{$inv_ev_text(0)}"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_ev_res",
+            "value": "{$inv_ev_text(1)}"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "inventory.eventReasonIs",
+              "args": {
+                "reason": "0"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.add",
+              "args": {
+                "name": "ev_expired_cnt",
+                "value": "1"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Slot timer EXPIRED!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "inventory.eventReasonIs",
+              "args": {
+                "reason": "1"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.add",
+              "args": {
+                "name": "ev_used_cnt",
+                "value": "1"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Slot item USED / CLEARED!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "cancel_probe"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.cancel",
+              "args": {}
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "On Inventory Slot Emptied",
+      "collapsed": false
+    },
+    {
+      "event": "inventory.chainChanged",
+      "filters": {},
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.add",
+          "args": {
+            "name": "ev_chain_cnt",
+            "value": "1"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ch_len",
+            "value": "=inv_chain_ev_int(0)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ch_pts",
+            "value": "=inv_chain_ev_int(1)"
+          }
+        },
+        {
+          "id": "var.set",
+          "args": {
+            "name": "last_ch_broke",
+            "value": "=inv_chain_ev_int(2)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "inventory.chainEvBroke",
+              "args": {}
+            }
+          ],
+          "actions": [
+            {
+              "id": "var.add",
+              "args": {
+                "name": "ev_chain_broke_cnt",
+                "value": "1"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Combo chain window expired (broke = 1)"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "On Combo Chain Changed",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "112"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "hud_on"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "F1: Toggle HUD",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "113"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.set",
+          "args": {
+            "name": "hud_page",
+            "value": "=(hud_page + 1) % 3"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "F2: Cycle HUD Page",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "49"
+      },
+      "conditions": [],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "inventory.isAvailable",
+              "args": {},
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "world.startLevel",
+              "args": {
+                "level": "levels/level_1.txt"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "1: Started levels/level_1.txt"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "inventory.isAvailable",
+              "args": {}
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.give",
+              "args": {
+                "name": "totem",
+                "time": "12",
+                "timerMode": "AMOD_BONUS_TIMER_GAME"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "1: Gave Protection Totem (12s) into first free slot"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "1: Start Level 1 (in menu) or Give Totem (in room)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "50"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "inventory.give",
+          "args": {
+            "name": "torch",
+            "time": "20",
+            "timerMode": "AMOD_BONUS_TIMER_GAME"
+          }
+        },
+        {
+          "id": "inventory.give",
+          "args": {
+            "name": "key_a",
+            "timerMode": "AMOD_BONUS_TIMER_NONE"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "2: Gave Torch (20s) + White Key (no timer)"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "2: Give Torch & White Key",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "51"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "inventory.give",
+          "args": {
+            "name": "ancient_amulet",
+            "time": "15",
+            "timerMode": "AMOD_BONUS_TIMER_GAME"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "3: Gave custom ancient_amulet (Shift+3 puts in Slot #0 with custom icon)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.give",
+              "args": {
+                "slot": "0",
+                "name": "ancient_amulet",
+                "time": "18",
+                "timerMode": "AMOD_BONUS_TIMER_MOD"
+              }
+            },
+            {
+              "id": "inventory.setSlotIcon",
+              "args": {
+                "slot": "0",
+                "icon": "textures/bonus/fomka_icon.png"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "expr",
+              "args": {
+                "text": "inv_last_put_slot() >= 0"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setSlotIcon",
+              "args": {
+                "slot": "=inv_last_put_slot()",
+                "icon": "textures/bonus/megakey_icon.png"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "3: Give Custom Ancient Amulet + Per-Slot Icon Override",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "52"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "timers_paused"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "timers_paused"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setTicking",
+              "args": {
+                "mode": "3"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "4: Froze all carried slot timers (rings stay visible)!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "timers_paused"
+              },
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setTicking",
+              "args": {
+                "mode": "4"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "4: Resumed all carried slot timers!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setTicking",
+              "args": {
+                "mode": "0",
+                "slot": "0"
+              }
+            },
+            {
+              "id": "inventory.setTicking",
+              "args": {
+                "mode": "2",
+                "slot": "0"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "4: Pause / Resume All Slot Timers",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "53"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        },
+        {
+          "id": "inventory.slotHasItem",
+          "args": {
+            "slot": "0"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "inventory.addTimeLeft",
+          "args": {
+            "slot": "0",
+            "delta": "5"
+          }
+        },
+        {
+          "id": "inventory.setItemPropNumber",
+          "args": {
+            "slot": "0",
+            "key": "pts_out",
+            "value": "750"
+          }
+        },
+        {
+          "id": "inventory.setItemPropAsset",
+          "args": {
+            "slot": "0",
+            "key": "icon",
+            "path": "textures/bonus/fomka_icon.png"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "5: Slot #0 +5s timer, pts_out=750, icon=crowbar (Shift+5 sets 3s left)"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setTimeLeft",
+              "args": {
+                "slot": "0",
+                "seconds": "3"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "5: Add +5s Time, Boost pts_out & Swap Icon on Slot #0",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "54"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              },
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.swapItems",
+              "args": {
+                "first": "0",
+                "second": "1"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "6: Swapped Slot #0 <-> Slot #1 (hold Shift+6 to Move #0 -> #2)"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.moveItem",
+              "args": {
+                "fromSlot": "0",
+                "toSlot": "2"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Shift+6: Moved Slot #0 into empty Slot #2"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "6: Swap Slots #0 <-> #1 (or Shift+6 Move #0 -> #2)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "55"
+      },
+      "conditions": [],
+      "actions": [
+        {
+          "id": "var.toggle",
+          "args": {
+            "name": "expanded_bag"
+          }
+        }
+      ],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "expanded_bag"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setSlotCount",
+              "args": {
+                "count": "8"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "7: Expanded inventory capacity to 8 slots!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "var.on",
+              "args": {
+                "name": "expanded_bag"
+              },
+              "inverted": true
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.setSlotCount",
+              "args": {
+                "count": "5"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "7: Restored standard 5-slot inventory capacity"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "7: Toggle 8-Slot Expanded Inventory vs Standard 5 Slots",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "56"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [
+        {
+          "id": "bonuses.takeChainLink",
+          "args": {
+            "points": "20",
+            "where": "0"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "8: Added Combo Chain Link (+20) — watch Chain Len/Timer & Page 3!"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "8: Advance Combo Chain Link",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "57"
+      },
+      "conditions": [
+        {
+          "id": "inventory.isAvailable",
+          "args": {}
+        }
+      ],
+      "actions": [],
+      "children": [
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              },
+              "inverted": true
+            },
+            {
+              "id": "var.compare",
+              "args": {
+                "name": "first_used_slot",
+                "op": ">=",
+                "value": "0"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.clear",
+              "args": {
+                "by": "0",
+                "slot": "=first_used_slot"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "9: Cleared first occupied slot (Shift+9 clears all + key_a)"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        },
+        {
+          "event": "",
+          "filters": {},
+          "conditions": [
+            {
+              "id": "input.keyDown",
+              "args": {
+                "key": "16"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "inventory.clear",
+              "args": {
+                "by": "1",
+                "name": "key_a"
+              }
+            },
+            {
+              "id": "inventory.clear",
+              "args": {
+                "by": "2"
+              }
+            },
+            {
+              "id": "var.setText",
+              "args": {
+                "name": "last_cmd",
+                "value": "Shift+9: Cleared all carried items!"
+              }
+            }
+          ],
+          "children": [],
+          "veto": false,
+          "enabled": true,
+          "group": false,
+          "name": "",
+          "collapsed": false
+        }
+      ],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "9: Clear First Occupied Slot (or Shift+9 Clear All)",
+      "collapsed": false
+    },
+    {
+      "event": "input.key",
+      "filters": {
+        "key": "48"
+      },
+      "conditions": [
+        {
+          "id": "expr",
+          "args": {
+            "text": "inv_slot_count() > 0"
+          }
+        }
+      ],
+      "actions": [
+        {
+          "id": "var.set",
+          "args": {
+            "name": "slot_cursor",
+            "value": "=(slot_cursor + 1) % inv_slot_count()"
+          }
+        },
+        {
+          "id": "inventory.selectSlot",
+          "args": {
+            "slot": "=slot_cursor"
+          }
+        },
+        {
+          "id": "var.setText",
+          "args": {
+            "name": "last_cmd",
+            "value": "0: Cycled selected slot (check HUD Page 2 with F2)"
+          }
+        }
+      ],
+      "children": [],
+      "veto": false,
+      "enabled": true,
+      "group": false,
+      "name": "0: Cycle Selected Slot Index",
+      "collapsed": false
+    }
+  ]
+}

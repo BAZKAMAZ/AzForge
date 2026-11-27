@@ -1,27 +1,481 @@
 [
   {
-    "id": "monster.killed",
-    "label": "mod.ev.monsterKilled",
+    "id": "monsters.beforeKill",
+    "label": "mod.ev.monsterBeforeKill",
     "call": "Monsters.AddKillHandler",
     "canVeto": true,
     "filters": [
       {
-        "key": "name",
-        "label": "mod.p.monster",
-        "kind": "monster",
-        "test": "if (!info->name || strcmp(info->name, \"%v%\") != 0) return AMOD_MONSTER_KILL_DEFAULT;"
+        "key": "monster",
+        "label": "mod.p.monsterFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "test": "if (!monsters_kill_matches(\"%v%\")) return AMOD_MONSTER_KILL_DEFAULT;"
       }
     ],
-    "values": [
-      "monster",
-      "position",
-      "level"
-    ],
-    "handler": "static AmodMonsterKillResult __cdecl %H%(const AmodMonsterKillInfo* info, void* user)",
-    "subscribe": "if (API->monsters) %token% = API->monsters->AddKillHandler(SELF, %H%, 0);",
-    "retDefault": "return AMOD_MONSTER_KILL_DEFAULT;",
+    "handler": "static AmodMonsterKillResult __cdecl %H%(const AmodMonsterKillInfo* kinfo, void* user)",
+    "subscribe": "if (API->monsters && API->monsters->AddKillHandler) %token% = API->monsters->AddKillHandler(SELF, monsters_kill_relay, (void*)%H%);",
+    "retDefault": "return (AmodMonsterKillResult)monsters_kill_verdict();",
     "retVeto": "return AMOD_MONSTER_KILL_REFUSE;",
+    "provides": "monster_kill",
     "group": "monsters",
-    "section": "mod.sec.general"
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.ev.monsterBeforeKill.hint"
+  },
+  {
+    "id": "monsters.beforeTouch",
+    "label": "mod.ev.monsterBeforeTouch",
+    "call": "Monsters.AddTouchHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "monster",
+        "label": "mod.p.monsterFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "test": "if (!monsters_touch_matches(\"%v%\")) return AMOD_MONSTER_TOUCH_DEFAULT;"
+      }
+    ],
+    "handler": "static AmodMonsterTouchResult __cdecl %H%(const AmodMonsterTouchInfo* tinfo, void* user)",
+    "subscribe": "if (API->monsters && API->monsters->AddTouchHandler) %token% = API->monsters->AddTouchHandler(SELF, monsters_touch_relay, (void*)%H%);",
+    "retDefault": "return (AmodMonsterTouchResult)monsters_touch_verdict();",
+    "retVeto": "return AMOD_MONSTER_TOUCH_REFUSE;",
+    "provides": "monster_touch",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.ev.monsterBeforeTouch.hint"
+  },
+  {
+    "id": "monsters.spawned",
+    "label": "mod.ev.monsterSpawned",
+    "call": "Monsters.AddSpawnHandler",
+    "canVeto": false,
+    "filters": [
+      {
+        "key": "monster",
+        "label": "mod.p.monsterFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "test": "if (!monsters_spawn_matches(\"%v%\")) return;"
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodMonsterSpawnInfo* sinfo, void* user)",
+    "subscribe": "if (API->monsters && API->monsters->AddSpawnHandler) %token% = API->monsters->AddSpawnHandler(SELF, monsters_spawn_relay, (void*)%H%);",
+    "retDefault": "return;",
+    "provides": "monster_spawn",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.ev.monsterSpawned.hint"
+  },
+  {
+    "id": "monsters.beforePlace",
+    "label": "mod.ev.monsterBeforePlace",
+    "call": "Monsters.AddPlaceHandler",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "monster",
+        "label": "mod.p.monsterFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "test": "if (!monsters_place_matches(\"%v%\")) return 1;"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterPlaceInfo* pinfo, void* user)",
+    "subscribe": "if (API->monsters && API->monsters->AddPlaceHandler) %token% = API->monsters->AddPlaceHandler(SELF, monsters_place_relay, (void*)%H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "monster_place",
+    "group": "monsters",
+    "section": "mod.sec.monsterEvents",
+    "hint": "mod.ev.monsterBeforePlace.hint"
+  },
+  {
+    "id": "monsters.definedThink",
+    "label": "mod.ev.monsterDefinedThink",
+    "call": "Monsters.DefineBehaviour",
+    "canVeto": false,
+    "filters": [
+      {
+        "key": "monsterName",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "frost_skull"
+      }
+    ],
+    "handler": "static void __cdecl %H%(const AmodMonsterThinkInfo* minfo, void* user)",
+    "subscribe": "monsters_bind_defined_think(\"%monsterName%\", %H%);",
+    "retDefault": "return;",
+    "provides": "monster_think",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "hint": "mod.ev.monsterDefinedThink.hint"
+  },
+  {
+    "id": "monsters.behaviourTick",
+    "label": "mod.ev.monsterBehaviourTick",
+    "call": "Monsters.SetBehaviour",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "monsterName",
+        "label": "mod.p.monsterTypeName",
+        "kind": "text",
+        "preset": "skull",
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ]
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterThinkInfo* minfo, void* user)",
+    "subscribe": "monsters_bind_behaviour(\"%monsterName%\", %H%);",
+    "retDefault": "return monsters_think_verdict();",
+    "retVeto": "return AMOD_MONSTER_INSTEAD_OF_GAME;",
+    "provides": "monster_think",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "hint": "mod.ev.monsterBehaviourTick.hint"
+  },
+  {
+    "id": "monsters.borrowedTick",
+    "label": "mod.ev.monsterBorrowedTick",
+    "call": "Monsters.BorrowMonster",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "monster",
+        "label": "mod.p.monsterFilter",
+        "kind": "text",
+        "preset": "",
+        "optional": true,
+        "options": [
+          {
+            "value": "skull",
+            "label": "mod.monsters.sp.skull"
+          },
+          {
+            "value": "j_skull",
+            "label": "mod.monsters.sp.jSkull"
+          },
+          {
+            "value": "snake",
+            "label": "mod.monsters.sp.snake"
+          },
+          {
+            "value": "snake2",
+            "label": "mod.monsters.sp.snake2"
+          },
+          {
+            "value": "snake3",
+            "label": "mod.monsters.sp.snake3"
+          },
+          {
+            "value": "spider",
+            "label": "mod.monsters.sp.spider"
+          },
+          {
+            "value": "scorpion",
+            "label": "mod.monsters.sp.scorpion"
+          },
+          {
+            "value": "bat",
+            "label": "mod.monsters.sp.bat"
+          },
+          {
+            "value": "mummy",
+            "label": "mod.monsters.sp.mummy"
+          },
+          {
+            "value": "mummy2",
+            "label": "mod.monsters.sp.mummy2"
+          }
+        ],
+        "test": "if (!monsters_borrow_matches(\"%v%\")) return AMOD_MONSTER_ALSO_GAME;"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterThinkInfo* minfo, void* user)",
+    "subscribe": "monsters_bind_borrow(%H%);",
+    "retDefault": "return monsters_think_verdict();",
+    "retVeto": "return AMOD_MONSTER_INSTEAD_OF_GAME;",
+    "provides": "monster_think",
+    "group": "monsters",
+    "section": "mod.sec.monsterBehaviour",
+    "hint": "mod.ev.monsterBorrowedTick.hint"
+  },
+  {
+    "id": "monsters.kindBuild",
+    "label": "mod.ev.monsterKindBuild",
+    "call": "Monsters.RegisterKind(BUILD)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.monsterKindName",
+        "kind": "text",
+        "preset": "sentinel"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterKindInfo* mkinfo, void* user)",
+    "subscribe": "monsters_bind_kind(\"%kindName%\", 0, %H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "monster_body",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "hint": "mod.ev.monsterKindBuild.hint"
+  },
+  {
+    "id": "monsters.kindUpdate",
+    "label": "mod.ev.monsterKindUpdate",
+    "call": "Monsters.RegisterKind(UPDATE)",
+    "canVeto": false,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.monsterKindName",
+        "kind": "text",
+        "preset": "sentinel"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterKindInfo* mkinfo, void* user)",
+    "subscribe": "monsters_bind_kind(\"%kindName%\", 1, %H%);",
+    "retDefault": "return 0;",
+    "provides": "monster_think",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "hint": "mod.ev.monsterKindUpdate.hint"
+  },
+  {
+    "id": "monsters.kindTouch",
+    "label": "mod.ev.monsterKindTouch",
+    "call": "Monsters.RegisterKind(TOUCH)",
+    "canVeto": true,
+    "filters": [
+      {
+        "key": "kindName",
+        "label": "mod.p.monsterKindName",
+        "kind": "text",
+        "preset": "sentinel"
+      }
+    ],
+    "handler": "static int __cdecl %H%(const AmodMonsterKindInfo* mkinfo, void* user)",
+    "subscribe": "monsters_bind_kind(\"%kindName%\", 2, %H%);",
+    "retDefault": "return monsters_kind_touch_verdict();",
+    "retVeto": "return AMOD_MONSTER_INSTEAD_OF_GAME;",
+    "provides": "monster_touch",
+    "group": "monsters",
+    "section": "mod.sec.monsterKind",
+    "hint": "mod.ev.monsterKindTouch.hint"
   }
 ]

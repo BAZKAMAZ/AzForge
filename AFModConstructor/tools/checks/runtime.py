@@ -22,6 +22,7 @@ BUILTINS = '''/* The table the loader hands over, and the seconds the last frame
    fills them in: everything below reads them */
 const AmodApi* g_api = 0;
 float mod_delta = 0.0f;
+float mod_elapsed = 0.0f;
 
 AmodValue as_value(const char* text) {
     AmodValue v;
@@ -69,6 +70,7 @@ DECLARATIONS = '''extern const AmodApi* g_api;
 #define SELF g_api->self
 
 extern float mod_delta;
+extern float mod_elapsed;
 
 AmodValue as_value(const char* text);
 int ctrl_index(const char* name);

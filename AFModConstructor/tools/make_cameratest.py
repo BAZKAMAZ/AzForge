@@ -54,7 +54,7 @@ def act(entry_id, **args):
 
 
 def hud_line(y, text, r=0.90, g=0.93, b=0.98):
-    return act('render.text', text=text, x=16, y=y, font='', scale=0.56, r=r, g=g, b=b, a=1)
+    return act('render.textAligned', text=text, x=18, y=y, font='', scale=0.45, align='0x08', r=r, g=g, b=b, a=1)
 
 
 def set_status(text):
@@ -198,14 +198,14 @@ def build_sheet():
         filters={'driver': 'AMOD_CAMERA_DRIVER_BOTH'},
         actions=[
             act('var.add', name='upd_ticks', value='1'),
-            act('var.set', name='upd_dt', value='=(camFrame ? camFrame->delta : 0.0f)'),
+            act('var.set', name='upd_dt', value='=cam_update_delta()'),
         ],
         children=[
             rule(
                 conditions=[cond('camera.isHere'), cond('var.on', name='orbit_on')],
                 actions=[
                     act('var.add', name='orbit_angle',
-                        value='=(camFrame ? camFrame->delta : 0.0f) * 1.6f'),
+                        value='=cam_update_delta() * 1.6f'),
                     act('camera.setEye',
                         x='=cam_focus(0) + sinf(orbit_angle) * 2.2f',
                         y='=cam_focus(1) + 1.0f',
@@ -250,9 +250,9 @@ def build_sheet():
         event='camera.placing',
         actions=[
             act('var.add', name='snap_ticks', value='1'),
-            act('var.set', name='snap_x', value='=(info ? info->point[0] : 0.0f)'),
-            act('var.set', name='snap_y', value='=(info ? info->point[1] : 0.0f)'),
-            act('var.set', name='snap_z', value='=(info ? info->point[2] : 0.0f)'),
+            act('var.set', name='snap_x', value='=cam_place_num(0)'),
+            act('var.set', name='snap_y', value='=cam_place_num(1)'),
+            act('var.set', name='snap_z', value='=cam_place_num(2)'),
             set_status('Event: camera.placing fired'),
         ],
     )

@@ -26,7 +26,7 @@
             "name": "mingw-debug",
             "displayName": "Qt6 MinGW 64-bit (Debug)",
             "inherits": "mingw-release",
-            "binaryDir": "${sourceDir}/build-debug",
+            "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }

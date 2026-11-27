@@ -20,7 +20,7 @@ ipch/
 # Written by a post-build step, which copies the freshly linked DLL into the
 # package before sealing it into a .amod
 sdk/SampleMod/package/bin/
-CoreMod/package/bin/
+AzForge-site/*.tsx
 
 # The plugins: everything a build of them makes
 plugins/**/bin/

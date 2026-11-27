@@ -1,0 +1,1914 @@
+[
+  {
+    "id": "bonuses.place",
+    "label": "mod.act.bonusPlace",
+    "call": "Bonuses.Place / PlaceEx / PlaceIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "bonus_1",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "col",
+        "label": "mod.p.bonusCol",
+        "kind": "number",
+        "preset": "20"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.bonusRow",
+        "kind": "number",
+        "preset": "14"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.bonusTag",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "time",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "decor",
+        "label": "mod.p.bonusDecor",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "model",
+        "label": "mod.p.bonusModel",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_place_any((int)(%room%), \"%name%\", (int)(%col%), (int)(%row%), \"%tag%\", (float)(%time%), %decor%, \"%model%\", \"%texture%\");",
+    "hint": "mod.act.bonusPlace.hint"
+  },
+  {
+    "id": "bonuses.selectPlacement",
+    "label": "mod.act.bonusSelectPl",
+    "call": "Bonuses.GetPlacement / GetPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_select_placement((int)(%room%), (int)(%index%));"
+  },
+  {
+    "id": "bonuses.remove",
+    "label": "mod.act.bonusRemove",
+    "call": "Bonuses.RemovePlacement / RemovePlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.bonusLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.rm.index"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.rm.tag"
+          },
+          {
+            "value": "2",
+            "label": "mod.bonuses.rm.name"
+          }
+        ]
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.bonusTag",
+        "kind": "text",
+        "preset": "gift",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "bonus_1",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ],
+        "when": {
+          "param": "by",
+          "equals": "2"
+        }
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "if (%by% == 0) bonuses_remove_placement((int)(%room%), (int)(%index%)); else if (%by% == 1) bonuses_remove_by_tag((int)(%room%), \"%tag%\"); else bonuses_remove_by_name((int)(%room%), \"%name%\");",
+    "hint": "mod.act.bonusRemove.hint"
+  },
+  {
+    "id": "bonuses.setPlacementNumber",
+    "label": "mod.act.bonusSetPlNum",
+    "call": "Bonuses.SetPlacementProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "decor",
+        "options": [
+          {
+            "value": "time",
+            "label": "mod.bonuses.pp.time"
+          },
+          {
+            "value": "decor",
+            "label": "mod.bonuses.pp.decor"
+          },
+          {
+            "value": "is_live",
+            "label": "mod.bonuses.pp.isLive"
+          },
+          {
+            "value": "phase",
+            "label": "mod.bonuses.pp.phase"
+          },
+          {
+            "value": "own_look",
+            "label": "mod.bonuses.pp.ownLook"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_set_pl_prop_num((int)(%room%), (int)(%index%), \"%key%\", (float)(%value%));"
+  },
+  {
+    "id": "bonuses.setPlacementPos",
+    "label": "mod.act.bonusSetPlPos",
+    "call": "Bonuses.SetPlacementProperty(pos)",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0.2"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_set_pl_prop_pos((int)(%room%), (int)(%index%), (float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "bonuses.setPlacementText",
+    "label": "mod.act.bonusSetPlText",
+    "call": "Bonuses.SetPlacementProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "tag",
+        "options": [
+          {
+            "value": "tag",
+            "label": "mod.bonuses.pp.tag"
+          },
+          {
+            "value": "model",
+            "label": "mod.bonuses.pp.model"
+          },
+          {
+            "value": "texture",
+            "label": "mod.bonuses.pp.texture"
+          }
+        ]
+      },
+      {
+        "key": "text",
+        "label": "mod.p.text",
+        "kind": "text",
+        "preset": "secret"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_set_pl_prop_str((int)(%room%), (int)(%index%), \"%key%\", \"%text%\");"
+  },
+  {
+    "id": "bonuses.selectType",
+    "label": "mod.act.bonusSelectType",
+    "call": "Bonuses.FindType / GetType",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.bonusLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.by.name"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.by.index"
+          }
+        ]
+      },
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ],
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%by% == 0) bonuses_select_type(\"%name%\"); else bonuses_select_type_at((int)(%index%));"
+  },
+  {
+    "id": "bonuses.beginType",
+    "label": "mod.act.bonusBeginType",
+    "call": "Bonuses.DefineType (stage)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "solar_relic"
+      },
+      {
+        "key": "basedOn",
+        "label": "mod.p.bonusBasedOn",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "behavesAs",
+        "label": "mod.p.bonusBehavesAs",
+        "kind": "enum",
+        "preset": "bonus",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.like.scored"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.like.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.like.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.like.quest"
+          },
+          {
+            "value": "sys",
+            "label": "mod.bonuses.like.silent"
+          },
+          {
+            "value": "",
+            "label": "mod.bonuses.like.slot"
+          }
+        ]
+      },
+      {
+        "key": "pointsTake",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "500"
+      },
+      {
+        "key": "pointsOut",
+        "label": "mod.p.bonusPointsOut",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_begin_type(\"%id%\", \"%basedOn%\", \"%behavesAs%\", (int)(%pointsTake%), (int)(%pointsOut%));",
+    "hint": "mod.act.bonusDefine.hint"
+  },
+  {
+    "id": "bonuses.typeAssets",
+    "label": "mod.act.bonusTypeAssets",
+    "call": "Bonuses.DefineType (assets)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.bonusModel",
+        "kind": "text",
+        "preset": "models/bonus/corona.mmd"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/bonus/cor_quest.jpg"
+      },
+      {
+        "key": "icon",
+        "label": "mod.p.bonusIcon",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "soundTake",
+        "label": "mod.p.bonusSoundTake",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "soundUse",
+        "label": "mod.p.bonusSoundUse",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_type_assets(\"%model%\", \"%texture%\", \"%icon%\", \"%soundTake%\", \"%soundUse%\");"
+  },
+  {
+    "id": "bonuses.typeTimerAndTrain",
+    "label": "mod.act.bonusTypeTimer",
+    "call": "Bonuses.DefineType (timer/train)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "time",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "12"
+      },
+      {
+        "key": "timerMode",
+        "label": "mod.p.bonusTimerMode",
+        "kind": "enum",
+        "preset": "AMOD_BONUS_TIMER_GAME",
+        "options": [
+          {
+            "value": "AMOD_BONUS_TIMER_NONE",
+            "label": "mod.bonuses.timer.none"
+          },
+          {
+            "value": "AMOD_BONUS_TIMER_GAME",
+            "label": "mod.bonuses.timer.game"
+          },
+          {
+            "value": "AMOD_BONUS_TIMER_MOD",
+            "label": "mod.bonuses.timer.mod"
+          }
+        ]
+      },
+      {
+        "key": "makesTrain",
+        "label": "mod.p.bonusTrain",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "trainIndex",
+        "label": "mod.p.bonusTrainIdx",
+        "kind": "number",
+        "preset": "5",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_type_timer_train((float)(%time%), %timerMode%, %makesTrain%, (int)(%trainIndex%));"
+  },
+  {
+    "id": "bonuses.typeGlow",
+    "label": "mod.act.bonusTypeGlow",
+    "call": "Bonuses.DefineType (glow)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "r2",
+        "label": "mod.p.bonusR2",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "g2",
+        "label": "mod.p.bonusG2",
+        "kind": "number",
+        "preset": "0.3",
+        "optional": true
+      },
+      {
+        "key": "b2",
+        "label": "mod.p.bonusB2",
+        "kind": "number",
+        "preset": "0.1",
+        "optional": true
+      },
+      {
+        "key": "a2",
+        "label": "mod.p.bonusA2",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_type_glow((float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%), (float)(%r2%), (float)(%g2%), (float)(%b2%), (float)(%a2%));"
+  },
+  {
+    "id": "bonuses.typeRockingAndLight",
+    "label": "mod.act.bonusTypeRockLight",
+    "call": "Bonuses.DefineType (rocking/light)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "amp",
+        "label": "mod.p.bonusRockAmp",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.bonusRockSpeed",
+        "kind": "number",
+        "preset": "4.0"
+      },
+      {
+        "key": "axisX",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "axisY",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "axisZ",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0.0",
+        "optional": true
+      },
+      {
+        "key": "lr",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "lg",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.8",
+        "optional": true
+      },
+      {
+        "key": "lb",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.4",
+        "optional": true
+      },
+      {
+        "key": "radius",
+        "label": "mod.p.bonusLightRad",
+        "kind": "number",
+        "preset": "0.5",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_type_rock_light((float)(%amp%), (float)(%speed%), (float)(%axisX%), (float)(%axisY%), (float)(%axisZ%), (float)(%lr%), (float)(%lg%), (float)(%lb%), (float)(%radius%));"
+  },
+  {
+    "id": "bonuses.commitType",
+    "label": "mod.act.bonusCommitType",
+    "call": "Bonuses.DefineType",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [],
+    "emit": "bonuses_commit_type();",
+    "hint": "mod.act.bonusDefine.hint"
+  },
+  {
+    "id": "bonuses.setTypeTexture",
+    "label": "mod.act.bonusSetTypeTex",
+    "call": "Bonuses.SetTexture",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "ruby_gem"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/bonus/d_8.jpg"
+      }
+    ],
+    "emit": "bonuses_set_type_tex(\"%id%\", \"%texture%\");",
+    "hint": "mod.act.bonusOwnedType.hint"
+  },
+  {
+    "id": "bonuses.setTypeIcon",
+    "label": "mod.act.bonusSetTypeIcon",
+    "call": "Bonuses.SetIcon",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "solar_relic"
+      },
+      {
+        "key": "icon",
+        "label": "mod.p.bonusIcon",
+        "kind": "text",
+        "preset": "textures/bonus/megakey_icon.png"
+      }
+    ],
+    "emit": "bonuses_set_type_icon(\"%id%\", \"%icon%\");",
+    "hint": "mod.act.bonusOwnedType.hint"
+  },
+  {
+    "id": "bonuses.setTypePropNumber",
+    "label": "mod.act.bonusSetTypeNum",
+    "call": "Bonuses.SetTypeProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "ruby_gem"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "pts_take",
+        "options": [
+          {
+            "value": "pts_take",
+            "label": "mod.bonuses.tp.ptsTake"
+          },
+          {
+            "value": "pts_out",
+            "label": "mod.bonuses.tp.ptsOut"
+          },
+          {
+            "value": "time",
+            "label": "mod.bonuses.tp.time"
+          },
+          {
+            "value": "burn_time",
+            "label": "mod.bonuses.tp.burnTime"
+          },
+          {
+            "value": "light_radius",
+            "label": "mod.bonuses.tp.lightRadius"
+          },
+          {
+            "value": "bonus_light_radius",
+            "label": "mod.bonuses.tp.bonusLightRadius"
+          },
+          {
+            "value": "rocking_amp",
+            "label": "mod.bonuses.tp.rockAmp"
+          },
+          {
+            "value": "rocking_speed",
+            "label": "mod.bonuses.tp.rockSpeed"
+          },
+          {
+            "value": "train_idx",
+            "label": "mod.bonuses.tp.trainIdx"
+          },
+          {
+            "value": "flags",
+            "label": "mod.bonuses.tp.flags"
+          },
+          {
+            "value": "is_totem",
+            "label": "mod.bonuses.tp.isTotem"
+          },
+          {
+            "value": "is_torch",
+            "label": "mod.bonuses.tp.isTorch"
+          },
+          {
+            "value": "makes_train",
+            "label": "mod.bonuses.tp.makesTrain"
+          },
+          {
+            "value": "timer_is_mine",
+            "label": "mod.bonuses.tp.timerMine"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "500"
+      }
+    ],
+    "emit": "bonuses_set_type_prop_num(\"%id%\", \"%key%\", (float)(%value%));",
+    "hint": "mod.act.bonusOwnedType.hint"
+  },
+  {
+    "id": "bonuses.setTypePropColor",
+    "label": "mod.act.bonusSetTypeVec",
+    "call": "Bonuses.SetTypeProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "ruby_gem"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "glow_color",
+        "options": [
+          {
+            "value": "glow_color",
+            "label": "mod.bonuses.tp.glowColor"
+          },
+          {
+            "value": "glow_color2",
+            "label": "mod.bonuses.tp.glowColor2"
+          },
+          {
+            "value": "light_color",
+            "label": "mod.bonuses.tp.lightColor"
+          },
+          {
+            "value": "rocking_axis",
+            "label": "mod.bonuses.tp.rockAxis"
+          }
+        ]
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1.0"
+      }
+    ],
+    "emit": "bonuses_set_type_prop_vec(\"%id%\", \"%key%\", (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));",
+    "hint": "mod.act.bonusOwnedType.hint"
+  },
+  {
+    "id": "bonuses.setTypePropAsset",
+    "label": "mod.act.bonusSetTypeAsset",
+    "call": "Bonuses.SetTypeProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "id",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "ruby_gem"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "texture",
+        "options": [
+          {
+            "value": "texture",
+            "label": "mod.bonuses.tp.texture"
+          },
+          {
+            "value": "model",
+            "label": "mod.bonuses.tp.model"
+          },
+          {
+            "value": "icon",
+            "label": "mod.bonuses.tp.icon"
+          },
+          {
+            "value": "sound_take",
+            "label": "mod.bonuses.tp.soundTake"
+          },
+          {
+            "value": "sound_use",
+            "label": "mod.bonuses.tp.soundUse"
+          }
+        ]
+      },
+      {
+        "key": "path",
+        "label": "mod.p.gameFile",
+        "kind": "text",
+        "preset": "textures/bonus/d_6.jpg"
+      }
+    ],
+    "emit": "bonuses_set_type_prop_str(\"%id%\", \"%key%\", \"%path%\");",
+    "hint": "mod.act.bonusOwnedType.hint"
+  },
+  {
+    "id": "bonuses.awardPoints",
+    "label": "mod.act.bonusAwardPts",
+    "call": "Bonuses.AwardPoints",
+    "group": "bonuses",
+    "section": "mod.sec.bonusScore",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "250"
+      },
+      {
+        "key": "where",
+        "label": "mod.p.bonusPopupWhere",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.at.player"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.at.pos"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.3f",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "bonuses_award_points_any((int)(%points%), %where%, (float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "bonuses.takeChainLink",
+    "label": "mod.act.bonusChainLink",
+    "call": "Bonuses.TakeChainLink",
+    "group": "bonuses",
+    "section": "mod.sec.bonusScore",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "10"
+      },
+      {
+        "key": "where",
+        "label": "mod.p.bonusPopupWhere",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.at.player"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.at.pos"
+          }
+        ]
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=player_position(0)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=player_position(1) + 0.28f",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=player_position(2)",
+        "when": {
+          "param": "where",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "bonuses_chain_link_any((int)(%points%), %where%, (float)(%x%), (float)(%y%), (float)(%z%));",
+    "hint": "mod.act.bonusChainLink.hint"
+  },
+  {
+    "id": "bonuses.setTakeResult",
+    "label": "mod.act.bonusSetTakeRes",
+    "call": "Bonuses.AddTakeHandler",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take",
+    "params": [
+      {
+        "key": "result",
+        "label": "mod.p.bonusTakeResult",
+        "kind": "enum",
+        "preset": "AMOD_BONUS_TAKE_HANDLED",
+        "options": [
+          {
+            "value": "AMOD_BONUS_TAKE_DEFAULT",
+            "label": "mod.bonuses.take.default"
+          },
+          {
+            "value": "AMOD_BONUS_TAKE_HANDLED",
+            "label": "mod.bonuses.take.handled"
+          },
+          {
+            "value": "AMOD_BONUS_TAKE_REFUSE",
+            "label": "mod.bonuses.take.refuse"
+          }
+        ]
+      }
+    ],
+    "emit": "bonuses_set_take_result(%result%);",
+    "hint": "mod.act.bonusSetTakeRes.hint"
+  },
+  {
+    "id": "bonuses.registerKind",
+    "label": "mod.act.bonusRegKind",
+    "call": "Bonuses.RegisterKind",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      }
+    ],
+    "emit": "bonuses_ensure_kind(\"%kindName%\");"
+  },
+  {
+    "id": "bonuses.placeKind",
+    "label": "mod.act.bonusPlaceKind",
+    "call": "Bonuses.PlaceKind / PlaceKindIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      },
+      {
+        "key": "col",
+        "label": "mod.p.bonusCol",
+        "kind": "number",
+        "preset": "20"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.bonusRow",
+        "kind": "number",
+        "preset": "14"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.bonusTag",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      },
+      {
+        "key": "decor",
+        "label": "mod.p.bonusDecor",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ],
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_place_kind((int)(%room%), \"%kindName%\", (int)(%col%), (int)(%row%), \"%tag%\", %decor%);"
+  },
+  {
+    "id": "bonuses.borrowPlacement",
+    "label": "mod.act.bonusBorrowPl",
+    "call": "Bonuses.BorrowPlacement / BorrowPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      },
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_borrow_placement((int)(%room%), \"%kindName%\", (int)(%index%));",
+    "hint": "mod.act.bonusBorrowPl.hint"
+  },
+  {
+    "id": "bonuses.borrowAllInRoom",
+    "label": "mod.act.bonusBorrowAll",
+    "call": "Bonuses.BorrowPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [
+      {
+        "key": "kindName",
+        "label": "mod.p.bonusKindName",
+        "kind": "text",
+        "preset": "orb"
+      },
+      {
+        "key": "tagFilter",
+        "label": "mod.p.bonusTag",
+        "kind": "text",
+        "preset": "",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_borrow_all_in_room(\"%kindName%\", \"%tagFilter%\");",
+    "hint": "mod.act.bonusBorrowAll.hint"
+  },
+  {
+    "id": "bonuses.returnPlacement",
+    "label": "mod.act.bonusReturnPl",
+    "call": "Bonuses.ReturnPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "bonuses_return_placement((int)(%index%));"
+  },
+  {
+    "id": "bonuses.returnAllInRoom",
+    "label": "mod.act.bonusReturnAll",
+    "call": "Bonuses.ReturnPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "params": [],
+    "emit": "bonuses_return_all_in_room();"
+  },
+  {
+    "id": "bonuses.bodySetLook",
+    "label": "mod.act.bonusBodyLook",
+    "call": "Bonuses.RegisterKind (body look)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "model",
+        "label": "mod.p.bonusModel",
+        "kind": "text",
+        "preset": "models/bonus/corona.mmd"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.texture",
+        "kind": "text",
+        "preset": "textures/bonus/cor_quest.jpg",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_body_set_look(\"%model%\", \"%texture%\");"
+  },
+  {
+    "id": "bonuses.bodySetIds",
+    "label": "mod.act.bonusBodyIds",
+    "call": "Bonuses.RegisterKind (body ids)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "modelId",
+        "label": "mod.p.bonusModelId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "textureId",
+        "label": "mod.p.bonusTextureId",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_body_set_ids((int)(%modelId%), (int)(%textureId%));"
+  },
+  {
+    "id": "bonuses.bodySetPos",
+    "label": "mod.act.bonusBodyPos",
+    "call": "Bonuses.RegisterKind (body pos)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "=bonuses_body_num(0)"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "=bonuses_body_num(1)"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "=bonuses_body_num(2)"
+      }
+    ],
+    "emit": "bonuses_body_set_pos((float)(%x%), (float)(%y%), (float)(%z%));"
+  },
+  {
+    "id": "bonuses.bodySetGlow",
+    "label": "mod.act.bonusBodyGlow",
+    "call": "Bonuses.RegisterKind (body glow)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_body_set_glow(0, (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));"
+  },
+  {
+    "id": "bonuses.bodySetGlow2",
+    "label": "mod.act.bonusBodyGlow2",
+    "call": "Bonuses.RegisterKind (body glow2)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.9"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "a",
+        "label": "mod.p.a",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_body_set_glow(1, (float)(%r%), (float)(%g%), (float)(%b%), (float)(%a%));"
+  },
+  {
+    "id": "bonuses.bodySetRocking",
+    "label": "mod.act.bonusBodyRock",
+    "call": "Bonuses.RegisterKind (body rocking)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "amp",
+        "label": "mod.p.bonusRockAmp",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "speed",
+        "label": "mod.p.bonusRockSpeed",
+        "kind": "number",
+        "preset": "4.0"
+      },
+      {
+        "key": "axisX",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "axisY",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "1.0",
+        "optional": true
+      },
+      {
+        "key": "axisZ",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0.0",
+        "optional": true
+      }
+    ],
+    "emit": "bonuses_body_set_rocking((float)(%amp%), (float)(%speed%), (float)(%axisX%), (float)(%axisY%), (float)(%axisZ%));"
+  },
+  {
+    "id": "bonuses.bodySetLight",
+    "label": "mod.act.bonusBodyLight",
+    "call": "Bonuses.RegisterKind (body light)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.75"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "radius",
+        "label": "mod.p.bonusLightRad",
+        "kind": "number",
+        "preset": "0.45"
+      }
+    ],
+    "emit": "bonuses_body_set_light((float)(%r%), (float)(%g%), (float)(%b%), (float)(%radius%));"
+  },
+  {
+    "id": "bonuses.bodySetBox",
+    "label": "mod.act.bonusBodyBox",
+    "call": "Bonuses.RegisterKind (body box)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "minX",
+        "label": "mod.p.x1",
+        "kind": "number",
+        "preset": "-0.08"
+      },
+      {
+        "key": "minY",
+        "label": "mod.p.y1",
+        "kind": "number",
+        "preset": "-0.08"
+      },
+      {
+        "key": "minZ",
+        "label": "mod.p.bonusMinZ",
+        "kind": "number",
+        "preset": "-0.10"
+      },
+      {
+        "key": "maxX",
+        "label": "mod.p.x2",
+        "kind": "number",
+        "preset": "0.08"
+      },
+      {
+        "key": "maxY",
+        "label": "mod.p.y2",
+        "kind": "number",
+        "preset": "0.08"
+      },
+      {
+        "key": "maxZ",
+        "label": "mod.p.bonusMaxZ",
+        "kind": "number",
+        "preset": "0.10"
+      }
+    ],
+    "emit": "bonuses_body_set_box((float)(%minX%), (float)(%minY%), (float)(%minZ%), (float)(%maxX%), (float)(%maxY%), (float)(%maxZ%));"
+  },
+  {
+    "id": "bonuses.bodySetPoints",
+    "label": "mod.act.bonusBodyPts",
+    "call": "Bonuses.RegisterKind (body points)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "points",
+        "label": "mod.p.points",
+        "kind": "number",
+        "preset": "200"
+      }
+    ],
+    "emit": "bonuses_body_set_points((int)(%points%));"
+  },
+  {
+    "id": "bonuses.bodySetHidden",
+    "label": "mod.act.bonusBodyHidden",
+    "call": "Bonuses.RegisterKind (body hidden)",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body",
+    "params": [
+      {
+        "key": "hidden",
+        "label": "mod.p.bonusHidden",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ]
+      }
+    ],
+    "emit": "bonuses_body_set_hidden(%hidden%);"
+  },
+  {
+    "id": "bonuses.cancel",
+    "label": "mod.act.bonusCancel",
+    "call": "Bonuses.Cancel",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "token",
+    "params": [],
+    "emit": "bonuses_cancel(%token%);"
+  }
+]

@@ -1,0 +1,681 @@
+[
+  {
+    "id": "inventory.isAvailable",
+    "label": "mod.cond.invAvailable",
+    "call": "Inventory.IsAvailable",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [],
+    "emit": "(inv_available() != 0)"
+  },
+  {
+    "id": "inventory.isCarrying",
+    "label": "mod.cond.invCarrying",
+    "call": "Inventory.FindSlot",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.invItemName",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "totem",
+            "label": "mod.inv.item.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.inv.item.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.inv.item.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.inv.item.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.inv.item.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.inv.item.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.inv.item.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.inv.item.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.inv.item.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.inv.item.uniKey"
+          }
+        ]
+      }
+    ],
+    "emit": "(inv_find_slot(\"%name%\") >= 0)"
+  },
+  {
+    "id": "inventory.hasFreeSlot",
+    "label": "mod.cond.invHasFreeSlot",
+    "call": "Inventory.FindFreeSlot",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [],
+    "emit": "(inv_free_slot() >= 0)"
+  },
+  {
+    "id": "inventory.countCompare",
+    "label": "mod.cond.invCountCmp",
+    "call": "Inventory.GetUsedCount / GetSlotCount",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.invCountMode",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.cnt.used"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.cnt.free"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.cnt.capacity"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(inv_count_by_mode(%mode%) %op% (int)(%count%))"
+  },
+  {
+    "id": "inventory.slotHasItem",
+    "label": "mod.cond.invSlotFilled",
+    "call": "Inventory.GetItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(inv_slot_has_item((int)(%slot%)) != 0)"
+  },
+  {
+    "id": "inventory.slotItemIs",
+    "label": "mod.cond.invSlotItemIs",
+    "call": "Inventory.GetItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "name",
+        "label": "mod.p.invItemName",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "totem",
+            "label": "mod.inv.item.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.inv.item.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.inv.item.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.inv.item.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.inv.item.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.inv.item.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.inv.item.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.inv.item.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.inv.item.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.inv.item.uniKey"
+          }
+        ]
+      }
+    ],
+    "emit": "(inv_slot_matches((int)(%slot%), \"%name%\") != 0)"
+  },
+  {
+    "id": "inventory.slotTimeCompare",
+    "label": "mod.cond.invSlotTimeCmp",
+    "call": "Inventory.GetItem",
+    "group": "inventory",
+    "section": "mod.sec.invTimers",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "field",
+        "label": "mod.p.invTimeField",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.tf.left"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.tf.total"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.tf.fraction"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(inv_slot_num((int)(%slot%), %field%) %op% (float)(%value%))"
+  },
+  {
+    "id": "inventory.slotIsTicking",
+    "label": "mod.cond.invSlotTicking",
+    "call": "Inventory.IsTicking",
+    "group": "inventory",
+    "section": "mod.sec.invTimers",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(inv_is_ticking((int)(%slot%)) != 0)"
+  },
+  {
+    "id": "inventory.hasItemProperty",
+    "label": "mod.cond.invHasItemProp",
+    "call": "Inventory.HasItemProperty",
+    "group": "inventory",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "time_left",
+        "options": [
+          {
+            "value": "pts_out",
+            "label": "mod.inv.ip.ptsOut"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.inv.ip.timeLeft"
+          },
+          {
+            "value": "time_total",
+            "label": "mod.inv.ip.timeTotal"
+          },
+          {
+            "value": "burn_time",
+            "label": "mod.inv.ip.burnTime"
+          },
+          {
+            "value": "flags",
+            "label": "mod.inv.ip.flags"
+          },
+          {
+            "value": "has_timer",
+            "label": "mod.inv.ip.hasTimer"
+          },
+          {
+            "value": "timer_is_mine",
+            "label": "mod.inv.ip.timerMine"
+          },
+          {
+            "value": "icon",
+            "label": "mod.inv.ip.icon"
+          },
+          {
+            "value": "sound_use",
+            "label": "mod.inv.ip.soundUse"
+          },
+          {
+            "value": "name",
+            "label": "mod.inv.ip.name"
+          }
+        ]
+      }
+    ],
+    "emit": "(inv_has_item_prop((int)(%slot%), \"%key%\") != 0)"
+  },
+  {
+    "id": "inventory.itemPropCompare",
+    "label": "mod.cond.invItemPropCmp",
+    "call": "Inventory.GetItemProperty",
+    "group": "inventory",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "slot",
+        "label": "mod.p.invSlot",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "pts_out",
+        "options": [
+          {
+            "value": "pts_out",
+            "label": "mod.inv.ip.ptsOut"
+          },
+          {
+            "value": "time_left",
+            "label": "mod.inv.ip.timeLeft"
+          },
+          {
+            "value": "time_total",
+            "label": "mod.inv.ip.timeTotal"
+          },
+          {
+            "value": "burn_time",
+            "label": "mod.inv.ip.burnTime"
+          },
+          {
+            "value": "flags",
+            "label": "mod.inv.ip.flags"
+          },
+          {
+            "value": "has_timer",
+            "label": "mod.inv.ip.hasTimer"
+          },
+          {
+            "value": "timer_is_mine",
+            "label": "mod.inv.ip.timerMine"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "100"
+      }
+    ],
+    "emit": "(inv_item_prop_num((int)(%slot%), \"%key%\") %op% (float)(%value%))"
+  },
+  {
+    "id": "inventory.forEachSlot",
+    "label": "mod.cond.invForEachSlot",
+    "call": "Inventory.GetSlotCount + GetItem",
+    "group": "inventory",
+    "section": "mod.sec.invSlots",
+    "params": [
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "s_idx"
+      },
+      {
+        "key": "onlyFilled",
+        "label": "mod.p.invOnlyFilled",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ],
+        "optional": true
+      }
+    ],
+    "loop": "for (int %var% = 0, %var%_n = inv_slot_count(); %var% < %var%_n; ++%var%) if (inv_step_slot(%onlyFilled%, %var%))",
+    "hint": "mod.cond.invForEachSlot.hint"
+  },
+  {
+    "id": "inventory.chainCompare",
+    "label": "mod.cond.invChainCmp",
+    "call": "Inventory.GetChain",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "params": [
+      {
+        "key": "field",
+        "label": "mod.p.invChainField",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.cf.length"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.cf.points"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.cf.timeLeft"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "5"
+      }
+    ],
+    "emit": "((%field% == 2 ? inv_chain_num(0) : (float)inv_chain_int(%field%)) %op% (float)(%value%))"
+  },
+  {
+    "id": "inventory.levelLeftCompare",
+    "label": "mod.cond.invLevelLeftCmp",
+    "call": "Inventory.GetBonusesLeft / GetMegaBonusesLeft / GetOtherBonusesLeft",
+    "group": "inventory",
+    "section": "mod.sec.invLevel",
+    "params": [
+      {
+        "key": "which",
+        "label": "mod.p.invLeftKind",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.left.bonuses"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.left.mega"
+          },
+          {
+            "value": "2",
+            "label": "mod.inv.left.other"
+          },
+          {
+            "value": "3",
+            "label": "mod.inv.left.total"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(inv_bonuses_left(%which%) %op% (int)(%count%))"
+  },
+  {
+    "id": "inventory.eventReasonIs",
+    "label": "mod.cond.invEvReason",
+    "call": "Inventory.AddSlotHandler",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event",
+    "params": [
+      {
+        "key": "reason",
+        "label": "mod.p.invReason",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.inv.reason.expired"
+          },
+          {
+            "value": "1",
+            "label": "mod.inv.reason.used"
+          }
+        ]
+      }
+    ],
+    "emit": "(inv_ev_int(0) == %reason%)"
+  },
+  {
+    "id": "inventory.chainEvBroke",
+    "label": "mod.cond.invChainEvBroke",
+    "call": "Inventory.AddChainHandler",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "needs": "inv_chain_event",
+    "params": [],
+    "emit": "(inv_chain_ev_int(2) != 0)"
+  }
+]

@@ -70,6 +70,16 @@ private:
         QString displayText;
         QString paramLabel;
         bool isExpr = false;
+        bool isEnum = false;
+        bool hasOptionLabel = false;
+        bool canRemove = false;
+        bool isAddParam = false;
+    };
+
+    struct TextRun {
+        QRect rect;
+        QString text;
+        bool warningStyle = false;
     };
 
     struct VisualLine {
@@ -84,6 +94,7 @@ private:
         bool veto = false;
         std::string warnKey;
         std::vector<UiFormat::LineSegment> segments;
+        std::vector<TextRun> textRuns;
         std::vector<PillHit> pills;
     };
 

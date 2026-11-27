@@ -4,6 +4,7 @@ mod.act.renderSpritePart=Нарисовать часть картинки
 mod.act.renderStyleColor=Задать цвет элемента
 mod.act.renderStyleScale=Задать масштаб элемента
 mod.act.renderText=Написать текст
+mod.act.renderText.hint=Центрирует текст относительно точки (x, y); для привязки к левому или правому краю используйте «Написать текст с выравниванием»
 mod.act.renderTextAligned=Написать текст с выравниванием
 mod.align.game=Как в игре
 mod.align.top=Сверху по центру

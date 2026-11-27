@@ -21,7 +21,7 @@
       }
     ],
     "handler": "static void __cdecl %H%(const AmodCameraFrame* camFrame, void* user)",
-    "subscribe": "if (API->camera) { API->camera->SetUpdateHandler(SELF, %H%, 0); API->camera->SetDriver(SELF, %driver%); }",
+    "subscribe": "if (API->camera) { API->camera->SetUpdateHandler(SELF, cam_update_relay, (void*)%H%); API->camera->SetDriver(SELF, %driver%); }",
     "provides": "camera_update",
     "hint": "mod.ev.camUpdate.hint"
   },
@@ -51,7 +51,7 @@
       "info"
     ],
     "handler": "static int __cdecl %H%(const AmodCameraEventInfo* info, void* user)",
-    "subscribe": "if (API->camera) API->camera->SetEventHandler(SELF, %H%, 0);",
+    "subscribe": "if (API->camera) API->camera->SetEventHandler(SELF, cam_place_relay, (void*)%H%);",
     "retDefault": "return 0;",
     "retVeto": "return 1;",
     "provides": "camera_place",

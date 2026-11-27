@@ -1,10 +1,12 @@
 #include "ModCatalog.h"
 
 #include "Localization.h"
+#include "ModLogic.h"
 #include "ModPackages.h"
 #include "PathUtil.h"
 #include "json.hpp"
 
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
@@ -31,6 +33,48 @@ std::vector<ModCatalog::ParamDef> ReadParams(const json& j, const char* key) {
         def.kind = p.value("kind", "text");
         def.preset = p.value("preset", "");
         def.test = p.value("test", "");
+        def.optional = p.value("optional", false);
+        if (p.contains("when") && p["when"].is_object()) {
+            const json& w = p["when"];
+            def.whenParam = w.value("param", "");
+            def.whenCustom = w.value("custom", false);
+            if (w.contains("equals") && w["equals"].is_string()) {
+                def.whenValues.push_back(w["equals"].get<std::string>());
+            }
+            if (w.contains("in") && w["in"].is_array()) {
+                for (const json& v : w["in"]) {
+                    if (v.is_string()) def.whenValues.push_back(v.get<std::string>());
+                }
+            }
+            if (w.contains("notIn") && w["notIn"].is_array()) {
+                def.whenNegate = true;
+                for (const json& v : w["notIn"]) {
+                    if (v.is_string()) def.whenValues.push_back(v.get<std::string>());
+                }
+            }
+        }
+        if (p.contains("autoWhen") && p["autoWhen"].is_object()) {
+            const json& aw = p["autoWhen"];
+            def.autoWhenParam = aw.value("param", "");
+            if (aw.contains("in") && aw["in"].is_array()) {
+                for (const json& v : aw["in"]) {
+                    if (v.is_string()) def.autoWhenValues.push_back(v.get<std::string>());
+                }
+            }
+        }
+        if (p.contains("labelWhen") && p["labelWhen"].is_array()) {
+            for (const json& lw : p["labelWhen"]) {
+                if (!lw.is_object()) continue;
+                ModCatalog::LabelWhen item;
+                item.label = lw.value("label", "");
+                if (lw.contains("in") && lw["in"].is_array()) {
+                    for (const json& v : lw["in"]) {
+                        if (v.is_string()) item.values.push_back(v.get<std::string>());
+                    }
+                }
+                if (!item.label.empty() && !item.values.empty()) def.labelWhen.push_back(std::move(item));
+            }
+        }
         if (p.contains("options") && p["options"].is_array()) {
             for (const json& o : p["options"]) {
                 ModCatalog::Option option;
@@ -110,6 +154,7 @@ void LoadPackages() {
         const auto wantParams = [&want](const std::vector<ModCatalog::ParamDef>& params) {
             for (const ModCatalog::ParamDef& param : params) {
                 want(param.label);
+                for (const ModCatalog::LabelWhen& lw : param.labelWhen) want(lw.label);
                 for (const ModCatalog::Option& option : param.options) want(option.label);
             }
         };
@@ -142,6 +187,7 @@ void LoadPackages() {
                 def.loop = item.value("loop", "");
                 def.state = item.value("state", "");
                 def.stateInit = item.value("stateInit", "0");
+                def.needs = item.value("needs", "");
                 if (def.id.empty() || !Claim(package, def, g_conditions, "condition")) continue;
                 want(def.label);
                 wantLine(def.label);
@@ -210,6 +256,7 @@ void LoadPackages() {
                 def.text = item.value("text", "");
                 def.hint = item.value("hint", "");
                 def.kind = item.value("kind", "float");
+                def.needs = item.value("needs", "");
                 if (def.id.empty() || def.text.empty()) continue;
                 if (!Claim(package, def, g_expressions, "expression")) continue;
                 want(def.label);
@@ -360,4 +407,76 @@ const ModCatalog::ActionDef* ModCatalog::FindAction(const std::string& id) {
 const ModCatalog::ExpressionDef* ModCatalog::FindExpression(const std::string& id) {
     for (const ExpressionDef& e : g_expressions) if (e.id == id) return &e;
     return nullptr;
+}
+
+namespace {
+
+const ModCatalog::ParamDef* FindParamInList(const std::vector<ModCatalog::ParamDef>& allDefs, const std::string& key) {
+    for (const ModCatalog::ParamDef& p : allDefs) {
+        if (p.key == key) return &p;
+    }
+    return nullptr;
+}
+
+} // namespace
+
+bool ModCatalog::IsWhenMatched(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    if (def.whenParam.empty()) return true;
+    const ParamDef* ctrl = FindParamInList(allDefs, def.whenParam);
+    const std::string val = ModLogic::ParamValueOr(args, def.whenParam, ctrl ? ctrl->preset : std::string());
+    const bool inList = std::find(def.whenValues.begin(), def.whenValues.end(), val) != def.whenValues.end();
+    bool isCustom = false;
+    if (!inList && def.whenCustom && ctrl && !ctrl->options.empty()) {
+        isCustom = std::none_of(ctrl->options.begin(), ctrl->options.end(), [&](const Option& o) { return o.value == val; });
+    }
+    return def.whenNegate ? (!inList) : (inList || isCustom);
+}
+
+bool ModCatalog::IsAutoWhenMatched(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    if (def.autoWhenParam.empty()) return false;
+    const ParamDef* ctrl = FindParamInList(allDefs, def.autoWhenParam);
+    const std::string val = ModLogic::ParamValueOr(args, def.autoWhenParam, ctrl ? ctrl->preset : std::string());
+    return std::find(def.autoWhenValues.begin(), def.autoWhenValues.end(), val) != def.autoWhenValues.end();
+}
+
+bool ModCatalog::IsParamActive(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    if (!IsWhenMatched(def, allDefs, args)) return false;
+    if (!def.optional) return true;
+    return ModLogic::HasParam(args, def.key) || IsAutoWhenMatched(def, allDefs, args);
+}
+
+bool ModCatalog::CanRemoveOptionalParam(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    return def.optional && !IsAutoWhenMatched(def, allDefs, args) && ModLogic::HasParam(args, def.key);
+}
+
+bool ModCatalog::CanAddOptionalParam(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    return def.optional && IsWhenMatched(def, allDefs, args) && !IsParamActive(def, allDefs, args);
+}
+
+bool ModCatalog::HasAddableOptionalParams(const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    for (const ParamDef& def : allDefs) {
+        if (CanAddOptionalParam(def, allDefs, args)) return true;
+    }
+    return false;
+}
+
+bool ModCatalog::HasDependentParams(const std::vector<ParamDef>& allDefs, const std::string& changedKey) {
+    for (const ParamDef& def : allDefs) {
+        if (def.whenParam == changedKey || def.autoWhenParam == changedKey) return true;
+    }
+    return false;
+}
+
+std::string ModCatalog::EffectiveParamLabelKey(const ParamDef& def, const std::vector<ParamDef>& allDefs, const std::vector<ModLogic::Param>& args) {
+    if (!def.labelWhen.empty()) {
+        const std::string& ctrlKey = !def.whenParam.empty() ? def.whenParam : def.autoWhenParam;
+        if (!ctrlKey.empty()) {
+            const ParamDef* ctrl = FindParamInList(allDefs, ctrlKey);
+            const std::string val = ModLogic::ParamValueOr(args, ctrlKey, ctrl ? ctrl->preset : std::string());
+            for (const LabelWhen& lw : def.labelWhen) {
+                if (std::find(lw.values.begin(), lw.values.end(), val) != lw.values.end()) return lw.label;
+            }
+        }
+    }
+    return def.label;
 }

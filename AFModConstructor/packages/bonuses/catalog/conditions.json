@@ -1,0 +1,1363 @@
+[
+  {
+    "id": "bonuses.typeExists",
+    "label": "mod.cond.bonusTypeExists",
+    "call": "Bonuses.FindType",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      }
+    ],
+    "emit": "(bonuses_type_exists(\"%name%\") != 0)"
+  },
+  {
+    "id": "bonuses.typeFlagIs",
+    "label": "mod.cond.bonusTypeFlag",
+    "call": "Bonuses.FindType",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "flag",
+        "label": "mod.p.bonusFlag",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.flag.totem"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.flag.torch"
+          },
+          {
+            "value": "2",
+            "label": "mod.bonuses.flag.train"
+          },
+          {
+            "value": "3",
+            "label": "mod.bonuses.flag.modTimer"
+          }
+        ]
+      }
+    ],
+    "emit": "(bonuses_type_flag(\"%name%\", %flag%) != 0)"
+  },
+  {
+    "id": "bonuses.typeCompare",
+    "label": "mod.cond.bonusTypeCmp",
+    "call": "Bonuses.FindType",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "totem",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "field",
+        "label": "mod.p.bonusField",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.tp.ptsTake"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.tp.ptsOut"
+          },
+          {
+            "value": "2",
+            "label": "mod.bonuses.tp.time"
+          },
+          {
+            "value": "3",
+            "label": "mod.bonuses.tp.burnTime"
+          },
+          {
+            "value": "4",
+            "label": "mod.bonuses.tp.lightRadius"
+          },
+          {
+            "value": "5",
+            "label": "mod.bonuses.tp.bonusLightRadius"
+          },
+          {
+            "value": "6",
+            "label": "mod.bonuses.tp.trainIdx"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">=",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "50"
+      }
+    ],
+    "emit": "(bonuses_type_field(\"%name%\", %field%) %op% (float)(%value%))"
+  },
+  {
+    "id": "bonuses.hasTypeProperty",
+    "label": "mod.cond.bonusHasTypeProp",
+    "call": "Bonuses.HasTypeProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "torch",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "light_radius",
+        "options": [
+          {
+            "value": "pts_take",
+            "label": "mod.bonuses.tp.ptsTake"
+          },
+          {
+            "value": "pts_out",
+            "label": "mod.bonuses.tp.ptsOut"
+          },
+          {
+            "value": "time",
+            "label": "mod.bonuses.tp.time"
+          },
+          {
+            "value": "burn_time",
+            "label": "mod.bonuses.tp.burnTime"
+          },
+          {
+            "value": "light_radius",
+            "label": "mod.bonuses.tp.lightRadius"
+          },
+          {
+            "value": "bonus_light_radius",
+            "label": "mod.bonuses.tp.bonusLightRadius"
+          },
+          {
+            "value": "rocking_amp",
+            "label": "mod.bonuses.tp.rockAmp"
+          },
+          {
+            "value": "rocking_speed",
+            "label": "mod.bonuses.tp.rockSpeed"
+          },
+          {
+            "value": "train_idx",
+            "label": "mod.bonuses.tp.trainIdx"
+          },
+          {
+            "value": "flags",
+            "label": "mod.bonuses.tp.flags"
+          },
+          {
+            "value": "is_totem",
+            "label": "mod.bonuses.tp.isTotem"
+          },
+          {
+            "value": "is_torch",
+            "label": "mod.bonuses.tp.isTorch"
+          },
+          {
+            "value": "makes_train",
+            "label": "mod.bonuses.tp.makesTrain"
+          },
+          {
+            "value": "timer_is_mine",
+            "label": "mod.bonuses.tp.timerMine"
+          },
+          {
+            "value": "glow_color",
+            "label": "mod.bonuses.tp.glowColor"
+          },
+          {
+            "value": "glow_color2",
+            "label": "mod.bonuses.tp.glowColor2"
+          },
+          {
+            "value": "light_color",
+            "label": "mod.bonuses.tp.lightColor"
+          },
+          {
+            "value": "rocking_axis",
+            "label": "mod.bonuses.tp.rockAxis"
+          },
+          {
+            "value": "texture",
+            "label": "mod.bonuses.tp.texture"
+          },
+          {
+            "value": "model",
+            "label": "mod.bonuses.tp.model"
+          },
+          {
+            "value": "icon",
+            "label": "mod.bonuses.tp.icon"
+          },
+          {
+            "value": "sound_take",
+            "label": "mod.bonuses.tp.soundTake"
+          },
+          {
+            "value": "sound_use",
+            "label": "mod.bonuses.tp.soundUse"
+          },
+          {
+            "value": "name",
+            "label": "mod.bonuses.tp.name"
+          },
+          {
+            "value": "res_id",
+            "label": "mod.bonuses.tp.resId"
+          }
+        ]
+      }
+    ],
+    "emit": "(bonuses_has_type_prop(\"%name%\", \"%key%\") != 0)"
+  },
+  {
+    "id": "bonuses.roomCountCompare",
+    "label": "mod.cond.bonusRoomCountCmp",
+    "call": "Bonuses.PlacementCount + GetPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom",
+    "params": [
+      {
+        "key": "mode",
+        "label": "mod.p.bonusCountMode",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.bonuses.cnt.live"
+          },
+          {
+            "value": "1",
+            "label": "mod.bonuses.cnt.all"
+          },
+          {
+            "value": "2",
+            "label": "mod.bonuses.cnt.slots"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(bonuses_room_count((int)(%room%), %mode%) %op% (int)(%count%))"
+  },
+  {
+    "id": "bonuses.namedCountCompare",
+    "label": "mod.cond.bonusNamedCountCmp",
+    "call": "Bonuses.GetPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom",
+    "params": [
+      {
+        "key": "name",
+        "label": "mod.p.bonusId",
+        "kind": "text",
+        "preset": "bonus",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "count",
+        "label": "mod.p.count",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(bonuses_named_count(\"%name%\") %op% (int)(%count%))"
+  },
+  {
+    "id": "bonuses.taggedExists",
+    "label": "mod.cond.bonusTaggedExists",
+    "call": "Bonuses.GetPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom",
+    "params": [
+      {
+        "key": "tag",
+        "label": "mod.p.bonusTag",
+        "kind": "text",
+        "preset": "secret"
+      }
+    ],
+    "emit": "(bonuses_index_of_tag(\"%tag%\", 0) >= 0)"
+  },
+  {
+    "id": "bonuses.cellHasBonus",
+    "label": "mod.cond.bonusCellHas",
+    "call": "Bonuses.GetPlacement",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom",
+    "params": [
+      {
+        "key": "col",
+        "label": "mod.p.bonusCol",
+        "kind": "number",
+        "preset": "10"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.bonusRow",
+        "kind": "number",
+        "preset": "10"
+      }
+    ],
+    "emit": "(bonuses_index_at_cell((int)(%col%), (int)(%row%)) >= 0)"
+  },
+  {
+    "id": "bonuses.placementIsLive",
+    "label": "mod.cond.bonusPlLive",
+    "call": "Bonuses.GetPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(bonuses_placement_is_live((int)(%room%), (int)(%index%)) != 0)"
+  },
+  {
+    "id": "bonuses.placementMatches",
+    "label": "mod.cond.bonusPlMatches",
+    "call": "Bonuses.GetPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "text",
+        "label": "mod.p.bonusFilter",
+        "kind": "text",
+        "preset": "bonus",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(bonuses_placement_matches((int)(%room%), (int)(%index%), \"%text%\") != 0)"
+  },
+  {
+    "id": "bonuses.placementPropCompare",
+    "label": "mod.cond.bonusPlPropCmp",
+    "call": "Bonuses.GetPlacementProperty",
+    "group": "bonuses",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.index",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "key",
+        "label": "mod.p.key2",
+        "kind": "enum",
+        "preset": "is_live",
+        "options": [
+          {
+            "value": "time",
+            "label": "mod.bonuses.pp.time"
+          },
+          {
+            "value": "decor",
+            "label": "mod.bonuses.pp.decor"
+          },
+          {
+            "value": "is_live",
+            "label": "mod.bonuses.pp.isLive"
+          },
+          {
+            "value": "phase",
+            "label": "mod.bonuses.pp.phase"
+          },
+          {
+            "value": "own_look",
+            "label": "mod.bonuses.pp.ownLook"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": "==",
+        "options": [
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "emit": "(bonuses_pl_prop_num((int)(%room%), (int)(%index%), \"%key%\", 0) %op% (float)(%value%))"
+  },
+  {
+    "id": "bonuses.forEachPlacement",
+    "label": "mod.cond.bonusForEachPl",
+    "call": "Bonuses.PlacementCount + GetPlacementIn",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace",
+    "params": [
+      {
+        "key": "var",
+        "label": "mod.p.varName",
+        "kind": "text",
+        "preset": "b_idx"
+      },
+      {
+        "key": "onlyLive",
+        "label": "mod.p.bonusOnlyLive",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      }
+    ],
+    "loop": "for (int %var% = 0, %var%_n = bonuses_placement_slots((int)(%room%)); %var% < %var%_n; ++%var%) if (bonuses_step_placement((int)(%room%), %onlyLive%, %var%))",
+    "hint": "mod.cond.bonusForEachPl.hint"
+  },
+  {
+    "id": "bonuses.takeMatches",
+    "label": "mod.cond.bonusTakeMatches",
+    "call": "Bonuses.AddTakeHandler",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.bonusFilter",
+        "kind": "text",
+        "preset": "bonus",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      }
+    ],
+    "emit": "(bonuses_take_matches(\"%text%\") != 0)"
+  },
+  {
+    "id": "bonuses.takeIsDecor",
+    "label": "mod.cond.bonusTakeDecor",
+    "call": "Bonuses.AddTakeHandler",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take",
+    "params": [],
+    "emit": "(bonuses_take_int(3) != 0)"
+  },
+  {
+    "id": "bonuses.spawnMatches",
+    "label": "mod.cond.bonusSpawnMatches",
+    "call": "Bonuses.AddSpawnHandler",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn",
+    "params": [
+      {
+        "key": "text",
+        "label": "mod.p.bonusFilter",
+        "kind": "text",
+        "preset": "bonus",
+        "options": [
+          {
+            "value": "bonus",
+            "label": "mod.bonuses.id.bonus"
+          },
+          {
+            "value": "bonus_t",
+            "label": "mod.bonuses.id.bonusT"
+          },
+          {
+            "value": "bonus_0",
+            "label": "mod.bonuses.id.bonus0"
+          },
+          {
+            "value": "bonus_1",
+            "label": "mod.bonuses.id.bonus1"
+          },
+          {
+            "value": "bonus_2",
+            "label": "mod.bonuses.id.bonus2"
+          },
+          {
+            "value": "bonus_3",
+            "label": "mod.bonuses.id.bonus3"
+          },
+          {
+            "value": "bonus_4",
+            "label": "mod.bonuses.id.bonus4"
+          },
+          {
+            "value": "bonus_5",
+            "label": "mod.bonuses.id.bonus5"
+          },
+          {
+            "value": "mega_bonus",
+            "label": "mod.bonuses.id.mega"
+          },
+          {
+            "value": "life",
+            "label": "mod.bonuses.id.life"
+          },
+          {
+            "value": "quest",
+            "label": "mod.bonuses.id.quest"
+          },
+          {
+            "value": "totem",
+            "label": "mod.bonuses.id.totem"
+          },
+          {
+            "value": "torch",
+            "label": "mod.bonuses.id.torch"
+          },
+          {
+            "value": "knife",
+            "label": "mod.bonuses.id.knife"
+          },
+          {
+            "value": "fomka",
+            "label": "mod.bonuses.id.fomka"
+          },
+          {
+            "value": "key_a",
+            "label": "mod.bonuses.id.keyA"
+          },
+          {
+            "value": "key_b",
+            "label": "mod.bonuses.id.keyB"
+          },
+          {
+            "value": "key_c",
+            "label": "mod.bonuses.id.keyC"
+          },
+          {
+            "value": "key_d",
+            "label": "mod.bonuses.id.keyD"
+          },
+          {
+            "value": "key_e",
+            "label": "mod.bonuses.id.keyE"
+          },
+          {
+            "value": "uni_key",
+            "label": "mod.bonuses.id.uniKey"
+          }
+        ]
+      }
+    ],
+    "emit": "(bonuses_spawn_matches(\"%text%\") != 0)"
+  },
+  {
+    "id": "bonuses.spawnIsLive",
+    "label": "mod.cond.bonusSpawnLive",
+    "call": "Bonuses.AddSpawnHandler",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn",
+    "params": [],
+    "emit": "(bonuses_spawn_int(1) != 0)"
+  }
+]

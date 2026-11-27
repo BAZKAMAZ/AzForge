@@ -1,0 +1,521 @@
+[
+  {
+    "id": "demo.isPlaying",
+    "label": "mod.expr.demoPlaying",
+    "call": "Demo.IsPlaying",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "kind": "int",
+    "text": "(API->demo ? API->demo->IsPlaying(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.count",
+    "label": "mod.expr.demoCount",
+    "call": "Demo.Count",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "kind": "int",
+    "text": "(API->demo ? API->demo->Count(SELF) : 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.current",
+    "label": "mod.expr.demoCurrent",
+    "call": "Demo.Current",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "kind": "int",
+    "text": "(API->demo ? API->demo->Current(SELF) : -1)",
+    "hint": "mod.expr.demoCurrent.hint"
+  },
+  {
+    "id": "demo.elapsed",
+    "label": "mod.expr.demoElapsed",
+    "call": "Demo.Elapsed",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "kind": "float",
+    "text": "(API->demo ? API->demo->Elapsed(SELF) : 0.0f)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveIndex",
+    "label": "mod.expr.demoMoveIndex",
+    "call": "Demo.MoveIndex",
+    "group": "demo",
+    "section": "mod.sec.demoState",
+    "kind": "int",
+    "text": "(API->demo ? API->demo->MoveIndex(SELF) : -1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.lastAdded",
+    "label": "mod.expr.demoLastAdded",
+    "call": "Demo.Create",
+    "group": "demo",
+    "section": "mod.sec.demoBuild",
+    "kind": "int",
+    "text": "demo_last_added()",
+    "hint": "mod.expr.demoLastAdded.hint"
+  },
+  {
+    "id": "demo.breakTime",
+    "label": "mod.expr.demoBreakTime",
+    "call": "Demo.GetBreakTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_break_time(-1)",
+    "hint": "mod.expr.demoBreakTime.hint"
+  },
+  {
+    "id": "demo.moveCount",
+    "label": "mod.expr.demoMoveCount",
+    "call": "Demo.MoveCount",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_count(-1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.movePause",
+    "label": "mod.expr.demoMovePause",
+    "call": "Demo.GetMove",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_move_num(0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveEndCoord",
+    "label": "mod.expr.demoMoveEndCoord",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_move_num(1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveHorz",
+    "label": "mod.expr.demoMoveHorz",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveVert",
+    "label": "mod.expr.demoMoveVert",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveJump",
+    "label": "mod.expr.demoMoveJump",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveTimeCount",
+    "label": "mod.expr.demoMoveTimeCount",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(3)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveViewCount",
+    "label": "mod.expr.demoMoveViewCount",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(4)",
+    "hint": ""
+  },
+  {
+    "id": "demo.moveCamCount",
+    "label": "mod.expr.demoMoveCamCount",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_move_int(5)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camPosX",
+    "label": "mod.expr.demoCamPosX",
+    "call": "Demo.GetCamera",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camPosY",
+    "label": "mod.expr.demoCamPosY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camPosZ",
+    "label": "mod.expr.demoCamPosZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camSpeedX",
+    "label": "mod.expr.demoCamSpeedX",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 3)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camSpeedY",
+    "label": "mod.expr.demoCamSpeedY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 4)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camSpeedZ",
+    "label": "mod.expr.demoCamSpeedZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 5)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camTime",
+    "label": "mod.expr.demoCamTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(0, 6)",
+    "hint": ""
+  },
+  {
+    "id": "demo.camGiveBack",
+    "label": "mod.expr.demoCamGiveBack",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_cam_auto(0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewPosX",
+    "label": "mod.expr.demoViewPosX",
+    "call": "Demo.GetView",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewPosY",
+    "label": "mod.expr.demoViewPosY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewPosZ",
+    "label": "mod.expr.demoViewPosZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewSpeedX",
+    "label": "mod.expr.demoViewSpeedX",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 3)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewSpeedY",
+    "label": "mod.expr.demoViewSpeedY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 4)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewSpeedZ",
+    "label": "mod.expr.demoViewSpeedZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 5)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewTime",
+    "label": "mod.expr.demoViewTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_num(1, 6)",
+    "hint": ""
+  },
+  {
+    "id": "demo.viewGiveBack",
+    "label": "mod.expr.demoViewGiveBack",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_cam_auto(1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.timePause",
+    "label": "mod.expr.demoTimePause",
+    "call": "Demo.GetTime",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_time_num(0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.timeFactor",
+    "label": "mod.expr.demoTimeFactor",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_time_num(1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.timeDuration",
+    "label": "mod.expr.demoTimeDuration",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_time_num(2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startCamX",
+    "label": "mod.expr.demoStartCamX",
+    "call": "Demo.GetCameraStart",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(0, 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startCamY",
+    "label": "mod.expr.demoStartCamY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(0, 1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startCamZ",
+    "label": "mod.expr.demoStartCamZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(0, 2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startViewX",
+    "label": "mod.expr.demoStartViewX",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(1, 0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startViewY",
+    "label": "mod.expr.demoStartViewY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(1, 1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.startViewZ",
+    "label": "mod.expr.demoStartViewZ",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "float",
+    "text": "demo_cam_start_num(1, 2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.placePlayerX",
+    "label": "mod.expr.demoPlacePlayerX",
+    "call": "Demo.GetPlace",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_place_int(0)",
+    "hint": ""
+  },
+  {
+    "id": "demo.placePlayerY",
+    "label": "mod.expr.demoPlacePlayerY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_place_int(1)",
+    "hint": ""
+  },
+  {
+    "id": "demo.placeRoomX",
+    "label": "mod.expr.demoPlaceRoomX",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_place_int(2)",
+    "hint": ""
+  },
+  {
+    "id": "demo.placeRoomY",
+    "label": "mod.expr.demoPlaceRoomY",
+    "group": "demo",
+    "section": "mod.sec.demoScript",
+    "kind": "int",
+    "text": "demo_place_int(3)",
+    "hint": ""
+  },
+  {
+    "id": "demo.eventKind",
+    "label": "mod.expr.demoEventKind",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_ev_int(0)",
+    "needs": "demo_state",
+    "hint": "mod.expr.demoEventKind.hint"
+  },
+  {
+    "id": "demo.eventScript",
+    "label": "mod.expr.demoEventScript",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_ev_int(1)",
+    "needs": "demo_state",
+    "hint": "mod.expr.demoEventScript.hint"
+  },
+  {
+    "id": "demo.eventMove",
+    "label": "mod.expr.demoEventMove",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_ev_int(2)",
+    "needs": "demo_move",
+    "hint": "mod.expr.demoEventMove.hint"
+  },
+  {
+    "id": "demo.inputX",
+    "label": "mod.expr.demoInputX",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "float",
+    "text": "demo_in_num(0)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputY",
+    "label": "mod.expr.demoInputY",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "float",
+    "text": "demo_in_num(1)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputZ",
+    "label": "mod.expr.demoInputZ",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "float",
+    "text": "demo_in_num(2)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputHorz",
+    "label": "mod.expr.demoInputHorz",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_in_int(0)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputVert",
+    "label": "mod.expr.demoInputVert",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_in_int(1)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputJump",
+    "label": "mod.expr.demoInputJump",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "int",
+    "text": "demo_in_int(2)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  },
+  {
+    "id": "demo.inputSeconds",
+    "label": "mod.expr.demoInputSeconds",
+    "group": "demo",
+    "section": "mod.sec.demoControl",
+    "kind": "float",
+    "text": "demo_in_num(3)",
+    "needs": "demo_input",
+    "hint": "mod.expr.demoInputX.hint"
+  }
+]

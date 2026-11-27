@@ -56,3 +56,13 @@ class FullCodeDialog : public QDialog {
 public:
     FullCodeDialog(const QString& code, const QString& title, QWidget* parent = nullptr);
 };
+
+class ValueEditorDialog : public QDialog {
+    Q_OBJECT
+public:
+    ValueEditorDialog(const QString& title, const std::string& initialValue, const std::string& paramKind, bool allowExpressions, bool preserveNewlines, QWidget* parent = nullptr);
+    std::string value() const { return m_value; }
+
+private:
+    std::string m_value;
+};

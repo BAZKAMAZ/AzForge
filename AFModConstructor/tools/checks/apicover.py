@@ -15,9 +15,8 @@ import sys
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 SDK = os.path.join(os.path.dirname(ROOT), 'sdk', 'include')
 
-# Attach and IsAvailable are C++ helpers outside the struct, so nothing has to be filtered here:
-# whatever the struct holds is a call a sheet could make
-PLUMBING = set()
+# Attach and IsAvailable are C++ helpers outside the struct; Revive stays in ABI only
+PLUMBING = {'Revive'}
 
 
 def struct_members(text, name):

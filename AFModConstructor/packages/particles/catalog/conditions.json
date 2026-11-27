@@ -1,0 +1,325 @@
+[
+  {
+    "id": "particles.isHere",
+    "label": "mod.cond.partHere",
+    "call": "Particles.IsHere",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "params": [],
+    "emit": "(API->particles && API->particles->IsHere(SELF) != 0)"
+  },
+  {
+    "id": "particles.hasTextFont",
+    "label": "mod.cond.partHasFont",
+    "call": "Particles.TextFont",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "params": [],
+    "emit": "(part_text_font() != 0)"
+  },
+  {
+    "id": "particles.countIs",
+    "label": "mod.cond.partCount",
+    "call": "Particles.Count",
+    "group": "particles",
+    "section": "mod.sec.partState",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "-1",
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.part.kind.all"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_UNI",
+            "label": "mod.part.kind.uni"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "(part_count(%kind%) %op% (int)(%value%))"
+  },
+  {
+    "id": "particles.hasPicked",
+    "label": "mod.cond.partPicked",
+    "call": "Particles.KindOf",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [],
+    "emit": "(part_kind_of() >= 0)"
+  },
+  {
+    "id": "particles.kindIs",
+    "label": "mod.cond.partKind",
+    "call": "Particles.KindOf",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "options": [
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_UNI",
+            "label": "mod.part.kind.uni"
+          }
+        ]
+      }
+    ],
+    "emit": "(part_kind_of() == (int)(%kind%))"
+  },
+  {
+    "id": "particles.tagIs",
+    "label": "mod.cond.partTag",
+    "call": "Particles.GetTag",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "(part_tag_of() == (uint32_t)(%tag%))"
+  },
+  {
+    "id": "particles.fieldIs",
+    "label": "mod.cond.partField",
+    "call": "Particles.Get",
+    "group": "particles",
+    "section": "mod.sec.props",
+    "params": [
+      {
+        "key": "field",
+        "label": "mod.p.partField",
+        "kind": "enum",
+        "preset": "8",
+        "options": [
+          {
+            "value": "8",
+            "label": "mod.part.field.life"
+          },
+          {
+            "value": "9",
+            "label": "mod.part.field.decay"
+          },
+          {
+            "value": "6",
+            "label": "mod.part.field.speed"
+          },
+          {
+            "value": "7",
+            "label": "mod.part.field.size"
+          },
+          {
+            "value": "0",
+            "label": "mod.part.field.posX"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.field.posY"
+          },
+          {
+            "value": "2",
+            "label": "mod.part.field.posZ"
+          },
+          {
+            "value": "19",
+            "label": "mod.part.field.angle"
+          },
+          {
+            "value": "20",
+            "label": "mod.part.field.spin"
+          },
+          {
+            "value": "23",
+            "label": "mod.part.field.waypoint"
+          }
+        ]
+      },
+      {
+        "key": "op",
+        "label": "mod.p.op",
+        "kind": "enum",
+        "preset": ">",
+        "options": [
+          {
+            "value": ">",
+            "label": "mod.op.gt"
+          },
+          {
+            "value": ">=",
+            "label": "mod.op.ge"
+          },
+          {
+            "value": "<",
+            "label": "mod.op.lt"
+          },
+          {
+            "value": "<=",
+            "label": "mod.op.le"
+          },
+          {
+            "value": "==",
+            "label": "mod.op.eq"
+          },
+          {
+            "value": "!=",
+            "label": "mod.op.ne"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "0.2"
+      }
+    ],
+    "emit": "(part_num(%field%) %op% (float)(%value%))"
+  },
+  {
+    "id": "particles.forEach",
+    "label": "mod.cond.partForEach",
+    "call": "Particles.At / GetTag",
+    "group": "particles",
+    "section": "mod.sec.partPick",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.partLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.part.by.store"
+          },
+          {
+            "value": "1",
+            "label": "mod.part.by.tag"
+          }
+        ]
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_PARTICLE_KIND_POOL_0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        },
+        "options": [
+          {
+            "value": "-1",
+            "label": "mod.part.kind.all"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_0",
+            "label": "mod.part.kind.pool0"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_1",
+            "label": "mod.part.kind.pool1"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_POOL_2",
+            "label": "mod.part.kind.pool2"
+          },
+          {
+            "value": "AMOD_PARTICLE_KIND_UNI",
+            "label": "mod.part.kind.uni"
+          }
+        ]
+      },
+      {
+        "key": "tag",
+        "label": "mod.p.partTag",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "var",
+        "label": "mod.p.partLoopVar",
+        "kind": "text",
+        "preset": "p_idx"
+      }
+    ],
+    "loop": "for (int %var% = 0; (%by% == 0 ? part_pick_at(%kind%, %var%) : part_pick_tagged((uint32_t)(%tag%), %var%)); ++%var%)"
+  }
+]

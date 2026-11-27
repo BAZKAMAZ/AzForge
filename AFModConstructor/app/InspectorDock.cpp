@@ -1,6 +1,7 @@
 #include "InspectorDock.h"
 
 #include "CppHighlighter.h"
+#include "Dialogs.h"
 #include "ExprPickerDialog.h"
 #include "IconCache.h"
 #include "Localization.h"
@@ -66,15 +67,19 @@ InspectorDock::InspectorDock(QWidget* parent) : QWidget(parent) {
     auto* varsTop = new QHBoxLayout();
     m_addVarBtn = new QPushButton(varsTab);
     m_delVarBtn = new QPushButton(varsTab);
+    m_editVarBtn = new QPushButton(varsTab);
     varsTop->addWidget(m_addVarBtn);
     varsTop->addWidget(m_delVarBtn);
+    varsTop->addWidget(m_editVarBtn);
     varsTop->addStretch(1);
     varsLay->addLayout(varsTop);
 
-    m_varsTable = new QTableWidget(0, 3, varsTab);
+    m_varsTable = new QTableWidget(0, 4, varsTab);
     m_varsTable->horizontalHeader()->setSectionResizeMode(0, QHeaderView::Stretch);
     m_varsTable->horizontalHeader()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
     m_varsTable->horizontalHeader()->setSectionResizeMode(2, QHeaderView::Stretch);
+    m_varsTable->horizontalHeader()->setSectionResizeMode(3, QHeaderView::Fixed);
+    m_varsTable->setColumnWidth(3, 32);
     m_varsTable->verticalHeader()->setVisible(false);
     m_varsTable->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_varsTable->setAlternatingRowColors(true);
@@ -103,6 +108,9 @@ InspectorDock::InspectorDock(QWidget* parent) : QWidget(parent) {
         rebuildVarsTable();
         rebuildCodePreview();
         emit sheetEdited();
+    });
+    connect(m_editVarBtn, &QPushButton::clicked, this, [this]() {
+        openVarValueEditor(m_varsTable->currentRow());
     });
     connect(m_varsTable, &QTableWidget::cellChanged, this, [this]() {
         if (!m_rebuilding) commitVarsFromTable();
@@ -143,10 +151,12 @@ void InspectorDock::retranslateUi() {
 
     m_addVarBtn->setText(QStringLiteral("+ ") + UiFormat::Label("common.add"));
     m_delVarBtn->setText(UiFormat::Label("common.delete"));
+    m_editVarBtn->setText(QStringLiteral("⤢ ") + UiFormat::Label("app.dlg.valEditBtn"));
     m_varsTable->setHorizontalHeaderLabels({
         UiFormat::Label("app.vars.name"),
         UiFormat::Label("app.vars.type"),
-        UiFormat::Label("app.vars.value")
+        UiFormat::Label("app.vars.value"),
+        QString()
     });
 
     m_codeLabel->setText(UiFormat::Label("app.inspector.codeCaption"));
@@ -435,25 +445,65 @@ void InspectorDock::rebuildParamsForm() {
     m_paramLayout->addWidget(flagsRow);
 
     if (defs && !defs->empty() && args) {
+        int activeCount = 0;
         for (const ModCatalog::ParamDef& def : *defs) {
+            if (!ModCatalog::IsParamActive(def, *defs, *args)) continue;
+            ++activeCount;
+
             auto* fieldBox = new QWidget(m_paramHost);
             auto* fieldLay = new QVBoxLayout(fieldBox);
             fieldLay->setContentsMargins(0, 2, 0, 2);
             fieldLay->setSpacing(3);
 
+            const std::string effLblKey = ModCatalog::EffectiveParamLabelKey(def, *defs, *args);
+            const QString effLbl = effLblKey.empty() ? QString::fromStdString(def.key) : UiFormat::Label(effLblKey);
+            const bool canRemove = ModCatalog::CanRemoveOptionalParam(def, *defs, *args);
+
+            auto* hdrRow = new QHBoxLayout();
+            hdrRow->setContentsMargins(0, 0, 0, 0);
+            hdrRow->setSpacing(4);
+
             auto* lbl = new QLabel(
                 QStringLiteral("%1  <span style='color:#6b738f; font-family:Consolas;'>%2</span>")
-                    .arg(UiFormat::Label(def.label).toHtmlEscaped(),
-                         QString::fromStdString(def.key).toHtmlEscaped()),
-                fieldBox);
+                    .arg(effLbl.toHtmlEscaped(),
+                    QString::fromStdString(def.key).toHtmlEscaped()), fieldBox);
+    
             lbl->setTextFormat(Qt::RichText);
-            fieldLay->addWidget(lbl);
+            hdrRow->addWidget(lbl, 1);
 
             const std::string curVal = ModLogic::ParamValueOr(*args, def.key, def.preset);
             const std::string paramKey = def.key;
             const std::string paramKind = def.kind;
+            const bool hasDeps = ModCatalog::HasDependentParams(*defs, paramKey);
 
-            auto commitValue = [this, paramKey](const std::string& newVal) {
+            if (canRemove) {
+                auto* remBtn = new QPushButton(QStringLiteral("×"), fieldBox);
+                remBtn->setFixedSize(22, 20);
+                remBtn->setStyleSheet(QStringLiteral("QPushButton { padding: 0px; color: #8c93a8; } QPushButton:hover { color: #e56767; }"));
+                remBtn->setToolTip(UiFormat::Label("mod.removeParam"));
+                connect(remBtn, &QPushButton::clicked, this, [this, paramKey]() {
+                    if (m_rebuilding || !m_sheet) return;
+                    ModLogic::Rule* r = UiFormat::RuleAt(*m_sheet, m_sel.path);
+                    if (!r) return;
+                    std::vector<ModLogic::Param>* targetArgs = nullptr;
+                    if (m_sel.slot == UiFormat::Slot::Event) targetArgs = &r->filters;
+                    else if (m_sel.slot == UiFormat::Slot::Condition && m_sel.index < static_cast<int>(r->conditions.size()))
+                        targetArgs = &r->conditions[m_sel.index].args;
+                    else if (m_sel.slot == UiFormat::Slot::Action && m_sel.index < static_cast<int>(r->actions.size()))
+                        targetArgs = &r->actions[m_sel.index].args;
+                    if (!targetArgs) return;
+                    emit aboutToEdit();
+                    if (ModLogic::RemoveParam(*targetArgs, paramKey)) {
+                        rebuildCodePreview();
+                        emit sheetEdited();
+                        QMetaObject::invokeMethod(this, [this]() { if (!m_rebuilding) rebuildParamsForm(); }, Qt::QueuedConnection);
+                    }
+                });
+                hdrRow->addWidget(remBtn);
+            }
+            fieldLay->addLayout(hdrRow);
+
+            auto commitValue = [this, paramKey, hasDeps](const std::string& newVal) {
                 if (m_rebuilding || !m_sheet) return;
                 ModLogic::Rule* r = UiFormat::RuleAt(*m_sheet, m_sel.path);
                 if (!r) return;
@@ -471,7 +521,13 @@ void InspectorDock::rebuildParamsForm() {
                 slot = newVal;
                 rebuildCodePreview();
                 emit sheetEdited();
+                if (hasDeps) {
+                    QMetaObject::invokeMethod(this, [this]() { if (!m_rebuilding) rebuildParamsForm(); }, Qt::QueuedConnection);
+                }
             };
+
+            const QString fieldTitle = QStringLiteral("%1 (%2)").arg(effLbl, QString::fromStdString(def.key));
+            const QString compactBtnCss = QStringLiteral("QPushButton { padding: 2px 0px; }");
 
             if (def.kind == "fragment") {
                 auto* edit = new QPlainTextEdit(QString::fromStdString(curVal), fieldBox);
@@ -484,6 +540,8 @@ void InspectorDock::rebuildParamsForm() {
                 });
                 fieldLay->addWidget(edit);
 
+                auto* fragBar = new QHBoxLayout();
+                fragBar->setSpacing(6);
                 if (!def.options.empty()) {
                     auto* addBlk = new QPushButton(QStringLiteral("+ ") + UiFormat::Label("mod.addBlock"), fieldBox);
                     auto* menu = new QMenu(addBlk);
@@ -498,8 +556,46 @@ void InspectorDock::rebuildParamsForm() {
                         });
                     }
                     addBlk->setMenu(menu);
-                    fieldLay->addWidget(addBlk, 0, Qt::AlignLeft);
+                    fragBar->addWidget(addBlk);
                 }
+                auto* expBtn = new QPushButton(QStringLiteral("⤢"), fieldBox);
+                expBtn->setFixedWidth(28);
+                expBtn->setStyleSheet(compactBtnCss);
+                expBtn->setToolTip(UiFormat::Label("app.dlg.valOpenHint"));
+                connect(expBtn, &QPushButton::clicked, this, [this, edit, fieldTitle, paramKind, commitValue]() {
+                    ValueEditorDialog dlg(fieldTitle, edit->toPlainText().toStdString(), paramKind, true, true, this);
+                    if (dlg.exec() == QDialog::Accepted) {
+                        edit->setPlainText(QString::fromStdString(dlg.value()));
+                        commitValue(dlg.value());
+                    }
+                });
+                fragBar->addStretch(1);
+                fragBar->addWidget(expBtn);
+                fieldLay->addLayout(fragBar);
+            } else if (!def.options.empty() && def.kind == "enum" &&
+                       !(curVal.size() > 1 && curVal[0] == '=' && curVal[1] != '=')) {
+                auto* combo = new QComboBox(fieldBox);
+                combo->setEditable(false);
+                int idx = 0;
+                for (const ModCatalog::Option& opt : def.options) {
+                    const QString valQ = QString::fromStdString(opt.value);
+                    combo->addItem(UiFormat::OptionLabel(def, opt.value), valQ);
+                    combo->setItemData(idx, valQ, Qt::ToolTipRole);
+                    ++idx;
+                }
+                int foundIdx = combo->findData(QString::fromStdString(curVal));
+                if (foundIdx < 0 && !curVal.empty()) {
+                    const QString customQ = QString::fromStdString(curVal);
+                    combo->addItem(customQ, customQ);
+                    foundIdx = combo->count() - 1;
+                }
+                if (foundIdx >= 0) combo->setCurrentIndex(foundIdx);
+                if (!m_firstInput) m_firstInput = combo;
+
+                connect(combo, qOverload<int>(&QComboBox::activated), this, [combo, commitValue](int i) {
+                    commitValue(combo->itemData(i).toString().toStdString());
+                });
+                fieldLay->addWidget(combo);
             } else if (!def.options.empty()) {
                 auto* row = new QHBoxLayout();
                 row->setSpacing(4);
@@ -508,10 +604,8 @@ void InspectorDock::rebuildParamsForm() {
                 combo->setInsertPolicy(QComboBox::NoInsert);
                 combo->setFont(Theme::MonoFont(9));
                 for (const ModCatalog::Option& opt : def.options) {
-                    const QString lblOpt = UiFormat::Label(opt.label);
                     const QString valQ = QString::fromStdString(opt.value);
-                    const QString display = (lblOpt == valQ) ? valQ : QStringLiteral("%1 (%2)").arg(lblOpt, valQ);
-                    combo->addItem(display, valQ);
+                    combo->addItem(UiFormat::OptionLabel(def, opt.value), valQ);
                 }
                 const int foundIdx = combo->findData(QString::fromStdString(curVal));
                 if (foundIdx >= 0) combo->setCurrentIndex(foundIdx);
@@ -528,7 +622,8 @@ void InspectorDock::rebuildParamsForm() {
                 });
 
                 auto* fxBtn = new QPushButton(QStringLiteral("fx"), fieldBox);
-                fxBtn->setFixedWidth(34);
+                fxBtn->setFixedWidth(28);
+                fxBtn->setStyleSheet(compactBtnCss);
                 fxBtn->setFont(Theme::MonoFont(9));
                 fxBtn->setToolTip(UiFormat::Label("mod.expr.title"));
                 connect(fxBtn, &QPushButton::clicked, this, [this, combo, paramKind, commitValue]() {
@@ -553,8 +648,21 @@ void InspectorDock::rebuildParamsForm() {
                     commitValue(val);
                 });
 
+                auto* expBtn = new QPushButton(QStringLiteral("⤢"), fieldBox);
+                expBtn->setFixedWidth(28);
+                expBtn->setStyleSheet(compactBtnCss);
+                expBtn->setToolTip(UiFormat::Label("app.dlg.valOpenHint"));
+                connect(expBtn, &QPushButton::clicked, this, [this, combo, fieldTitle, paramKind, commitValue]() {
+                    ValueEditorDialog dlg(fieldTitle, combo->currentText().toStdString(), paramKind, true, false, this);
+                    if (dlg.exec() == QDialog::Accepted) {
+                        combo->setEditText(QString::fromStdString(dlg.value()));
+                        commitValue(dlg.value());
+                    }
+                });
+
                 row->addWidget(combo, 1);
                 row->addWidget(fxBtn);
+                row->addWidget(expBtn);
                 fieldLay->addLayout(row);
             } else {
                 auto* row = new QHBoxLayout();
@@ -567,7 +675,8 @@ void InspectorDock::rebuildParamsForm() {
                 });
 
                 auto* fxBtn = new QPushButton(QStringLiteral("fx"), fieldBox);
-                fxBtn->setFixedWidth(34);
+                fxBtn->setFixedWidth(28);
+                fxBtn->setStyleSheet(compactBtnCss);
                 fxBtn->setFont(Theme::MonoFont(9));
                 fxBtn->setToolTip(UiFormat::Label("mod.expr.title"));
                 connect(fxBtn, &QPushButton::clicked, this, [this, edit, paramKind, commitValue]() {
@@ -591,12 +700,64 @@ void InspectorDock::rebuildParamsForm() {
                     commitValue(val);
                 });
 
+                auto* expBtn = new QPushButton(QStringLiteral("⤢"), fieldBox);
+                expBtn->setFixedWidth(28);
+                expBtn->setStyleSheet(compactBtnCss);
+                expBtn->setToolTip(UiFormat::Label("app.dlg.valOpenHint"));
+                connect(expBtn, &QPushButton::clicked, this, [this, edit, fieldTitle, paramKind, commitValue]() {
+                    ValueEditorDialog dlg(fieldTitle, edit->text().toStdString(), paramKind, true, false, this);
+                    if (dlg.exec() == QDialog::Accepted) {
+                        edit->setText(QString::fromStdString(dlg.value()));
+                        commitValue(dlg.value());
+                    }
+                });
+
                 row->addWidget(edit, 1);
                 row->addWidget(fxBtn);
+                row->addWidget(expBtn);
                 fieldLay->addLayout(row);
             }
 
             m_paramLayout->addWidget(fieldBox);
+        }
+
+        if (activeCount == 0 && !ModCatalog::HasAddableOptionalParams(*defs, *args)) {
+            auto* none = new QLabel(UiFormat::Label("app.inspector.noParams"), m_paramHost);
+            none->setStyleSheet(QStringLiteral("color: #8c93a8;"));
+            m_paramLayout->addWidget(none);
+        }
+
+        if (ModCatalog::HasAddableOptionalParams(*defs, *args)) {
+            auto* addBtn = new QPushButton(QStringLiteral("+ ") + UiFormat::Label("mod.addParam"), m_paramHost);
+            auto* addMenu = new QMenu(addBtn);
+            for (const ModCatalog::ParamDef& def : *defs) {
+                if (!ModCatalog::CanAddOptionalParam(def, *defs, *args)) continue;
+                const std::string effKey = ModCatalog::EffectiveParamLabelKey(def, *defs, *args);
+                const QString itemText = QStringLiteral("%1 (%2)")
+                    .arg(effKey.empty() ? QString::fromStdString(def.key) : UiFormat::Label(effKey),
+                         QString::fromStdString(def.key));
+                const std::string addKey = def.key;
+                const std::string addPreset = def.preset;
+                addMenu->addAction(itemText, this, [this, addKey, addPreset]() {
+                    if (m_rebuilding || !m_sheet) return;
+                    ModLogic::Rule* r = UiFormat::RuleAt(*m_sheet, m_sel.path);
+                    if (!r) return;
+                    std::vector<ModLogic::Param>* targetArgs = nullptr;
+                    if (m_sel.slot == UiFormat::Slot::Event) targetArgs = &r->filters;
+                    else if (m_sel.slot == UiFormat::Slot::Condition && m_sel.index < static_cast<int>(r->conditions.size()))
+                        targetArgs = &r->conditions[m_sel.index].args;
+                    else if (m_sel.slot == UiFormat::Slot::Action && m_sel.index < static_cast<int>(r->actions.size()))
+                        targetArgs = &r->actions[m_sel.index].args;
+                    if (!targetArgs) return;
+                    emit aboutToEdit();
+                    ModLogic::ParamValue(*targetArgs, addKey) = addPreset;
+                    rebuildCodePreview();
+                    emit sheetEdited();
+                    QMetaObject::invokeMethod(this, [this]() { if (!m_rebuilding) rebuildParamsForm(); }, Qt::QueuedConnection);
+                });
+            }
+            addBtn->setMenu(addMenu);
+            m_paramLayout->addWidget(addBtn);
         }
     } else {
         auto* none = new QLabel(UiFormat::Label("app.inspector.noParams"), m_paramHost);
@@ -679,9 +840,34 @@ void InspectorDock::rebuildVarsTable() {
         });
         m_varsTable->setCellWidget(i, 1, typeCombo);
 
-        auto* valItem = new QTableWidgetItem(QString::fromStdString(v.value));
-        valItem->setFont(Theme::MonoFont(9));
-        m_varsTable->setItem(i, 2, valItem);
+        if (v.type == "bool") {
+            auto* boolCombo = new QComboBox(m_varsTable);
+            boolCombo->addItem(UiFormat::Label("common.no"), QStringLiteral("0"));
+            boolCombo->addItem(UiFormat::Label("common.yes"), QStringLiteral("1"));
+            boolCombo->setCurrentIndex((v.value == "1" || v.value == "true") ? 1 : 0);
+            connect(boolCombo, qOverload<int>(&QComboBox::activated), this, [this, i, boolCombo]() {
+                if (m_rebuilding || !m_sheet || i >= static_cast<int>(m_sheet->vars.size())) return;
+                const std::string nv = boolCombo->currentData().toString().toStdString();
+                if (m_sheet->vars[i].value == nv) return;
+                emit aboutToEdit();
+                m_sheet->vars[i].value = nv;
+                rebuildCodePreview();
+                emit sheetEdited();
+            });
+            m_varsTable->setCellWidget(i, 2, boolCombo);
+        } else {
+            auto* valItem = new QTableWidgetItem(QString::fromStdString(v.value));
+            valItem->setFont(Theme::MonoFont(9));
+            m_varsTable->setItem(i, 2, valItem);
+
+            auto* expBtn = new QPushButton(QStringLiteral("⤢"), m_varsTable);
+            expBtn->setStyleSheet(QStringLiteral("QPushButton { padding: 1px 0px; }"));
+            expBtn->setToolTip(UiFormat::Label("app.dlg.valOpenHint"));
+            connect(expBtn, &QPushButton::clicked, this, [this, i]() {
+                openVarValueEditor(i);
+            });
+            m_varsTable->setCellWidget(i, 3, expBtn);
+        }
     }
 
     if (anyBad) {
@@ -691,6 +877,25 @@ void InspectorDock::rebuildVarsTable() {
     m_rebuilding = false;
 }
 
+void InspectorDock::openVarValueEditor(int row) {
+    if (!m_sheet || row < 0 || row >= static_cast<int>(m_sheet->vars.size())) return;
+    ModLogic::Var& var = m_sheet->vars[row];
+    if (var.type == "bool") return;
+    const QString title = QStringLiteral("%1 (%2)").arg(
+        QString::fromStdString(var.name),
+        UiFormat::VarTypeLabel(var.type));
+    const std::string kind = (var.type == "text") ? "text" : "number";
+    ValueEditorDialog dlg(title, var.value, kind, false, false, this);
+    if (dlg.exec() != QDialog::Accepted) return;
+    if (var.value == dlg.value()) return;
+    emit aboutToEdit();
+    var.value = dlg.value();
+    rebuildVarsTable();
+    m_varsTable->selectRow(row);
+    rebuildCodePreview();
+    emit sheetEdited();
+}
+
 void InspectorDock::commitVarsFromTable() {
     if (!m_sheet) return;
     const int rows = std::min(m_varsTable->rowCount(), static_cast<int>(m_sheet->vars.size()));
@@ -698,10 +903,12 @@ void InspectorDock::commitVarsFromTable() {
     bool anyBad = false;
     for (int i = 0; i < rows; ++i) {
         QTableWidgetItem* ni = m_varsTable->item(i, 0);
-        QTableWidgetItem* vi = m_varsTable->item(i, 2);
-        if (!ni || !vi) continue;
+        if (!ni) continue;
         const std::string newName = ni->text().trimmed().toStdString();
-        const std::string newVal = vi->text().toStdString();
+        std::string newVal = m_sheet->vars[i].value;
+        if (QTableWidgetItem* vi = m_varsTable->item(i, 2)) {
+            newVal = vi->text().toStdString();
+        }
         if (m_sheet->vars[i].name != newName || m_sheet->vars[i].value != newVal) {
             if (!changed) emit aboutToEdit();
             m_sheet->vars[i].name = newName;

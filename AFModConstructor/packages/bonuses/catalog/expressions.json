@@ -1,0 +1,665 @@
+[
+  {
+    "id": "bonuses.typeCount",
+    "label": "mod.expr.bonusTypeCount",
+    "text": "bonuses_type_count()",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.liveCount",
+    "label": "mod.expr.bonusLiveCount",
+    "text": "bonuses_room_count(-1, 0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.totalPlacements",
+    "label": "mod.expr.bonusTotalPl",
+    "text": "bonuses_room_count(-1, 1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.spawnSlotCount",
+    "label": "mod.expr.bonusSlotCount",
+    "text": "bonuses_placement_slots(-1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.indexOfTagged",
+    "label": "mod.expr.bonusIdxTag",
+    "text": "bonuses_index_of_tag(\"gift\", 0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.indexAtCell",
+    "label": "mod.expr.bonusIdxCell",
+    "text": "bonuses_index_at_cell(20, 14)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusRoom"
+  },
+  {
+    "id": "bonuses.lastChainPoints",
+    "label": "mod.expr.bonusLastChainPts",
+    "text": "bonuses_last_chain_points()",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusScore"
+  },
+  {
+    "id": "bonuses.kindId",
+    "label": "mod.expr.bonusKindId",
+    "text": "bonuses_find_kind_id(\"orb\")",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind"
+  },
+  {
+    "id": "bonuses.selTypeName",
+    "label": "mod.expr.bonusSelTypeName",
+    "text": "bonuses_sel_type_text(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeResId",
+    "label": "mod.expr.bonusSelTypeRes",
+    "text": "bonuses_sel_type_text(1)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypePtsTake",
+    "label": "mod.expr.bonusSelTypePtsTake",
+    "text": "bonuses_sel_type_int(0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypePtsOut",
+    "label": "mod.expr.bonusSelTypePtsOut",
+    "text": "bonuses_sel_type_int(1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeIsTotem",
+    "label": "mod.expr.bonusSelTypeTotem",
+    "text": "bonuses_sel_type_int(2)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeIsTorch",
+    "label": "mod.expr.bonusSelTypeTorch",
+    "text": "bonuses_sel_type_int(3)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeMakesTrain",
+    "label": "mod.expr.bonusSelTypeTrain",
+    "text": "bonuses_sel_type_int(4)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeTrainIdx",
+    "label": "mod.expr.bonusSelTypeTrainIdx",
+    "text": "bonuses_sel_type_int(5)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeModelId",
+    "label": "mod.expr.bonusSelTypeModelId",
+    "text": "bonuses_sel_type_int(6)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeTextureId",
+    "label": "mod.expr.bonusSelTypeTexId",
+    "text": "bonuses_sel_type_int(7)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeIconId",
+    "label": "mod.expr.bonusSelTypeIconId",
+    "text": "bonuses_sel_type_int(8)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeTime",
+    "label": "mod.expr.bonusSelTypeTime",
+    "text": "bonuses_sel_type_num(0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeBurnTime",
+    "label": "mod.expr.bonusSelTypeBurn",
+    "text": "bonuses_sel_type_num(1)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeLightRadius",
+    "label": "mod.expr.bonusSelTypeLightR",
+    "text": "bonuses_sel_type_num(2)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeBonusLightRadius",
+    "label": "mod.expr.bonusSelTypeBLightR",
+    "text": "bonuses_sel_type_num(3)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeGlowR",
+    "label": "mod.expr.bonusSelTypeGlowR",
+    "text": "bonuses_sel_type_num(4)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeGlowG",
+    "label": "mod.expr.bonusSelTypeGlowG",
+    "text": "bonuses_sel_type_num(5)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeGlowB",
+    "label": "mod.expr.bonusSelTypeGlowB",
+    "text": "bonuses_sel_type_num(6)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.selTypeGlowA",
+    "label": "mod.expr.bonusSelTypeGlowA",
+    "text": "bonuses_sel_type_num(7)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusTypes"
+  },
+  {
+    "id": "bonuses.typePropCount",
+    "label": "mod.expr.bonusTypePropCnt",
+    "text": "bonuses_type_prop_count()",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.typePropName0",
+    "label": "mod.expr.bonusTypePropName",
+    "text": "bonuses_type_prop_name(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.typePropInt",
+    "label": "mod.expr.bonusTypePropInt",
+    "text": "bonuses_type_prop_int(\"totem\", \"pts_take\")",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.typePropFloat",
+    "label": "mod.expr.bonusTypePropNum",
+    "text": "bonuses_type_prop_num(\"totem\", \"time\", 0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.typePropText",
+    "label": "mod.expr.bonusTypePropText",
+    "text": "bonuses_type_prop_text(\"totem\", \"name\")",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.placementPropCount",
+    "label": "mod.expr.bonusPlPropCnt",
+    "text": "bonuses_pl_prop_count()",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.placementPropName0",
+    "label": "mod.expr.bonusPlPropName",
+    "text": "bonuses_pl_prop_name(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.placementPropFloat",
+    "label": "mod.expr.bonusPlPropNum",
+    "text": "bonuses_pl_prop_num(-1, 0, \"time\", 0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.placementPropText",
+    "label": "mod.expr.bonusPlPropText",
+    "text": "bonuses_pl_prop_text(-1, 0, \"tag\")",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "bonuses.selPlIndex",
+    "label": "mod.expr.bonusSelPlIdx",
+    "text": "bonuses_sel_pl_int(0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlName",
+    "label": "mod.expr.bonusSelPlName",
+    "text": "bonuses_sel_pl_text(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlResId",
+    "label": "mod.expr.bonusSelPlRes",
+    "text": "bonuses_sel_pl_text(1)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlTag",
+    "label": "mod.expr.bonusSelPlTag",
+    "text": "bonuses_sel_pl_text(2)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlX",
+    "label": "mod.expr.bonusSelPlX",
+    "text": "bonuses_sel_pl_num(0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlY",
+    "label": "mod.expr.bonusSelPlY",
+    "text": "bonuses_sel_pl_num(1)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlZ",
+    "label": "mod.expr.bonusSelPlZ",
+    "text": "bonuses_sel_pl_num(2)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlCol",
+    "label": "mod.expr.bonusSelPlCol",
+    "text": "bonuses_sel_pl_int(1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlRow",
+    "label": "mod.expr.bonusSelPlRow",
+    "text": "bonuses_sel_pl_int(2)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlIsLive",
+    "label": "mod.expr.bonusSelPlLive",
+    "text": "bonuses_sel_pl_int(3)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlHasType",
+    "label": "mod.expr.bonusSelPlHasType",
+    "text": "bonuses_sel_pl_int(4)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.selPlKind",
+    "label": "mod.expr.bonusSelPlKind",
+    "text": "bonuses_sel_pl_int(5)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusPlace"
+  },
+  {
+    "id": "bonuses.takeName",
+    "label": "mod.expr.bonusTakeName",
+    "text": "bonuses_take_text(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeResourceId",
+    "label": "mod.expr.bonusTakeRes",
+    "text": "bonuses_take_text(1)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeTag",
+    "label": "mod.expr.bonusTakeTag",
+    "text": "bonuses_take_text(2)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeCol",
+    "label": "mod.expr.bonusTakeCol",
+    "text": "bonuses_take_int(0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeRow",
+    "label": "mod.expr.bonusTakeRow",
+    "text": "bonuses_take_int(1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takePoints",
+    "label": "mod.expr.bonusTakePts",
+    "text": "bonuses_take_int(2)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeIsDecor",
+    "label": "mod.expr.bonusTakeDecor",
+    "text": "bonuses_take_int(3)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeX",
+    "label": "mod.expr.bonusTakeX",
+    "text": "bonuses_take_num(0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeY",
+    "label": "mod.expr.bonusTakeY",
+    "text": "bonuses_take_num(1)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.takeZ",
+    "label": "mod.expr.bonusTakeZ",
+    "text": "bonuses_take_num(2)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_take"
+  },
+  {
+    "id": "bonuses.spawnName",
+    "label": "mod.expr.bonusSpawnName",
+    "text": "bonuses_spawn_text(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnResourceId",
+    "label": "mod.expr.bonusSpawnRes",
+    "text": "bonuses_spawn_text(1)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnTag",
+    "label": "mod.expr.bonusSpawnTag",
+    "text": "bonuses_spawn_text(2)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnX",
+    "label": "mod.expr.bonusSpawnX",
+    "text": "bonuses_spawn_num(0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnY",
+    "label": "mod.expr.bonusSpawnY",
+    "text": "bonuses_spawn_num(1)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnZ",
+    "label": "mod.expr.bonusSpawnZ",
+    "text": "bonuses_spawn_num(2)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnHasType",
+    "label": "mod.expr.bonusSpawnHasType",
+    "text": "bonuses_spawn_int(0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnIsLive",
+    "label": "mod.expr.bonusSpawnLive",
+    "text": "bonuses_spawn_int(1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.spawnKind",
+    "label": "mod.expr.bonusSpawnKind",
+    "text": "bonuses_spawn_int(2)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusEvents",
+    "needs": "bonus_spawn"
+  },
+  {
+    "id": "bonuses.bodyName",
+    "label": "mod.expr.bonusBodyName",
+    "text": "bonuses_body_text(0)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyTag",
+    "label": "mod.expr.bonusBodyTag",
+    "text": "bonuses_body_text(1)",
+    "kind": "text",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyX",
+    "label": "mod.expr.bonusBodyX",
+    "text": "bonuses_body_num(0)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyY",
+    "label": "mod.expr.bonusBodyY",
+    "text": "bonuses_body_num(1)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyZ",
+    "label": "mod.expr.bonusBodyZ",
+    "text": "bonuses_body_num(2)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyRockAmp",
+    "label": "mod.expr.bonusBodyRockAmp",
+    "text": "bonuses_body_num(3)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyRockSpeed",
+    "label": "mod.expr.bonusBodyRockSpd",
+    "text": "bonuses_body_num(4)",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyHidden",
+    "label": "mod.expr.bonusBodyHidden",
+    "text": "bonuses_body_int(0)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyPoints",
+    "label": "mod.expr.bonusBodyPts",
+    "text": "bonuses_body_int(1)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyModelId",
+    "label": "mod.expr.bonusBodyModelId",
+    "text": "bonuses_body_int(2)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.bodyTextureId",
+    "label": "mod.expr.bonusBodyTexId",
+    "text": "bonuses_body_int(3)",
+    "kind": "int",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_body"
+  },
+  {
+    "id": "bonuses.kindDelta",
+    "label": "mod.expr.bonusKindDt",
+    "text": "bonuses_kind_dt()",
+    "kind": "float",
+    "group": "bonuses",
+    "section": "mod.sec.bonusKind",
+    "needs": "bonus_kind_update"
+  }
+]

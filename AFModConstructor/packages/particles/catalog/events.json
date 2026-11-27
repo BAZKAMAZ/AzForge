@@ -1,0 +1,70 @@
+[
+  {
+    "id": "particles.birth",
+    "label": "mod.ev.partBirth",
+    "call": "Particles.SetBirthHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "canVeto": true,
+    "values": [
+      "birthParticle",
+      "birthKind"
+    ],
+    "handler": "static int __cdecl %H%(AmodParticle birthParticle, AmodParticleKind birthKind, void* user)",
+    "subscribe": "part_bind_birth(%H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "particle_birth",
+    "hint": "mod.ev.partBirth.hint"
+  },
+  {
+    "id": "particles.trailSpawning",
+    "label": "mod.ev.partTrailSpawning",
+    "call": "Particles.SetSpawnHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "canVeto": true,
+    "values": [
+      "trailDesc"
+    ],
+    "handler": "static int __cdecl %H%(AmodParticleDesc* trailDesc, void* user)",
+    "subscribe": "part_bind_spawn(%H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "particle_trail",
+    "hint": "mod.ev.partTrailSpawning.hint"
+  },
+  {
+    "id": "particles.think",
+    "label": "mod.ev.partThink",
+    "call": "Particles.SetThink",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "canVeto": true,
+    "values": [
+      "thinkParticle",
+      "partDelta"
+    ],
+    "handler": "static int __cdecl %H%(AmodParticle thinkParticle, float partDelta, void* user)",
+    "subscribe": "part_bind_think(%H%);",
+    "retDefault": "return 1;",
+    "retVeto": "return 0;",
+    "provides": "particle_think",
+    "hint": "mod.ev.partThink.hint"
+  },
+  {
+    "id": "particles.draw",
+    "label": "mod.ev.partDraw",
+    "call": "Particles.SetDrawHandler",
+    "group": "particles",
+    "section": "mod.sec.partControl",
+    "canVeto": true,
+    "values": [],
+    "handler": "static int __cdecl %H%(void* user)",
+    "subscribe": "part_bind_draw(%H%);",
+    "retDefault": "return 0;",
+    "retVeto": "return 1;",
+    "provides": "particle_draw",
+    "hint": "mod.ev.partDraw.hint"
+  }
+]

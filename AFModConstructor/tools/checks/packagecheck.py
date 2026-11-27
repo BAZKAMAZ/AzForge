@@ -70,6 +70,9 @@ def wanted(package):
             for param in item.get('params', []) + item.get('filters', []):
                 if param.get('label'):
                     keys.add(param['label'])
+                for lw in param.get('labelWhen', []) or []:
+                    if lw.get('label'):
+                        keys.add(lw['label'])
                 for option in param.get('options', []) or []:
                     if option.get('label'):
                         keys.add(option['label'])

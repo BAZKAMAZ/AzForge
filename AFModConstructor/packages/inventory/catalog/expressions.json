@@ -1,0 +1,387 @@
+[
+  {
+    "id": "inventory.isAvailable",
+    "label": "mod.expr.invAvailable",
+    "text": "inv_available()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.slotCount",
+    "label": "mod.expr.invSlotCount",
+    "text": "inv_slot_count()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.usedCount",
+    "label": "mod.expr.invUsedCount",
+    "text": "inv_used_count()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.freeCount",
+    "label": "mod.expr.invFreeCount",
+    "text": "inv_free_count()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.freeSlot",
+    "label": "mod.expr.invFreeSlot",
+    "text": "inv_free_slot()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.slotOfTotem",
+    "label": "mod.expr.invSlotOf",
+    "text": "inv_find_slot(\"totem\")",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.lastPutSlot",
+    "label": "mod.expr.invLastPutSlot",
+    "text": "inv_last_put_slot()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.slot0Name",
+    "label": "mod.expr.invSlotName",
+    "text": "inv_slot_name(0, 0)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.slot0ResId",
+    "label": "mod.expr.invSlotResId",
+    "text": "inv_slot_name(0, 1)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invSlots"
+  },
+  {
+    "id": "inventory.slot0TimeLeft",
+    "label": "mod.expr.invSlotTimeLeft",
+    "text": "inv_slot_num(0, 0)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invTimers"
+  },
+  {
+    "id": "inventory.slot0TimeTotal",
+    "label": "mod.expr.invSlotTimeTotal",
+    "text": "inv_slot_num(0, 1)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invTimers"
+  },
+  {
+    "id": "inventory.slot0Fraction",
+    "label": "mod.expr.invSlotFraction",
+    "text": "inv_slot_num(0, 2)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invTimers"
+  },
+  {
+    "id": "inventory.slot0Ticking",
+    "label": "mod.expr.invSlotTicking",
+    "text": "inv_is_ticking(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invTimers"
+  },
+  {
+    "id": "inventory.selSlotIndex",
+    "label": "mod.expr.invSelSlotIdx",
+    "text": "inv_sel_int(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selFilled",
+    "label": "mod.expr.invSelFilled",
+    "text": "inv_sel_int(1)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selName",
+    "label": "mod.expr.invSelName",
+    "text": "inv_sel_text(0)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selResId",
+    "label": "mod.expr.invSelResId",
+    "text": "inv_sel_text(1)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selTimeLeft",
+    "label": "mod.expr.invSelTimeLeft",
+    "text": "inv_sel_num(0)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selTimeTotal",
+    "label": "mod.expr.invSelTimeTotal",
+    "text": "inv_sel_num(1)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selFraction",
+    "label": "mod.expr.invSelFraction",
+    "text": "inv_sel_num(2)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selBurnTime",
+    "label": "mod.expr.invSelBurn",
+    "text": "inv_sel_num(3)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selIsTotem",
+    "label": "mod.expr.invSelTotem",
+    "text": "inv_sel_int(2)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selIsTorch",
+    "label": "mod.expr.invSelTorch",
+    "text": "inv_sel_int(3)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.selPointsOut",
+    "label": "mod.expr.invSelPtsOut",
+    "text": "inv_sel_int(4)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invSelected"
+  },
+  {
+    "id": "inventory.bonusesLeft",
+    "label": "mod.expr.invBonusesLeft",
+    "text": "inv_bonuses_left(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invLevel"
+  },
+  {
+    "id": "inventory.megaBonusesLeft",
+    "label": "mod.expr.invMegaLeft",
+    "text": "inv_bonuses_left(1)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invLevel"
+  },
+  {
+    "id": "inventory.otherBonusesLeft",
+    "label": "mod.expr.invOtherLeft",
+    "text": "inv_bonuses_left(2)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invLevel"
+  },
+  {
+    "id": "inventory.totalBonusesLeft",
+    "label": "mod.expr.invTotalLeft",
+    "text": "inv_bonuses_left(3)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invLevel"
+  },
+  {
+    "id": "inventory.chainLength",
+    "label": "mod.expr.invChainLen",
+    "text": "inv_chain_int(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invChain"
+  },
+  {
+    "id": "inventory.chainPoints",
+    "label": "mod.expr.invChainPts",
+    "text": "inv_chain_int(1)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invChain"
+  },
+  {
+    "id": "inventory.chainTimeLeft",
+    "label": "mod.expr.invChainTime",
+    "text": "inv_chain_num(0)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invChain"
+  },
+  {
+    "id": "inventory.chainWindow",
+    "label": "mod.expr.invChainWindow",
+    "text": "inv_chain_num(1)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invChain"
+  },
+  {
+    "id": "inventory.chainFraction",
+    "label": "mod.expr.invChainFrac",
+    "text": "inv_chain_num(2)",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invChain"
+  },
+  {
+    "id": "inventory.itemPropCount",
+    "label": "mod.expr.invPropCnt",
+    "text": "inv_item_prop_count()",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "inventory.itemPropName0",
+    "label": "mod.expr.invPropName",
+    "text": "inv_item_prop_name(0)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "inventory.itemPropInt",
+    "label": "mod.expr.invPropInt",
+    "text": "inv_item_prop_int(0, \"pts_out\")",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "inventory.itemPropFloat",
+    "label": "mod.expr.invPropNum",
+    "text": "inv_item_prop_num(0, \"time_left\")",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "inventory.itemPropText",
+    "label": "mod.expr.invPropText",
+    "text": "inv_item_prop_text(0, \"name\")",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.props"
+  },
+  {
+    "id": "inventory.evReason",
+    "label": "mod.expr.invEvReason",
+    "text": "inv_ev_int(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.evSlot",
+    "label": "mod.expr.invEvSlot",
+    "text": "inv_ev_int(1)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.evPointsOut",
+    "label": "mod.expr.invEvPtsOut",
+    "text": "inv_ev_int(2)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.evTimeLeft",
+    "label": "mod.expr.invEvTimeLeft",
+    "text": "inv_ev_time_left()",
+    "kind": "float",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.evName",
+    "label": "mod.expr.invEvName",
+    "text": "inv_ev_text(0)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.evResId",
+    "label": "mod.expr.invEvResId",
+    "text": "inv_ev_text(1)",
+    "kind": "text",
+    "group": "inventory",
+    "section": "mod.sec.invEvents",
+    "needs": "inv_slot_event"
+  },
+  {
+    "id": "inventory.chainEvLength",
+    "label": "mod.expr.invChainEvLen",
+    "text": "inv_chain_ev_int(0)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "needs": "inv_chain_event"
+  },
+  {
+    "id": "inventory.chainEvPoints",
+    "label": "mod.expr.invChainEvPts",
+    "text": "inv_chain_ev_int(1)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "needs": "inv_chain_event"
+  },
+  {
+    "id": "inventory.chainEvBroke",
+    "label": "mod.expr.invChainEvBroke",
+    "text": "inv_chain_ev_int(2)",
+    "kind": "int",
+    "group": "inventory",
+    "section": "mod.sec.invChain",
+    "needs": "inv_chain_event"
+  }
+]

@@ -1,0 +1,18 @@
+{
+    "api_version": 1,
+    "author": "AFModConstructor",
+    "capabilities": [],
+    "description": "Interactive showcase of all ParticlesApi events, conditions, actions and expressions",
+    "entry": "bin/particlestest.dll",
+    "game_version": "1.0",
+    "id": "particlestest",
+    "name": "particlestest",
+    "requires": [
+        "input",
+        "particles",
+        "player",
+        "render",
+        "textures"
+    ],
+    "version": "1.0.0"
+}

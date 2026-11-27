@@ -2,34 +2,32 @@
   {
     "id": "world.setPaused",
     "label": "mod.act.pause",
-    "call": "World.SetPaused",
+    "call": "World.IsPaused + SetPaused",
     "group": "world",
+    "section": "mod.sec.level",
     "params": [
       {
-        "key": "paused",
-        "label": "mod.p.paused",
-        "kind": "number",
-        "preset": "1"
+        "key": "mode",
+        "label": "mod.p.worldPauseMode",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.world.pause.on"
+          },
+          {
+            "value": "0",
+            "label": "mod.world.pause.off"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.pause.toggle"
+          }
+        ]
       }
     ],
-    "emit": "if (API->world) API->world->SetPaused(SELF, %paused%);",
-    "section": "mod.sec.general"
-  },
-  {
-    "id": "world.setTimeLeft",
-    "label": "mod.act.timeLeft",
-    "call": "World.SetTimeLeft",
-    "group": "world",
-    "params": [
-      {
-        "key": "seconds",
-        "label": "mod.p.seconds",
-        "kind": "number",
-        "preset": "60"
-      }
-    ],
-    "emit": "if (API->world) API->world->SetTimeLeft(SELF, (float)(%seconds%));",
-    "section": "mod.sec.time"
+    "emit": "if (%mode% == 2) world_toggle_paused(); else if (API->world && API->world->SetPaused) API->world->SetPaused(SELF, (int)(%mode%));"
   },
   {
     "id": "world.startLevel",
@@ -42,7 +40,7 @@
         "key": "level",
         "label": "mod.p.levelPath",
         "kind": "text",
-        "preset": "levels/castle1/level1.lev"
+        "preset": "levels/level_1.txt"
       }
     ],
     "emit": "if (API->world && API->world->StartLevel) API->world->StartLevel(SELF, \"%level%\");"
@@ -55,5 +53,1928 @@
     "section": "mod.sec.level",
     "params": [],
     "emit": "if (API->world && API->world->LeaveLevel) API->world->LeaveLevel(SELF);"
+  },
+  {
+    "id": "world.cancel",
+    "label": "mod.act.worldCancel",
+    "call": "World.Cancel",
+    "group": "world",
+    "section": "mod.sec.level",
+    "params": [],
+    "emit": "world_cancel(%token%);",
+    "needs": "token"
+  },
+  {
+    "id": "world.setTimeLeft",
+    "label": "mod.act.timeLeft",
+    "call": "World.SetTimeLeft",
+    "group": "world",
+    "section": "mod.sec.time",
+    "params": [
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "60"
+      }
+    ],
+    "emit": "if (API->world && API->world->SetTimeLeft) API->world->SetTimeLeft(SELF, (float)(%seconds%));"
+  },
+  {
+    "id": "world.setElapsed",
+    "label": "mod.act.worldSetElapsed",
+    "call": "World.SetElapsed",
+    "group": "world",
+    "section": "mod.sec.time",
+    "params": [
+      {
+        "key": "seconds",
+        "label": "mod.p.seconds",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "if (API->world && API->world->SetElapsed) API->world->SetElapsed(SELF, (float)(%seconds%));"
+  },
+  {
+    "id": "world.setLevelStat",
+    "label": "mod.act.worldSetStat",
+    "call": "World.SetLevelStats",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "params": [
+      {
+        "key": "counter",
+        "label": "mod.p.worldStatCounter",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.stat.crystals"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.stat.bonuses"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.stat.super"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.stat.monsters"
+          },
+          {
+            "value": "4",
+            "label": "mod.world.stat.lightRooms"
+          },
+          {
+            "value": "5",
+            "label": "mod.world.stat.darkRooms"
+          },
+          {
+            "value": "6",
+            "label": "mod.world.stat.secretRooms"
+          },
+          {
+            "value": "7",
+            "label": "mod.world.stat.eighth"
+          }
+        ]
+      },
+      {
+        "key": "taken",
+        "label": "mod.p.worldStatTaken",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "total",
+        "label": "mod.p.worldStatTotal",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ],
+    "emit": "world_set_stat(%counter%, (int)(%taken%), (int)(%total%));",
+    "hint": "mod.act.worldSetStat.hint"
+  },
+  {
+    "id": "world.addLevelStat",
+    "label": "mod.act.worldAddStat",
+    "call": "World.SetLevelStats",
+    "group": "world",
+    "section": "mod.sec.worldStats",
+    "params": [
+      {
+        "key": "counter",
+        "label": "mod.p.worldStatCounter",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.stat.crystals"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.stat.bonuses"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.stat.super"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.stat.monsters"
+          },
+          {
+            "value": "4",
+            "label": "mod.world.stat.lightRooms"
+          },
+          {
+            "value": "5",
+            "label": "mod.world.stat.darkRooms"
+          },
+          {
+            "value": "6",
+            "label": "mod.world.stat.secretRooms"
+          },
+          {
+            "value": "7",
+            "label": "mod.world.stat.eighth"
+          }
+        ]
+      },
+      {
+        "key": "delta",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "world_add_stat(%counter%, (int)(%delta%));"
+  },
+  {
+    "id": "world.selectRoom",
+    "label": "mod.act.worldSelectRoom",
+    "call": "World.GetRoom / FindRoomById",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.worldLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.by.index"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.by.id"
+          }
+        ]
+      },
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "roomId",
+        "label": "mod.p.worldRoomId",
+        "kind": "number",
+        "preset": "1",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%by% == 0) world_select_room((int)(%room%)); else world_select_room_by_id((int)(%roomId%));"
+  },
+  {
+    "id": "world.selectMazeCell",
+    "label": "mod.act.worldSelectMaze",
+    "call": "World.GetMazeRoomId",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.worldMazeX",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.worldMazeY",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ],
+    "emit": "world_select_maze_cell((int)(%x%), (int)(%y%));",
+    "hint": "mod.act.worldSelectMaze.hint"
+  },
+  {
+    "id": "world.crossRoom",
+    "label": "mod.act.worldCrossRoom",
+    "call": "World.CrossRoom",
+    "group": "world",
+    "section": "mod.sec.worldRooms",
+    "params": [
+      {
+        "key": "side",
+        "label": "mod.p.worldSide",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "mod.world.side.right"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.side.left"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.side.up"
+          },
+          {
+            "value": "4",
+            "label": "mod.world.side.down"
+          }
+        ]
+      }
+    ],
+    "emit": "if (API->world && API->world->CrossRoom) API->world->CrossRoom(SELF, (int)(%side%));"
+  },
+  {
+    "id": "world.selectCell",
+    "label": "mod.act.worldSelectCell",
+    "call": "World.GetRoomCell",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "by",
+        "label": "mod.p.worldLookupBy",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.cellBy.grid"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.cellBy.pos"
+          }
+        ]
+      },
+      {
+        "key": "col",
+        "label": "mod.p.worldCol",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "row",
+        "label": "mod.p.worldRow",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "0"
+        }
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0",
+        "when": {
+          "param": "by",
+          "equals": "1"
+        }
+      }
+    ],
+    "emit": "if (%by% == 0) world_select_cell((int)(%col%), (int)(%row%)); else world_select_cell_pos((float)(%x%), (float)(%y%));"
+  },
+  {
+    "id": "world.setCell",
+    "label": "mod.act.worldSetCell",
+    "call": "World.SetRoomCell",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "col",
+        "label": "mod.p.worldCol",
+        "kind": "number",
+        "preset": "20"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.worldRow",
+        "kind": "number",
+        "preset": "14"
+      },
+      {
+        "key": "type",
+        "label": "mod.p.worldCellType",
+        "kind": "enum",
+        "preset": "87",
+        "options": [
+          {
+            "value": "32",
+            "label": "mod.world.cell.empty"
+          },
+          {
+            "value": "87",
+            "label": "mod.world.cell.wall"
+          },
+          {
+            "value": "119",
+            "label": "mod.world.cell.wallDecor"
+          },
+          {
+            "value": "45",
+            "label": "mod.world.cell.ladder"
+          },
+          {
+            "value": "61",
+            "label": "mod.world.cell.ladderAlt"
+          },
+          {
+            "value": "67",
+            "label": "mod.world.cell.ladderCross"
+          },
+          {
+            "value": "73",
+            "label": "mod.world.cell.chain"
+          },
+          {
+            "value": "105",
+            "label": "mod.world.cell.chainAlt"
+          },
+          {
+            "value": "80",
+            "label": "mod.world.cell.chainCross"
+          },
+          {
+            "value": "124",
+            "label": "mod.world.cell.pipe"
+          },
+          {
+            "value": "70",
+            "label": "mod.world.cell.fire"
+          },
+          {
+            "value": "65",
+            "label": "mod.world.cell.doorWhite"
+          },
+          {
+            "value": "66",
+            "label": "mod.world.cell.doorBlue"
+          },
+          {
+            "value": "68",
+            "label": "mod.world.cell.doorGreen"
+          },
+          {
+            "value": "69",
+            "label": "mod.world.cell.exit"
+          },
+          {
+            "value": "49",
+            "label": "mod.world.cell.bonusFloor"
+          }
+        ]
+      }
+    ],
+    "emit": "world_set_cell((int)(%room%), (int)(%col%), (int)(%row%), (int)(%type%));"
+  },
+  {
+    "id": "world.fillCellsRect",
+    "label": "mod.act.worldFillCells",
+    "call": "World.SetRoomCells",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "col",
+        "label": "mod.p.worldCol",
+        "kind": "number",
+        "preset": "18"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.worldRow",
+        "kind": "number",
+        "preset": "14"
+      },
+      {
+        "key": "w",
+        "label": "mod.p.width",
+        "kind": "number",
+        "preset": "4"
+      },
+      {
+        "key": "h",
+        "label": "mod.p.height",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "type",
+        "label": "mod.p.worldCellType",
+        "kind": "enum",
+        "preset": "87",
+        "options": [
+          {
+            "value": "32",
+            "label": "mod.world.cell.empty"
+          },
+          {
+            "value": "87",
+            "label": "mod.world.cell.wall"
+          },
+          {
+            "value": "119",
+            "label": "mod.world.cell.wallDecor"
+          },
+          {
+            "value": "45",
+            "label": "mod.world.cell.ladder"
+          },
+          {
+            "value": "61",
+            "label": "mod.world.cell.ladderAlt"
+          },
+          {
+            "value": "67",
+            "label": "mod.world.cell.ladderCross"
+          },
+          {
+            "value": "73",
+            "label": "mod.world.cell.chain"
+          },
+          {
+            "value": "105",
+            "label": "mod.world.cell.chainAlt"
+          },
+          {
+            "value": "80",
+            "label": "mod.world.cell.chainCross"
+          },
+          {
+            "value": "124",
+            "label": "mod.world.cell.pipe"
+          },
+          {
+            "value": "70",
+            "label": "mod.world.cell.fire"
+          },
+          {
+            "value": "65",
+            "label": "mod.world.cell.doorWhite"
+          },
+          {
+            "value": "66",
+            "label": "mod.world.cell.doorBlue"
+          },
+          {
+            "value": "68",
+            "label": "mod.world.cell.doorGreen"
+          },
+          {
+            "value": "69",
+            "label": "mod.world.cell.exit"
+          },
+          {
+            "value": "49",
+            "label": "mod.world.cell.bonusFloor"
+          }
+        ]
+      }
+    ],
+    "emit": "world_fill_cells_rect((int)(%room%), (int)(%col%), (int)(%row%), (int)(%w%), (int)(%h%), (int)(%type%));"
+  },
+  {
+    "id": "world.snapshotCells",
+    "label": "mod.act.worldSnapshotCells",
+    "call": "World.GetRoomCells",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.worldGridSlot",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.slot.0"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.slot.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.slot.2"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.slot.3"
+          }
+        ]
+      }
+    ],
+    "emit": "world_snapshot_cells((int)(%room%), %slot%);"
+  },
+  {
+    "id": "world.restoreCells",
+    "label": "mod.act.worldRestoreCells",
+    "call": "World.SetRoomCells",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.worldGridSlot",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.slot.0"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.slot.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.slot.2"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.slot.3"
+          }
+        ]
+      }
+    ],
+    "emit": "world_restore_cells((int)(%room%), %slot%);"
+  },
+  {
+    "id": "world.setCellByte",
+    "label": "mod.act.worldSetCellByte",
+    "call": "World.SetRoomCellRecord",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "col",
+        "label": "mod.p.worldCol",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.worldRow",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "slot",
+        "label": "mod.p.worldCellSlot",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "mod.world.byte.0"
+          },
+          {
+            "value": "1",
+            "label": "mod.world.byte.1"
+          },
+          {
+            "value": "2",
+            "label": "mod.world.byte.2"
+          },
+          {
+            "value": "3",
+            "label": "mod.world.byte.3"
+          },
+          {
+            "value": "4",
+            "label": "mod.world.byte.4"
+          }
+        ]
+      },
+      {
+        "key": "value",
+        "label": "mod.p.value",
+        "kind": "number",
+        "preset": "1"
+      }
+    ],
+    "emit": "world_set_cell_byte((int)(%room%), (int)(%col%), (int)(%row%), %slot%, (int)(%value%));",
+    "hint": "mod.act.worldSetCellByte.hint"
+  },
+  {
+    "id": "world.clearCellBytes",
+    "label": "mod.act.worldClearCellBytes",
+    "call": "World.SetRoomCellRecord",
+    "group": "world",
+    "section": "mod.sec.worldGrid",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "col",
+        "label": "mod.p.worldCol",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "row",
+        "label": "mod.p.worldRow",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_clear_cell_bytes((int)(%room%), (int)(%col%), (int)(%row%));"
+  },
+  {
+    "id": "world.selectBox",
+    "label": "mod.act.worldSelectBox",
+    "call": "World.GetRoomBox",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "params": [
+      {
+        "key": "box",
+        "label": "mod.p.worldBoxIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_box((int)(%box%));"
+  },
+  {
+    "id": "world.setBox",
+    "label": "mod.act.worldSetBox",
+    "call": "World.SetRoomBox",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "box",
+        "label": "mod.p.worldBoxIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_BOX_PUSHES",
+        "options": [
+          {
+            "value": "AMOD_BOX_PUSHES",
+            "label": "mod.world.box.pushes"
+          },
+          {
+            "value": "AMOD_BOX_REPORTS_ONLY",
+            "label": "mod.world.box.trigger"
+          },
+          {
+            "value": "AMOD_BOX_PUSHES_WHEN_ASKED",
+            "label": "mod.world.box.asked"
+          },
+          {
+            "value": "AMOD_BOX_PUSHES_TOO",
+            "label": "mod.world.box.pushesToo"
+          }
+        ]
+      },
+      {
+        "key": "minX",
+        "label": "mod.p.worldMinX",
+        "kind": "number",
+        "preset": "-0.2"
+      },
+      {
+        "key": "minY",
+        "label": "mod.p.worldMinY",
+        "kind": "number",
+        "preset": "-0.1"
+      },
+      {
+        "key": "minZ",
+        "label": "mod.p.worldMinZ",
+        "kind": "number",
+        "preset": "-0.2"
+      },
+      {
+        "key": "maxX",
+        "label": "mod.p.worldMaxX",
+        "kind": "number",
+        "preset": "0.2"
+      },
+      {
+        "key": "maxY",
+        "label": "mod.p.worldMaxY",
+        "kind": "number",
+        "preset": "0.0"
+      },
+      {
+        "key": "maxZ",
+        "label": "mod.p.worldMaxZ",
+        "kind": "number",
+        "preset": "0.2"
+      }
+    ],
+    "emit": "world_set_box((int)(%room%), (int)(%box%), %kind%, (float)(%minX%), (float)(%minY%), (float)(%minZ%), (float)(%maxX%), (float)(%maxY%), (float)(%maxZ%));"
+  },
+  {
+    "id": "world.addBox",
+    "label": "mod.act.worldAddBox",
+    "call": "World.AddRoomBox",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "kind",
+        "label": "mod.p.kind",
+        "kind": "enum",
+        "preset": "AMOD_BOX_PUSHES",
+        "options": [
+          {
+            "value": "AMOD_BOX_PUSHES",
+            "label": "mod.world.box.pushes"
+          },
+          {
+            "value": "AMOD_BOX_REPORTS_ONLY",
+            "label": "mod.world.box.trigger"
+          },
+          {
+            "value": "AMOD_BOX_PUSHES_WHEN_ASKED",
+            "label": "mod.world.box.asked"
+          },
+          {
+            "value": "AMOD_BOX_PUSHES_TOO",
+            "label": "mod.world.box.pushesToo"
+          }
+        ]
+      },
+      {
+        "key": "minX",
+        "label": "mod.p.worldMinX",
+        "kind": "number",
+        "preset": "-0.2"
+      },
+      {
+        "key": "minY",
+        "label": "mod.p.worldMinY",
+        "kind": "number",
+        "preset": "-0.1"
+      },
+      {
+        "key": "minZ",
+        "label": "mod.p.worldMinZ",
+        "kind": "number",
+        "preset": "-0.2"
+      },
+      {
+        "key": "maxX",
+        "label": "mod.p.worldMaxX",
+        "kind": "number",
+        "preset": "0.2"
+      },
+      {
+        "key": "maxY",
+        "label": "mod.p.worldMaxY",
+        "kind": "number",
+        "preset": "0.0"
+      },
+      {
+        "key": "maxZ",
+        "label": "mod.p.worldMaxZ",
+        "kind": "number",
+        "preset": "0.2"
+      }
+    ],
+    "emit": "world_add_box((int)(%room%), %kind%, (float)(%minX%), (float)(%minY%), (float)(%minZ%), (float)(%maxX%), (float)(%maxY%), (float)(%maxZ%));"
+  },
+  {
+    "id": "world.removeBox",
+    "label": "mod.act.worldRemoveBox",
+    "call": "World.RemoveRoomBox",
+    "group": "world",
+    "section": "mod.sec.worldBoxes",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "box",
+        "label": "mod.p.worldBoxIndex",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ],
+    "emit": "world_remove_box((int)(%room%), (int)(%box%));",
+    "hint": "mod.act.worldRemoveBox.hint"
+  },
+  {
+    "id": "world.selectEntity",
+    "label": "mod.act.worldSelectEntity",
+    "call": "World.GetEntity",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldEntityIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_entity((int)(%index%));"
+  },
+  {
+    "id": "world.selectPlayerEntity",
+    "label": "mod.act.worldSelectPlayer",
+    "call": "World.GetPlayerEntity",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "params": [],
+    "emit": "world_select_player_entity();"
+  },
+  {
+    "id": "world.setEntityHidden",
+    "label": "mod.act.worldSetEntityHidden",
+    "call": "World.SetEntityHidden",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldEntityIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "hidden",
+        "label": "mod.p.worldHidden",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "world_set_entity_hidden((int)(%room%), (int)(%index%), %hidden%);"
+  },
+  {
+    "id": "world.selectSpawn",
+    "label": "mod.act.worldSelectSpawn",
+    "call": "World.GetSpawn",
+    "group": "world",
+    "section": "mod.sec.worldEntities",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldSpawnIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_spawn((int)(%index%));"
+  },
+  {
+    "id": "world.selectLight",
+    "label": "mod.act.worldSelectLight",
+    "call": "World.GetRoomLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldLightIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_light((int)(%index%));"
+  },
+  {
+    "id": "world.setRoomLight",
+    "label": "mod.act.worldSetRoomLight",
+    "call": "World.SetRoomLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldLightIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.4"
+      },
+      {
+        "key": "range",
+        "label": "mod.p.worldLightRange",
+        "kind": "number",
+        "preset": "1.2"
+      }
+    ],
+    "emit": "world_set_room_light((int)(%room%), (int)(%index%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%range%));"
+  },
+  {
+    "id": "world.addRoomLight",
+    "label": "mod.act.worldAddRoomLight",
+    "call": "World.AddRoomLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.8"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.3"
+      },
+      {
+        "key": "range",
+        "label": "mod.p.worldLightRange",
+        "kind": "number",
+        "preset": "1.2"
+      }
+    ],
+    "emit": "world_add_room_light((int)(%room%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%range%));"
+  },
+  {
+    "id": "world.addFrameLight",
+    "label": "mod.act.worldAddFrameLight",
+    "call": "World.AddLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "0.4"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.8"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "1.0"
+      },
+      {
+        "key": "range",
+        "label": "mod.p.worldLightRange",
+        "kind": "number",
+        "preset": "1.0"
+      }
+    ],
+    "emit": "world_add_frame_light((float)(%x%), (float)(%y%), (float)(%z%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%range%));",
+    "hint": "mod.act.worldAddFrameLight.hint"
+  },
+  {
+    "id": "world.setEntityLight",
+    "label": "mod.act.worldSetEntityLight",
+    "call": "World.SetEntityLight",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldEntityIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "lit",
+        "label": "mod.p.worldIsLit",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "offX",
+        "label": "mod.p.worldOffX",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "offY",
+        "label": "mod.p.worldOffY",
+        "kind": "number",
+        "preset": "0.1"
+      },
+      {
+        "key": "offZ",
+        "label": "mod.p.worldOffZ",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "r",
+        "label": "mod.p.r",
+        "kind": "number",
+        "preset": "1"
+      },
+      {
+        "key": "g",
+        "label": "mod.p.g",
+        "kind": "number",
+        "preset": "0.85"
+      },
+      {
+        "key": "b",
+        "label": "mod.p.b",
+        "kind": "number",
+        "preset": "0.4"
+      },
+      {
+        "key": "range",
+        "label": "mod.p.worldLightRange",
+        "kind": "number",
+        "preset": "1.2"
+      }
+    ],
+    "emit": "world_set_entity_light((int)(%room%), (int)(%index%), %lit%, (float)(%offX%), (float)(%offY%), (float)(%offZ%), (float)(%r%), (float)(%g%), (float)(%b%), (float)(%range%));"
+  },
+  {
+    "id": "world.selectLightTriangle",
+    "label": "mod.act.worldSelectTri",
+    "call": "World.GetLightTriangle",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldTriIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_tri((int)(%index%));"
+  },
+  {
+    "id": "world.setLightTriangle",
+    "label": "mod.act.worldSetTri",
+    "call": "World.SetLightTriangle",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldTriIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "x1",
+        "label": "mod.p.x1",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "y1",
+        "label": "mod.p.y1",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "z1",
+        "label": "mod.p.worldZ1",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x2",
+        "label": "mod.p.x2",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "y2",
+        "label": "mod.p.y2",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "z2",
+        "label": "mod.p.worldZ2",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x3",
+        "label": "mod.p.worldX3",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y3",
+        "label": "mod.p.worldY3",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "z3",
+        "label": "mod.p.worldZ3",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_set_tri((int)(%room%), (int)(%index%), (float)(%x1%), (float)(%y1%), (float)(%z1%), (float)(%x2%), (float)(%y2%), (float)(%z2%), (float)(%x3%), (float)(%y3%), (float)(%z3%));"
+  },
+  {
+    "id": "world.addLightTriangle",
+    "label": "mod.act.worldAddTri",
+    "call": "World.AddLightTriangle",
+    "group": "world",
+    "section": "mod.sec.worldLights",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "x1",
+        "label": "mod.p.x1",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "y1",
+        "label": "mod.p.y1",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "z1",
+        "label": "mod.p.worldZ1",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x2",
+        "label": "mod.p.x2",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "y2",
+        "label": "mod.p.y2",
+        "kind": "number",
+        "preset": "-0.5"
+      },
+      {
+        "key": "z2",
+        "label": "mod.p.worldZ2",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x3",
+        "label": "mod.p.worldX3",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y3",
+        "label": "mod.p.worldY3",
+        "kind": "number",
+        "preset": "0.5"
+      },
+      {
+        "key": "z3",
+        "label": "mod.p.worldZ3",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_add_tri((int)(%room%), (float)(%x1%), (float)(%y1%), (float)(%z1%), (float)(%x2%), (float)(%y2%), (float)(%z2%), (float)(%x3%), (float)(%y3%), (float)(%z3%));"
+  },
+  {
+    "id": "world.selectStatic",
+    "label": "mod.act.worldSelectStatic",
+    "call": "World.GetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_static((int)(%index%));"
+  },
+  {
+    "id": "world.setStaticVisible",
+    "label": "mod.act.worldSetStaticVis",
+    "call": "World.SetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "shown",
+        "label": "mod.p.visible",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      }
+    ],
+    "emit": "world_set_static_visible((int)(%room%), (int)(%index%), %shown%);"
+  },
+  {
+    "id": "world.setStaticStyle",
+    "label": "mod.act.worldSetStaticStyle",
+    "call": "World.SetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "lit",
+        "label": "mod.p.worldIsLit",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ]
+      },
+      {
+        "key": "translucent",
+        "label": "mod.p.worldTranslucent",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ]
+      },
+      {
+        "key": "blend",
+        "label": "mod.p.worldStaticBlend",
+        "kind": "enum",
+        "preset": "AMOD_STATIC_BLEND_OPAQUE",
+        "options": [
+          {
+            "value": "AMOD_STATIC_BLEND_OPAQUE",
+            "label": "mod.world.blend.opaque"
+          },
+          {
+            "value": "AMOD_STATIC_BLEND_ADD",
+            "label": "mod.world.blend.add"
+          },
+          {
+            "value": "AMOD_STATIC_BLEND_MULTIPLY",
+            "label": "mod.world.blend.multiply"
+          }
+        ]
+      },
+      {
+        "key": "model",
+        "label": "mod.p.worldModelId",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.worldTextureId",
+        "kind": "number",
+        "preset": "0",
+        "optional": true
+      }
+    ],
+    "emit": "world_set_static_style((int)(%room%), (int)(%index%), %lit%, %translucent%, %blend%, (uint32_t)(%model%), (uint32_t)(%texture%));"
+  },
+  {
+    "id": "world.setStaticPos",
+    "label": "mod.act.worldSetStaticPos",
+    "call": "World.SetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_set_static_pos((int)(%room%), (int)(%index%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%scale%));",
+    "hint": "mod.act.worldSetStaticPos.hint"
+  },
+  {
+    "id": "world.readStaticMatrix",
+    "label": "mod.act.worldReadStaticMat",
+    "call": "World.GetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "world_read_static_matrix((int)(%room%), (int)(%index%), %list%, (int)(sizeof %list% / sizeof %list%[0]));"
+  },
+  {
+    "id": "world.setStaticMatrix",
+    "label": "mod.act.worldSetStaticMat",
+    "call": "World.SetStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "list",
+        "label": "mod.p.listName",
+        "kind": "text",
+        "preset": ""
+      }
+    ],
+    "emit": "world_set_static_matrix((int)(%room%), (int)(%index%), %list%, (int)(sizeof %list% / sizeof %list%[0]));"
+  },
+  {
+    "id": "world.addStatic",
+    "label": "mod.act.worldAddStatic",
+    "call": "World.AddStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "model",
+        "label": "mod.p.worldModelId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "texture",
+        "label": "mod.p.worldTextureId",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "x",
+        "label": "mod.p.x",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "y",
+        "label": "mod.p.y",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "z",
+        "label": "mod.p.z",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "scale",
+        "label": "mod.p.scale",
+        "kind": "number",
+        "preset": "1",
+        "optional": true
+      },
+      {
+        "key": "lit",
+        "label": "mod.p.worldIsLit",
+        "kind": "enum",
+        "preset": "1",
+        "options": [
+          {
+            "value": "1",
+            "label": "common.yes"
+          },
+          {
+            "value": "0",
+            "label": "common.no"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "translucent",
+        "label": "mod.p.worldTranslucent",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ],
+        "optional": true
+      },
+      {
+        "key": "blend",
+        "label": "mod.p.worldStaticBlend",
+        "kind": "enum",
+        "preset": "AMOD_STATIC_BLEND_OPAQUE",
+        "options": [
+          {
+            "value": "AMOD_STATIC_BLEND_OPAQUE",
+            "label": "mod.world.blend.opaque"
+          },
+          {
+            "value": "AMOD_STATIC_BLEND_ADD",
+            "label": "mod.world.blend.add"
+          },
+          {
+            "value": "AMOD_STATIC_BLEND_MULTIPLY",
+            "label": "mod.world.blend.multiply"
+          }
+        ],
+        "optional": true
+      }
+    ],
+    "emit": "world_add_static((int)(%room%), (uint32_t)(%model%), (uint32_t)(%texture%), (float)(%x%), (float)(%y%), (float)(%z%), (float)(%scale%), %lit%, %translucent%, %blend%);",
+    "hint": "mod.act.worldAddStatic.hint"
+  },
+  {
+    "id": "world.removeStatic",
+    "label": "mod.act.worldRemoveStatic",
+    "call": "World.RemoveStatic",
+    "group": "world",
+    "section": "mod.sec.worldStatics",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldStaticIndex",
+        "kind": "number",
+        "preset": "-1"
+      }
+    ],
+    "emit": "world_remove_static((int)(%room%), (int)(%index%));",
+    "hint": "mod.act.worldRemoveStatic.hint"
+  },
+  {
+    "id": "world.selectThing",
+    "label": "mod.act.worldSelectThing",
+    "call": "World.GetRoomThing",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "params": [
+      {
+        "key": "index",
+        "label": "mod.p.worldThingIndex",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_select_thing((int)(%index%));"
+  },
+  {
+    "id": "world.setRoomThing",
+    "label": "mod.act.worldSetThing",
+    "call": "World.SetRoomThing",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "index",
+        "label": "mod.p.worldThingIndex",
+        "kind": "number",
+        "preset": "-1"
+      },
+      {
+        "key": "v0",
+        "label": "mod.p.first",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "v1",
+        "label": "mod.p.second",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "v2",
+        "label": "mod.p.worldThird",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_set_thing((int)(%room%), (int)(%index%), (int)(%v0%), (int)(%v1%), (int)(%v2%));"
+  },
+  {
+    "id": "world.setRoomMemory",
+    "label": "mod.act.worldSetMemory",
+    "call": "World.SetRoomMemory",
+    "group": "world",
+    "section": "mod.sec.worldSave",
+    "params": [
+      {
+        "key": "room",
+        "label": "mod.p.roomIndex",
+        "kind": "number",
+        "preset": "-1",
+        "optional": true
+      },
+      {
+        "key": "state",
+        "label": "mod.p.worldMemState",
+        "kind": "number",
+        "preset": "0"
+      },
+      {
+        "key": "hasExtra",
+        "label": "mod.p.worldMemHasExtra",
+        "kind": "enum",
+        "preset": "0",
+        "options": [
+          {
+            "value": "0",
+            "label": "common.no"
+          },
+          {
+            "value": "1",
+            "label": "common.yes"
+          }
+        ]
+      },
+      {
+        "key": "extra",
+        "label": "mod.p.worldMemExtra",
+        "kind": "number",
+        "preset": "0"
+      }
+    ],
+    "emit": "world_set_memory((int)(%room%), (int)(%state%), %hasExtra%, (int)(%extra%));"
   }
 ]

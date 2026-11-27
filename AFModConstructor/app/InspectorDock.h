@@ -38,6 +38,7 @@ private:
     void rebuildVarsTable();
     void rebuildCodePreview();
     void commitVarsFromTable();
+    void openVarValueEditor(int row);
 
     ModLogic::Sheet* m_sheet = nullptr;
     UiFormat::Selection m_sel;
@@ -52,6 +53,7 @@ private:
 
     QPushButton* m_addVarBtn = nullptr;
     QPushButton* m_delVarBtn = nullptr;
+    QPushButton* m_editVarBtn = nullptr;
     QTableWidget* m_varsTable = nullptr;
     QLabel* m_varsWarn = nullptr;
 
