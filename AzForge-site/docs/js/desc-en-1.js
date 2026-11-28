@@ -22,7 +22,6 @@ E["hdr:InventoryApi.h"] = "What player carries and chain of scores for pickup se
 E["hdr:LauncherApi.h"] = "Start launcher: button events, text, control positions, logo, dialog skipping.";
 E["hdr:LevelEditorApi.h"] = "Level editor seams: custom editor on top, brushes, grids, maze, saving custom formats.";
 E["hdr:MmdApi.h"] = "All game 3D models: game meshes, mod models, file replacement, animations, vertices, materials, light.";
-E["hdr:ModManagerApi.h"] = "List of installed mods: manifests, order, enabled state, reloading.";
 E["hdr:MonstersApi.h"] = "Level monsters: types from monster_res.txt, placement, health, touches, custom types and behaviors.";
 E["hdr:ObjectsMenuApi.h"] = "In-game menus: finding elements by $id from script, properties, clicks, adding objects.";
 E["hdr:ParticlesApi.h"] = "Sparks, smoke and trails: four particle storages that game draws inside world renderer.";

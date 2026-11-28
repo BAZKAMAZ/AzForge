@@ -43,19 +43,38 @@ foreach ($sz in $icoSizes) {
     $rad = [Math]::Max(2.0, $sz * 0.22)
     $rectPath = New-RoundedRectPath $pad $pad ($sz - $pad * 2) ($sz - $pad * 2) $rad
 
+    # Aurora Glass dark panel background (#101930 -> #080c15)
     $bgBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
         (New-Object System.Drawing.PointF(0, 0)),
         (New-Object System.Drawing.PointF($sz, $sz)),
-        [System.Drawing.Color]::FromArgb(255, 22, 27, 36),
-        [System.Drawing.Color]::FromArgb(255, 11, 14, 20)
+        [System.Drawing.Color]::FromArgb(255, 16, 25, 48),
+        [System.Drawing.Color]::FromArgb(255, 8, 12, 21)
     )
     $g.FillPath($bgBrush, $rectPath)
     $bgBrush.Dispose()
 
+    # Subtle internal Aurora sheen inside the glass tile
+    $sheenBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+        (New-Object System.Drawing.PointF(0, 0)),
+        (New-Object System.Drawing.PointF($sz, $sz)),
+        [System.Drawing.Color]::FromArgb(28, 56, 189, 248),
+        [System.Drawing.Color]::FromArgb(14, 99, 102, 241)
+    )
+    $g.FillPath($sheenBrush, $rectPath)
+    $sheenBrush.Dispose()
+
+    # Aurora Glass border gradient (#38bdf8 -> #818cf8)
     $borderW = [Math]::Max(1.0, $sz * 0.045)
-    $borderPen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(190, 255, 120, 0), $borderW)
+    $borderBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+        (New-Object System.Drawing.PointF(0, 0)),
+        (New-Object System.Drawing.PointF($sz, $sz)),
+        [System.Drawing.Color]::FromArgb(220, 56, 189, 248),
+        [System.Drawing.Color]::FromArgb(200, 129, 140, 248)
+    )
+    $borderPen = New-Object System.Drawing.Pen($borderBrush, $borderW)
     $g.DrawPath($borderPen, $rectPath)
     $borderPen.Dispose()
+    $borderBrush.Dispose()
     $rectPath.Dispose()
 
     $hammerSize = $sz * 0.84
@@ -69,16 +88,39 @@ foreach ($sz in $icoSizes) {
         )
     }
 
-    $fillBrush = New-Object System.Drawing.SolidBrush([System.Drawing.Color]::FromArgb(42, 255, 120, 0))
+    # Translucent Aurora fill inside the hammer polygon
+    $fillBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+        (New-Object System.Drawing.PointF(0, 0)),
+        (New-Object System.Drawing.PointF($sz, $sz)),
+        [System.Drawing.Color]::FromArgb(55, 56, 189, 248),
+        [System.Drawing.Color]::FromArgb(35, 99, 102, 241)
+    )
     $g.FillPolygon($fillBrush, $pts)
     $fillBrush.Dispose()
 
-    $pen = New-Object System.Drawing.Pen([System.Drawing.Color]::FromArgb(255, 255, 120, 0), [Math]::Max(1.4, $sz * 0.055))
+    # Multi-stop Aurora stroke (#67e8f9 -> #38bdf8 -> #818cf8)
+    $strokeBrush = New-Object System.Drawing.Drawing2D.LinearGradientBrush(
+        (New-Object System.Drawing.PointF(0, 0)),
+        (New-Object System.Drawing.PointF($sz, $sz)),
+        [System.Drawing.Color]::FromArgb(255, 103, 232, 249),
+        [System.Drawing.Color]::FromArgb(255, 129, 140, 248)
+    )
+    $blend = New-Object System.Drawing.Drawing2D.ColorBlend(3)
+    $blend.Colors = [System.Drawing.Color[]]@(
+        [System.Drawing.Color]::FromArgb(255, 103, 232, 249),
+        [System.Drawing.Color]::FromArgb(255, 56, 189, 248),
+        [System.Drawing.Color]::FromArgb(255, 129, 140, 248)
+    )
+    $blend.Positions = [float[]]@(0.0, 0.45, 1.0)
+    $strokeBrush.InterpolationColors = $blend
+
+    $pen = New-Object System.Drawing.Pen($strokeBrush, [Math]::Max(1.4, $sz * 0.055))
     $pen.LineJoin = [System.Drawing.Drawing2D.LineJoin]::Round
     $pen.StartCap = [System.Drawing.Drawing2D.LineCap]::Round
     $pen.EndCap = [System.Drawing.Drawing2D.LineCap]::Round
     $g.DrawPolygon($pen, $pts)
     $pen.Dispose()
+    $strokeBrush.Dispose()
 
     $ms = New-Object System.IO.MemoryStream
     $bmp.Save($ms, [System.Drawing.Imaging.ImageFormat]::Png)

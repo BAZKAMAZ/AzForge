@@ -439,16 +439,6 @@ R["AmodInteropApi.Write"] = "Записать в память.";
 R["AmodInteropApi.Hook"] = "Detour. prologueLength >= 5, только целые инструкции. Токен или AMOD_INVALID_TOKEN.";
 R["AmodInteropApi.Unhook"] = "Снять хук по токену.";
 
-// ---------- ModManagerApi ----------
-R["struct:AmodModEntry"] = "Один установленный мод; строки живут всё время процесса, пустые поля — \"\".";
-R["AmodModManagerApi.Count"] = "Сколько модов установлено.";
-R["AmodModManagerApi.Get"] = "Запись о моде по индексу.";
-R["AmodModManagerApi.Capability"] = "Заявленная capability мода по индексу.";
-R["AmodModManagerApi.FailureReason"] = "Почему мод не загрузился (пусто, если загрузился).";
-R["AmodModManagerApi.SetEnabled"] = "Включить/выключить; переключатель пишется на диск сразу.";
-R["AmodModManagerApi.IsDirty"] = "Есть ли несApplied переключения (ждут перезагрузки).";
-R["AmodModManagerApi.Reload"] = "Загрузить/выгрузить мод на следующем кадре; лаунчерным отказано.";
-
 // ---------- HudApi ----------
 R["AmodHudApi.GetProperty"] = "Ключ HUD; доступно после того, как игра прочла game_info.txt (не в AmodInit).";
 R["AmodHudApi.SetProperty"] = "Изменить ключ HUD.";

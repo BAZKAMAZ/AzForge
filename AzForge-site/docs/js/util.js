@@ -13,7 +13,6 @@
   W.UTIL.esc = esc;
 
   // ---- описания API на двух языках ----
-  // RU собраны вручную; EN лежит в desc-en-*.js (тот же набор ключей).
   const RU = W.AZFORGE_RU || {};
   const EN = W.AZFORGE_EN || {};
   W.UTIL.desc = (key) => {
@@ -31,7 +30,7 @@
   const TABLE_NS = {
     AmodLauncherApi: "Launcher", AmodObjectsMenuApi: "Menu", AmodBoxMenuApi: "Box",
     AmodBlockExpressionApi: "Data", AmodConsoleApi: "Console", AmodRenderApi: "Render",
-    AmodWorldApi: "World", AmodInteropApi: "Interop", AmodModManagerApi: "Mods",
+    AmodWorldApi: "World", AmodInteropApi: "Interop",
     AmodInputApi: "Input", AmodBonusesApi: "Bonuses", AmodInventoryApi: "Inventory",
     AmodHudApi: "Hud", AmodMonstersApi: "Monsters", AmodMmdApi: "Mmd",
     AmodTextureApi: "Textures", AmodSoundApi: "Sound", AmodPlayerApi: "Player",
@@ -90,7 +89,6 @@
     AmodDemoApi:        { t: ["Demo — демо-скрипты", "Demo — demo scripts"],           group: "platform" },
     AmodLevelEditorApi: { t: ["LevelEditor — редактор", "LevelEditor — editor"],       group: "platform" },
     AmodInteropApi:     { t: ["Interop — память и хуки", "Interop — memory and hooks"], group: "platform" },
-    AmodModManagerApi:  { t: ["ModManager — список модов", "ModManager — mod list"],   group: "platform" },
   };
 
   const HDR_META = {
@@ -165,7 +163,6 @@
     const flushPlain = () => {
       if (!buf) return;
       let b = esc(buf);
-      // защитить HTML-сущности от подсветки слов/чисел внутри них
       const ents = [];
       b = b.replace(/&(amp|quot|lt|gt|#39|#x27);/g, (m) => { ents.push(m); return "\x03"; });
       b = b.replace(/[A-Za-z_][A-Za-z0-9_]*/g, (w) => {
@@ -217,7 +214,7 @@
   function hlJson(code) {
     let s = esc(code);
     const strings = [];
-    const enc = (v) => { // индекс в base-26 только буквами a..z
+    const enc = (v) => {
       let out = "";
       do { out += String.fromCharCode(97 + v % 26); v = Math.floor(v / 26); } while (v > 0);
       return out;
@@ -228,9 +225,9 @@
     s = s.replace(/\x01([a-z]+)\x02/g, (_, e) => {
       let v = 0;
       for (let i = e.length - 1; i >= 0; i--) v = v * 26 + (e.charCodeAt(i) - 97);
-      return '<span class="tok-type">' + strings[v] + "</span>";
+      return '<span class="tok-str">' + strings[v] + "</span>";
     });
-    s = s.replace(/(<span class="tok-type">(&quot;[^&]*&quot;)<\/span>)(\s*:)/g, '<span class="tok-tag">$2</span>$3');
+    s = s.replace(/(<span class="tok-str">(&quot;[^&]*&quot;)<\/span>)(\s*:)/g, '<span class="tok-tag">$2</span>$3');
     return s;
   }
   W.UTIL.hlJson = hlJson;
@@ -242,13 +239,15 @@
   }
   W.UTIL.hlShell = hlShell;
 
+  const COPY_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-copy"/></svg>';
+  const CHECK_ICON = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><use href="#i-check"/></svg>';
+
   // ---- блок кода с подписью и копированием ----
   W.UTIL.codeBlock = (code, label, lang) => {
     const body = lang === "json" ? hlJson(code) : lang === "sh" ? hlShell(code) : hlC(code);
     return '<div class="codeblk">' +
-      (label ? '<div class="cb-head"><span>' + esc(label) + '</span><button class="copybtn" data-copy>' +
-        '<svg viewBox="0 0 24 24" width="12" height="12"><rect x="9" y="9" width="11" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" fill="none" stroke="currentColor" stroke-width="2"/></svg>' +
-        T("копировать", "copy") + "</button></div>" : "") +
+      (label ? '<div class="cb-head"><span>' + esc(label) + '</span><button class="copybtn" type="button" data-copy>' +
+        COPY_ICON + "<span>" + T("Копировать", "Copy") + "</span></button></div>" : "") +
       "<pre>" + body + "</pre></div>";
   };
 
@@ -274,21 +273,46 @@
     let t = null;
     return (msg) => {
       const el = document.getElementById("toast");
-      el.textContent = msg;
+      const txt = document.getElementById("toastText");
+      if (!el) return;
+      if (txt) txt.textContent = msg;
+      else el.textContent = msg;
       el.classList.add("show");
       clearTimeout(t);
-      t = setTimeout(() => el.classList.remove("show"), 1800);
+      t = setTimeout(() => el.classList.remove("show"), 1900);
     };
   })();
+
+  function copyRawText(text, done) {
+    function fallback() {
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.style.cssText = "position:fixed;opacity:0";
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); done(); } catch (e) {}
+      document.body.removeChild(ta);
+    }
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
 
   // копирование
   document.addEventListener("click", (e) => {
     const btn = e.target.closest("[data-copy]");
     if (!btn) return;
     const pre = btn.closest(".codeblk").querySelector("pre");
-    navigator.clipboard.writeText(pre.textContent).then(() => {
-      btn.innerHTML = T("скопировано ✓", "copied ✓");
-      setTimeout(() => { btn.innerHTML = T("копировать", "copy"); }, 1400);
+    copyRawText(pre.textContent, () => {
+      btn.classList.add("copied");
+      btn.innerHTML = CHECK_ICON + "<span>" + T("Скопировано", "Copied") + "</span>";
+      W.UTIL.toast(T("Скопировано в буфер обмена", "Copied to clipboard"));
+      setTimeout(() => {
+        btn.classList.remove("copied");
+        btn.innerHTML = COPY_ICON + "<span>" + T("Копировать", "Copy") + "</span>";
+      }, 1500);
     });
   });
 

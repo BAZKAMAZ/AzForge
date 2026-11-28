@@ -12,6 +12,7 @@ window.AF_LANG_RU = {
   "nav.features": "Возможности",
   "nav.install": "Установка",
   "nav.docs": "Документация",
+  "nav.playground": "Песочница",
   "nav.github": "GitHub",
 
   "hero.kicker": "Платформа модов для Azangara",
@@ -19,6 +20,7 @@ window.AF_LANG_RU = {
   "hero.lead": "Скачай AzForge — и играй с модами. Установщик сам подключит их к игре: без правки файлов и лишней настройки.",
   "hero.install": "Установить",
   "hero.docs": "Документация",
+  "hero.playground": "Песочница",
   "hero.micro": "Windows",
   "hero.micro2": "Открытый исходный код",
 

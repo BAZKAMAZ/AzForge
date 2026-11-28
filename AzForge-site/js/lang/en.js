@@ -13,6 +13,7 @@ window.AF_LANG_EN = {
   "nav.features": "Features",
   "nav.install": "Install",
   "nav.docs": "Documentation",
+  "nav.playground": "Playground",
   "nav.github": "GitHub",
 
   "hero.kicker": "Mod platform for Azangara",
@@ -20,6 +21,7 @@ window.AF_LANG_EN = {
   "hero.lead": "Get AzForge and play with mods. The installer hooks everything into the game for you — no file editing, no manual setup.",
   "hero.install": "Install",
   "hero.docs": "Documentation",
+  "hero.playground": "Playground",
   "hero.micro": "Windows",
   "hero.micro2": "Open source",
 

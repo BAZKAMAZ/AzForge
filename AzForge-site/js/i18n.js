@@ -95,10 +95,10 @@
   };
 
   function boot() {
-    AF.apply();
     var hosts = document.querySelectorAll("[data-lang-switch]");
     for (var i = 0; i < hosts.length; i++) AF.renderSwitch(hosts[i]);
+    AF.apply();
   }
-  if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
-  else boot();
+  if (document.body) boot();
+  else document.addEventListener("DOMContentLoaded", boot);
 })();
